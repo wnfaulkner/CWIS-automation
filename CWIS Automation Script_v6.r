@@ -24,6 +24,7 @@ library(ReporteRs)
 library(ggplot2)
 library(stringr)
 library(reshape2)
+library(xlsx)
 
 ### LOAD DATA ###
 
@@ -48,11 +49,19 @@ school.names <- c("All") #!
       cwis.df <- read.csv(current.survey.data.file,
                       stringsAsFactors = TRUE,
                       header = TRUE)
-
+  
   #Google Sheets
     #cwis.ss <- 	gs_key("13--0r4jDrW8DgC4cBlrbwIOS7nLfHsjaLFqbk_9qjVs",verbose = TRUE)
     #cwis.df <- 	gs_read(cwis.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
   
+  #Output directories
+    template.file <- paste(wd,"Report Template/CWIS Template.pptx",sep="")
+    target.dir <- paste(wd,"R script outputs/",
+                        "Output_",
+                        gsub(":",".",Sys.time()), sep = "")
+    
+    template.file
+    
   # Variable helper table
     cwis.embed.helper.ss <- gs_key("1FaBPQP8Gqwp5sI_0g793G6yjW5XNFbV8ji8N7i9oLjs",verbose = TRUE) 
     cwis.embed.helper.df <- 	gs_read(cwis.embed.helper.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
@@ -233,10 +242,32 @@ school.names <- c("All") #!
   dat.df <- dat.df[!grepl("TEST TEST",dat.df$q33),]
 }
 
+  ### EXPORTING RESULTS TO EXCEL ###
+  
+  target.file.xlsx <- paste( target.dir,
+                             "/",
+                             "CWIS Cleaned Data_v",
+                             gsub(":",".",Sys.time()),
+                             ".xlsx", sep="") 
+  
+  write.xlsx(dat.df, file = target.file.xlsx)
+  
+  
+  ### EXPORTING RESULTS TO GOOGLE SHEETS ###
+  
+  #output.ss <- gs_new(title = "Cleaned Data", ws_title = "Cleaned Data")
+  #gs_edit_cells(output.ss, ws = 1, input = dat.df, verbose = TRUE)
+  
+  
+  
+  #cwis.ss %>% gs_new("Cleaned Data", input = dat.df)#, verbose = TRUE)
+  
+  #gs_edit_cells(dat, ws='sheetname', input=colnames(result), byrow=TRUE, anchor="A1")
+  #gs_edit_cells(dat, ws='sheetname', input = result, anchor="A2", col_names=FALSE, trim=TRUE)
 
 ########################################################################################################################################################      
 ### PRODUCING DATA, TABLES, & CHARTS ###
-
+{
 if(tolower(school.names) %in% "all" %>% any){school.names <- dat.df$school.name %>% unique}else{}
 progress.bar.i <- txtProgressBar(min = 0, max = 100, style = 3)
 maxrow <- length(school.names)
@@ -595,27 +626,21 @@ for(i in c(1,110:115)){   #for testing loop
     s20.outputs.df$avg.progress <- s20.outputs.df$avg.progress %>% as.character %>% as.numeric %>% round(., digits = 1)
     s20.outputs.df <- s20.outputs.df[c(3,4,1,2),]
   }
-  
-  
-  
-  
-  ########################################################################################################################################################                  
-  ### EXPORTING RESULTS TO POWERPOINT ###
-  
-  #j <- 1 #LOOP TESTER
-  #for(j in 1:length(school.names)){    #START LOOP J BY SCHOOL
+}
+}
+
+########################################################################################################################################################                  
+### EXPORTING RESULTS TO POWERPOINT ###
+
+#j <- 1 #LOOP TESTER
+for(j in 1:length(school.names)){    #START LOOP J BY SCHOOL
   j <- i
   
   #Copy template file into target directory & rename with individual report name 
   if(j == 1){
-    template.file <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/2017-09 CWIS automation/Report Template/CWIS Template.pptx"
-    target.dir <- paste("C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/2018-04 CWIS Automation for CW/R script outputs/",
-                        "Output_",
-                        gsub(":",".",Sys.time()), sep = "")
     dir.create(target.dir)
   }
   
-  #file.copy(template.file,target.dir)
   target.file.j <- paste( target.dir,
                           "/",
                           "CWIS Report_",
@@ -1729,17 +1754,4 @@ for(i in c(1,110:115)){   #for testing loop
 end_time <- Sys.time()
 proc.time <- end_time - start_time
 proc.time  
-
-### EXPORTING RESULTS TO GOOGLE SHEETS ###
-
-#output.ss <- gs_new(title = "Cleaned Data", ws_title = "Cleaned Data")
-#gs_edit_cells(output.ss, ws = 1, input = dat.df, verbose = TRUE)
-
-
-
-#cwis.ss %>% gs_new("Cleaned Data", input = dat.df)#, verbose = TRUE)
-
-#gs_edit_cells(dat, ws='sheetname', input=colnames(result), byrow=TRUE, anchor="A1")
-#gs_edit_cells(dat, ws='sheetname', input = result, anchor="A2", col_names=FALSE, trim=TRUE)
-
-#} #END OF LOOP J BY SCHOOL
+  
