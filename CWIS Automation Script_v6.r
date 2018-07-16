@@ -246,11 +246,12 @@ school.names <- c("All") #!
   
   target.file.xlsx <- paste( target.dir,
                              "/",
-                             "CWIS Cleaned Data_v",
+                             "data_v",
                              gsub(":",".",Sys.time()),
                              ".xlsx", sep="") 
   
-  write.xlsx(dat.df, file = target.file.xlsx)
+  write.xlsx(dat.df, file = target.file.xlsx, sheetName = "cwis_responses")
+  write.xlsx(dat.df, file = target.file.xlsx, sheetName = "questions", append = TRUE)
   
   
   ### EXPORTING RESULTS TO GOOGLE SHEETS ###
