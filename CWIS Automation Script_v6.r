@@ -1,5 +1,5 @@
 #########################################################
-##### 	R >< GOOGLE SHEETS INTERACITON SCRATCHPAD	#####
+##### 	CWIS Automation for MMD                   	#####
 #########################################################
 
 #install.packages('devtools')
@@ -31,31 +31,38 @@ library(reshape2)
 school.names <- c("All") #!
 
 # Main data
-#CSV
-#Set working directory
-wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/2018-04 CWIS Automation for CW/"
-setwd(wd)
-#Read most recently modified csv file in working directory
-survey.data.csvs <- list.files()[grepl(".csv",list.files()) & !grepl(".gsheet",list.files())]
-current.survey.data.file <- survey.data.csvs[order(survey.data.csvs %>% file.mtime, decreasing =  TRUE)][1]
+  #CSV
+    #Set working directory
+      
+      #M900
+      #wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-04 CWIS Automation for CW/"
+      
+      #Thinkpad T470
+      wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-04 CWIS Automation for CW/"
+      
+      setwd(wd)
+    #Read most recently modified csv file in working directory
+      survey.data.csvs <- list.files()[grepl(".csv",list.files()) & !grepl(".gsheet",list.files())]
+      current.survey.data.file <- survey.data.csvs[order(survey.data.csvs %>% file.mtime, decreasing =  TRUE)][1]
+  
+      cwis.df <- read.csv(current.survey.data.file,
+                      stringsAsFactors = TRUE,
+                      header = TRUE)
 
-cwis.df <- read.csv(current.survey.data.file,
-                    stringsAsFactors = TRUE,
-                    header = TRUE)
-
-#Google Sheets
-#cwis.ss <- 	gs_key("13--0r4jDrW8DgC4cBlrbwIOS7nLfHsjaLFqbk_9qjVs",verbose = TRUE)
-#cwis.df <- 	gs_read(cwis.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
-
-names(cwis.df) <- cwis.df %>% names %>% tolower
-
-# Variable helper table
-cwis.embed.helper.ss <- gs_key("1FaBPQP8Gqwp5sI_0g793G6yjW5XNFbV8ji8N7i9oLjs",verbose = TRUE) 
-cwis.embed.helper.df <- 	gs_read(cwis.embed.helper.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
+  #Google Sheets
+    #cwis.ss <- 	gs_key("13--0r4jDrW8DgC4cBlrbwIOS7nLfHsjaLFqbk_9qjVs",verbose = TRUE)
+    #cwis.df <- 	gs_read(cwis.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
+  
+  # Variable helper table
+    cwis.embed.helper.ss <- gs_key("1FaBPQP8Gqwp5sI_0g793G6yjW5XNFbV8ji8N7i9oLjs",verbose = TRUE) 
+    cwis.embed.helper.df <- 	gs_read(cwis.embed.helper.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
 
 ########################################################################################################################################################      
 ### DATA CLEANING & PREP ###
 {
+  #Lower-case all variable names
+  names(cwis.df) <- cwis.df %>% names %>% tolower
+  
   # Remove trailing column and rows with extra labels
   dat.startrow <- which(cwis.df[,1] %>% substr(.,1,1) == "{")+1
   dat.remove.colnums <- which(cwis.df %>% names %>% substr(.,1,1) == "x")
