@@ -12,6 +12,7 @@
 #install.packages("ReporteRs")
 
 ### INITIAL SETUP ###
+options(java.parameters = "- Xmx1024m")
 rm(list=ls()) #Remove lists
 
 start_time <- Sys.time()
@@ -32,35 +33,26 @@ library(xlsx)
 school.names <- c("All") #!
 
 # Main data
-  #CSV
-    #Set working directory
-      
-      #M900
+  #Directories
+  
+    #M900
       #wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-04 CWIS Automation for CW/"
+    
+    #Thinkpad T470
+      wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-05 Repeated Measures/"
+
+    source.dir <- paste(wd,"Source data/", sep = "")
+    target.dir <- paste(wd,"R script outputs/",
+                          "Output_",
+                          gsub(":",".",Sys.time()), sep = "")
+    
+    setwd(wd)
       
-      #Thinkpad T470
-      wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-04 CWIS Automation for CW/"
-      
-      setwd(wd)
-    #Read most recently modified csv file in working directory
-      survey.data.csvs <- list.files()[grepl(".csv",list.files()) & !grepl(".gsheet",list.files())]
-      current.survey.data.file <- survey.data.csvs[order(survey.data.csvs %>% file.mtime, decreasing =  TRUE)][1]
-  
-      cwis.df <- read.csv(current.survey.data.file,
-                      stringsAsFactors = TRUE,
-                      header = TRUE)
-  
   #Google Sheets
     #cwis.ss <- 	gs_key("13--0r4jDrW8DgC4cBlrbwIOS7nLfHsjaLFqbk_9qjVs",verbose = TRUE)
     #cwis.df <- 	gs_read(cwis.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
-  
-  #Output directories
-    template.file <- paste(wd,"Report Template/CWIS Template.pptx",sep="")
-    target.dir <- paste(wd,"R script outputs/",
-                        "Output_",
-                        gsub(":",".",Sys.time()), sep = "")
-    
-    template.file
+
+   
     
   # Variable helper table
     cwis.embed.helper.ss <- gs_key("1FaBPQP8Gqwp5sI_0g793G6yjW5XNFbV8ji8N7i9oLjs",verbose = TRUE) 
@@ -68,181 +60,190 @@ school.names <- c("All") #!
 
 ########################################################################################################################################################      
 ### DATA CLEANING & PREP ###
-{
-  #Lower-case all variable names
-  names(cwis.df) <- cwis.df %>% names %>% tolower
-  
-  # Remove trailing column and rows with extra labels
-  dat.startrow <- which(cwis.df[,1] %>% substr(.,1,1) == "{")+1
-  dat.remove.colnums <- which(cwis.df %>% names %>% substr(.,1,1) == "x")
-  
-  # Make data frame of base variables (that require no stacking)  
-  dat.basevars.df <- cwis.df[dat.startrow:length(cwis.df[,1]),                           # all rows after row where first cell begins with "{"
-                             setdiff(1:length(names(cwis.df)),dat.remove.colnums)]              # all columns except those whose names begin with "X"
-  
-  names(dat.basevars.df) <- names(cwis.df)[setdiff(1:length(names(cwis.df)),dat.remove.colnums)]
-  
-  # Make data fram of variables to be stacked
-  dat.stackvars.df <- cwis.df[dat.startrow:length(cwis.df[,1]),                          # all rows after row where first cell begins with "{"
-                              intersect(1:length(names(cwis.df)),dat.remove.colnums) %>% # ResponseId plus all columns whose names begin with "X"
-                                c(which(tolower(names(cwis.df))=="responseid"),.)]        
-  
-  # Re-stack & collapse columns that are split up because of survey branching 
-  split.names.ls <- strsplit(names(cwis.df),"_")
-  
-  #Variable names for questions with only one column
-  base.varnames.v <-  split.names.ls %>% .[sapply(., length)==1] %>% unlist 
-  
-  ans.opt.varnames.mtx <- split.names.ls %>% 
-    .[sapply(., length)==2] %>% 
-    do.call(rbind,.) 
-  
-  #Variable names for questions with various answer options
-  ans.opt.varnames.v <- ans.opt.varnames.mtx[grepl("q",ans.opt.varnames.mtx[,1]),] %>% 
-    apply(.,1, function(x){paste(x, collapse = "_")}) 
-  
-  #Variable names for questions with both answer options and branching
-  branch.ans.opt.varnames.v.1 <- split.names.ls %>%    
-    .[sapply(., length)==3] %>% 
-    sapply(., function(x){paste(x, collapse = "_")})   
-  
-  branch.ans.opt.varnames.v.2 <-  ans.opt.varnames.mtx[grepl("x",ans.opt.varnames.mtx[,1]),] %>% 
-    apply(.,1, function(x){paste(x, collapse = "_")}) 
-  
-  branch.ans.opt.varnames.v <- c(branch.ans.opt.varnames.v.1, branch.ans.opt.varnames.v.2)
-  
-  #Question titles for questions with both answer options and branching
-  branch.q.names.v <- strsplit(branch.ans.opt.varnames.v, "_") %>% 
-    unlist %>% 
-    .[grep("q",.)] %>% 
-    unique 
-  
-  q.ls <- list()
-  varname.match.ls <- list()
-  
-  #h <- 4 #for testing loop
-  for(h in 1:length(branch.q.names.v)){     ### START OF LOOP BY QUESTION; only for questions with branched variables
-    
-    q.name.h <- branch.q.names.v[h]                                 # base question number
-    varnames.h <- names(dat.stackvars.df)[grep(q.name.h, names(dat.stackvars.df))]  # all columns in dat.basevars.df that belong to base question number
-    
-    q.ans.options.h <-  if((varnames.h %>% strsplit(.,"_") %>% lapply(., length) %>% unique %>% unlist)==2){ # final column names once branching is collapsed
-      q.name.h
-    }else{
-      paste(q.name.h, 
-            varnames.h %>% strsplit(.,"_") %>% lapply(., `[[`, 3) %>% unique %>% unlist,
-            sep = "_")
-    }        
-    varname.match.ls[[h]] <- q.ans.options.h
-    
-    collapsed.h.ls <- list()
-    
-    for(g in 1:length(q.ans.options.h)){    ### START OF LOOP BY ANSWER OPTION
-      
-      check.varnames.h <- str_sub(names(dat.stackvars.df), start = -nchar(q.ans.options.h[g]))
-      
-      uncollapsed.df <- grep(q.ans.options.h[g],check.varnames.h) %>% 
-        c(grepl("responseid", names(dat.stackvars.df)) %>% which,.) %>% 
-        dat.stackvars.df[,.] # data frame with all relevant columns for answer option and ResponseID up front (for re-merging later)
-      
-      uncollapsed.df$newvar <- apply(uncollapsed.df[,2:ncol(uncollapsed.df)] %>% as.matrix , 1, function (x) {paste(x,collapse = "")}) #create single column which is pasted together answers from all columns (should only be one per Response ID)
-      
-      collapsed.df <- uncollapsed.df[,c(which(tolower(names(uncollapsed.df))=="responseid"),which(tolower(names(uncollapsed.df))=="newvar"))]
-      
-      names(collapsed.df) <- c("responseid",q.ans.options.h[g])        
-      collapsed.h.ls[[g]] <- collapsed.df
-      
-    } ### END OF LOOP BY ANSWER OPTION
-    
-    q.dat.df <- collapsed.h.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .)
-    q.ls[[h + 1]] <- q.dat.df
-    
-  } ### END OF LOOP BY QUESTION
-  
-  #Re-merge with non-branched variables
-  
-  q.ls[[1]] <- dat.basevars.df
-  #q.ls[[2]] <- dat.basevars.df[names(dat.basevars.df) %in% c("ResponseId",ans.opt.varnames.v)]
-  dat.remerged.df <- q.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .) 
-  
-  
-  # Lookup Tables
-  
-  #Variable names & questions, adjusting for collapsed columns
-  vars.df <- names(dat.remerged.df) %>% as.data.frame(., stringsAsFactors = FALSE)
-  names(vars.df) <- "q.id"
-  vars.df$question.full <- ""
-  q.ans.options.v <- varname.match.ls %>% do.call(c, .)
-  varmatch.df <- paste("1_", q.ans.options.v, sep = "") %>% cbind(q.ans.options.v, .) %>% as.data.frame
-  
-  #f=25 #LOOP TESTER
-  for(f in 1:dim(vars.df)[1]){
-    q.id.f <- vars.df$q.id[f]
-    
-    if(q.id.f %in% varmatch.df$q.ans.options.v){
-      match.id.f <- varmatch.df$.[varmatch.df$q.ans.options.v == q.id.f] %>% as.character
-    }else{
-      match.id.f <- q.id.f
-    }
-    
-    vars.df$question.full[f] <- cwis.df[1,] %>% .[grep(match.id.f,names(cwis.df))] %>% as.matrix %>% as.character
-  }
-  
-  #Remove repeated parts of questions
-  question.full.remove.strings <- c(
-    "Please ",
-    "Please use the agreement scale to respond to each prompt representing your",
-    "Please use the frequency scale to respond to each prompt representing your",
-    " - Classroom Teacher - ",
-    "\\[Field-2\\]",
-    "\\[Field-3\\]"
-  )
-  vars.df$question.full <- gsub(paste(question.full.remove.strings, collapse = "|"),
-                                "",
-                                vars.df$question.full)
-  vars.df$q.id <- vars.df$q.id %>% tolower
-  
-  #Add variable names from embedding tool 
-  cwis.embed.helper.df$q.id <- gsub("q","Q",cwis.embed.helper.df$q.id) %>% tolower
-  vars.df <-  left_join(vars.df, cwis.embed.helper.df[,!grepl("full",names(cwis.embed.helper.df))], by = "q.id")
-  
-  
-  #Answer Options
-  ans.opt.always.df <-  cbind(
-    c(5:1),
-    c("Always","Most of the time","About half the time","Sometimes","Never"),
-    c("Strongly agree","Agree","Neither agree or disagree","Disagree","Strongly disagree")
-  ) %>% as.data.frame
-  names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
-  ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
-  ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
-  ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
-  
-  slide.names.v <- c("Participation Details")
-  
-  
-  # Variable renaming for useful variables
-  names(dat.remerged.df)[names(dat.remerged.df) == "q27_1"] <- "district.name"
-  names(dat.remerged.df)[names(dat.remerged.df) == "q27_2"] <- "school.name"
-  dat.remerged.df$school.name <- dat.remerged.df$school.name %>% tolower # put all school names in lower case for less error-prone matching
-  names(dat.remerged.df)[names(dat.remerged.df) == "q6"] <- "role"
-  names(dat.remerged.df) <- names(dat.remerged.df) %>% tolower # all variable names in lower case for less error-prone matching
-  
-  # Exclude responses with blank for school name
-  dat.df <- dat.remerged.df[dat.remerged.df$school.name %>% as.character(.) != "",] # removes 353 rows in 2018 spring test data
-  
-  # Exclude responses with blank for school name
-  dat.df <- dat.df[!is.na(dat.df$school.name %>% as.character(.)),] # removes 353 rows in 2018 spring test data
-  
-  # Exclude responses with 'District Office' for school name
-  dat.df <- dat.df[dat.df$school.name %>% as.character(.) != "district office",] # removes 35 rows in 2018 spring test data
-  
-  
-  # Exclude responses with "TEST TEST" in the comments
-  dat.df <- dat.df[!grepl("TEST TEST",dat.df$q33),]
-}
+#{ #START OF DATA CLEANING & PREP BRACKET
 
-  ### EXPORTING RESULTS TO EXCEL ###
+  setwd(source.dir)
+  survey.data.csvs <- list.files()[grepl(".csv",list.files()) & !grepl(".gsheet",list.files())]
+
+  e<-1
+  #for(e in 1:2)  
+  #for(e in 1:length){ #START OF LOOP BY SOURCE DATA FILE  
+  
+    #Read data file
+      data.filename <- survey.data.csvs[order(survey.data.csvs %>% file.mtime, decreasing =  TRUE)][e]
+      
+      cwis.df <- read.csv(data.filename,
+                          stringsAsFactors = TRUE,
+                          header = TRUE)
+    
+    #Lower-case all variable names
+      names(cwis.df) <- cwis.df %>% names %>% tolower
+    
+    # Remove trailing column and rows with extra labels
+      dat.startrow <- which(cwis.df[,1] %>% substr(.,1,1) == "{")+1
+      split.names.ls <- strsplit(names(cwis.df),"_")
+      onecol.varnames.v <-  strsplit(names(cwis.df),"_") %>% .[sapply(., length)==1] %>% unlist #questions in only one column
+      twocol.varnames.v <-  strsplit(names(cwis.df),"_") %>% .[sapply(., length)==2] %>% sapply(., function(x) {paste(x, collapse = "_")}) #questions with answer options but no splitting by role
+      threecol.varnames.v <-  strsplit(names(cwis.df),"_") %>% .[sapply(., length)==3] %>% sapply(., function(x) {paste(x, collapse = "_")}) #questions split by answer options and role
+      threecol.base.varnames.v <- threecol.varnames.v  %>% 
+                                    strsplit(., "q") %>% 
+                                    sapply(., `[[`, 2) %>%
+                                    unique %>%
+                                    paste("q",., sep = "") #question names that stacked variables will be stacked into (e.g. "q10_1")
+      dat.base.df <- cwis.df[
+                              dat.startrow:length(cwis.df[,1]),           # all rows after row where first cell begins with "{"
+                              c(
+                                names(cwis.df) %in% onecol.varnames.v %>% which,    #all columns except those whose names begin with "X" (those which require stacking)
+                                names(cwis.df) %in% twocol.varnames.v %>% which
+                              )
+                            ]              
+      
+      #names(dat.base.df) <- names(cwis.df)[setdiff(1:length(names(cwis.df)),dat.remove.colnums)]
+    
+    # Make data frame of variables to be stacked
+      dat.stack.df <- cwis.df[
+                                    dat.startrow:length(cwis.df[,1]),                # all rows after row where first cell begins with "{"
+                                    c(
+                                      names(cwis.df) %in% threecol.varnames.v %>% which,
+                                      which(names(cwis.df)=="responseid")
+                                    )
+                                  ]        
+    
+  # Re-stack & collapse columns that are split up because of survey branching 
+    
+    #  ans.opt.varnames.mtx <- split.names.ls %>% 
+    #    .[sapply(., length)==2] %>% 
+    #    do.call(rbind,.) 
+    
+    #Variable names for questions with various answer options
+    #  ans.opt.varnames.v <- ans.opt.varnames.mtx[grepl("q",ans.opt.varnames.mtx[,1]),] %>% 
+    #    apply(.,1, function(x){paste(x, collapse = "_")}) 
+    
+    #Variable names for questions with both answer options and branching
+    #  branch.ans.opt.varnames.v.1 <- split.names.ls %>%    
+    #    .[sapply(., length)==3] %>% 
+    #    sapply(., function(x){paste(x, collapse = "_")})   
+    #  
+    #  branch.ans.opt.varnames.v.2 <-  ans.opt.varnames.mtx[grepl("x",ans.opt.varnames.mtx[,1]),] %>% 
+    #    apply(.,1, function(x){paste(x, collapse = "_")}) 
+    #  
+    #  branch.ans.opt.varnames.v <- c(branch.ans.opt.varnames.v.1, branch.ans.opt.varnames.v.2)
+    #
+    #Question titles for questions with both answer options and branching
+    #threecol.varnames.v <- strsplit(branch.ans.opt.varnames.v, "_") %>% 
+    #  unlist %>% 
+    #  .[grep("q",.)] %>% 
+    #  unique 
+    
+    q.ls <- list()
+    varname.match.ls <- list()
+    
+    #h <- 4 #for testing loop
+    for(h in 1:length(threecol.varnames.v)){     ### START OF LOOP BY QUESTION; only for questions with branched variables
+      
+      q.name.h <- threecol.base.varnames.v[h]                               # base question number
+      varnames.h <- names(dat.stack.df)[grep(q.name.h, names(dat.stack.df))]  # all columns in dat.base.df that belong to base question number
+      q.dat.df.h <- dat.stack.df[,c("responseid",varnames.h)]  # data frame with all relevant columns for answer option and ResponseID up front (for re-merging later)
+      
+      stack.h.ls <- list()
+      
+      for(g in 2:dim(q.dat.df.h)[2]){    ### START OF LOOP BY ANSWER OPTION
+        stack.df.g <- cbind(as.vector(as.character(q.dat.df.h[,1])),as.vector(q.dat.df.h[g]))
+        stack.h.ls[[g]] <- stack.df.g
+      } ### END OF LOOP BY ANSWER OPTION
+      
+      #! Working on making sure these all collapse into single long column with ResponseId and answer
+      q.ls[[h + 1]] <- stack.h.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .)
+      
+    } ### END OF LOOP BY QUESTION
+    
+    #Re-merge with non-branched variables
+    
+    q.ls[[1]] <- dat.base.df
+    #q.ls[[2]] <- dat.base.df[names(dat.base.df) %in% c("ResponseId",ans.opt.varnames.v)]
+    dat.remerged.df <- q.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .) 
+    
+    
+    ## Lookup Tables
+    
+      #Variable names & questions, adjusting for collapsed columns
+      vars.df <- names(dat.remerged.df) %>% as.data.frame(., stringsAsFactors = FALSE)
+      names(vars.df) <- "q.id"
+      vars.df$question.full <- ""
+      q.ans.options.v <- varname.match.ls %>% do.call(c, .)
+      varmatch.df <- paste("1_", q.ans.options.v, sep = "") %>% cbind(q.ans.options.v, .) %>% as.data.frame
+      
+      #f=25 #LOOP TESTER
+      for(f in 1:dim(vars.df)[1]){
+        q.id.f <- vars.df$q.id[f]
+        
+        if(q.id.f %in% varmatch.df$q.ans.options.v){
+          match.id.f <- varmatch.df$.[varmatch.df$q.ans.options.v == q.id.f] %>% as.character
+        }else{
+          match.id.f <- q.id.f
+        }
+        
+        vars.df$question.full[f] <- cwis.df[1,] %>% .[grep(match.id.f,names(cwis.df))] %>% as.matrix %>% as.character
+      }
+      
+      #Remove repeated parts of questions
+      question.full.remove.strings <- c(
+        "Please ",
+        "Please use the agreement scale to respond to each prompt representing your",
+        "Please use the frequency scale to respond to each prompt representing your",
+        " - Classroom Teacher - ",
+        "\\[Field-2\\]",
+        "\\[Field-3\\]"
+      )
+      vars.df$question.full <- gsub(paste(question.full.remove.strings, collapse = "|"),
+                                    "",
+                                    vars.df$question.full)
+      vars.df$q.id <- vars.df$q.id %>% tolower
+      
+      #Add variable names from embedding tool 
+      cwis.embed.helper.df$q.id <- gsub("q","Q",cwis.embed.helper.df$q.id) %>% tolower
+      vars.df <-  left_join(vars.df, cwis.embed.helper.df[,!grepl("full",names(cwis.embed.helper.df))], by = "q.id")
+      
+      
+      #Answer Options
+      ans.opt.always.df <-  cbind(
+        c(5:1),
+        c("Always","Most of the time","About half the time","Sometimes","Never"),
+        c("Strongly agree","Agree","Neither agree or disagree","Disagree","Strongly disagree")
+      ) %>% as.data.frame
+      names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
+      ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
+      ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
+      ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
+      
+      slide.names.v <- c("Participation Details")
+      
+      
+    # Variable renaming for useful variables
+    names(dat.remerged.df)[names(dat.remerged.df) == "q27_1"] <- "district.name"
+    names(dat.remerged.df)[names(dat.remerged.df) == "q27_2"] <- "school.name"
+    dat.remerged.df$school.name <- dat.remerged.df$school.name %>% tolower # put all school names in lower case for less error-prone matching
+    names(dat.remerged.df)[names(dat.remerged.df) == "q6"] <- "role"
+    names(dat.remerged.df) <- names(dat.remerged.df) %>% tolower # all variable names in lower case for less error-prone matching
+    
+    # Exclude responses with blank for school name
+    dat.df <- dat.remerged.df[dat.remerged.df$school.name %>% as.character(.) != "",] # removes 353 rows in 2018 spring test data
+    
+    # Exclude responses with blank for school name
+    dat.df <- dat.df[!is.na(dat.df$school.name %>% as.character(.)),] # removes 353 rows in 2018 spring test data
+    
+    # Exclude responses with 'District Office' for school name
+    dat.df <- dat.df[dat.df$school.name %>% as.character(.) != "district office",] # removes 35 rows in 2018 spring test data
+    
+    
+    # Exclude responses with "TEST TEST" in the comments
+    dat.df <- dat.df[!grepl("TEST TEST",dat.df$q33),]
+  
+  } # END OF LOOP BY SOURCE DATA FILE #
+    
+} # END OF SECTION BRACKET #
+
+### EXPORTING RESULTS TO EXCEL ###
   
   target.file.xlsx <- paste( target.dir,
                              "/",
