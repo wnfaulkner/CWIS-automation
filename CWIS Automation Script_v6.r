@@ -177,7 +177,7 @@ school.names <- c("All") #!
       
   } # END OF LOOP BY SOURCE DATA FILE #
   
-  dat.df <- Reduce(function(df1,df2) full_join(df1, df2, by = "responseid"), dat.ls)
+  dat.df <- Reduce(function(df1,df2) full_join(df1, df2, by = intersect(names(df1),names(df2))), dat.ls)
   
 ## BUILD VARIABLE/QUESTION LOOKUP TABLE
     
