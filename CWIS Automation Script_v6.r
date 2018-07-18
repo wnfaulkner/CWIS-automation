@@ -45,7 +45,7 @@ school.names <- c("All") #!
     target.dir <- paste(wd,"R script outputs/",
                           "Output_",
                           gsub(":",".",Sys.time()), sep = "")
-    
+    dir.create(target.dir)
     setwd(wd)
       
   #Google Sheets
@@ -67,7 +67,7 @@ school.names <- c("All") #!
   dat.ls <- list()
   
   #START OF LOOP BY SOURCE DATA FILE  
-  #e<-1
+  #e<-2
   for(e in 1:length(survey.data.csvs)){ #START OF LOOP BY SOURCE DATA FILE  
   
     #Read data file
@@ -77,16 +77,38 @@ school.names <- c("All") #!
                           stringsAsFactors = TRUE,
                           header = TRUE)
     
+      #! TEST VARIABLES - NOT REAL DATA
+      cwis.df$x1_q9 <- rep("TEST x1_q9", dim(cwis.df)[1])
+      cwis.df$x2_q9 <- rep("TEST x2_q9", dim(cwis.df)[1])
+      
     #Lower-case all variable names
       names(cwis.df) <- cwis.df %>% names %>% tolower
     
     # Remove trailing column and rows with extra labels
       dat.startrow <- which(cwis.df[,1] %>% substr(.,1,1) == "{")+1
       split.names.ls <- strsplit(names(cwis.df),"_")
-      onecol.varnames.v <-  strsplit(names(cwis.df),"_") %>% .[sapply(., length)==1] %>% unlist #questions in only one column
-      twocol.varnames.v <-  strsplit(names(cwis.df),"_") %>% .[sapply(., length)==2] %>% sapply(., function(x) {paste(x, collapse = "_")}) #questions with answer options but no splitting by role
-      threecol.varnames.v <-  strsplit(names(cwis.df),"_") %>% .[sapply(., length)==3] %>% sapply(., function(x) {paste(x, collapse = "_")}) #questions split by answer options and role
-      threecol.base.varnames.v <- threecol.varnames.v  %>% 
+      
+      #Defining column names for different types of variables (all combinations of with/without mult. answer option columns, with/without mult. branch columns)
+        #Without multiple answer option columns = ans.0
+        #With multiple answer option columns = ans.1
+        #Without multiple branch columns = branch.0
+        #With multiple branch columns = branch.1
+      
+      varnames.ends <- substr(names(cwis.df), nchar(names(cwis.df))-2, nchar(names(cwis.df)))
+      ans.0.varnames.v <- names(cwis.df)[!grepl("_",varnames.ends) | grepl("q", varnames.ends)] #without mult. answer option columns
+      ans.1.varnames.v <- names(cwis.df)[grepl("_",varnames.ends) & !grepl("q", varnames.ends)] #with mult. answer options columns
+      branch.0.varnames.v <- names(cwis.df)[!grepl("x",substr(names(cwis.df),1,1))] #without mult. branches
+      branch.1.varnames.v <- names(cwis.df)[grepl("x",substr(names(cwis.df),1,1))]  #with mult. branches
+      
+      ans.0.branch.0.varnames.v <- intersect(ans.0.varnames.v, branch.0.varnames.v)
+      ans.0.branch.1.varnames.v <- intersect(ans.0.varnames.v, branch.1.varnames.v)
+      ans.1.branch.0.varnames.v <- intersect(ans.1.varnames.v, branch.0.varnames.v)
+      ans.1.branch.1.varnames.v <- intersect(ans.1.varnames.v, branch.1.varnames.v)
+        
+      #strsplit(names(cwis.df),"_") %>% .[sapply(., length)==1] %>% unlist #questions in only one column
+      #ans.1.branch.0.varnames.v <-  strsplit(names(cwis.df),"_") %>% .[sapply(., length)==2] %>% sapply(., function(x) {paste(x, collapse = "_")}) #questions with answer options but no splitting by role
+      #ans.1.branch.1.varnames.v <-  strsplit(names(cwis.df),"_") %>% .[sapply(., length)==3] %>% sapply(., function(x) {paste(x, collapse = "_")}) #questions split by answer options and role
+      branch.1.base.varnames.v <- c(ans.1.branch.1.varnames.v, ans.0.branch.1.varnames.v)  %>% 
                                     strsplit(., "q") %>% 
                                     sapply(., `[[`, 2) %>%
                                     unique %>%
@@ -94,8 +116,8 @@ school.names <- c("All") #!
       dat.base.df <- cwis.df[
                               dat.startrow:length(cwis.df[,1]),           # all rows after row where first cell begins with "{"
                               c(
-                                names(cwis.df) %in% onecol.varnames.v %>% which,    #all columns except those whose names begin with "X" (those which require stacking)
-                                names(cwis.df) %in% twocol.varnames.v %>% which
+                                names(cwis.df) %in% ans.0.branch.0.varnames.v %>% which,    #all columns except those whose names begin with "X" (those which require stacking)
+                                names(cwis.df) %in% ans.1.branch.0.varnames.v %>% which
                               )
                             ]              
       
@@ -105,7 +127,7 @@ school.names <- c("All") #!
     dat.stack.df <- cwis.df[
                                   dat.startrow:length(cwis.df[,1]),                # all rows after row where first cell begins with "{"
                                   c(
-                                    names(cwis.df) %in% threecol.varnames.v %>% which,
+                                    names(cwis.df) %in% c(ans.1.branch.1.varnames.v, ans.0.branch.1.varnames.v) %>% which,
                                     which(names(cwis.df)=="responseid")
                                   )
                                 ]        
@@ -116,9 +138,9 @@ school.names <- c("All") #!
     varname.match.ls <- list()
     
     #h <- 4 #for testing loop
-    for(h in 1:length(threecol.base.varnames.v)){     
+    for(h in 1:length(branch.1.base.varnames.v)){     
       
-      q.name.h <- threecol.base.varnames.v[h]                               # base question number
+      q.name.h <- branch.1.base.varnames.v[h]                               # base question number
       select.varnames.v.h <- (strsplit(names(dat.stack.df)[!grepl("responseid",names(dat.stack.df))], "q") %>% sapply(., `[[`, 2) %>% unlist) == 
         (strsplit(q.name.h, "q") %>% sapply(., `[[`, 2) %>% unlist) 
       select.varnames.v.h <- c(select.varnames.v.h, FALSE)
@@ -151,6 +173,8 @@ school.names <- c("All") #!
       q.ls[[1]] <- dat.base.df
       dat.remerged.df <- q.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .) 
     
+    #Create variable for which file rows came from
+      dat.remerged.df$source.filename <- data.filename
     
     # Variable renaming for useful variables
       names(dat.remerged.df)[names(dat.remerged.df) == "q27_1"] <- "district.name"
@@ -234,7 +258,7 @@ school.names <- c("All") #!
       
       slide.names.v <- c("Participation Details")
     
-} # END OF SECTION BRACKET #
+#} # END OF SECTION BRACKET #
 
 ### EXPORTING RESULTS TO EXCEL ###
   
@@ -244,8 +268,8 @@ school.names <- c("All") #!
                              gsub(":",".",Sys.time()),
                              ".xlsx", sep="") 
   
-  write.xlsx(dat.df.e, file = target.file.xlsx, sheetName = "cwis_responses")
-  write.xlsx(dat.df.e, file = target.file.xlsx, sheetName = "questions", append = TRUE)
+  write.xlsx(dat.df, file = target.file.xlsx, sheetName = "cwis_responses")
+  write.xlsx(vars.df, file = target.file.xlsx, sheetName = "questions", append = TRUE)
   
   
   ### EXPORTING RESULTS TO GOOGLE SHEETS ###
@@ -632,9 +656,9 @@ for(j in 1:length(school.names)){    #START LOOP J BY SCHOOL
   j <- i
   
   #Copy template file into target directory & rename with individual report name 
-  if(j == 1){
-    dir.create(target.dir)
-  }
+  #if(j == 1){
+  #  dir.create(target.dir)
+  #}
   
   target.file.j <- paste( target.dir,
                           "/",
