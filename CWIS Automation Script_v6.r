@@ -139,21 +139,57 @@ school.names <- c("All") #!
     varname.match.ls <- list()
     
     #h <- 4 #for testing loop
-    for(h in 1:length(threecol.varnames.v)){     ### START OF LOOP BY QUESTION; only for questions with branched variables
+    for(h in 1:length(threecol.base.varnames.v)){     ### START OF LOOP BY QUESTION; only for questions with branched variables
       
       q.name.h <- threecol.base.varnames.v[h]                               # base question number
-      varnames.h <- names(dat.stack.df)[grep(q.name.h, names(dat.stack.df))]  # all columns in dat.base.df that belong to base question number
+      #varnames.h <- names(dat.stack.df)[(lapply(names(dat.stack.df), function(x){nchar(x[4:length(x)])}) %>% unlist) == 4 & grepl(q.name.h, names(dat.stack.df))]  # all columns in dat.base.df that belong to base question number
+      #varnames.h <- 
+        
+      select.varnames.v.h <- (strsplit(names(dat.stack.df)[!grepl("responseid",names(dat.stack.df))], "q") %>% sapply(., `[[`, 2) %>% unlist) == 
+        (strsplit(q.name.h, "q") %>% sapply(., `[[`, 2) %>% unlist) 
+      select.varnames.v.h <- c(select.varnames.v.h, FALSE)
+        
+      varnames.h <- names(dat.stack.df)[select.varnames.v.h]
+        
+        c(., FALSE)
+         
+         q#!split q.name.h and last pieces of variable names and make sure both elements match 
+        m <- regexpr(
+                      paste(
+                            "x.{1,2}_", 
+                            q.name.h %>% strsplit(., "_") %>% sapply(., `[[`, 1),
+                            "_",
+                            q.name.h %>% strsplit(., "_") %>% sapply(., `[[`, 2),
+                            "\b",
+                            sep = ""
+                            ),
+                      names(dat.stack.df)
+                    )
+
+
+#,sep="") ,names(dat.stack.df) 
+      #names(dat.stack.df)[!grepl("response", names(dat.stack.df))] %>% strsplit(., "q") %>% sapply(., `[[`, 2)
       q.dat.df.h <- dat.stack.df[,c("responseid",varnames.h)]  # data frame with all relevant columns for answer option and ResponseID up front (for re-merging later)
       
       stack.h.ls <- list()
       
       for(g in 2:dim(q.dat.df.h)[2]){    ### START OF LOOP BY ANSWER OPTION
         stack.df.g <- cbind(as.vector(as.character(q.dat.df.h[,1])),as.vector(q.dat.df.h[g]))
-        stack.h.ls[[g]] <- stack.df.g
+        stack.df.g <- apply(stack.df.g, 2, as.character) %>% as.data.frame #convert factors to characters
+        names(stack.df.g) <- c("responseid",q.name.h) #rename vars consistently for stacking outside loop
+        stack.df.g <- stack.df.g[stack.df.g[,2] != "",] #filter out responses with no answer to the question
+        ifelse(dim(stack.df.g)[1] > 0, 
+               stack.h.ls[[g]] <- stack.df.g, #store in list if has more than zero responses
+               next()
+               )
       } ### END OF LOOP BY ANSWER OPTION
       
-      #! Working on making sure these all collapse into single long column with ResponseId and answer
-      q.ls[[h + 1]] <- stack.h.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .)
+      stack.h.ls <- stack.h.ls[sapply(stack.h.ls, function(x){!is.null(x)})] #remove null list elements (#1 plus any without responses)
+      q.ls[[h + 1]] <- stack.h.ls %>% do.call(rbind, .)
+      if(q.ls[[h + 1]][,1] %>% duplicated %>% any){
+        print(c(h, q.name.h, "Error: duplicated response ids"))
+        next()
+      }else{}
       
     } ### END OF LOOP BY QUESTION
     
