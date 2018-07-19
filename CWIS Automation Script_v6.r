@@ -203,27 +203,26 @@ school.names <- c("All") #!
   
   dat.df <- Reduce(function(df1,df2) full_join(df1, df2, by = intersect(names(df1),names(df2))), dat.ls)
   
+  #Add useful variables for analysis 
+    
+    #Year, month, day, time of response
+      
+      
+      dat.df$response.year <- dat.df$recordeddate %>% 
+                                strsplit(., "\\/|-| ") %>% 
+                                lapply(., FUN = function(x){x[nchar(x)==4 & substr(x,1,2)=="20"]}) %>%
+                                unlist
+      #!
+      #dat.df$response.month <- dat.df$recordeddate %>% as.Date(.) %>% month(.)
+      #dat.df$response.day <- dat.df$recordeddate %>% as.Date(.) %>% day(.)
+      #dat.df$response.date <- dat.df$recordeddate %>% as.Date(.)
+  
 ## BUILD VARIABLE/QUESTION LOOKUP TABLE
     
       #Variable names & questions, adjusting for collapsed columns
-      vars.df <- names(dat.remerged.df) %>% as.data.frame(., stringsAsFactors = FALSE)
+      vars.df <- names(dat.df) %>% as.data.frame(., stringsAsFactors = FALSE)
       names(vars.df) <- "q.id"
-      vars.df$question.full <- ""
-      q.ans.options.v <- varname.match.ls %>% do.call(c, .)
-      varmatch.df <- paste("1_", q.ans.options.v, sep = "") %>% cbind(q.ans.options.v, .) %>% as.data.frame
-      
-      #f=25 #LOOP TESTER
-      for(f in 1:dim(vars.df)[1]){
-        q.id.f <- vars.df$q.id[f]
-        
-        if(q.id.f %in% varmatch.df$q.ans.options.v){
-          match.id.f <- varmatch.df$.[varmatch.df$q.ans.options.v == q.id.f] %>% as.character
-        }else{
-          match.id.f <- q.id.f
-        }
-        
-        vars.df$question.full[f] <- cwis.df[1,] %>% .[grep(match.id.f,names(cwis.df))] %>% as.matrix %>% as.character
-      }
+      vars.df <- left_join(vars.df, cwis.embed.helper.df, by = "q.id")
       
       #Remove repeated parts of questions
       question.full.remove.strings <- c(
@@ -238,11 +237,33 @@ school.names <- c("All") #!
       vars.df$question.full <- gsub(paste(question.full.remove.strings, collapse = "|"),
                                     "",
                                     vars.df$question.full)
-      vars.df$q.id <- vars.df$q.id %>% tolower
+      
+      #vars.df$question.full <- ""
+        
+      #q.ans.options.v <- varname.match.ls %>% do.call(c, .)
+      #varmatch.df <- paste("1_", q.ans.options.v, sep = "") %>% cbind(q.ans.options.v, .) %>% as.data.frame
+      
+      
+      
+      #f=25 #LOOP TESTER
+      #for(f in 1:dim(vars.df)[1]){
+      #  q.id.f <- vars.df$q.id[f]
+      #  
+      #  if(q.id.f %in% varmatch.df$q.ans.options.v){
+      #    match.id.f <- varmatch.df$.[varmatch.df$q.ans.options.v == q.id.f] %>% as.character
+      #  }else{
+      #    match.id.f <- q.id.f
+      #  }
+        
+      #  vars.df$question.full[f] <- cwis.df[1,] %>% .[grep(match.id.f,names(cwis.df))] %>% as.matrix %>% as.character
+      #}
+      
+     
+      #vars.df$q.id <- vars.df$q.id %>% tolower
       
       #Add variable names from embedding tool 
-      cwis.embed.helper.df$q.id <- gsub("q","Q",cwis.embed.helper.df$q.id) %>% tolower
-      vars.df <-  left_join(vars.df, cwis.embed.helper.df[,!grepl("full",names(cwis.embed.helper.df))], by = "q.id")
+      #cwis.embed.helper.df$q.id <- gsub("q","Q",cwis.embed.helper.df$q.id) %>% tolower
+      #vars.df <-  left_join(vars.df, cwis.embed.helper.df[,!grepl("full",names(cwis.embed.helper.df))], by = "q.id")
       
       
       #Answer Options
