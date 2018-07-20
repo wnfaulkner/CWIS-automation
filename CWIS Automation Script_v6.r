@@ -72,23 +72,24 @@ school.names <- c("All") #!
                           stringsAsFactors = TRUE,
                           header = TRUE)
     
+      cwis.df <- cwis.df[,
+        c(which(!grepl("_", names(cwis.df))),
+          grep("_", names(cwis.df)))
+      ]
+    
     #Lower-case all variable names
       names(cwis.df) <- cwis.df %>% names %>% tolower
     
-   
   #Add useful variables for analysis 
     
-    #Year, month, day, time of response
-      
-      
-      dat.df$response.year <- dat.df$recordeddate %>% 
-                                strsplit(., "\\/|-| ") %>% 
-                                lapply(., FUN = function(x){x[nchar(x)==4 & substr(x,1,2)=="20"]}) %>%
-                                unlist
+    #Variables for Implementation Scales rates
       #!
-      #dat.df$response.month <- dat.df$recordeddate %>% as.Date(.) %>% month(.)
-      #dat.df$response.day <- dat.df$recordeddate %>% as.Date(.) %>% day(.)
-      #dat.df$response.date <- dat.df$recordeddate %>% as.Date(.)
+      cwis.areas.v <- names(cwis.df)[grep("_", names(cwis.df))] %>% strsplit(.,"_") %>% sapply(., `[[`, 1) %>% unique
+      for(a in 1:length(cwis.areas)){
+        
+      }
+    
+    
   
 ## BUILD VARIABLE/QUESTION LOOKUP TABLE
     
