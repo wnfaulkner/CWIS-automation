@@ -41,7 +41,7 @@ school.names <- c("All") #!
     #Thinkpad T470
       wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-05 Repeated Measures/"
 
-    source.dir <- paste(wd,"Source data/", sep = "")
+    source.dir <- paste(wd,"Data - R Script Source/", sep = "")
     target.dir <- paste(wd,"R script outputs/",
                           "Output_",
                           gsub(":",".",Sys.time()), sep = "")
@@ -52,9 +52,7 @@ school.names <- c("All") #!
     #cwis.ss <- 	gs_key("13--0r4jDrW8DgC4cBlrbwIOS7nLfHsjaLFqbk_9qjVs",verbose = TRUE)
     #cwis.df <- 	gs_read(cwis.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
 
-   
-    
-  # Variable helper table
+  #Variable helper table
     cwis.embed.helper.ss <- gs_key("1FaBPQP8Gqwp5sI_0g793G6yjW5XNFbV8ji8N7i9oLjs",verbose = TRUE) 
     cwis.embed.helper.df <- 	gs_read(cwis.embed.helper.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
     cwis.embed.helper.df$q.id <- tolower(cwis.embed.helper.df$q.id)
@@ -65,73 +63,105 @@ school.names <- c("All") #!
 
   setwd(source.dir)
 
-  #Read data file
-      data.filename <- "All Baseline and Year 1 data_20180719.csv"
+  #Read data files
+    cwis.df <- read.csv("All Baseline and Year 1 data_20180719.csv",
+                        stringsAsFactors = FALSE,
+                        header = TRUE)
+    
+    roles.df <- read.csv("roles.df.csv",
+                         stringsAsFactors = FALSE,
+                         header = TRUE)
+    
+  #Initial informatics
+    
+    #Edit variable names
+      names(cwis.df) <- cwis.df %>% names %>% tolower #Lower-case all variable names
+      names(cwis.df)[names(cwis.df) == "id"] <- "responseid"
+    
+    #Remove duplicates from roles.df
+      roles.df <- roles.df[!duplicated(roles.df$responseid),]
+    
+    #Merge
+      cwis.df <- left_join(cwis.df, roles.df, by = "responseid")
+    
+    #Rearrange data columns
+      cwis.df <- cwis.df[,   # CWIS response variables last, others first
+          c(which(!grepl("_", names(cwis.df))),
+            grep("_", names(cwis.df)))
+        ]
       
-      cwis.df <- read.csv(data.filename,
-                          stringsAsFactors = TRUE,
-                          header = TRUE)
-    
-      cwis.df <- cwis.df[,
-        c(which(!grepl("_", names(cwis.df))),
-          grep("_", names(cwis.df)))
-      ]
-    
-    #Lower-case all variable names
-      names(cwis.df) <- cwis.df %>% names %>% tolower
+      cwis.df <-  cwis.df[, #Put "responseid" in first column
+                    c(grep("responseid", names(cwis.df)),which(!grepl("responseid", names(cwis.df))))
+                    ]
     
   #Add useful variables for analysis 
     
-    #Variables for Implementation Scales rates
-      #!
-      cwis.areas.v <- names(cwis.df)[grep("_", names(cwis.df))] %>% strsplit(.,"_") %>% sapply(., `[[`, 1) %>% unique
-      for(a in 1:length(cwis.areas)){
+    #Useful vectors for selecting cwis answer variables
+      cwis.vars.v <- grep("_", names(cwis.df))
+      cwis.varnames.v <- names(cwis.df)[grep("_", names(cwis.df))]
+      cwis.areas.v <- cwis.varnames.v %>% strsplit(.,"_") %>% sapply(., `[[`, 1) %>% unique
+    
+    #Create dummy variables for implementation (4 or above = 1)
+      impbinary.df <- cwis.df[,cwis.vars.v] %>% apply(., c(1:2), function(x){ifelse(x>=4,1,0)}) %>% as.data.frame
+      names(impbinary.df) <- paste(cwis.varnames.v,"_impbinary",sep="") 
+    
+    #Create final data frame: merge cwis.df and impbinary.df
+    dat.df <- cbind(cwis.df, impbinary.df) 
         
+    #Loop: state average implementation rates [a], results in imp.state.df
+      imp.state.df <- data.frame(cwis.area = cwis.areas.v)
+      #a <- 1 # LOOP TESTER
+      for(a in 1:length(cwis.areas.v)){
+        imp.state.df$imp.rate[imp.state.df[,1]==cwis.areas.v[a]] <- 
+          impbinary.df[,grep(cwis.areas.v[a], names(impbinary.df))] %>%
+          apply(., 2, function(x){mean(x, na.rm = TRUE)}) %>% 
+          mean() 
       }
-    
-    
-  
+
 ## BUILD VARIABLE/QUESTION LOOKUP TABLE
     
-      #Variable names & questions, adjusting for collapsed columns
-      vars.df <- names(dat.df) %>% as.data.frame(., stringsAsFactors = FALSE)
-      names(vars.df) <- "q.id"
-      vars.df <- left_join(vars.df, cwis.embed.helper.df, by = "q.id")
-      
-      #Remove repeated parts of questions
-      question.full.remove.strings <- c(
-        "Please ",
-        "Please use the agreement scale to respond to each prompt representing your",
-        "Please use the frequency scale to respond to each prompt representing your",
-        " - Classroom Teacher - ",
-        "\\[Field-2\\]",
-        "\\[Field-3\\]",
-        "\\\n"
-      )
-      vars.df$question.full <- gsub(paste(question.full.remove.strings, collapse = "|"),
-                                    "",
-                                    vars.df$question.full)
-      
-      #Answer Options
-        ans.opt.always.df <-  cbind(
-          c(5:1),
-          c("Always","Most of the time","About half the time","Sometimes","Never"),
-          c("Strongly agree","Agree","Neither agree or disagree","Disagree","Strongly disagree")
-        ) %>% as.data.frame
-        names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
-        ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
-        ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
-        ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
-      
-      slide.names.v <- c("Participation Details")
+  #Variable names & questions, adjusting for collapsed columns
+    vars.df <- names(dat.df) %>% as.data.frame(., stringsAsFactors = FALSE)
+    names(vars.df) <- "q.id"
+    vars.df <- left_join(vars.df, cwis.embed.helper.df, by = "q.id")
+    
+  #Remove repeated parts of questions
+    question.full.remove.strings <- c(
+      "Please ",
+      "Please use the agreement scale to respond to each prompt representing your",
+      "Please use the frequency scale to respond to each prompt representing your",
+      " - Classroom Teacher - ",
+      "\\[Field-2\\]",
+      "\\[Field-3\\]",
+      "\\\n"
+    )
+    vars.df$question.full <- gsub(paste(question.full.remove.strings, collapse = "|"),
+                                  "",
+                                  vars.df$question.full)
+    
+  #Answer Options
+    ans.opt.always.df <-  cbind(
+      c(5:1),
+      c("Always","Most of the time","About half the time","Sometimes","Never"),
+      c("Strongly agree","Agree","Neither agree or disagree","Disagree","Strongly disagree")
+    ) %>% as.data.frame
+    names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
+    ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
+    ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
+    ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
+  
+    slide.names.v <- c("Participation Details")
     
       
 ########################################################################################################################################################      
 ### PRODUCING DATA, TABLES, & CHARTS ###
-{
-if(tolower(school.names) %in% "all" %>% any){school.names <- dat.df.e$school.name %>% unique}else{}
-progress.bar.i <- txtProgressBar(min = 0, max = 100, style = 3)
-maxrow <- length(school.names)
+
+{ #SECTION COLLAPSE BRACKET
+  if(tolower(school.names) %in% "all" %>% any){school.names <- dat.df.e$school.name %>% unique}else{}
+
+  #Progress bar for loop
+    progress.bar.i <- txtProgressBar(min = 0, max = 100, style = 3)
+    maxrow <- length(school.names)
 
 #i <- 1 # for testing loop
 for(i in c(1,110:115)){   #for testing loop
