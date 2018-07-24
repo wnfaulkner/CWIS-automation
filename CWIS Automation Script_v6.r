@@ -2,35 +2,51 @@
 ##### 	CWIS Automation for MMD                   	#####
 #########################################################
 
-#install.packages('devtools')
-#install.packages("httr")
-#install.packages("readr")
-#install.packages("data.table")
-#install.packages("dplyr")
-#install.packages("googlesheets")
-#install.packages("stringr")
-#install.packages("ReporteRs")
 
 ### INITIAL SETUP ###
-options(java.parameters = "- Xmx1024m")
-rm(list=ls()) #Remove lists
+  
+  rm(list=ls()) #Remove lists
+  options(java.parameters = "- Xmx1024m") #helps r not to fail when importing large xlsx files with xlsx package
+  
+  #Record code start time for processing time calculations
+    start_time <- Sys.time()
+  
+  #Load libraries
+    
+    #In case working on new R install that does not have packages installed
+      #install.packages('devtools')
+      #install.packages("httr")
+      #install.packages("readr")
+      #install.packages("data.table")
+      #install.packages("dplyr")
+      #install.packages("googlesheets")
+      #install.packages("stringr")
+      #install.packages("ReporteRs")
+    
+    #library(devtools)
+    library(magrittr)
+    library(googlesheets)
+    library(dplyr)
+    library(ReporteRs)
+    library(ggplot2)
+    library(stringr)
+    library(reshape2)
+    library(xlsx)
+  
+  #Define Useful Functions
+    
+    #Convert all factors in data frame back into correct class
+      #!
+    
+    #Capitalize the first letter of each word in a substring
+      FirstLetterCap <- function(x) {
+        s <- strsplit(x, " ")[[1]]
+        paste(toupper(substring(s, 1, 1)), tolower(substring(s, 2)),
+              sep = "", collapse = " ")
+      }
 
-start_time <- Sys.time()
-
-#library(devtools)
-library(magrittr)
-library(googlesheets)
-library(dplyr)
-library(ReporteRs)
-library(ggplot2)
-library(stringr)
-library(reshape2)
-library(xlsx)
-
+      
 ### LOAD DATA ###
-
-# School & district name selections
-school.names <- c("All") #!
 
 # Main data
   #Directories
@@ -105,8 +121,12 @@ school.names <- c("All") #!
       impbinary.df <- cwis.df[,cwis.vars.v] %>% apply(., c(1:2), function(x){ifelse(x>=4,1,0)}) %>% as.data.frame
       names(impbinary.df) <- paste(cwis.varnames.v,"_impbinary",sep="") 
     
+    #Create school.id variable which is concatenation of school and district
+      cwis.df$school.id <- paste(cwis.df$district, cwis.df$school,sep = "_") %>% tolower
+      cwis.df$school.id <- gsub("\\/"," ",cwis.df$school.id.i) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
+      
     #Create final data frame: merge cwis.df and impbinary.df
-    dat.df <- cbind(cwis.df, impbinary.df) 
+      dat.df <- cbind(cwis.df, impbinary.df) 
         
     #Loop: state average implementation rates [a], results in imp.state.df
       imp.state.df <- data.frame(cwis.area = cwis.areas.v)
@@ -156,369 +176,373 @@ school.names <- c("All") #!
 ########################################################################################################################################################      
 ### PRODUCING DATA, TABLES, & CHARTS ###
 
-{ #SECTION COLLAPSE BRACKET
-  if(tolower(school.names) %in% "all" %>% any){school.names <- dat.df.e$school.name %>% unique}else{}
+#{ #SECTION COLLAPSE BRACKET
+  
+  # School & district name selections
+    #school.names <- readline(prompt = "Enter school names for repeated measures reports or 'all'.")
+    school.ids <- "all"
+    if(tolower(school.ids) %in% "all" %>% any){school.ids <- dat.df$school.id %>% unique}else{}   #If user has designated school names as "all", code will create reports for all school names present in the data
 
   #Progress bar for loop
     progress.bar.i <- txtProgressBar(min = 0, max = 100, style = 3)
-    maxrow <- length(school.names)
+    maxrow <- length(school.ids)
 
-#i <- 1 # for testing loop
-for(i in c(1,110:115)){   #for testing loop
+  i <- 1 #LOOP TESTER
+  #for(i in c(1,110:115)){   #LOOP TESTER
   #for(i in 1:length(school.names)){   #START OF LOOP BY SCHOOL
   
-  # Create data frame for this loop - restrict to responses from school name i
-  school.name.i <- school.names[i] %>% tolower 
-  
-  if(school.name.i %in% c("district office","other") %>% any){next()}else{}
-  
-  dat.df.e.i <- dat.df.e[dat.df.e$school.name == school.name.i,] 
-  
-  school.name.i <- gsub("\\/"," ",school.name.i) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
-  
-  district.name.i <- dat.df.e.i$district.name %>% unique %>% as.character
-  
-  if(length(district.name.i) > 1){
-    print(c(school.name.i,district.name.i))
-    next()
-  }else{}
-  
-  #S2 Table for slide 2 "Participation Details"
-  {
-    s2.mtx <- table(dat.df.e.i$role %>% as.character) %>% as.matrix
-    s2.df <- cbind(row.names(s2.mtx),s2.mtx[,1]) %>% as.data.frame
-    names(s2.df) <- c("Role","# Responses")
-    rownames(s2.df) <- c()
-    s2.df$Role <- s2.df$Role %>% as.character #convert factor to character
-    s2.df$`# Responses` <- s2.df$`# Responses` %>% as.character %>% as.numeric #convert factor to numeric
-    s2.df <- rbind(s2.df, c("Total", sum(s2.df[,2] %>% as.character %>% as.numeric))) #add "Total" row
-    s2.roworder.df <- c("Special Educator",
-                        "Classroom Teacher",
-                        "Building Administrator",
-                        "School Counselor",
-                        "Instructional Coach",
-                        "School Social Worker",
-                        "Media Specialist",
-                        "Other",
-                        "Total") %>% as.data.frame(., stringsAsFactors = FALSE)
-    names(s2.roworder.df) <- "Role"
-    s2.outputs.df <- full_join(s2.roworder.df %>% as.data.frame,s2.df, by = "Role")
-    s2.outputs.df[is.na(s2.outputs.df)] <- 0  #replace any NA with 0
-  }      
-  #S3 Table for slide 3 "Overall Scale Performance"
-  {
-    #Define input variables for each column
+    # Create data frame for this loop - restrict to responses from school name i
+    school.id.i <- school.ids[i] %>% tolower
+    #school.id.i <- school.names[i] %>% tolower 
     
-    fig.categories <- c("etl","cfa","dbdm","lead","pd")
-    fig.outputs.ls <- list()
+    if(school.id.i %in% c("district office","other") %>% any){next()}else{}
     
-    #k <- 1 #for testing loop
+    dat.df.i <- dat.df[dat.df$school.id == school.id.i,] 
+    district.name.i <- dat.df.i$district %>% unique %>% as.character %>% FirstLetterCap()
+    school.name.i <- dat.df.i$school %>% unique %>% as.character %>% FirstLetterCap()
     
-    for(k in 1:length(fig.categories)){ #START OF BY CATEGORY LOOP, I.E. EACH COLUMN REPRESENTS A CATEGORY IN S3
+    #if(length(district.name.i) > 1){
+    #  print(c(school.id.i,district.name.i))
+    #  next()
+    #}else{}
+    
+    #S2 Table for slide 2 "Participation Details"
+    {
+      s2.mtx <- table(dat.df.i$role %>% as.character) %>% as.matrix
+      s2.df <- cbind(row.names(s2.mtx),s2.mtx[,1]) %>% as.data.frame
+      names(s2.df) <- c("Role","# Responses")
+      rownames(s2.df) <- c()
+      s2.df$Role <- s2.df$Role %>% as.character #convert factor to character
+      s2.df$`# Responses` <- s2.df$`# Responses` %>% as.character %>% as.numeric #convert factor to numeric
+      s2.df <- rbind(s2.df, c("Total", sum(s2.df[,2] %>% as.character %>% as.numeric))) #add "Total" row
+      s2.roworder.df <- c("Special Educator",
+                          "Classroom Teacher",
+                          "Building Administrator",
+                          "School Counselor",
+                          "Instructional Coach",
+                          "School Social Worker",
+                          "Media Specialist",
+                          "Other",
+                          "Total") %>% as.data.frame(., stringsAsFactors = FALSE)
+      names(s2.roworder.df) <- "Role"
+      s2.outputs.df <- full_join(s2.roworder.df %>% as.data.frame,s2.df, by = "Role")
+      s2.outputs.df[is.na(s2.outputs.df)] <- 0  #replace any NA with 0
+    }      
+    #S3 Table for slide 3 "Overall Scale Performance"
+    {
+      #Define input variables for each column
       
-      #Subset data
-      fig.cat.k <- fig.categories[k]
-      cat.calc.vars.k <- vars.df$q.id[vars.df$slide.category %>% grepl(fig.cat.k,.)]
-      cat.df.k <- dat.df.e.i[, names(dat.df.e.i) %in% cat.calc.vars.k]  #Dataset containing all input values for school i
-      cat.df.k.state <- dat.df.e[, names(dat.df.e.i) %in% cat.calc.vars.k]    #Dataset containing all input values for state
+      fig.categories <- c("etl","cfa","dbdm","lead","pd")
+      fig.outputs.ls <- list()
       
-      #Re-coding variables as numeric
-      ordinal.to.numeric.f <- function(x){
-        recode(x, Never=1, Sometimes = 2, `About half the time` = 3 , `Most of the time` = 4, Always = 5,
-               `Strongly disagree` = 1, Disagree = 2, `Neither agree or disagree` = 3, Agree = 4, `Strongly agree` = 5,
-               `BLANK` = NA_real_)
+      #k <- 1 #for testing loop
+      
+      for(k in 1:length(fig.categories)){ #START OF BY CATEGORY LOOP, I.E. EACH COLUMN REPRESENTS A CATEGORY IN S3
+        
+        #Subset data
+        fig.cat.k <- fig.categories[k]
+        cat.calc.vars.k <- vars.df$q.id[vars.df$slide.category %>% grepl(fig.cat.k,.)]
+        cat.df.k <- dat.df.i[, names(dat.df.i) %in% cat.calc.vars.k]  #Dataset containing all input values for school i
+        cat.df.k.state <- dat.df[, names(dat.df.i) %in% cat.calc.vars.k]    #Dataset containing all input values for state
+        
+        #Re-coding variables as numeric
+        ordinal.to.numeric.f <- function(x){
+          recode(x, Never=1, Sometimes = 2, `About half the time` = 3 , `Most of the time` = 4, Always = 5,
+                 `Strongly disagree` = 1, Disagree = 2, `Neither agree or disagree` = 3, Agree = 4, `Strongly agree` = 5,
+                 `BLANK` = NA_real_)
+        }
+        
+        #Calculate average of re-coded variables
+        avg.cat.k <- apply(cat.df.k, 2, ordinal.to.numeric.f) %>% mean(., na.rm = TRUE) #for school
+        avg.cat.k.state <- apply(cat.df.k.state, 2, ordinal.to.numeric.f) %>% mean(., na.rm = TRUE) #for school
+        
+        #Store result along with category name
+        fig.outputs.ls[[k]] <- c(fig.cat.k, avg.cat.k, avg.cat.k.state) %>% as.matrix
+        
+        
+      }  #END OF BY CATEGORY LOOP  
+      
+      s3.outputs.df <- do.call(cbind, fig.outputs.ls ) %>% t %>% as.data.frame
+      names(s3.outputs.df) <- c("category","score_school_avg","score_state_avg")
+      s3.outputs.df$category <- s3.outputs.df$category %>% as.character
+      s3.outputs.df$score_school_avg <- s3.outputs.df$score_school_avg %>% as.character %>% as.numeric %>% round(., digits = 2)
+      s3.outputs.df$score_state_avg <- s3.outputs.df$score_state_avg %>% as.character %>% as.numeric %>% round(., digits = 2)
+      s3.outputs.df$score_school_avg[is.na(s3.outputs.df$score_school_avg)] <- 0
+      
+    }    
+    #S6 Table for slide 6 "ETLP Scale Performance"
+    {
+      s6.headers.v <- paste(c(1:8),
+                            c("learning targets",
+                              "students assess",
+                              "students identify",
+                              "feedback to targets",
+                              "student to student feedback",
+                              "students state criteria",
+                              "instruction state standards",
+                              "student reviews cfa"),sep = ". "
+      )
+      
+      s6.varnames.v <- vars.df$q.id[!is.na(vars.df$etlp)] 
+      s6.var.df <- cbind(1:length(s6.headers.v),s6.varnames.v,s6.headers.v) %>% as.data.frame(., stringsAsFactors = FALSE)
+      names(s6.var.df) <- c("num","s6.varname","s6.header")
+      
+      s6.ls <- list()
+      
+      for(j in 1:length(s6.varnames.v)){
+        s6.varname.j <- s6.var.df$s6.varname[j]
+        s6.df.j <- table(dat.df.i[,names(dat.df.i)==s6.varname.j]) %>% as.matrix %>% as.data.frame
+        s6.df.j$ans.opt <- row.names(s6.df.j)
+        names(s6.df.j) <- c(s6.varname.j, "ans.opt")
+        s6.ls[[j]] <- s6.df.j
       }
       
-      #Calculate average of re-coded variables
-      avg.cat.k <- apply(cat.df.k, 2, ordinal.to.numeric.f) %>% mean(., na.rm = TRUE) #for school
-      avg.cat.k.state <- apply(cat.df.k.state, 2, ordinal.to.numeric.f) %>% mean(., na.rm = TRUE) #for school
+      s6.outputs.df <- Reduce(function(df1,df2) full_join(df1, df2,by = "ans.opt"), s6.ls)
+      s6.outputs.df <- s6.outputs.df[,c(which(names(s6.outputs.df)=="ans.opt"),1,3:length(names(s6.outputs.df)))] # re-order columns
+      s6.outputs.df <- full_join(s6.outputs.df, ans.opt.always.df, by = c("ans.opt"="ans.text.freq"))
+      s6.outputs.df[is.na(s6.outputs.df)] <- 0
+      s6.outputs.df <- s6.outputs.df[order(s6.outputs.df$ans.num, decreasing = TRUE),
+                                     c(which(grepl("ans.opt",names(s6.outputs.df))),which(!grepl("ans",names(s6.outputs.df))))]
+      s6.outputs.df <- s6.outputs.df[s6.outputs.df$ans.opt != "",]
+      names(s6.outputs.df) <- c("Answer option",
+                                "1. learning targets",
+                                "2. students assess",
+                                "3. students identify",
+                                "4. feedback to targets",
+                                "5. student to student feedback",
+                                "6. students state criteria",
+                                "7. instruction state standards",
+                                "8. student reviews cfa")
+    }
+    #S7 Bar Chart "ETLP Scale Rates of Implementation"
+    {
+      s7.headers.v <- s6.headers.v
+      s7.varnames.v <- s6.varnames.v
+      s7.ls <- list()
       
-      #Store result along with category name
-      fig.outputs.ls[[k]] <- c(fig.cat.k, avg.cat.k, avg.cat.k.state) %>% as.matrix
+      for(m in 1:length(s7.varnames.v)){
+        s7.m <- (100*(s6.outputs.df[1:2,m+1] %>% sum)/ (s6.outputs.df[1:5,m+1] %>% sum)) %>% round(., digits = 0)
+        s7.ls[[m]] <- s7.m
+      }
+      
+      s7.outputs.df <- do.call(rbind, s7.ls) %>% cbind(s7.headers.v, .) %>% as.data.frame
+      names(s7.outputs.df) <- c("category","score_school_rate")
+      s7.outputs.df$category <- s7.outputs.df$category %>% as.character
+      s7.outputs.df$score_school_rate <- s7.outputs.df$score_school_rate %>% as.character %>% as.numeric
+      s7.outputs.df$score_school_rate[is.na(s7.outputs.df$score_school_rate)] <- 0
+    }
+    #S9 Table "CFA Scale Performance"
+    {
+      s9.headers.v <- paste(c(1:4),
+                            c("use cfa",
+                              "all in cfa",
+                              "student reviews cfa",
+                              "cfa used to plan"),sep = ". "
+      )
+      
+      s9.varnames.v <- vars.df$q.id[vars.df$slide.category %>% grepl("cfa",.)]
+      
+      dat.df.i.s9 <- dat.df.i[,names(dat.df.i) %in% s9.varnames.v]
+      
+      s9.ls <- list()
+      
+      for(j in 1:length(s9.varnames.v)){
+        s9.varname.j <- s9.varnames.v[j]
+        s9.df.j <- table(dat.df.i.s9[,names(dat.df.i.s9)==s9.varname.j]) %>% as.matrix %>% as.data.frame
+        s9.df.j$ans.opt <- row.names(s9.df.j)
+        names(s9.df.j) <- c(s9.varname.j, "ans.opt")
+        s9.ls[[j]] <- s9.df.j
+      }
+      
+      s9.outputs.df <- Reduce(function(df1,df2) full_join(df1, df2,by = "ans.opt"), s9.ls)
+      s9.outputs.df <- s9.outputs.df[,c(which(names(s9.outputs.df)=="ans.opt"),1,3:length(names(s9.outputs.df)))] # re-order columns
+      s9.outputs.df <- full_join(s9.outputs.df, ans.opt.always.df, by = c("ans.opt"="ans.text.freq"))
+      s9.outputs.df <- s9.outputs.df[!is.na(s9.outputs.df$ans.text.agreement),]
+      s9.outputs.df[is.na(s9.outputs.df)] <- 0
+      s9.outputs.df <- s9.outputs.df[order(s9.outputs.df$ans.num, decreasing = TRUE),
+                                     c(which(grepl("ans.opt",names(s9.outputs.df))),which(!grepl("ans",names(s9.outputs.df))))]
+      names(s9.outputs.df) <- c("Answer option",s9.headers.v)
+    }
+    #s10 Bar Chart "CFA Scale Rates of Implementation"
+    {
+      s10.headers.v <- s9.headers.v
+      s10.varnames.v <- s9.varnames.v
+      s10.ls <- list()
+      
+      for(m in 1:length(s10.varnames.v)){
+        s10.m <- (100*(s9.outputs.df[1:2,m+1] %>% sum)/(s9.outputs.df[1:nrow(s9.outputs.df),m+1] %>% sum)) %>% round(., digits = 0)
+        s10.ls[[m]] <- s10.m
+      }
+      
+      s10.outputs.df <- do.call(rbind, s10.ls) %>% cbind(s10.headers.v, .) %>% as.data.frame
+      names(s10.outputs.df) <- c("category","score_school_rate")
+      s10.outputs.df$category <- s10.outputs.df$category %>% as.character
+      s10.outputs.df$score_school_rate <- s10.outputs.df$score_school_rate %>% as.character %>% as.numeric
+      s10.outputs.df$score_school_rate[is.na(s10.outputs.df$score_school_rate)] <- 0
+    }
+    #S12 Table "DBDM Scale Performance"
+    {
+      s12.headers.v <- c("team reviews data",
+                         "team positive",
+                         "effective teaming practices",
+                         "data determine practices",
+                         "visual representations") %>%
+        paste(c(1:length(.)),.,sep = ". ")
       
       
-    }  #END OF BY CATEGORY LOOP  
-    
-    s3.outputs.df <- do.call(cbind, fig.outputs.ls ) %>% t %>% as.data.frame
-    names(s3.outputs.df) <- c("category","score_school_avg","score_state_avg")
-    s3.outputs.df$category <- s3.outputs.df$category %>% as.character
-    s3.outputs.df$score_school_avg <- s3.outputs.df$score_school_avg %>% as.character %>% as.numeric %>% round(., digits = 2)
-    s3.outputs.df$score_state_avg <- s3.outputs.df$score_state_avg %>% as.character %>% as.numeric %>% round(., digits = 2)
-    s3.outputs.df$score_school_avg[is.na(s3.outputs.df$score_school_avg)] <- 0
-    
-  }    
-  #S6 Table for slide 6 "ETLP Scale Performance"
-  {
-    s6.headers.v <- paste(c(1:8),
-                          c("learning targets",
-                            "students assess",
-                            "students identify",
-                            "feedback to targets",
-                            "student to student feedback",
-                            "students state criteria",
-                            "instruction state standards",
-                            "student reviews cfa"),sep = ". "
-    )
-    
-    s6.varnames.v <- vars.df$q.id[!is.na(vars.df$etlp)] 
-    s6.var.df <- cbind(1:length(s6.headers.v),s6.varnames.v,s6.headers.v) %>% as.data.frame(., stringsAsFactors = FALSE)
-    names(s6.var.df) <- c("num","s6.varname","s6.header")
-    
-    s6.ls <- list()
-    
-    for(j in 1:length(s6.varnames.v)){
-      s6.varname.j <- s6.var.df$s6.varname[j]
-      s6.df.j <- table(dat.df.e.i[,names(dat.df.e.i)==s6.varname.j]) %>% as.matrix %>% as.data.frame
-      s6.df.j$ans.opt <- row.names(s6.df.j)
-      names(s6.df.j) <- c(s6.varname.j, "ans.opt")
-      s6.ls[[j]] <- s6.df.j
+      s12.varnames.v <- vars.df$q.id[vars.df$slide.category %>% grepl("dbdm",.)]
+      
+      dat.df.i.s12 <- dat.df.i[,names(dat.df.i) %in% s12.varnames.v]
+      
+      s12.ls <- list()
+      
+      for(j in 1:length(s12.varnames.v)){
+        s12.varname.j <- s12.varnames.v[j]
+        s12.df.j <- table(dat.df.i.s12[,names(dat.df.i.s12)==s12.varname.j]) %>% as.matrix %>% as.data.frame
+        s12.df.j$ans.opt <- row.names(s12.df.j)
+        names(s12.df.j) <- c(s12.varname.j, "ans.opt")
+        s12.ls[[j]] <- s12.df.j
+      }
+      
+      s12.outputs.df <- Reduce(function(df1,df2) full_join(df1, df2,by = "ans.opt"), s12.ls)
+      s12.outputs.df <- s12.outputs.df[,c(which(names(s12.outputs.df)=="ans.opt"),1,3:length(names(s12.outputs.df)))] # re-order columns
+      s12.outputs.df <- full_join(s12.outputs.df, ans.opt.always.df, by = c("ans.opt"="ans.text.freq"))
+      s12.outputs.df <- s12.outputs.df[!is.na(s12.outputs.df$ans.text.agreement),]
+      s12.outputs.df[is.na(s12.outputs.df)] <- 0
+      s12.outputs.df <- s12.outputs.df[s12.outputs.df$ans.opt != "",]
+      s12.outputs.df <- s12.outputs.df[order(s12.outputs.df$ans.num, decreasing = TRUE),
+                                       c(which(grepl("ans.opt",names(s12.outputs.df))),which(!grepl("ans",names(s12.outputs.df))))]
+      names(s12.outputs.df) <- c("Answer option",s12.headers.v)
+    } 
+    #S13 Bar Chart "DBDM Scale Rates of Implementation"
+    {
+      s13.headers.v <- s12.headers.v
+      s13.varnames.v <- s12.varnames.v
+      s13.ls <- list()
+      
+      for(m in 1:length(s13.varnames.v)){
+        s13.m <- (100*(s12.outputs.df[1:2,m+1] %>% sum)/(s12.outputs.df[1:nrow(s12.outputs.df),m+1] %>% sum)) %>% round(., digits = 0)
+        s13.ls[[m]] <- s13.m
+      }
+      
+      s13.outputs.df <- do.call(rbind, s13.ls) %>% cbind(s13.headers.v, .) %>% as.data.frame
+      names(s13.outputs.df) <- c("category","score_school_rate")
+      s13.outputs.df$category <- s13.outputs.df$category %>% as.character
+      s13.outputs.df$score_school_rate <- s13.outputs.df$score_school_rate %>% as.character %>% as.numeric
+      s13.outputs.df$score_school_rate[is.na(s13.outputs.df$score_school_rate)] <- 0
     }
-    
-    s6.outputs.df <- Reduce(function(df1,df2) full_join(df1, df2,by = "ans.opt"), s6.ls)
-    s6.outputs.df <- s6.outputs.df[,c(which(names(s6.outputs.df)=="ans.opt"),1,3:length(names(s6.outputs.df)))] # re-order columns
-    s6.outputs.df <- full_join(s6.outputs.df, ans.opt.always.df, by = c("ans.opt"="ans.text.freq"))
-    s6.outputs.df[is.na(s6.outputs.df)] <- 0
-    s6.outputs.df <- s6.outputs.df[order(s6.outputs.df$ans.num, decreasing = TRUE),
-                                   c(which(grepl("ans.opt",names(s6.outputs.df))),which(!grepl("ans",names(s6.outputs.df))))]
-    s6.outputs.df <- s6.outputs.df[s6.outputs.df$ans.opt != "",]
-    names(s6.outputs.df) <- c("Answer option",
-                              "1. learning targets",
-                              "2. students assess",
-                              "3. students identify",
-                              "4. feedback to targets",
-                              "5. student to student feedback",
-                              "6. students state criteria",
-                              "7. instruction state standards",
-                              "8. student reviews cfa")
-  }
-  #S7 Bar Chart "ETLP Scale Rates of Implementation"
-  {
-    s7.headers.v <- s6.headers.v
-    s7.varnames.v <- s6.varnames.v
-    s7.ls <- list()
-    
-    for(m in 1:length(s7.varnames.v)){
-      s7.m <- (100*(s6.outputs.df[1:2,m+1] %>% sum)/ (s6.outputs.df[1:5,m+1] %>% sum)) %>% round(., digits = 0)
-      s7.ls[[m]] <- s7.m
+    #S15 Table "Leadership Scale Performance"
+    {
+      s15.headers.v <- c("leaders manage",
+                         "teacher to teacher feedback",
+                         "leader committed",
+                         "leader active") %>%
+        paste(c(1:length(.)),.,sep = ". ")
+      
+      
+      s15.varnames.v <- vars.df$q.id[vars.df$slide.category %>% grepl("lead",.)]
+      
+      dat.df.i.s15 <- dat.df.i[,names(dat.df.i) %in% s15.varnames.v]
+      
+      s15.ls <- list()
+      
+      for(j in 1:length(s15.varnames.v)){
+        s15.varname.j <- s15.varnames.v[j]
+        s15.df.j <- table(dat.df.i.s15[,names(dat.df.i.s15)==s15.varname.j]) %>% as.matrix %>% as.data.frame
+        s15.df.j$ans.opt <- row.names(s15.df.j)
+        names(s15.df.j) <- c(s15.varname.j, "ans.opt")
+        s15.ls[[j]] <- s15.df.j
+      }
+      
+      s15.outputs.df <- Reduce(function(df1,df2) full_join(df1, df2,by = "ans.opt"), s15.ls)
+      s15.outputs.df <- s15.outputs.df[,c(which(names(s15.outputs.df)=="ans.opt"),1,3:length(names(s15.outputs.df)))] # re-order columns
+      s15.outputs.df <- full_join(s15.outputs.df, ans.opt.always.df, by = c("ans.opt"="ans.text.agreement"))
+      s15.outputs.df <- s15.outputs.df[!is.na(s15.outputs.df$ans.text.freq),]
+      s15.outputs.df[is.na(s15.outputs.df)] <- 0
+      s15.outputs.df <- s15.outputs.df[order(s15.outputs.df$ans.num, decreasing = TRUE),
+                                       c(which(grepl("ans.opt",names(s15.outputs.df))),which(!grepl("ans",names(s15.outputs.df))))]
+      names(s15.outputs.df) <- c("Answer option",s15.headers.v)
+    } 
+    #S16 Bar Chart "Leadership Scale Rates of Implementation"
+    {
+      s16.headers.v <- s15.headers.v
+      s16.varnames.v <- s15.varnames.v
+      s16.ls <- list()
+      
+      for(m in 1:length(s16.varnames.v)){
+        s16.m <- (100*(s15.outputs.df[1:2,m+1] %>% sum)/(s15.outputs.df[1:nrow(s15.outputs.df),m+1] %>% sum)) %>% round(., digits = 0)
+        s16.ls[[m]] <- s16.m
+      }
+      
+      s16.outputs.df <- do.call(rbind, s16.ls) %>% cbind(s16.headers.v, .) %>% as.data.frame
+      names(s16.outputs.df) <- c("category","score_school_rate")
+      s16.outputs.df$category <- s16.outputs.df$category %>% as.character
+      s16.outputs.df$score_school_rate <- s16.outputs.df$score_school_rate %>% as.character %>% as.numeric
+      s16.outputs.df$score_school_rate[is.na(s16.outputs.df$score_school_rate)] <- 0
     }
-    
-    s7.outputs.df <- do.call(rbind, s7.ls) %>% cbind(s7.headers.v, .) %>% as.data.frame
-    names(s7.outputs.df) <- c("category","score_school_rate")
-    s7.outputs.df$category <- s7.outputs.df$category %>% as.character
-    s7.outputs.df$score_school_rate <- s7.outputs.df$score_school_rate %>% as.character %>% as.numeric
-    s7.outputs.df$score_school_rate[is.na(s7.outputs.df$score_school_rate)] <- 0
-  }
-  #S9 Table "CFA Scale Performance"
-  {
-    s9.headers.v <- paste(c(1:4),
-                          c("use cfa",
-                            "all in cfa",
-                            "student reviews cfa",
-                            "cfa used to plan"),sep = ". "
-    )
-    
-    s9.varnames.v <- vars.df$q.id[vars.df$slide.category %>% grepl("cfa",.)]
-    
-    dat.df.e.i.s9 <- dat.df.e.i[,names(dat.df.e.i) %in% s9.varnames.v]
-    
-    s9.ls <- list()
-    
-    for(j in 1:length(s9.varnames.v)){
-      s9.varname.j <- s9.varnames.v[j]
-      s9.df.j <- table(dat.df.e.i.s9[,names(dat.df.e.i.s9)==s9.varname.j]) %>% as.matrix %>% as.data.frame
-      s9.df.j$ans.opt <- row.names(s9.df.j)
-      names(s9.df.j) <- c(s9.varname.j, "ans.opt")
-      s9.ls[[j]] <- s9.df.j
+    #S18 Table "PD Scale Performance"
+    {
+      s18.headers.v <- c("pd instruction",
+                         "coaching instruction",
+                         "pd monitor",
+                         "teacher feedback instruction") %>%
+        paste(c(1:length(.)),.,sep = ". ")
+      
+      
+      s18.varnames.v <- vars.df$q.id[vars.df$slide.category %>% grepl("pd",.)]
+      
+      dat.df.i.s18 <- dat.df.i[,names(dat.df.i) %in% s18.varnames.v]
+      
+      s18.ls <- list()
+      
+      for(j in 1:length(s18.varnames.v)){
+        s18.varname.j <- s18.varnames.v[j]
+        s18.df.j <- table(dat.df.i.s18[,names(dat.df.i.s18)==s18.varname.j]) %>% as.matrix %>% as.data.frame
+        s18.df.j$ans.opt <- row.names(s18.df.j)
+        names(s18.df.j) <- c(s18.varname.j, "ans.opt")
+        s18.ls[[j]] <- s18.df.j
+      }
+      
+      s18.outputs.df <- Reduce(function(df1,df2) full_join(df1, df2,by = "ans.opt"), s18.ls)
+      s18.outputs.df <- s18.outputs.df[,c(which(names(s18.outputs.df)=="ans.opt"),1,3:length(names(s18.outputs.df)))] # re-order columns
+      s18.outputs.df <- full_join(s18.outputs.df, ans.opt.always.df, by = c("ans.opt"="ans.text.agreement"))
+      s18.outputs.df <- s18.outputs.df[!is.na(s18.outputs.df$ans.text.freq),]
+      s18.outputs.df[is.na(s18.outputs.df)] <- 0
+      s18.outputs.df <- s18.outputs.df[order(s18.outputs.df$ans.num, decreasing = TRUE),
+                                       c(which(grepl("ans.opt",names(s18.outputs.df))),which(!grepl("ans",names(s18.outputs.df))))]
+      names(s18.outputs.df) <- c("Answer option",s18.headers.v)
+    } 
+    #S19 Bar Chart "PD Scale Rates of Implementation"
+    {
+      s19.headers.v <- s18.headers.v
+      s19.varnames.v <- s18.varnames.v
+      s19.ls <- list()
+      
+      for(m in 1:length(s19.varnames.v)){
+        s19.m <- (100*(s18.outputs.df[1:2,m+1] %>% sum)/(s18.outputs.df[1:nrow(s18.outputs.df),m+1] %>% sum)) %>% round(., digits = 0)
+        s19.ls[[m]] <- s19.m
+      }
+      
+      s19.outputs.df <- do.call(rbind, s19.ls) %>% cbind(s19.headers.v, .) %>% as.data.frame
+      names(s19.outputs.df) <- c("category","score_school_rate")
+      s19.outputs.df$category <- s19.outputs.df$category %>% as.character
+      s19.outputs.df$score_school_rate <- s19.outputs.df$score_school_rate %>% as.character %>% as.numeric
+      s19.outputs.df$score_school_rate[is.na(s19.outputs.df$score_school_rate)] <- 0
     }
-    
-    s9.outputs.df <- Reduce(function(df1,df2) full_join(df1, df2,by = "ans.opt"), s9.ls)
-    s9.outputs.df <- s9.outputs.df[,c(which(names(s9.outputs.df)=="ans.opt"),1,3:length(names(s9.outputs.df)))] # re-order columns
-    s9.outputs.df <- full_join(s9.outputs.df, ans.opt.always.df, by = c("ans.opt"="ans.text.freq"))
-    s9.outputs.df <- s9.outputs.df[!is.na(s9.outputs.df$ans.text.agreement),]
-    s9.outputs.df[is.na(s9.outputs.df)] <- 0
-    s9.outputs.df <- s9.outputs.df[order(s9.outputs.df$ans.num, decreasing = TRUE),
-                                   c(which(grepl("ans.opt",names(s9.outputs.df))),which(!grepl("ans",names(s9.outputs.df))))]
-    names(s9.outputs.df) <- c("Answer option",s9.headers.v)
-  }
-  #s10 Bar Chart "CFA Scale Rates of Implementation"
-  {
-    s10.headers.v <- s9.headers.v
-    s10.varnames.v <- s9.varnames.v
-    s10.ls <- list()
-    
-    for(m in 1:length(s10.varnames.v)){
-      s10.m <- (100*(s9.outputs.df[1:2,m+1] %>% sum)/(s9.outputs.df[1:nrow(s9.outputs.df),m+1] %>% sum)) %>% round(., digits = 0)
-      s10.ls[[m]] <- s10.m
+    #S20 Bar Chart "Recent Progress"
+    {
+      s20.headers.v <- c("Collaborative Data Teaming","Data-based Decision-making", "Common Formative Assessment","Effective Teaching and Learning")
+      s20.varnames.v <- names(dat.df.i)[grepl("q25",names(dat.df.i))]
+      dat.df.i.s20 <- dat.df.i[,names(dat.df.i) %in% s20.varnames.v] %>% as.data.frame
+      s20.outputs.df <- apply(dat.df.i.s20, 2, function(x) mean(as.numeric(as.character(x)), na.rm = TRUE)) %>% as.data.frame
+      s20.outputs.df <- s20.outputs.df %>% cbind(s20.headers.v,.) %>% as.data.frame
+      names(s20.outputs.df) <- c("category","avg.progress")
+      s20.outputs.df$avg.progress <- s20.outputs.df$avg.progress %>% as.character %>% as.numeric %>% round(., digits = 1)
+      s20.outputs.df <- s20.outputs.df[c(3,4,1,2),]
     }
-    
-    s10.outputs.df <- do.call(rbind, s10.ls) %>% cbind(s10.headers.v, .) %>% as.data.frame
-    names(s10.outputs.df) <- c("category","score_school_rate")
-    s10.outputs.df$category <- s10.outputs.df$category %>% as.character
-    s10.outputs.df$score_school_rate <- s10.outputs.df$score_school_rate %>% as.character %>% as.numeric
-    s10.outputs.df$score_school_rate[is.na(s10.outputs.df$score_school_rate)] <- 0
-  }
-  #S12 Table "DBDM Scale Performance"
-  {
-    s12.headers.v <- c("team reviews data",
-                       "team positive",
-                       "effective teaming practices",
-                       "data determine practices",
-                       "visual representations") %>%
-      paste(c(1:length(.)),.,sep = ". ")
-    
-    
-    s12.varnames.v <- vars.df$q.id[vars.df$slide.category %>% grepl("dbdm",.)]
-    
-    dat.df.e.i.s12 <- dat.df.e.i[,names(dat.df.e.i) %in% s12.varnames.v]
-    
-    s12.ls <- list()
-    
-    for(j in 1:length(s12.varnames.v)){
-      s12.varname.j <- s12.varnames.v[j]
-      s12.df.j <- table(dat.df.e.i.s12[,names(dat.df.e.i.s12)==s12.varname.j]) %>% as.matrix %>% as.data.frame
-      s12.df.j$ans.opt <- row.names(s12.df.j)
-      names(s12.df.j) <- c(s12.varname.j, "ans.opt")
-      s12.ls[[j]] <- s12.df.j
-    }
-    
-    s12.outputs.df <- Reduce(function(df1,df2) full_join(df1, df2,by = "ans.opt"), s12.ls)
-    s12.outputs.df <- s12.outputs.df[,c(which(names(s12.outputs.df)=="ans.opt"),1,3:length(names(s12.outputs.df)))] # re-order columns
-    s12.outputs.df <- full_join(s12.outputs.df, ans.opt.always.df, by = c("ans.opt"="ans.text.freq"))
-    s12.outputs.df <- s12.outputs.df[!is.na(s12.outputs.df$ans.text.agreement),]
-    s12.outputs.df[is.na(s12.outputs.df)] <- 0
-    s12.outputs.df <- s12.outputs.df[s12.outputs.df$ans.opt != "",]
-    s12.outputs.df <- s12.outputs.df[order(s12.outputs.df$ans.num, decreasing = TRUE),
-                                     c(which(grepl("ans.opt",names(s12.outputs.df))),which(!grepl("ans",names(s12.outputs.df))))]
-    names(s12.outputs.df) <- c("Answer option",s12.headers.v)
-  } 
-  #S13 Bar Chart "DBDM Scale Rates of Implementation"
-  {
-    s13.headers.v <- s12.headers.v
-    s13.varnames.v <- s12.varnames.v
-    s13.ls <- list()
-    
-    for(m in 1:length(s13.varnames.v)){
-      s13.m <- (100*(s12.outputs.df[1:2,m+1] %>% sum)/(s12.outputs.df[1:nrow(s12.outputs.df),m+1] %>% sum)) %>% round(., digits = 0)
-      s13.ls[[m]] <- s13.m
-    }
-    
-    s13.outputs.df <- do.call(rbind, s13.ls) %>% cbind(s13.headers.v, .) %>% as.data.frame
-    names(s13.outputs.df) <- c("category","score_school_rate")
-    s13.outputs.df$category <- s13.outputs.df$category %>% as.character
-    s13.outputs.df$score_school_rate <- s13.outputs.df$score_school_rate %>% as.character %>% as.numeric
-    s13.outputs.df$score_school_rate[is.na(s13.outputs.df$score_school_rate)] <- 0
-  }
-  #S15 Table "Leadership Scale Performance"
-  {
-    s15.headers.v <- c("leaders manage",
-                       "teacher to teacher feedback",
-                       "leader committed",
-                       "leader active") %>%
-      paste(c(1:length(.)),.,sep = ". ")
-    
-    
-    s15.varnames.v <- vars.df$q.id[vars.df$slide.category %>% grepl("lead",.)]
-    
-    dat.df.e.i.s15 <- dat.df.e.i[,names(dat.df.e.i) %in% s15.varnames.v]
-    
-    s15.ls <- list()
-    
-    for(j in 1:length(s15.varnames.v)){
-      s15.varname.j <- s15.varnames.v[j]
-      s15.df.j <- table(dat.df.e.i.s15[,names(dat.df.e.i.s15)==s15.varname.j]) %>% as.matrix %>% as.data.frame
-      s15.df.j$ans.opt <- row.names(s15.df.j)
-      names(s15.df.j) <- c(s15.varname.j, "ans.opt")
-      s15.ls[[j]] <- s15.df.j
-    }
-    
-    s15.outputs.df <- Reduce(function(df1,df2) full_join(df1, df2,by = "ans.opt"), s15.ls)
-    s15.outputs.df <- s15.outputs.df[,c(which(names(s15.outputs.df)=="ans.opt"),1,3:length(names(s15.outputs.df)))] # re-order columns
-    s15.outputs.df <- full_join(s15.outputs.df, ans.opt.always.df, by = c("ans.opt"="ans.text.agreement"))
-    s15.outputs.df <- s15.outputs.df[!is.na(s15.outputs.df$ans.text.freq),]
-    s15.outputs.df[is.na(s15.outputs.df)] <- 0
-    s15.outputs.df <- s15.outputs.df[order(s15.outputs.df$ans.num, decreasing = TRUE),
-                                     c(which(grepl("ans.opt",names(s15.outputs.df))),which(!grepl("ans",names(s15.outputs.df))))]
-    names(s15.outputs.df) <- c("Answer option",s15.headers.v)
-  } 
-  #S16 Bar Chart "Leadership Scale Rates of Implementation"
-  {
-    s16.headers.v <- s15.headers.v
-    s16.varnames.v <- s15.varnames.v
-    s16.ls <- list()
-    
-    for(m in 1:length(s16.varnames.v)){
-      s16.m <- (100*(s15.outputs.df[1:2,m+1] %>% sum)/(s15.outputs.df[1:nrow(s15.outputs.df),m+1] %>% sum)) %>% round(., digits = 0)
-      s16.ls[[m]] <- s16.m
-    }
-    
-    s16.outputs.df <- do.call(rbind, s16.ls) %>% cbind(s16.headers.v, .) %>% as.data.frame
-    names(s16.outputs.df) <- c("category","score_school_rate")
-    s16.outputs.df$category <- s16.outputs.df$category %>% as.character
-    s16.outputs.df$score_school_rate <- s16.outputs.df$score_school_rate %>% as.character %>% as.numeric
-    s16.outputs.df$score_school_rate[is.na(s16.outputs.df$score_school_rate)] <- 0
-  }
-  #S18 Table "PD Scale Performance"
-  {
-    s18.headers.v <- c("pd instruction",
-                       "coaching instruction",
-                       "pd monitor",
-                       "teacher feedback instruction") %>%
-      paste(c(1:length(.)),.,sep = ". ")
-    
-    
-    s18.varnames.v <- vars.df$q.id[vars.df$slide.category %>% grepl("pd",.)]
-    
-    dat.df.e.i.s18 <- dat.df.e.i[,names(dat.df.e.i) %in% s18.varnames.v]
-    
-    s18.ls <- list()
-    
-    for(j in 1:length(s18.varnames.v)){
-      s18.varname.j <- s18.varnames.v[j]
-      s18.df.j <- table(dat.df.e.i.s18[,names(dat.df.e.i.s18)==s18.varname.j]) %>% as.matrix %>% as.data.frame
-      s18.df.j$ans.opt <- row.names(s18.df.j)
-      names(s18.df.j) <- c(s18.varname.j, "ans.opt")
-      s18.ls[[j]] <- s18.df.j
-    }
-    
-    s18.outputs.df <- Reduce(function(df1,df2) full_join(df1, df2,by = "ans.opt"), s18.ls)
-    s18.outputs.df <- s18.outputs.df[,c(which(names(s18.outputs.df)=="ans.opt"),1,3:length(names(s18.outputs.df)))] # re-order columns
-    s18.outputs.df <- full_join(s18.outputs.df, ans.opt.always.df, by = c("ans.opt"="ans.text.agreement"))
-    s18.outputs.df <- s18.outputs.df[!is.na(s18.outputs.df$ans.text.freq),]
-    s18.outputs.df[is.na(s18.outputs.df)] <- 0
-    s18.outputs.df <- s18.outputs.df[order(s18.outputs.df$ans.num, decreasing = TRUE),
-                                     c(which(grepl("ans.opt",names(s18.outputs.df))),which(!grepl("ans",names(s18.outputs.df))))]
-    names(s18.outputs.df) <- c("Answer option",s18.headers.v)
-  } 
-  #S19 Bar Chart "PD Scale Rates of Implementation"
-  {
-    s19.headers.v <- s18.headers.v
-    s19.varnames.v <- s18.varnames.v
-    s19.ls <- list()
-    
-    for(m in 1:length(s19.varnames.v)){
-      s19.m <- (100*(s18.outputs.df[1:2,m+1] %>% sum)/(s18.outputs.df[1:nrow(s18.outputs.df),m+1] %>% sum)) %>% round(., digits = 0)
-      s19.ls[[m]] <- s19.m
-    }
-    
-    s19.outputs.df <- do.call(rbind, s19.ls) %>% cbind(s19.headers.v, .) %>% as.data.frame
-    names(s19.outputs.df) <- c("category","score_school_rate")
-    s19.outputs.df$category <- s19.outputs.df$category %>% as.character
-    s19.outputs.df$score_school_rate <- s19.outputs.df$score_school_rate %>% as.character %>% as.numeric
-    s19.outputs.df$score_school_rate[is.na(s19.outputs.df$score_school_rate)] <- 0
-  }
-  #S20 Bar Chart "Recent Progress"
-  {
-    s20.headers.v <- c("Collaborative Data Teaming","Data-based Decision-making", "Common Formative Assessment","Effective Teaching and Learning")
-    s20.varnames.v <- names(dat.df.e.i)[grepl("q25",names(dat.df.e.i))]
-    dat.df.e.i.s20 <- dat.df.e.i[,names(dat.df.e.i) %in% s20.varnames.v] %>% as.data.frame
-    s20.outputs.df <- apply(dat.df.e.i.s20, 2, function(x) mean(as.numeric(as.character(x)), na.rm = TRUE)) %>% as.data.frame
-    s20.outputs.df <- s20.outputs.df %>% cbind(s20.headers.v,.) %>% as.data.frame
-    names(s20.outputs.df) <- c("category","avg.progress")
-    s20.outputs.df$avg.progress <- s20.outputs.df$avg.progress %>% as.character %>% as.numeric %>% round(., digits = 1)
-    s20.outputs.df <- s20.outputs.df[c(3,4,1,2),]
-  }
-}
-}
+  } #END OF LOOP BY SCHOOL
+
+} #SECTION COLLAPSE BRACKET
 
 ########################################################################################################################################################                  
 ### EXPORTING RESULTS TO POWERPOINT ###
@@ -537,7 +561,7 @@ for(j in 1:length(school.names)){    #START LOOP J BY SCHOOL
                           "CWIS Report_",
                           district.name.i,
                           "_",
-                          school.name.i,
+                          school.id.i,
                           ".pptx", sep="") 
   file.copy(template.file, target.file.j)
   
@@ -586,7 +610,7 @@ for(j in 1:length(school.names)){    #START LOOP J BY SCHOOL
       title.format
     )
     subtitle.j <- pot(
-      paste("SCHOOL REPORT: ",school.name.i %>% toupper),
+      paste("SCHOOL REPORT: ",school.id.i %>% toupper),
       subtitle.format
     )
     
