@@ -22,6 +22,7 @@
       #install.packages("googlesheets")
       #install.packages("stringr")
       #install.packages("ReporteRs")
+      #install.packages("jsonline")
     
     #library(devtools)
     library(magrittr)
@@ -32,19 +33,8 @@
     library(stringr)
     library(reshape2)
     library(xlsx)
+    library(jsonlite)
   
-  #Define Useful Functions
-    
-    #Convert all factors in data frame back into correct class
-      #!
-    
-    #Capitalize the first letter of each word in a substring
-      FirstLetterCap <- function(x) {
-        s <- strsplit(x, " ")[[1]]
-        paste(toupper(substring(s, 1, 1)), tolower(substring(s, 2)),
-              sep = "", collapse = " ")
-      }
-
       
 ### LOAD DATA ###
 
@@ -169,8 +159,7 @@
     ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
     ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
     ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
-  
-    slide.names.v <- c("Participation Details")
+    
     
       
 ########################################################################################################################################################      
@@ -187,9 +176,9 @@
     progress.bar.i <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow <- length(school.ids)
 
-  i <- 1 #LOOP TESTER
+  #i <- 1 #LOOP TESTER
   #for(i in c(1,110:115)){   #LOOP TESTER
-  #for(i in 1:length(school.names)){   #START OF LOOP BY SCHOOL
+  for(i in 1:length(school.names)){   #START OF LOOP BY SCHOOL
   
     # Create data frame for this loop - restrict to responses from school name i
     school.id.i <- school.ids[i] %>% tolower
