@@ -40,20 +40,28 @@
 
 # Main data
   #Directories
-  
+    
     #M900
       #wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-04 CWIS Automation for CW/"
-    
+      #rproj.dir <- ""
     #Thinkpad T470
+      rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"  
       wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-05 Repeated Measures/"
 
-    source.dir <- paste(wd,"Data - R Script Source/", sep = "")
+    
+    #Function Directories
+      setwd(rproj.dir)
+      source("FUN_FirstletterCap.r")  
+      
+    #Data & Output Directories
+    source.dir <- paste(rproj.dir,"/data_source/", sep = "")
     target.dir <- paste(wd,"R script outputs/",
                           "Output_",
                           gsub(":",".",Sys.time()), sep = "")
     dir.create(target.dir)
-    setwd(wd)
-      
+    
+    
+    
   #Google Sheets
     #cwis.ss <- 	gs_key("13--0r4jDrW8DgC4cBlrbwIOS7nLfHsjaLFqbk_9qjVs",verbose = TRUE)
     #cwis.df <- 	gs_read(cwis.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
@@ -70,25 +78,15 @@
   setwd(source.dir)
 
   #Read data files
-    cwis.df <- read.csv("All Baseline and Year 1 data_20180719.csv",
+    cwis.df <- read.csv("All Baseline and Year 1 data_20180724.csv",
                         stringsAsFactors = FALSE,
                         header = TRUE)
-    
-    roles.df <- read.csv("roles.df.csv",
-                         stringsAsFactors = FALSE,
-                         header = TRUE)
     
   #Initial informatics
     
     #Edit variable names
       names(cwis.df) <- cwis.df %>% names %>% tolower #Lower-case all variable names
       names(cwis.df)[names(cwis.df) == "id"] <- "responseid"
-    
-    #Remove duplicates from roles.df
-      roles.df <- roles.df[!duplicated(roles.df$responseid),]
-    
-    #Merge
-      cwis.df <- left_join(cwis.df, roles.df, by = "responseid")
     
     #Rearrange data columns
       cwis.df <- cwis.df[,   # CWIS response variables last, others first
@@ -113,7 +111,7 @@
     
     #Create school.id variable which is concatenation of school and district
       cwis.df$school.id <- paste(cwis.df$district, cwis.df$school,sep = "_") %>% tolower
-      cwis.df$school.id <- gsub("\\/"," ",cwis.df$school.id.i) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
+      cwis.df$school.id <- gsub("\\/"," ",cwis.df$school.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
       
     #Create final data frame: merge cwis.df and impbinary.df
       dat.df <- cbind(cwis.df, impbinary.df) 
