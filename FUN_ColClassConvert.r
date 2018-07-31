@@ -125,7 +125,6 @@
   return(result)
   }
   
-  
   ColClassConvert <- function(x){
     
     #Display names of data.frame with class they are currently
@@ -177,10 +176,9 @@
     
     #print(display.df)
     return(x)
-    
   }
   
-  ColClassConvert(x)
+  #ColClassConvert(x)
     
    
 
