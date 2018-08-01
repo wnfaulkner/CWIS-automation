@@ -2,7 +2,6 @@
   
   FirstLetterCap_OneElement <- function(x){
     if(class(x) != "character"){print(paste("Warning: Input is of class ",toupper(class(x)),". Coercing to character vector.",sep = ""))}
-    #if(length(x) > 1){print("Warning: Input has length greater than 1. All elements will be collapsed into single element.")}
     if(!is.null(dim(x))){print("Error: Input is not an atomic vector.")}
     
     s <- strsplit(as.character(x), " ")  %>% unlist

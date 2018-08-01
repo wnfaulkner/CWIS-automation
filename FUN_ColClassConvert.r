@@ -5,18 +5,18 @@
   #4. Once all entered, convert to 
 
 #TESTING OBJECTS
-  #x2 <- data.frame(
-	#  factor.name = c("a","xa","222","xa"),
-	#  character.name = c("char","a","b","cd"),
-	#  logical.name = c(TRUE, FALSE,TRUE,FALSE),
-	#  integer.name = c(1,2,3,4) %>% as.integer,
-	#  numeric.name = c(1.1,2.2,3.3,4.4)
-	#)
-  #x2$character.name <- x2$character.name %>% as.character
+  x2 <- data.frame(
+	  factor.name = c("a","xa","222","xa"),
+	  character.name = c("char","a","b","cd"),
+	  logical.name = c(TRUE, FALSE,TRUE,FALSE),
+	  integer.name = c(1,2,3,4) %>% as.integer,
+	  numeric.name = c(1.1,2.2,3.3,4.4)
+	)
+  x2$character.name <- x2$character.name %>% as.character
   
-  #x1 <- data.frame(numeric.name = c(1.1,2.2,3.3))
+  x1 <- data.frame(numeric.name = c(1.1,2.2,3.3))
   
-  #x <- x2
+  x <- x2
   
   ConvertToFactor <- function(x){
     if(!is.null(dim(x))){stop("Input is not an atomic vector.")}
@@ -125,15 +125,48 @@
   return(result)
   }
   
+  ConvertToDate <- function(x){
+    if(!is.null(dim(x))){stop("Input is not an atomic vector.")}
+    y <- as.character(x)
+    result <- tryCatch({y %>% as.Date()},
+             error=function(e){
+               return(y)
+               message("Error: Unable to convert character to date format.")
+               }
+    )
+  return(result)
+  }
+  
+  DisplayUniqueColVals <- function(x){
+    if(paste(unique(x), collapse = ", ") %>% nchar <= 25){
+      result <- paste(unique(x)[order(unique(x))], collapse = ", ")   
+    }
+    if(paste(unique(x), collapse = ", ") %>% nchar > 25){
+      result <- paste(unique(x)[order(unique(x))], collapse = ", ") %>% substr(., 1, 30) %>% paste(.,"...",sep="")   
+    }
+  return(result)
+  }
+  
   ColClassConvert <- function(x){
     
+    if(!is.data.frame(x)){stop("Input not a data frame.")}
+    
     #Display names of data.frame with class they are currently
-      display.df <- lapply(x, class) %>% 
+      display.df <- lapply(x, class) %>% #! Makes a data frame storing lists
         as.matrix %>% 
-        cbind(1:dim(x)[2],names(x),.) %>% 
-        as.data.frame()
+        cbind(
+          1:dim(x)[2],
+          names(x),
+          apply(x, 2, DisplayUniqueVals) %>% unlist,
+          .
+        ) %>% 
+        as.data.frame() %>%
+        lapply(., unlist) %>%
+        as.data.frame
       
-      names(display.df) <- c("colnum","colname","class")
+      
+      names(display.df) <- c("colnum","colname","unique.values","class")
+      #display.df <- apply(display.df, 2, function(z){as.character(z) %>% trimws(., which = "both")})
       display.df$corrected.class <- ""
       
       print(display.df)
@@ -141,18 +174,23 @@
     #Loop to collect user input for what classes columns should be converted to
       #a <- 1 #LOOP TESTER
       for(a in 1:dim(display.df)[1]){
-        corrected.class.a <- readline(prompt = paste("Enter corrected column class for '",display.df$colname[a],"':",sep=""))
+        corrected.class.a <- readline(prompt = paste("Enter corrected column class for '",display.df$colname[a],"' (Press enter to leave the same):",sep="")) %>% tolower
         
-        if(!corrected.class.a %in% c("factor","character","logical","integer","numeric")){
+        if(!corrected.class.a %in% c("factor","character","logical","integer","numeric","date","")){
           print("Warning: input does not match valid column class. Enter one of the following: factor, character, logical, integer, numeric.") 
           corrected.class.a <- readline(prompt = paste("Enter corrected column class for '",display.df$colname[a],"':",sep=""))
-        }else{}
+        }
         
-        display.df$corrected.class[a] <- corrected.class.a
+        if(corrected.class.a == ""){
+          display.df$corrected.class[a] <- display.df$class[a] %>% as.character
+        }else{
+          display.df$corrected.class[a] <- corrected.class.a
+        }
         print(display.df)
       }
     
-    #Conversion loop by column of data frame
+    
+      #Conversion loop by column of data frame
       progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
       progress.bar.b.max <- ncol(x)					
     
@@ -164,6 +202,7 @@
         if(convert.to.b == "logical"){x[,b] <- ConvertToLogical(x[,b])}
         if(convert.to.b == "integer"){x[,b] <- ConvertToInteger(x[,b])}
         if(convert.to.b == "numeric"){x[,b] <- ConvertToNumeric(x[,b])}
+        if(convert.to.b == "date"){x[,b] <- ConvertToDate(x[,b])}
           
         setTxtProgressBar(progress.bar.b, 100*b/progress.bar.b.max)	
         

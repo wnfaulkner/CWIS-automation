@@ -938,12 +938,6 @@ Baseline,2017-09-10 16:30,R_2wKNPtN8Upat04m,Classroom Teacher,CAMERON R-I,Parkvi
 Baseline,2017-09-10 18:59,R_3gYpoJ7UrNiX2yM,Other,CAMERON R-I,Cameron Intermediate School,2,4,3,4,2,3,5,5,4,3,5,1,3,4,5,5,3,4,4,5,4,4,4,4,3
 Baseline,2017-09-10 19:12,R_1flPmk2HNogjxUw,Instructional Coach,CAMERON R-I,Cameron Intermediate School,4,4,3,3,2,2,4,4,4,2,5,1,4,5,5,2,4,5,5,5,5,4,3,5,3
 Baseline,2017-09-10 19:18,R_24jiMiA5gmBvDi1,Building Administrator,CAMERON R-I,Cameron Intermediate School,,,,,,,,,,,,1,3,5,5,4,4,,,,,,,,
-Baseline,2017-09-11 6:34,R_3k1fjSa6QclaiUc,Classroom Teacher,CAMERON R-I,Cameron Intermediate School,4,5,5,5,4,4,5,5,5,5,5,1,5,5,5,5,4,5,4,5,4,4,5,4,4
-Baseline,2017-09-11 6:39,R_129yVk6s6ep6BzB,Classroom Teacher,CAMERON R-I,Parkview Elementary,5,5,5,5,4,4,5,5,5,4,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
-Baseline,2017-09-11 6:41,R_9FfLhCdPsaO8Qmd,Classroom Teacher,CAMERON R-I,Cameron High School,2,2,4,5,2,3,4,5,5,2,5,1,3,5,5,4,4,4,4,4,5,5,4,5,3
-Baseline,2017-09-11 8:20,R_2AYH2JdtGSpWocZ,Classroom Teacher,CAMERON R-I,Parkview Elementary,4,4,4,4,4,4,5,4,4,4,4,1,5,4,4,4,4,4,5,5,4,4,4,4,4
-Baseline,2017-09-11 8:35,R_4YDM9KxseXEKFz3,Classroom Teacher,CAMERON R-I,Parkview Elementary,4,4,3,5,2,2,4,5,5,4,5,1,5,5,5,4,5,4,5,,4,4,4,4,4
-Baseline,2017-09-11 11:01,R_3pm1Qe4B7Dduy3Q,Classroom Teacher,CAMERON R-I,Cameron Veterans Middle School,3,3,2,4,5,3,4,4,5,4,5,1,4,4,4,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-11,R_2wgJ8wQqkS24iro,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,5,5,4,5,4,3,5,5,5,5,5,1,5,5,3,5,5,5,5,5,5,3,5,5,5
 Baseline,2017-09-11,R_1Ea4ZA5Zqm29TlN,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,5,5,4,5,5,3,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-11,R_1jvndTaHfLJyBeX,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,2,2,1,2,2,1,4,5,5,2,4,1,4,2,2,2,2,4,2,4,4,4,4,4,2
@@ -960,85 +954,91 @@ Baseline,2017-09-11,R_24AHVJ3HuvWIhCg,Classroom Teacher,SEDALIA 200,Smith-Cotton
 Baseline,2017-09-11,R_2Y3NmTKNqOdKBAW,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,3,3,3,3,3,3,4,5,5,3,2,1,3,4,2,3,3,4,3,4,3,4,2,3,3
 Baseline,2017-09-11,R_3ql1WfBxb20E0ni,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,2,3,2,4,4,3,3,3,3,3,3,0,,,,4,4,4,3,5,4,4,3,5,3
 Baseline,2017-09-11,R_27Irh0ioZmdCgAH,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,3,2,2,4,4,2,5,4,4,1,2,1,2,4,4,2,2,4,2,4,4,4,4,4,2
-Baseline,2017-09-11 14:24,R_5j5DkBrj2TzIHrH,Classroom Teacher,CAMERON R-I,Parkview Elementary,4,5,5,5,5,5,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-11,R_3MDR3M2SPjUIjoP,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,5,5,3,5,5,4,5,4,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-11,R_56o1MmoUOpaAcCd,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,2,3,3,4,2,2,4,4,4,2,4,1,4,4,4,4,2,4,3,4,4,4,4,3,3
+Baseline,2017-09-11,R_DAHvMxQwf8H1hjb,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,2,2,2,4,2,3,4,2,5,5,5,0,,,,3,2,4,5,5,3,4,2,2,1
+Baseline,2017-09-11 6:34,R_3k1fjSa6QclaiUc,Classroom Teacher,CAMERON R-I,Cameron Intermediate School,4,5,5,5,4,4,5,5,5,5,5,1,5,5,5,5,4,5,4,5,4,4,5,4,4
+Baseline,2017-09-11 6:39,R_129yVk6s6ep6BzB,Classroom Teacher,CAMERON R-I,Parkview Elementary,5,5,5,5,4,4,5,5,5,4,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-11 6:41,R_9FfLhCdPsaO8Qmd,Classroom Teacher,CAMERON R-I,Cameron High School,2,2,4,5,2,3,4,5,5,2,5,1,3,5,5,4,4,4,4,4,5,5,4,5,3
+Baseline,2017-09-11 8:20,R_2AYH2JdtGSpWocZ,Classroom Teacher,CAMERON R-I,Parkview Elementary,4,4,4,4,4,4,5,4,4,4,4,1,5,4,4,4,4,4,5,5,4,4,4,4,4
+Baseline,2017-09-11 8:35,R_4YDM9KxseXEKFz3,Classroom Teacher,CAMERON R-I,Parkview Elementary,4,4,3,5,2,2,4,5,5,4,5,1,5,5,5,4,5,4,5,,4,4,4,4,4
+Baseline,2017-09-11 11:01,R_3pm1Qe4B7Dduy3Q,Classroom Teacher,CAMERON R-I,Cameron Veterans Middle School,3,3,2,4,5,3,4,4,5,4,5,1,4,4,4,4,4,4,4,4,4,4,4,4,4
+Baseline,2017-09-11 14:24,R_5j5DkBrj2TzIHrH,Classroom Teacher,CAMERON R-I,Parkview Elementary,4,5,5,5,5,5,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-11 14:43,R_1DNj42CFTBfiCQb,Other,HAYTI R-II,Mathis Elementary,4,4,4,4,4,5,5,5,5,5,4,1,4,5,5,5,4,5,5,5,5,5,5,5,5
 Baseline,2017-09-11 14:56,R_1dHtbZb8bpuwRdA,Classroom Teacher,CAMERON R-I,Cameron Intermediate School,4,4,4,5,4,4,5,5,5,4,5,1,5,5,5,5,5,4,4,4,4,4,4,4,3
 Baseline,2017-09-11 14:56,R_2SDNTKYjmx8QHEL,Instructional Coach,HAYTI R-II,Mathis Elementary,4,4,4,4,2,2,5,2,5,4,5,1,5,5,5,5,4,5,5,5,5,5,5,5,5
 Baseline,2017-09-11 16:15,R_2EcqjicYPERtAAK,Classroom Teacher,CAMERON R-I,Parkview Elementary,3,5,2,4,3,2,5,5,5,4,5,1,5,5,5,5,5,5,5,5,5,5,5,3,4
-Baseline,2017-09-11,R_56o1MmoUOpaAcCd,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,2,3,3,4,2,2,4,4,4,2,4,1,4,4,4,4,2,4,3,4,4,4,4,3,3
 Baseline,2017-09-11 18:37,R_UEg5DPoFYAKaSsx,Classroom Teacher,CAMERON R-I,Parkview Elementary,5,4,4,5,4,3,4,4,4,3,5,1,4,5,5,4,4,4,4,4,4,4,4,4,4
-Baseline,2017-09-11,R_DAHvMxQwf8H1hjb,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,2,2,2,4,2,3,4,2,5,5,5,0,,,,3,2,4,5,5,3,4,2,2,1
-Baseline,2017-09-12 2:25,R_3HGFIlCK8OLobq4,Classroom Teacher,CAMERON R-I,Cameron Intermediate School,4,5,4,5,3,4,4,4,2,5,5,1,4,4,5,4,4,4,4,4,4,4,3,4,3
-Baseline,2017-09-12 4:19,R_2dEZqUsxqbvOu3W,District Administrator,CAMERON R-I,Cameron High School,,,,,,,,,,,,,,,,,,5,5,5,5,5,5,5,5
 Baseline,2017-09-12,R_2V4uAP0mWxzjvrZ,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,4,5,4,5,4,4,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-12,R_2QY8o0mrY1tBp5S,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,4,4,4,4,4,4,4,4,4,4,4,1,5,5,5,5,5,4,4,4,4,4,4,4,4
 Baseline,2017-09-12,R_3m31OEGEGPsbIU7,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,1,3,2,5,5,2,4,5,5,3,3,0,,,,3,3,4,4,4,4,4,4,4,4
 Baseline,2017-09-12,R_3fHSieUZaQdoAg9,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,1,2,1,4,3,1,4,5,5,2,5,1,4,5,2,5,4,3,2,4,4,4,4,3,2
+Baseline,2017-09-12,R_2WIkNcJ7bpktdzS,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,2,5,2,5,2,2,5,5,5,5,5,1,5,5,1,5,4,4,2,5,5,4,3,4,2
+Baseline,2017-09-12,R_BA2Ukb7GRdmhdM5,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,2,3,2,4,3,3,5,4,4,4,4,0,,,,4,4,4,4,4,4,4,4,4,4
+Baseline,2017-09-12,R_xyEoZ6VLbnRuxkR,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,4,4,3,4,3,2,3,4,5,2,4,1,5,5,5,4,4,4,4,4,4,4,4,3,4
+Baseline,2017-09-12,R_1hPQSRAA015Y2ln,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,2,2,1,4,1,1,5,5,5,5,4,1,4,4,4,4,1,4,3,4,3,5,4,4,2
+Baseline,2017-09-12 2:25,R_3HGFIlCK8OLobq4,Classroom Teacher,CAMERON R-I,Cameron Intermediate School,4,5,4,5,3,4,4,4,2,5,5,1,4,4,5,4,4,4,4,4,4,4,3,4,3
+Baseline,2017-09-12 4:19,R_2dEZqUsxqbvOu3W,District Administrator,CAMERON R-I,Cameron High School,,,,,,,,,,,,,,,,,,5,5,5,5,5,5,5,5
 Baseline,2017-09-12 8:23,R_1OBuORjMUDAg4T1,Classroom Teacher,HAYTI R-II,Mathis Elementary,4,4,4,5,5,4,5,5,5,4,5,1,5,5,5,5,5,4,5,5,5,5,4,5,4
-Baseline,42990.35417,R_4UEtxgJExzj4fcZ,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,5,5,5,5,5,4,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-12,R_4UEtxgJExzj4fcZ,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,5,5,5,5,5,4,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-12 9:27,R_1NESoinaBVDTBVp,Classroom Teacher,HAYTI R-II,Mathis Elementary,3,2,5,5,4,4,5,4,5,5,5,1,5,5,5,5,3,5,4,5,5,5,5,5,5
 Baseline,2017-09-12 9:31,R_3hbWNSgXHdicRha,Classroom Teacher,HAYTI R-II,Mathis Elementary,4,2,2,5,3,2,2,3,3,2,4,1,4,4,3,2,2,5,5,5,5,4,4,4,4
 Baseline,2017-09-12 11:34,R_1KkDOiZNaoRsop2,Classroom Teacher,CAMERON R-I,Cameron High School,4,4,4,5,4,4,2,5,5,5,5,1,3,5,4,5,3,5,5,5,5,5,4,5,4
 Baseline,2017-09-12 12:10,R_2VrTjdkIL19Uiev,Classroom Teacher,HAYTI R-II,Mathis Elementary,3,5,4,5,5,4,5,5,5,5,5,0,,,,5,5,5,5,5,5,5,4,5,4
-Baseline,2017-09-12,R_2WIkNcJ7bpktdzS,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,2,5,2,5,2,2,5,5,5,5,5,1,5,5,1,5,4,4,2,5,5,4,3,4,2
 Baseline,2017-09-12 13:10,R_2OW01H70M0uut2p,Classroom Teacher,HAYTI R-II,Mathis Elementary,1,2,2,5,3,2,5,5,5,2,5,1,5,5,5,5,5,5,5,5,5,5,5,5,4
 Baseline,2017-09-12 13:42,R_1K0wtHXjLCUddlv,Classroom Teacher,HAYTI R-II,Mathis Elementary,3,3,4,5,5,5,5,5,4,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-12 13:42,R_1LOkED3bAuxAijc,Classroom Teacher,HAYTI R-II,Mathis Elementary,2,2,3,4,4,4,4,5,5,3,4,1,5,5,4,4,4,4,4,4,4,4,4,4,4
-Baseline,2017-09-12,R_BA2Ukb7GRdmhdM5,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,2,3,2,4,3,3,5,4,4,4,4,0,,,,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-12 14:17,R_2OJcya0D9ErbxNr,Classroom Teacher,CAMERON R-I,Parkview Elementary,4,4,5,5,5,5,4,5,5,4,5,1,5,5,5,5,5,4,4,5,4,4,3,3,3
-Baseline,42990.63194,R_1Kd0HkBAl6b6rAU,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,4,4,5,3,2,5,4,5,5,5,1,4,4,5,5,4,4,3,4,4,4,3,4,3
-Baseline,42990.63472,R_0PowRpDIdZXqZZn,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,2,2,5,4,1,4,4,4,5,5,1,4,4,4,4,4,4,3,4,4,3,3,3,2
-Baseline,42990.63472,R_3KovIsjHPl8ilgZ,Special Educator,SEDALIA 200,Smith-Cotton High School,4,4,3,5,4,3,5,5,5,5,5,1,4,5,5,4,4,5,5,5,5,5,5,5,5
-Baseline,42990.63472,R_3pHHbGv7hEkP3Vf,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,5,5,5,5,5,5,5,5,5,5,5,0,,,,5,5,5,5,5,5,5,5,5,5
-Baseline,42990.63681,R_1eCSpTwyJdlUYaX,Special Educator,SEDALIA 200,Smith-Cotton High School,2,2,1,2,2,1,4,5,5,4,4,0,,,,2,2,4,2,4,3,4,2,3,2
-Baseline,42990.63889,R_3n7470QlFoH62Zs,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,4,5,5,4,5,4,5,2,5,1,3,5,4,3,5,5,5,4,4,5,3,4,4
-Baseline,2017-09-12,R_xyEoZ6VLbnRuxkR,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,4,4,3,4,3,2,3,4,5,2,4,1,5,5,5,4,4,4,4,4,4,4,4,3,4
-Baseline,42990.64444,R_33Egwog16bo1UoE,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,5,5,5,5,4,4,5,5,5,1,4,1,2,2,1,1,1,3,2,2,3,4,1,2,1
-Baseline,42990.65069,R_2AQDJ02LJobN9ro,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,1,3,4,2,1,1,4,5,4,3,1,3,3,2,3,2,3,2,4,4,3,3,3,2
-Baseline,42990.68194,R_2EiOSJRVuFuewMK,Special Educator,SEDALIA 200,Smith-Cotton High School,3,3,3,4,2,3,5,4,4,4,4,1,4,3,2,3,2,3,3,3,3,3,2,3,3
-Baseline,42990.70208,R_27BV0oHWq39w20M,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,4,4,5,4,4,5,5,5,5,5,1,4,5,4,5,5,4,4,4,4,4,4,4,4
-Baseline,42990.71806,R_0wErZWvoqPngBb3,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,3,2,4,4,2,5,4,4,4,5,0,,,,4,5,5,5,5,5,4,2,4,3
-Baseline,42990.74653,R_uk4sVbR65oyCszT,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,3,2,4,5,4,3,4,5,4,2,4,0,,,,4,4,4,4,4,4,4,4,4,4
-Baseline,42990.775,R_1mEt8vaEJqDgKmd,Special Educator,SEDALIA 200,Smith-Cotton High School,2,4,2,3,4,2,4,5,4,2,1,1,4,4,2,3,4,5,5,5,5,5,4,4,4
-Baseline,42990.81042,R_2bOVxzsF7Co7J3K,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,4,1,4,4,2,4,5,5,5,5,1,4,5,5,4,4,5,5,5,4,5,5,5,4
-Baseline,42990.81111,R_rcB3sLwhcptL7Hj,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,1,2,5,5,4,5,1,5,5,5,0,,,,2,2,5,1,5,4,5,5,5,1
-Baseline,42990.82361,R_wZULSxXYxngGhkB,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,1,1,4,4,2,4,5,4,4,4,1,1,1,1,1,1,4,5,4,4,1,1,1,1
-Baseline,2017-09-12,R_1hPQSRAA015Y2ln,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,2,2,1,4,1,1,5,5,5,5,4,1,4,4,4,4,1,4,3,4,3,5,4,4,2
-Baseline,42991.20417,R_8v7r2nfif5SPNjb,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,5,5,5,5,5,5,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-12,R_1Kd0HkBAl6b6rAU,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,4,4,5,3,2,5,4,5,5,5,1,4,4,5,5,4,4,3,4,4,4,3,4,3
+Baseline,2017-09-12,R_0PowRpDIdZXqZZn,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,2,2,5,4,1,4,4,4,5,5,1,4,4,4,4,4,4,3,4,4,3,3,3,2
+Baseline,2017-09-12,R_3KovIsjHPl8ilgZ,Special Educator,SEDALIA 200,Smith-Cotton High School,4,4,3,5,4,3,5,5,5,5,5,1,4,5,5,4,4,5,5,5,5,5,5,5,5
+Baseline,2017-09-12,R_3pHHbGv7hEkP3Vf,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,5,5,5,5,5,5,5,5,5,5,5,0,,,,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-12,R_1eCSpTwyJdlUYaX,Special Educator,SEDALIA 200,Smith-Cotton High School,2,2,1,2,2,1,4,5,5,4,4,0,,,,2,2,4,2,4,3,4,2,3,2
+Baseline,2017-09-12,R_3n7470QlFoH62Zs,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,4,5,5,4,5,4,5,2,5,1,3,5,4,3,5,5,5,4,4,5,3,4,4
+Baseline,2017-09-12,R_33Egwog16bo1UoE,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,5,5,5,5,4,4,5,5,5,1,4,1,2,2,1,1,1,3,2,2,3,4,1,2,1
+Baseline,2017-09-12,R_2AQDJ02LJobN9ro,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,1,3,4,2,1,1,4,5,4,3,1,3,3,2,3,2,3,2,4,4,3,3,3,2
+Baseline,2017-09-12,R_2EiOSJRVuFuewMK,Special Educator,SEDALIA 200,Smith-Cotton High School,3,3,3,4,2,3,5,4,4,4,4,1,4,3,2,3,2,3,3,3,3,3,2,3,3
+Baseline,2017-09-12,R_27BV0oHWq39w20M,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,4,4,5,4,4,5,5,5,5,5,1,4,5,4,5,5,4,4,4,4,4,4,4,4
+Baseline,2017-09-12,R_0wErZWvoqPngBb3,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,3,2,4,4,2,5,4,4,4,5,0,,,,4,5,5,5,5,5,4,2,4,3
+Baseline,2017-09-12,R_uk4sVbR65oyCszT,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,3,2,4,5,4,3,4,5,4,2,4,0,,,,4,4,4,4,4,4,4,4,4,4
+Baseline,2017-09-12,R_1mEt8vaEJqDgKmd,Special Educator,SEDALIA 200,Smith-Cotton High School,2,4,2,3,4,2,4,5,4,2,1,1,4,4,2,3,4,5,5,5,5,5,4,4,4
+Baseline,2017-09-12,R_2bOVxzsF7Co7J3K,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,4,1,4,4,2,4,5,5,5,5,1,4,5,5,4,4,5,5,5,4,5,5,5,4
+Baseline,2017-09-12,R_rcB3sLwhcptL7Hj,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,1,2,5,5,4,5,1,5,5,5,0,,,,2,2,5,1,5,4,5,5,5,1
+Baseline,2017-09-12,R_wZULSxXYxngGhkB,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,1,1,4,4,2,4,5,4,4,4,1,1,1,1,1,1,4,5,4,4,1,1,1,1
 Baseline,2017-09-13,R_2Cm0Ku0LShKD36X,Other,SEDALIA 200,Smith-Cotton Junior High School,4,5,5,5,5,5,5,5,5,5,4,0,,,,5,5,5,5,5,5,5,5,5,5
-Baseline,42991.28472,R_1r0vFKTjxoBikq6,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,5,3,4,4,4,5,4,4,4,2,1,2,4,2,2,2,3,3,3,3,2,2,3,2
-Baseline,42991.28819,R_1rl8qqzq2zR9OsM,Building Administrator,SEDALIA 200,Smith-Cotton High School,,,,,,,,,,,,1,1,1,1,2,1,,,,,,,,
-Baseline,42991.29306,R_3ejZU9LeKIa9lPI,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,2,2,3,3,2,5,5,5,2,4,1,4,5,5,5,1,4,3,5,5,3,4,3,2
-Baseline,42991.29444,R_1CeEDaKI3gW3gQr,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,4,4,5,4,5,5,4,5,1,5,1,2,3,4,3,1,4,3,3,3,2,1,3,1
-Baseline,42991.29653,R_28GSbSHkyHnqqi1,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,1,2,4,3,1,3,3,5,2,3,1,1,4,2,1,1,2,2,2,2,5,2,4,1
-Baseline,42991.29653,R_xhCWQKxcPn56Qal,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,4,4,4,4,4,5,5,3,4,3,0,,,,3,4,5,5,5,5,5,5,5,5
-Baseline,2017-09-13 7:37,R_1MLNHfjxJFB1c4i,Classroom Teacher,HAYTI R-II,Mathis Elementary,2,2,2,4,4,2,5,5,4,3,5,1,4,5,4,4,4,4,3,5,4,5,5,4,4
-Baseline,42991.31944,R_1lgaonp2okjtYWR,Building Administrator,SEDALIA 200,Smith-Cotton High School,,,,,,,,,,,,1,2,4,4,4,2,,,,,,,,
-Baseline,42991.32014,R_1BQvb9DKpwQ046u,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,4,2,5,3,2,3,2,5,3,5,0,,,,1,1,2,2,2,2,5,2,5,2
-Baseline,42991.32222,R_3sit9ceME0pC9hB,School Counselor,SEDALIA 200,Smith-Cotton High School,,,,,,,,,,,,1,5,5,5,5,5,5,5,5,5,4,4,4,4
-Baseline,42991.32917,R_3fHT8iHCNI8Q9te,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,5,3,5,4,3,5,5,5,3,5,1,4,3,5,4,4,5,4,4,5,4,2,4,4
-Baseline,42991.33681,R_23fAgcC7HSR94wB,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,2,4,2,1,4,4,4,4,4,1,4,4,4,4,4,4,4,4,4,4,4,4,4
-Baseline,2017-09-13 8:51,R_YPHgxMMPsktSvfj,Instructional Coach,HAYTI R-II,Mathis Elementary,4,3,4,5,4,4,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
-Baseline,42991.39514,R_cGss48DsfhmPkHL,Special Educator,SEDALIA 200,Smith-Cotton High School,4,4,5,5,4,4,4,5,5,2,5,0,,,,4,5,5,4,5,4,5,5,4,3
 Baseline,2017-09-13,R_2BtjETJGT8r9fJG,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,2,2,2,4,4,2,4,4,4,2,5,0,,,,5,4,4,3,4,4,4,4,2,3
-Baseline,42991.40208,R_1dM5syfgG3bze2O,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,4,4,5,5,5,4,5,5,4,5,1,2,2,4,3,3,3,3,3,3,2,2,2,2
-Baseline,42991.40694,R_xzMbYWyfLjpPo4x,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,3,3,4,1,1,4,,5,,4,1,5,5,4,4,4,4,3,4,4,4,4,4,3
-Baseline,42991.41736,R_3p4FX936m5OzyhN,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,3,3,3,4,3,5,5,5,4,5,1,4,5,4,4,4,4,3,4,4,4,3,3,3
-Baseline,2017-09-13 10:18,R_1cRGXngOfizxvUj,Classroom Teacher,CAMERON R-I,Cameron Veterans Middle School,3,4,3,4,3,2,4,4,5,2,4,1,4,4,5,4,4,4,4,4,4,5,4,4,5
-Baseline,42991.43889,R_3DGAhWFkKtWIhVv,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,3,1,3,4,1,5,5,5,5,4,1,3,5,5,5,4,5,4,4,2,1,1,1,3
-Baseline,2017-09-13 10:37,R_ZxiEstT7OTJmteV,Special Educator,CAMERON R-I,Cameron Veterans Middle School,4,3,3,3,2,2,4,4,4,2,3,1,2,4,4,3,2,3,4,3,4,4,3,4,2
-Baseline,42991.46181,R_9ozahDrRxT4jVER,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,1,1,5,3,1,2,5,5,5,5,1,5,3,4,2,2,2,1,2,4,1,1,2,2
-Baseline,42991.4625,R_6uo3gbYUsTS3XVL,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,5,4,3,5,3,4,5,4,5,4,5,1,4,5,4,5,2,5,5,5,5,5,4,3,5
-Baseline,42991.47361,R_6m7xbZO8so25xfP,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,1,4,3,2,2,5,5,4,4,1,4,4,2,3,4,4,4,4,4,3,3,3,3
-Baseline,2017-09-13 12:03,R_2c1wbBkcX64mN1A,Classroom Teacher,CAMERON R-I,Parkview Elementary,4,2,1,2,2,1,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,4,5,4
-Baseline,42991.50347,R_242bQpbx4yNAqvF,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,4,2,4,4,3,5,2,2,2,4,0,,,,4,2,4,4,4,3,4,1,2,3
-Baseline,42991.52569,R_2uVa4TVyTDfGG9e,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,2,4,3,1,4,5,5,3,4,1,4,4,2,3,3,4,5,5,4,4,3,2,2
-Baseline,42991.52847,R_3nSG4uFqEwmtzOi,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,3,2,4,2,2,4,5,5,4,5,1,4,4,5,4,4,5,5,5,5,5,4,5,2
-Baseline,42991.53125,R_2tKErLXGyoCip8H,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,5,4,5,5,2,5,5,5,5,4,5,1,5,5,5,3,4,4,2,2,2,4,2,2,1
-Baseline,42991.53472,R_1PSQF3R2QKqeBfO,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,5,5,5,4,4,4,5,5,5,5,1,4,5,5,5,5,5,4,5,5,5,5,5,3
 Baseline,2017-09-13,R_3Kq3ifMs3Mqlv3j,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,5,2,2,5,4,3,5,5,5,4,4,1,3,5,1,1,2,5,5,5,5,5,4,3,3
 Baseline,2017-09-13,R_sM7soVUWzDB3GLL,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,5,5,4,4,4,4,5,5,5,5,5,1,5,5,4,4,4,4,5,5,4,4,4,4,3
+Baseline,2017-09-13,R_8v7r2nfif5SPNjb,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,5,5,5,5,5,5,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-13,R_1r0vFKTjxoBikq6,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,5,3,4,4,4,5,4,4,4,2,1,2,4,2,2,2,3,3,3,3,2,2,3,2
+Baseline,2017-09-13,R_1rl8qqzq2zR9OsM,Building Administrator,SEDALIA 200,Smith-Cotton High School,,,,,,,,,,,,1,1,1,1,2,1,,,,,,,,
+Baseline,2017-09-13,R_3ejZU9LeKIa9lPI,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,2,2,3,3,2,5,5,5,2,4,1,4,5,5,5,1,4,3,5,5,3,4,3,2
+Baseline,2017-09-13,R_1CeEDaKI3gW3gQr,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,4,4,5,4,5,5,4,5,1,5,1,2,3,4,3,1,4,3,3,3,2,1,3,1
+Baseline,2017-09-13,R_28GSbSHkyHnqqi1,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,1,2,4,3,1,3,3,5,2,3,1,1,4,2,1,1,2,2,2,2,5,2,4,1
+Baseline,2017-09-13,R_xhCWQKxcPn56Qal,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,4,4,4,4,4,5,5,3,4,3,0,,,,3,4,5,5,5,5,5,5,5,5
+Baseline,2017-09-13 7:37,R_1MLNHfjxJFB1c4i,Classroom Teacher,HAYTI R-II,Mathis Elementary,2,2,2,4,4,2,5,5,4,3,5,1,4,5,4,4,4,4,3,5,4,5,5,4,4
+Baseline,2017-09-13,R_1lgaonp2okjtYWR,Building Administrator,SEDALIA 200,Smith-Cotton High School,,,,,,,,,,,,1,2,4,4,4,2,,,,,,,,
+Baseline,2017-09-13,R_1BQvb9DKpwQ046u,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,4,2,5,3,2,3,2,5,3,5,0,,,,1,1,2,2,2,2,5,2,5,2
+Baseline,2017-09-13,R_3sit9ceME0pC9hB,School Counselor,SEDALIA 200,Smith-Cotton High School,,,,,,,,,,,,1,5,5,5,5,5,5,5,5,5,4,4,4,4
+Baseline,2017-09-13,R_3fHT8iHCNI8Q9te,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,5,3,5,4,3,5,5,5,3,5,1,4,3,5,4,4,5,4,4,5,4,2,4,4
+Baseline,2017-09-13,R_23fAgcC7HSR94wB,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,2,4,2,1,4,4,4,4,4,1,4,4,4,4,4,4,4,4,4,4,4,4,4
+Baseline,2017-09-13 8:51,R_YPHgxMMPsktSvfj,Instructional Coach,HAYTI R-II,Mathis Elementary,4,3,4,5,4,4,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-13,R_cGss48DsfhmPkHL,Special Educator,SEDALIA 200,Smith-Cotton High School,4,4,5,5,4,4,4,5,5,2,5,0,,,,4,5,5,4,5,4,5,5,4,3
+Baseline,2017-09-13,R_1dM5syfgG3bze2O,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,4,4,5,5,5,4,5,5,4,5,1,2,2,4,3,3,3,3,3,3,2,2,2,2
+Baseline,2017-09-13,R_xzMbYWyfLjpPo4x,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,3,3,4,1,1,4,,5,,4,1,5,5,4,4,4,4,3,4,4,4,4,4,3
+Baseline,2017-09-13,R_3p4FX936m5OzyhN,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,3,3,3,4,3,5,5,5,4,5,1,4,5,4,4,4,4,3,4,4,4,3,3,3
+Baseline,2017-09-13 10:18,R_1cRGXngOfizxvUj,Classroom Teacher,CAMERON R-I,Cameron Veterans Middle School,3,4,3,4,3,2,4,4,5,2,4,1,4,4,5,4,4,4,4,4,4,5,4,4,5
+Baseline,2017-09-13,R_3DGAhWFkKtWIhVv,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,3,1,3,4,1,5,5,5,5,4,1,3,5,5,5,4,5,4,4,2,1,1,1,3
+Baseline,2017-09-13 10:37,R_ZxiEstT7OTJmteV,Special Educator,CAMERON R-I,Cameron Veterans Middle School,4,3,3,3,2,2,4,4,4,2,3,1,2,4,4,3,2,3,4,3,4,4,3,4,2
+Baseline,2017-09-13,R_9ozahDrRxT4jVER,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,1,1,5,3,1,2,5,5,5,5,1,5,3,4,2,2,2,1,2,4,1,1,2,2
+Baseline,2017-09-13,R_6uo3gbYUsTS3XVL,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,5,4,3,5,3,4,5,4,5,4,5,1,4,5,4,5,2,5,5,5,5,5,4,3,5
+Baseline,2017-09-13,R_6m7xbZO8so25xfP,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,1,4,3,2,2,5,5,4,4,1,4,4,2,3,4,4,4,4,4,3,3,3,3
+Baseline,2017-09-13 12:03,R_2c1wbBkcX64mN1A,Classroom Teacher,CAMERON R-I,Parkview Elementary,4,2,1,2,2,1,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,4,5,4
+Baseline,2017-09-13,R_242bQpbx4yNAqvF,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,4,2,4,4,3,5,2,2,2,4,0,,,,4,2,4,4,4,3,4,1,2,3
+Baseline,2017-09-13,R_2uVa4TVyTDfGG9e,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,2,4,3,1,4,5,5,3,4,1,4,4,2,3,3,4,5,5,4,4,3,2,2
+Baseline,2017-09-13,R_3nSG4uFqEwmtzOi,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,3,2,4,2,2,4,5,5,4,5,1,4,4,5,4,4,5,5,5,5,5,4,5,2
+Baseline,2017-09-13,R_2tKErLXGyoCip8H,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,5,4,5,5,2,5,5,5,5,4,5,1,5,5,5,3,4,4,2,2,2,4,2,2,1
+Baseline,2017-09-13,R_1PSQF3R2QKqeBfO,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,5,5,5,4,4,4,5,5,5,5,1,4,5,5,5,5,5,4,5,5,5,5,5,3
 Baseline,2017-09-13 13:42,R_3nGmyBsN9QBxNeM,Other,SHELDON R-VIII,Sheldon K-12,2,3,2,3,4,2,5,4,4,2,4,0,,,,3,4,3,4,4,3,4,3,4,2
 Baseline,2017-09-13 13:50,R_3HuhSmMSB0RIWb5,Classroom Teacher,SHELDON R-VIII,Sheldon K-12,1,1,1,4,3,1,3,4,4,2,4,1,4,4,5,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-13 13:51,R_tEuGT5JsmHkbZKN,Classroom Teacher,SHELDON R-VIII,Sheldon K-12,1,2,2,4,3,1,5,4,4,2,4,1,2,5,3,1,1,4,3,4,3,4,4,3,4
@@ -1052,32 +1052,32 @@ Baseline,2017-09-13 16:28,R_1QFXxrRsV8cWFY8,Building Administrator,SHELDON R-VII
 Baseline,2017-09-13 16:29,R_2ZTTrGebXccH4UN,Classroom Teacher,SHELDON R-VIII,Sheldon K-12,1,1,1,4,4,1,1,2,2,2,2,1,2,2,2,2,2,3,2,2,2,1,1,1,1
 Baseline,2017-09-13 16:35,R_ZjxmPhPkyBn4qvT,Classroom Teacher,SHELDON R-VIII,Sheldon K-12,4,5,4,5,4,4,4,4,5,5,4,0,,,,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-13 16:37,R_1CdblG0bkCOroO9,School Counselor,CAMERON R-I,Cameron Veterans Middle School,,,,,,,,,,,,1,2,5,5,4,5,5,4,4,4,5,4,5,5
-Baseline,42992.17014,R_3lQ7uO4IxIZLiFe,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,2,1,2,1,2,4,2,5,4,2,0,,,,2,2,4,4,4,4,4,2,2,2
-Baseline,42992.27292,R_3fjjmOoMGgPVsYW,Other,SEDALIA 200,Smith-Cotton High School,4,4,4,4,4,4,4,4,4,4,4,0,,,,4,4,4,4,4,4,4,4,4,4
-Baseline,42992.28333,R_1cUnV6bX9rBjY9l,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,4,4,5,4,4,5,5,5,4,4,1,4,4,4,4,4,4,4,4,4,4,4,4,4
+Baseline,2017-09-14,R_1l00BWTM6nWOAE9,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,1,4,1,4,2,1,1,1,4,4,4,0,,,,5,5,4,5,5,5,5,5,5,1
+Baseline,2017-09-14,R_1IW4jz6v1df9bRm,Instructional Coach,SEDALIA 200,Smith-Cotton Junior High School,2,2,1,4,2,2,4,3,3,3,4,0,,,,4,4,4,4,4,4,4,4,4,4
+Baseline,2017-09-14,R_3lQ7uO4IxIZLiFe,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,2,1,2,1,2,4,2,5,4,2,0,,,,2,2,4,4,4,4,4,2,2,2
+Baseline,2017-09-14,R_3fjjmOoMGgPVsYW,Other,SEDALIA 200,Smith-Cotton High School,4,4,4,4,4,4,4,4,4,4,4,0,,,,4,4,4,4,4,4,4,4,4,4
+Baseline,2017-09-14,R_1cUnV6bX9rBjY9l,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,4,4,5,4,4,5,5,5,4,4,1,4,4,4,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-14 7:18,R_3htJaHfzpO3AtCY,Classroom Teacher,CAMERON R-I,Cameron Intermediate School,4,5,4,5,4,4,5,5,5,4,5,1,5,5,5,5,5,4,5,5,5,5,4,5,4
 Baseline,2017-09-14 7:22,R_2rNjmiToKVikuFT,Classroom Teacher,CAMERON R-I,Cameron Intermediate School,4,4,4,5,4,5,4,5,5,5,5,1,,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-14 8:16,R_VPAaViXQEOJuOZz,Special Educator,CAMERON R-I,Cameron High School,2,4,3,4,3,4,5,4,5,4,4,1,2,5,5,2,2,4,4,4,5,5,4,5,2
 Baseline,2017-09-14 8:38,R_eJstnxrQsj7FQMp,Classroom Teacher,SHELDON R-VIII,Sheldon K-12,2,3,2,3,3,4,4,4,4,5,5,1,4,4,4,4,4,4,4,4,4,4,,4,4
-Baseline,42992.36458,R_dgmp9X176n7WVfb,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,3,1,4,3,1,1,1,5,5,4,0,,,,4,4,4,2,4,3,2,2,4,2
+Baseline,2017-09-14,R_dgmp9X176n7WVfb,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,3,1,4,3,1,1,1,5,5,4,0,,,,4,4,4,2,4,3,2,2,4,2
 Baseline,2017-09-14 9:30,R_3emetzO271xwpTD,Classroom Teacher,SHELDON R-VIII,Sheldon K-12,1,1,2,5,5,2,5,5,5,4,5,1,2,3,1,3,2,2,2,2,1,4,3,4,1
-Baseline,42992.41736,R_2EtoPztdjZWDRSW,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,5,4,5,3,4,4,5,5,4,4,1,4,5,4,4,4,4,4,4,4,4,4,4,4
+Baseline,2017-09-14,R_2EtoPztdjZWDRSW,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,5,4,5,3,4,4,5,5,4,4,1,4,5,4,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-14 10:37,R_ZwsY2DofXwOjmdb,Special Educator,HAYTI R-II,Mathis Elementary,5,5,4,5,4,5,5,5,5,5,5,0,,,,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-14 10:55,R_uxiUsbNgSkydemd,Building Administrator,FARMINGTON R-VII,Farmington High School,,,,,,,,,,,,0,,,,5,2,,,,,,,,
 Baseline,2017-09-14 10:56,R_5oRvUYpcxqIFrPj,Building Administrator,FARMINGTON R-VII,Farmington High School,,,,,,,,,,,,1,3,4,4,3,3,,,,,,,,
 Baseline,2017-09-14 11:04,R_1eWYwyQtfMobGGf,Classroom Teacher,CAMERON R-I,Cameron High School,2,2,3,5,3,2,4,4,4,4,5,1,4,5,4,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-14 11:15,R_1QGE79FKFA45VsO,Classroom Teacher,SHELDON R-VIII,Sheldon K-12,1,5,4,5,3,4,5,4,5,5,5,0,,,,2,4,2,2,2,2,2,2,2,2
-Baseline,2017-09-14,R_1l00BWTM6nWOAE9,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,1,4,1,4,2,1,1,1,4,4,4,0,,,,5,5,4,5,5,5,5,5,5,1
 Baseline,2017-09-14 12:29,R_3efy6zRcKObdgkL,Classroom Teacher,SHELDON R-VIII,Sheldon K-12,4,4,4,5,4,4,5,5,4,4,5,1,4,4,4,4,5,5,5,5,5,4,4,4,4
-Baseline,42992.5375,R_3Mxv2cCOZsXatJ3,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,5,4,4,5,4,4,5,5,5,5,1,4,4,4,4,4,4,4,4,4,4,4,4,4
+Baseline,2017-09-14,R_3Mxv2cCOZsXatJ3,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,5,4,4,5,4,4,5,5,5,5,1,4,4,4,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-14 13:44,R_8HVRkvILwiSmLM5,Classroom Teacher,CAMERON R-I,Cameron High School,2,3,2,4,4,2,5,2,4,4,4,1,2,5,4,4,5,5,5,5,5,5,5,5,5
-Baseline,42992.57778,R_1DCthZyEk3DBfE4,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,4,5,2,1,5,5,5,5,5,1,2,4,1,2,4,4,3,4,3,4,4,5,2
+Baseline,2017-09-14,R_1DCthZyEk3DBfE4,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,4,5,2,1,5,5,5,5,5,1,2,4,1,2,4,4,3,4,3,4,4,5,2
 Baseline,2017-09-14 15:05,R_dp1ANeO2m2oFeHT,Classroom Teacher,SHELDON R-VIII,Sheldon K-12,2,2,1,2,2,1,4,5,5,2,5,1,4,4,1,2,2,4,4,4,3,4,2,4,2
-Baseline,2017-09-14,R_1IW4jz6v1df9bRm,Instructional Coach,SEDALIA 200,Smith-Cotton Junior High School,2,2,1,4,2,2,4,3,3,3,4,0,,,,4,4,4,4,4,4,4,4,4,4
-Baseline,42992.67569,R_1gzJ8hIotwv2Dyp,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,3,4,4,4,5,3,5,5,5,4,5,1,5,5,5,5,5,5,5,5,5,5,5,4,4
-Baseline,42992.77431,R_3QDC63BGl7of9zR,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,4,4,4,5,4,3,5,5,4,4,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
-Baseline,42993.30139,R_D8IRKYd8kq0AtlD,Instructional Coach,SEDALIA 200,Heber Hunt Elementary School,5,4,4,5,5,4,5,5,5,4,5,1,5,5,5,5,5,4,2,5,5,5,5,5,4
-Baseline,42993.30347,R_1NrZr4a8HJH68j2,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,4,5,3,5,5,4,4,5,5,3,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-14,R_1gzJ8hIotwv2Dyp,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,3,4,4,4,5,3,5,5,5,4,5,1,5,5,5,5,5,5,5,5,5,5,5,4,4
+Baseline,2017-09-14,R_3QDC63BGl7of9zR,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,4,4,4,5,4,3,5,5,4,4,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-15,R_D8IRKYd8kq0AtlD,Instructional Coach,SEDALIA 200,Heber Hunt Elementary School,5,4,4,5,5,4,5,5,5,4,5,1,5,5,5,5,5,4,2,5,5,5,5,5,4
+Baseline,2017-09-15,R_1NrZr4a8HJH68j2,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,4,5,3,5,5,4,4,5,5,3,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-15 7:18,R_2X6FWf39OnGlm3x,Classroom Teacher,CAMERON R-I,Cameron High School,1,4,1,4,1,1,5,5,5,2,5,0,,,,4,2,4,5,4,4,4,3,3,4
 Baseline,2017-09-15 7:40,R_1FLgwrl8E0zkqg8,Building Administrator,CAMERON R-I,Cameron Intermediate School,,,,,,,,,,,,0,,,,5,5,,,,,,,,
 Baseline,2017-09-15 7:51,R_1oaHeV8ldIyGlxP,Classroom Teacher,FARMINGTON R-VII,Washington-Franklin Elementary,2,4,1,4,4,1,5,4,5,2,5,1,2,3,2,2,1,3,3,4,4,5,4,5,5
@@ -1085,14 +1085,14 @@ Baseline,2017-09-15 7:55,R_6h8TRd2C74yxfrP,Classroom Teacher,FARMINGTON R-VII,Wa
 Baseline,2017-09-15 7:56,R_22qTqo3K5rPFeRP,Classroom Teacher,CAMERON R-I,Cameron High School,2,5,4,5,5,4,5,4,4,5,5,1,4,5,5,5,4,5,5,5,5,5,5,5,4
 Baseline,2017-09-15 7:56,R_QokUE0ynL10jeU1,Classroom Teacher,FARMINGTON R-VII,Washington-Franklin Elementary,4,5,4,5,5,4,5,2,2,2,2,1,3,5,2,4,5,5,5,5,5,5,5,5,3
 Baseline,2017-09-15 7:58,R_2Bl1BYAgfhVAlTG,Classroom Teacher,FARMINGTON R-VII,Washington-Franklin Elementary,3,3,4,5,2,4,5,2,2,2,4,1,4,5,3,4,2,4,4,4,4,5,4,4,4
-Baseline,42993.33819,R_10IPTHXpUNvr9xJ,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,2,4,1,5,3,2,5,5,5,2,2,1,5,5,4,4,5,4,2,4,4,5,2,2,2
+Baseline,2017-09-15,R_10IPTHXpUNvr9xJ,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,2,4,1,5,3,2,5,5,5,2,2,1,5,5,4,4,5,4,2,4,4,5,2,2,2
 Baseline,2017-09-15 8:36,R_8Caq8E2l1CEHaJr,Special Educator,FARMINGTON R-VII,Washington-Franklin Elementary,3,2,3,5,2,3,5,5,5,2,4,1,3,5,5,3,3,3,4,4,4,5,3,4,3
 Baseline,2017-09-15 8:37,R_a9JuUmAL7O6Hcpb,Classroom Teacher,FARMINGTON R-VII,Washington-Franklin Elementary,4,4,2,4,3,4,5,3,3,4,4,1,4,4,4,5,2,4,4,4,5,5,5,5,5
 Baseline,2017-09-15 8:42,R_1M5lHC2IOcQDlkU,Classroom Teacher,FARMINGTON R-VII,Washington-Franklin Elementary,4,3,4,4,3,3,4,4,5,3,5,1,4,4,3,4,4,5,5,5,5,5,4,4,4
 Baseline,2017-09-15 8:43,R_2YLJqRMPzUhZNvG,Classroom Teacher,FARMINGTON R-VII,Washington-Franklin Elementary,3,2,2,3,2,1,3,2,3,3,2,1,4,5,3,2,2,3,4,4,4,4,4,4,4
 Baseline,2017-09-15 8:43,R_BsURxAL7OZBYYiR,Special Educator,FARMINGTON R-VII,Washington-Franklin Elementary,4,2,2,2,2,2,5,4,4,4,5,1,2,5,2,5,4,5,3,5,5,5,3,5,3
 Baseline,2017-09-15 8:52,R_2U498tprWOLfneO,Building Administrator,UNIVERSITY ACADEMY,University Academy Middle,,,,,,,,,,,,1,3,4,3,4,4,,,,,,,,
-Baseline,42993.37222,R_1dBwfkoFfuHBNLB,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,4,4,4,3,2,5,5,4,5,1,5,5,5,4,4,3,4,3,4,4,3,3,2
+Baseline,2017-09-15,R_1dBwfkoFfuHBNLB,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,4,4,4,3,2,5,5,4,5,1,5,5,5,4,4,3,4,3,4,4,3,3,2
 Baseline,2017-09-15 8:58,R_1GK2gRVITG1fCWQ,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Lower,1,5,3,5,3,3,5,5,5,5,5,1,5,5,5,5,5,5,4,4,4,4,2,4,4
 Baseline,2017-09-15 9:08,R_3kgZxaDNHttfDPY,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Upper,2,3,4,4,5,4,5,5,5,5,5,1,4,5,4,4,4,5,5,5,,5,4,4,4
 Baseline,2017-09-15 9:19,R_11Xga4CMjwn3kuQ,Classroom Teacher,FARMINGTON R-VII,Washington-Franklin Elementary,2,1,4,4,2,2,4,1,1,1,1,1,5,5,4,5,5,5,5,5,5,3,2,2,3
@@ -1105,7 +1105,7 @@ Baseline,2017-09-15 9:25,R_3gZNJbHBcHfK1Kg,Classroom Teacher,FARMINGTON R-VII,Wa
 Baseline,2017-09-15 9:34,R_3G2hJEHAeOVdqAd,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Lower,5,4,4,4,3,4,4,4,5,5,5,1,4,3,3,3,4,3,3,3,3,3,3,3,3
 Baseline,2017-09-15 9:37,R_2PhyvgjmdAOkpKg,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Lower,1,3,2,4,2,2,4,4,5,4,5,1,3,3,4,4,2,4,3,3,4,3,2,2,2
 Baseline,2017-09-15 9:37,R_PGuTRe5NQvBPLC9,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Upper,1,2,4,5,2,1,4,4,4,4,4,1,3,5,1,3,3,3,4,4,2,1,1,1,4
-Baseline,42993.41389,R_1dn8VIWg4MiSTJ0,Special Educator,SEDALIA 200,Heber Hunt Elementary School,3,4,2,5,4,4,5,2,4,4,2,0,,,,4,5,5,4,5,4,4,4,4,3
+Baseline,2017-09-15,R_1dn8VIWg4MiSTJ0,Special Educator,SEDALIA 200,Heber Hunt Elementary School,3,4,2,5,4,4,5,2,4,4,2,0,,,,4,5,5,4,5,4,4,4,4,3
 Baseline,2017-09-15 9:58,R_2YQATAYeHfj0nUK,Other,FARMINGTON R-VII,Washington-Franklin Elementary,2,2,2,4,1,2,1,1,1,1,1,0,,,,4,4,5,5,5,5,2,3,2,3
 Baseline,2017-09-15 9:58,R_eVZXiM9TfqwYfcd,Classroom Teacher,FARMINGTON R-VII,Washington-Franklin Elementary,3,3,2,4,2,1,4,4,5,4,5,1,4,4,4,4,4,4,4,4,4,4,4,4,3
 Baseline,2017-09-15 9:59,R_UcCf1gxUDux8j0R,Classroom Teacher,FARMINGTON R-VII,Washington-Franklin Elementary,4,2,2,3,1,1,5,4,5,2,4,1,2,2,2,2,2,4,4,5,4,4,4,4,2
@@ -1114,7 +1114,7 @@ Baseline,2017-09-15 10:02,R_23wa8cpEsGPAmtz,Classroom Teacher,FARMINGTON R-VII,W
 Baseline,2017-09-15 10:02,R_2wn4L8naV9xK7B6,Classroom Teacher,FARMINGTON R-VII,Washington-Franklin Elementary,4,4,4,2,2,5,5,4,5,5,4,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-15 10:02,R_3HifpXcOqA6DVto,Special Educator,FARMINGTON R-VII,Washington-Franklin Elementary,4,3,3,5,4,4,4,5,5,2,4,1,4,4,5,4,5,5,4,5,4,4,4,4,4
 Baseline,2017-09-15 10:03,R_1mn4AQSeDUmfW2C,Classroom Teacher,FARMINGTON R-VII,Washington-Franklin Elementary,1,4,2,2,1,3,4,2,5,2,5,1,2,5,5,4,2,4,3,4,4,5,5,5,3
-Baseline,42993.44167,R_2Cy1RkTrcWQutBf,School Counselor,SEDALIA 200,Smith-Cotton High School,,,,,,,,,,,,1,5,5,5,5,5,5,4,5,5,5,5,5,5
+Baseline,2017-09-15,R_2Cy1RkTrcWQutBf,School Counselor,SEDALIA 200,Smith-Cotton High School,,,,,,,,,,,,1,5,5,5,5,5,5,4,5,5,5,5,5,5
 Baseline,2017-09-15 11:05,R_r2BKpnxngAVbY8V,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Upper,1,1,1,5,1,1,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-15 11:40,R_2dA4QmWFLxB9xjC,Classroom Teacher,CAMERON R-I,Cameron Intermediate School,5,4,4,5,4,4,5,5,5,5,5,1,4,4,5,5,5,4,5,5,5,4,4,4,4
 Baseline,2017-09-15 11:46,R_12hG3TzYQyDtlTQ,Classroom Teacher,FARMINGTON R-VII,Truman Learning Center,3,3,2,4,2,2,4,5,5,5,5,1,4,4,5,3,4,4,4,4,4,4,3,4,3
@@ -1149,12 +1149,12 @@ Baseline,2017-09-15 13:20,R_3pm7BSoe410nk8l,Classroom Teacher,FARMINGTON R-VII,L
 Baseline,2017-09-15 13:20,R_PNURpy83TN7052N,Classroom Teacher,FARMINGTON R-VII,Lincoln Intermediate,1,4,3,3,2,1,5,5,5,3,5,1,4,5,4,5,5,4,3,5,5,5,5,4,5
 Baseline,2017-09-15 13:20,R_Rb3dcvrAeJue9sl,Classroom Teacher,FARMINGTON R-VII,Lincoln Intermediate,3,4,4,4,4,2,4,5,5,2,4,1,2,2,4,2,2,4,4,4,4,4,4,4,4
 Baseline,2017-09-15 13:20,R_saKaT9RzEn0tgul,Classroom Teacher,FARMINGTON R-VII,Lincoln Intermediate,2,2,2,4,2,2,5,4,5,2,4,1,2,4,4,2,2,3,4,4,4,4,4,4,4
-Baseline,42993.55625,R_x6quNBwJnYvdtzr,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,4,4,3,5,4,3,5,5,5,5,5,1,5,5,5,5,5,5,4,5,5,5,5,5,4
+Baseline,2017-09-15,R_x6quNBwJnYvdtzr,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,4,4,3,5,4,3,5,5,5,5,5,1,5,5,5,5,5,5,4,5,5,5,5,5,4
 Baseline,2017-09-15 13:25,R_3QQqOvDHWOMEqFi,Special Educator,FARMINGTON R-VII,Lincoln Intermediate,3,4,2,4,4,2,4,1,1,1,1,0,,,,4,4,4,4,4,4,4,3,4,3
 Baseline,2017-09-15 13:27,R_1n7Toc0ej1gAD3z,Special Educator,FARMINGTON R-VII,Lincoln Intermediate,1,4,3,4,2,2,5,5,5,3,5,1,4,5,4,5,5,5,4,5,5,5,5,5,4
 Baseline,2017-09-15 13:29,R_12RB1pukitmpXcE,Classroom Teacher,FARMINGTON R-VII,Lincoln Intermediate,2,2,2,4,1,,5,5,5,2,5,1,2,5,4,5,5,5,3,4,4,4,3,3,3
 Baseline,2017-09-15 13:29,R_3Piwg8ZxwIArEEw,Classroom Teacher,FARMINGTON R-VII,Lincoln Intermediate,1,4,2,4,1,1,5,1,1,1,1,1,3,4,4,2,2,4,3,4,3,4,3,4,3
-Baseline,42993.57361,R_blm42lkGnTVcmRj,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,3,3,3,5,4,4,5,5,5,4,4,1,5,5,5,5,5,5,5,5,5,4,4,4,4
+Baseline,2017-09-15,R_blm42lkGnTVcmRj,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,3,3,3,5,4,4,5,5,5,4,4,1,5,5,5,5,5,5,5,5,5,4,4,4,4
 Baseline,2017-09-15 13:55,R_27rsDwmB69Y5FrW,Classroom Teacher,FARMINGTON R-VII,Lincoln Intermediate,2,2,2,2,2,2,4,4,2,1,2,0,,,,2,1,4,3,4,5,2,2,4,1
 Baseline,2017-09-15 13:56,R_8pquqYE0ddTpak9,Special Educator,FARMINGTON R-VII,Lincoln Intermediate,2,2,3,4,3,2,5,5,5,5,4,1,4,4,5,5,4,4,4,4,4,5,4,5,2
 Baseline,2017-09-15 13:57,R_23fLFFF2cWrg2jR,Special Educator,FARMINGTON R-VII,Lincoln Intermediate,2,2,1,4,1,2,4,4,5,3,5,1,3,2,4,4,4,4,5,5,5,5,4,4,4
@@ -1168,24 +1168,26 @@ Baseline,2017-09-15 13:59,R_3Mn6sniwnGsC2Rr,Classroom Teacher,FARMINGTON R-VII,L
 Baseline,2017-09-15 14:00,R_1HdfTRaK6m9FTve,Classroom Teacher,FARMINGTON R-VII,Lincoln Intermediate,5,3,5,4,2,4,4,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-15 14:00,R_1hGzJ2EXG0wdhIO,Classroom Teacher,FARMINGTON R-VII,Lincoln Intermediate,3,2,1,4,2,1,4,4,5,4,4,1,5,4,4,4,4,5,5,5,4,5,4,5,4
 Baseline,2017-09-15 14:02,R_3RfKi8fkluqDf26,Classroom Teacher,FARMINGTON R-VII,Lincoln Intermediate,1,4,2,4,4,2,5,5,5,4,4,1,4,5,5,5,4,5,4,5,5,5,4,5,4
-Baseline,42993.58681,R_2TpD8EA7d9z0BA6,Other,SEDALIA 200,Heber Hunt Elementary School,2,2,2,5,4,3,5,4,5,4,5,1,5,5,5,5,5,5,4,5,5,4,5,5,5
-Baseline,42993.62292,R_2f0RTs0R1tBI8O7,Special Educator,SEDALIA 200,Smith-Cotton High School,4,4,2,4,4,4,5,5,4,4,4,1,5,4,5,5,5,5,5,5,4,5,5,5,4
+Baseline,2017-09-15,R_2TpD8EA7d9z0BA6,Other,SEDALIA 200,Heber Hunt Elementary School,2,2,2,5,4,3,5,4,5,4,5,1,5,5,5,5,5,5,4,5,5,4,5,5,5
+Baseline,2017-09-15,R_2f0RTs0R1tBI8O7,Special Educator,SEDALIA 200,Smith-Cotton High School,4,4,2,4,4,4,5,5,4,4,4,1,5,4,5,5,5,5,5,5,4,5,5,5,4
 Baseline,2017-09-15 15:06,R_1d9Te2JpmcdVK96,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Lower,3,2,2,3,3,2,4,4,4,1,4,1,2,4,2,2,2,3,3,4,4,1,1,1,1
 Baseline,2017-09-15 18:56,R_3F54Tc3hHf6mdwT,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Lower,3,3,4,4,4,4,5,4,5,3,4,1,5,4,5,4,3,4,4,4,4,4,4,4,4
 Baseline,2017-09-15 20:45,R_9ZAFII9zpp2y8al,Classroom Teacher,FARMINGTON R-VII,Washington-Franklin Elementary,3,2,3,4,4,2,2,5,5,2,4,1,2,5,1,1,1,3,,3,2,3,2,2,3
-Baseline,42993.91389,R_24OV9P2NMmKkcsh,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,4,5,4,5,4,3,4,5,5,3,5,1,5,5,4,5,4,5,4,4,5,5,4,5,5
+Baseline,2017-09-15,R_24OV9P2NMmKkcsh,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,4,5,4,5,4,3,4,5,5,3,5,1,5,5,4,5,4,5,4,4,5,5,4,5,5
 Baseline,2017-09-16 9:01,R_2QAQ4gmlbm5Zg6P,Classroom Teacher,HAYTI R-II,Mathis Elementary,1,1,1,1,5,1,4,5,5,1,3,1,4,4,4,4,2,3,3,3,4,3,2,3,3
 Baseline,2017-09-16 15:06,R_XnQ7pgGZFIDXyF3,Other,FARMINGTON R-VII,Lincoln Intermediate,1,4,3,4,2,1,4,3,5,1,2,1,1,5,4,4,4,5,3,4,5,5,3,3,3
 Baseline,2017-09-16 15:30,R_1hYZxlTBVGWPmDq,Classroom Teacher,CAMERON R-I,Parkview Elementary,4,4,5,5,5,4,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
-Baseline,42995.33611,R_1JX8XyWktfHD1Mh,Special Educator,SEDALIA 200,Smith-Cotton High School,2,2,2,4,3,2,,4,3,2,2,0,,,,2,2,3,4,4,4,4,3,4,3
-Baseline,42995.39167,R_3hxYLBeANMA4Ufe,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,2,3,3,4,4,2,5,5,5,3,5,1,5,5,5,5,5,5,5,5,5,5,5,5,4
+Baseline,2017-09-17,R_1JX8XyWktfHD1Mh,Special Educator,SEDALIA 200,Smith-Cotton High School,2,2,2,4,3,2,,4,3,2,2,0,,,,2,2,3,4,4,4,4,3,4,3
+Baseline,2017-09-17,R_3hxYLBeANMA4Ufe,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,2,3,3,4,4,2,5,5,5,3,5,1,5,5,5,5,5,5,5,5,5,5,5,5,4
 Baseline,2017-09-17 12:33,R_1DvcEE6YMem7PJF,Instructional Coach,UNIVERSITY ACADEMY,University Academy Middle,2,3,3,4,5,4,5,5,5,5,5,1,3,4,4,2,5,4,4,3,4,5,5,5,4
-Baseline,42995.62708,R_3PNq5C1bYpPmtO4,Special Educator,SEDALIA 200,Smith-Cotton High School,2,3,3,5,2,2,5,5,4,3,5,0,,,,4,3,4,4,4,4,4,3,4,4
+Baseline,2017-09-17,R_3PNq5C1bYpPmtO4,Special Educator,SEDALIA 200,Smith-Cotton High School,2,3,3,5,2,2,5,5,4,3,5,0,,,,4,3,4,4,4,4,4,3,4,4
 Baseline,2017-09-17 15:43,R_2Enkn7iY4n9b7oo,Other,FARMINGTON R-VII,Lincoln Intermediate,3,4,3,4,2,2,4,4,4,3,4,1,1,4,4,4,3,4,4,4,4,4,3,4,3
 Baseline,2017-09-17 16:38,R_6tJ8cWoxccveURr,Classroom Teacher,CAMERON R-I,Cameron High School,3,2,2,4,4,3,2,5,5,5,5,1,3,4,5,4,2,4,4,4,4,4,4,4,4
-Baseline,42995.7,R_cUwzWrLmcPIA3RL,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,1,2,4,2,2,4,4,5,3,4,1,3,3,4,3,2,5,4,4,4,4,4,3,2
+Baseline,2017-09-17,R_cUwzWrLmcPIA3RL,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,1,2,4,2,2,4,4,5,3,4,1,3,3,4,3,2,5,4,4,4,4,4,3,2
 Baseline,2017-09-17 17:13,R_10VfTES9NVnOoza,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Lower,3,4,4,4,3,3,4,4,4,5,5,1,4,5,5,5,4,3,1,3,4,4,2,3,1
 Baseline,2017-09-17 19:21,R_1mO7PJVkhrFVR74,Classroom Teacher,CAMERON R-I,Cameron Intermediate School,2,4,2,5,2,3,5,5,4,5,5,1,4,4,5,4,5,5,5,5,5,5,5,5,2
+Baseline,2017-09-18,R_3nrd2j47nUFvRsp,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,2,4,2,5,4,4,2,4,4,2,4,0,,,,4,2,5,5,5,4,4,5,4,1
+Baseline,2017-09-18,R_1rfgDZXBn0sDx9Y,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,2,2,1,4,4,1,5,4,5,2,4,1,2,5,4,2,1,5,4,5,5,4,4,3,2
 Baseline,2017-09-18 6:39,R_2CgiR8wvLihplQf,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Lower,1,1,2,5,2,2,1,5,5,2,5,0,,,,5,5,5,2,4,2,4,4,1,1
 Baseline,2017-09-18 6:46,R_1Oxfeiqlf3UkrJV,Other,UNIVERSITY ACADEMY,University Academy Lower,3,4,5,5,4,3,4,5,4,4,5,0,,,,4,4,4,4,4,4,4,4,4,3
 Baseline,2017-09-18 7:17,R_vJKt5VxWcTUZ26t,Classroom Teacher,MOUND CITY R-II,Mound City Middle School,4,5,4,4,3,4,5,5,5,4,5,1,4,5,4,5,5,5,5,5,5,5,4,5,3
@@ -1202,22 +1204,21 @@ Baseline,2017-09-18 8:24,R_2YLFd0lgSO2tsFa,Special Educator,MOUND CITY R-II,Moun
 Baseline,2017-09-18 8:26,R_2V7pDMcgpcP3Mrp,Classroom Teacher,MOUND CITY R-II,Mound City High School,3,5,3,4,3,4,4,4,5,5,4,1,3,3,4,4,2,5,4,5,4,5,4,4,4
 Baseline,2017-09-18 8:57,R_1BOVmGw4zaWbrr9,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Middle,5,5,4,5,4,4,4,5,5,4,5,1,5,5,4,5,4,4,4,4,4,4,3,4,4
 Baseline,2017-09-18 10:02,R_3lyK7CqmcaA0aOw,Classroom Teacher,MOUND CITY R-II,Mound City Middle School,1,5,4,4,2,3,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,4,5
-Baseline,42996.42361,R_pQ1QMf2brp06pZT,Other,SEDALIA 200,Heber Hunt Elementary School,,,,,,,,,,,,0,,,,,,5,3,4,4,3,3,2,2
-Baseline,2017-09-18,R_3nrd2j47nUFvRsp,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,2,4,2,5,4,4,2,4,4,2,4,0,,,,4,2,5,5,5,4,4,5,4,1
+Baseline,2017-09-18,R_pQ1QMf2brp06pZT,Other,SEDALIA 200,Heber Hunt Elementary School,,,,,,,,,,,,0,,,,,,5,3,4,4,3,3,2,2
 Baseline,2017-09-18 12:06,R_2eQqmukeyQXjFIx,Classroom Teacher,MOUND CITY R-II,Mound City Middle School,4,4,4,4,3,4,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,4,5,4
 Baseline,2017-09-18 12:34,R_TtpfudRQK3xgZzP,Special Educator,MOUND CITY R-II,Mound City Middle School,4,5,5,5,4,4,5,5,5,5,4,1,4,4,5,5,4,5,5,5,5,5,5,5,3
 Baseline,2017-09-18 12:43,R_3mjETU4y71KopZU,Special Educator,UNIVERSITY ACADEMY,University Academy Middle,3,4,4,4,4,4,5,4,5,4,4,0,,,,4,4,4,,4,4,,4,4,4
 Baseline,2017-09-18 14:04,R_2wnshzKweN1sHfH,Classroom Teacher,HAYTI R-II,Mathis Elementary,1,1,1,1,4,1,4,2,2,2,4,1,2,4,2,4,2,5,4,5,5,4,3,3,3
-Baseline,42996.62917,R_1PcuYZKEP4ptalc,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,3,3,3,4,4,4,5,5,4,4,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-18,R_1PcuYZKEP4ptalc,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,3,3,3,4,4,4,5,5,4,4,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-18 16:53,R_1OktDo4G0ZSW3QH,Instructional Coach,MALDEN R-I,Malden Elementary,2,4,4,5,2,4,5,4,5,4,5,0,,,,4,5,5,5,4,5,5,5,5,5
 Baseline,2017-09-18 16:57,R_Zl4k1OxNt8pxMdz,Special Educator,MALDEN R-I,Malden Elementary,3,3,3,5,4,3,5,5,4,4,4,1,4,4,5,4,5,4,5,5,5,4,4,4,4
 Baseline,2017-09-18 18:47,R_2arv008GHNWLG9W,Classroom Teacher,MALDEN R-I,Malden High,4,4,2,5,5,4,4,4,5,4,5,1,3,5,2,5,1,4,2,4,4,2,2,2,2
 Baseline,2017-09-18 20:07,R_3hi5WPRKDJyOb24,Classroom Teacher,MALDEN R-I,Malden High,1,1,1,1,3,1,3,4,5,4,5,1,2,4,2,2,1,3,4,4,4,5,4,2,4
-Baseline,2017-09-18,R_1rfgDZXBn0sDx9Y,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,2,2,1,4,4,1,5,4,5,2,4,1,2,5,4,2,1,5,4,5,5,4,4,3,2
+Baseline,2017-09-19,R_1n3zrSMmjcfTpfU,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,4,3,3,5,4,3,5,5,5,3,5,1,4,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-19 4:43,R_bK2UeeQKJmsXEKB,Special Educator,MALDEN R-I,Malden Elementary,1,2,1,5,5,1,2,5,5,5,5,1,5,2,5,2,4,4,4,4,4,4,3,2,3
 Baseline,2017-09-19 5:18,R_1hRrVKQ0nc4lysQ,Other,MALDEN R-I,Malden Elementary,1,2,1,1,2,1,5,5,5,3,5,1,3,3,4,2,4,2,2,2,3,2,2,4,1
 Baseline,2017-09-19 5:48,R_XvNiv8csacSPchX,Classroom Teacher,HAYTI R-II,Hayti High School,2,2,2,4,2,2,5,4,5,3,4,0,,,,1,1,4,3,4,3,4,3,3,3
-Baseline,42997.24167,R_1KyfXoi6Eva4lEa,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,5,5,5,5,5,5,5,5,5,5,5,0,,,,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-19,R_1KyfXoi6Eva4lEa,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,5,5,5,5,5,5,5,5,5,5,5,0,,,,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-19 6:43,R_1NffqkiPxC5vm92,Classroom Teacher,MALDEN R-I,Malden Elementary,2,3,2,4,2,2,5,5,5,5,4,1,4,4,4,3,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-19 6:43,R_Y9XD5VsiBkOaOJj,Special Educator,MALDEN R-I,Malden High,2,1,3,4,1,1,5,3,1,4,4,1,5,5,4,4,5,5,3,5,3,5,3,5,3
 Baseline,2017-09-19 6:47,R_1o6kos2xkeRv5EB,Classroom Teacher,MALDEN R-I,Malden High,3,4,5,5,5,5,4,2,4,2,3,1,3,4,3,3,5,4,4,3,4,4,3,3,2
@@ -1264,11 +1265,10 @@ Baseline,2017-09-19 8:09,R_1JCkk9Fxdt42mlX,Classroom Teacher,HAYTI R-II,Hayti Hi
 Baseline,2017-09-19 8:31,R_1eE74BpxtdvdWfx,Classroom Teacher,MALDEN R-I,Malden Elementary,4,5,4,5,4,4,5,5,5,4,5,1,5,5,5,5,5,5,5,5,5,5,5,5,4
 Baseline,2017-09-19 8:44,R_1d4w2tZeHjgK9Ff,Classroom Teacher,MALDEN R-I,Malden Elementary,4,4,2,5,2,1,2,2,2,2,2,1,4,5,3,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-19 8:46,R_3PBOqZVMXHaMmu6,Classroom Teacher,HAYTI R-II,Hayti High School,5,4,3,5,3,4,5,5,5,5,5,0,,,,2,1,5,4,5,4,5,5,4,3
-Baseline,42997.37292,R_3CC4LtXtvrHMY3K,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,4,2,4,2,1,4,4,4,4,4,0,,,,2,2,3,3,3,3,4,3,2,2
+Baseline,2017-09-19,R_3CC4LtXtvrHMY3K,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,4,2,4,2,1,4,4,4,4,4,0,,,,2,2,3,3,3,3,4,3,2,2
 Baseline,2017-09-19 9:03,R_3mmLt22qaKghedV,Building Administrator,MALDEN R-I,Malden High,,,,,,,,,,,,0,,,,5,5,,,,,,,,
 Baseline,2017-09-19 9:11,R_1KuN7fxPvJlzG3y,Special Educator,FARMINGTON R-VII,Lincoln Intermediate,2,4,3,5,2,5,5,5,5,5,5,1,5,5,5,5,5,4,4,5,4,5,5,5,3
 Baseline,2017-09-19 9:11,R_3hnDnFIe3CSDt8G,Classroom Teacher,MALDEN R-I,Malden High,1,3,2,4,2,2,3,4,4,3,4,1,3,4,5,4,4,5,5,5,5,3,3,3,2
-Baseline,2017-09-19,R_1n3zrSMmjcfTpfU,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,4,3,3,5,4,3,5,5,5,3,5,1,4,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-19 9:43,R_1PYiWMuhgt6Njno,Classroom Teacher,MALDEN R-I,Malden High,3,4,4,5,4,3,4,5,5,5,5,0,,,,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-19 10:10,R_2DZBOaqaAcvKWfs,Classroom Teacher,MALDEN R-I,Malden High,4,2,2,4,3,2,2,5,5,5,5,1,2,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-19 10:30,R_1FwvsQVR5lpkayG,Special Educator,MALDEN R-I,Malden Elementary,1,1,1,5,4,1,4,1,1,1,1,1,1,4,1,1,1,4,4,4,4,5,3,5,4
@@ -1279,7 +1279,7 @@ Baseline,2017-09-19 11:10,R_2qxTMTg2CMPr5AQ,Classroom Teacher,MALDEN R-I,Malden 
 Baseline,2017-09-19 11:15,R_2bJK68apC1WbxRj,School Counselor,MALDEN R-I,Malden Elementary,,,,,,,,,,,,1,5,5,5,5,5,5,5,5,5,5,5,5,4
 Baseline,2017-09-19 12:03,R_1BUT8JD1oJOBTSV,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Lower,4,5,2,5,4,2,5,4,5,4,5,1,4,4,4,4,4,5,4,4,5,4,4,4,2
 Baseline,2017-09-19 12:09,R_2uCImGtqidFWog8,Classroom Teacher,MALDEN R-I,Malden Elementary,1,2,2,5,5,,4,4,4,4,5,1,4,4,4,4,4,4,4,4,4,4,4,4,4
-Baseline,42997.52222,R_UymBztcXScNW9Lb,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,5,3,5,4,4,5,5,5,3,4,1,3,4,5,3,4,5,5,4,4,4,5,5,5
+Baseline,2017-09-19,R_UymBztcXScNW9Lb,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,5,3,5,4,4,5,5,5,3,4,1,3,4,5,3,4,5,5,4,4,4,5,5,5
 Baseline,2017-09-19 12:49,R_Av6HVfEAZDrYZhf,Classroom Teacher,MALDEN R-I,Malden Elementary,3,4,1,4,2,1,1,4,4,2,4,1,5,5,5,4,3,4,3,4,4,4,3,4,2
 Baseline,2017-09-19 12:54,R_AvxJxCkxQFuYNK9,Classroom Teacher,MALDEN R-I,Malden Elementary,2,1,2,4,4,2,4,5,5,4,5,1,5,5,5,5,5,4,4,4,4,5,4,4,3
 Baseline,2017-09-19 12:57,R_2Ya0vVpEsJVQ3kE,Classroom Teacher,MALDEN R-I,Malden Elementary,2,3,3,5,4,4,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,4
@@ -1289,13 +1289,13 @@ Baseline,2017-09-19 13:28,R_Z29UYqaa4cQNo2Z,Classroom Teacher,MALDEN R-I,Malden 
 Baseline,2017-09-19 14:26,R_Qayi5HffQWL3G2l,Classroom Teacher,HAYTI R-II,Mathis Elementary,1,2,1,1,5,1,5,5,5,1,5,1,2,5,1,1,1,5,5,5,5,5,5,5,3
 Baseline,2017-09-19 15:10,R_Rfx8M78rVSmXL0d,Classroom Teacher,MALDEN R-I,Malden Elementary,1,1,1,1,5,1,5,5,5,5,5,1,5,5,5,5,5,4,4,4,4,5,4,4,1
 Baseline,2017-09-19 17:04,R_eFcYSCcFFB8cLKN,Classroom Teacher,MALDEN R-I,Malden Elementary,2,1,3,4,4,3,2,2,1,1,1,1,5,5,5,5,5,5,5,5,5,4,4,3,3
-Baseline,42997.71736,R_23f0jmomKycLOab,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,2,5,2,4,4,5,5,4,4,1,2,4,2,2,2,3,3,4,2,4,2,2,2
+Baseline,2017-09-19,R_23f0jmomKycLOab,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,2,5,2,4,4,5,5,4,4,1,2,4,2,2,2,3,3,4,2,4,2,2,2
 Baseline,2017-09-19 19:07,R_2xwPHYY8g1E0IAg,Classroom Teacher,CAMERON R-I,Cameron Intermediate School,2,2,2,3,3,1,5,5,5,2,4,1,4,3,5,2,2,4,3,4,4,4,4,3,3
 Baseline,2017-09-19 19:19,R_1mfrSAOU849EVA8,Special Educator,SHELDON R-VIII,Sheldon K-12,3,3,2,2,2,3,3,3,3,2,4,0,,,,2,3,4,4,4,4,4,4,4,4
 Baseline,2017-09-19 20:26,R_22RI9foOuwQN46j,Classroom Teacher,CAMERON R-I,Cameron High School,2,3,3,4,4,4,4,4,5,4,5,1,3,4,4,4,3,4,5,4,4,4,3,3,4
 Baseline,2017-09-19 22:15,R_SN4pZrzFpVbJchr,Classroom Teacher,BELTON 124,Kentucky Trail Elementary,2,4,3,4,2,4,5,5,5,2,4,1,4,4,4,4,3,4,3,5,4,5,3,4,2
 Baseline,2017-09-20 6:15,R_3MlJV5eR4nvKtRz,Classroom Teacher,MALDEN R-I,Malden High,1,4,2,4,2,2,4,4,5,4,4,1,3,3,1,3,3,3,4,4,3,4,4,4,3
-Baseline,42998.26389,R_2wb5hauwn6xTHyI,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,2,1,4,2,1,4,5,5,4,4,1,3,4,4,4,4,4,3,4,5,4,4,3,2
+Baseline,2017-09-20,R_2wb5hauwn6xTHyI,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,2,1,4,2,1,4,5,5,4,4,1,3,4,4,4,4,4,3,4,5,4,4,3,2
 Baseline,2017-09-20 6:27,R_1oHJivH0Pn3FvBW,Classroom Teacher,BELTON 124,Cambridge Elementary,4,5,5,4,4,4,5,5,5,3,5,1,5,5,5,5,5,5,5,5,5,5,5,5,4
 Baseline,2017-09-20 6:30,R_4ZLPztCysVuD4E9,Classroom Teacher,BELTON 124,Cambridge Elementary,3,4,3,4,4,4,5,5,5,5,5,1,4,5,4,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-20 6:39,R_2t6f1e1CNGjSYzM,Classroom Teacher,BELTON 124,Cambridge Elementary,4,4,5,5,5,5,5,4,4,5,5,0,,,,4,5,5,4,5,5,5,4,5,5
@@ -1320,10 +1320,10 @@ Baseline,2017-09-20 6:50,R_3ryZR2yHh3qa3U5,Classroom Teacher,BELTON 124,Cambridg
 Baseline,2017-09-20 6:50,R_z8eQmmJjVXwmHcd,Other,BELTON 124,Cambridge Elementary,1,3,2,2,2,1,5,5,5,2,5,0,,,,5,5,4,4,4,4,4,3,3,3
 Baseline,2017-09-20 6:52,R_3QKMbwBbrM1vkYz,Other,BELTON 124,Cambridge Elementary,2,2,3,4,2,1,2,1,4,4,1,0,,,,4,4,4,3,4,4,4,3,4,3
 Baseline,2017-09-20 8:19,R_1n8jSurXgisEA2R,Special Educator,MALDEN R-I,Malden Elementary,4,4,4,4,4,4,5,5,4,4,5,1,5,5,5,5,4,4,4,4,4,4,4,4,4
-Baseline,42998.34653,R_3hbyKs4NvTeCMTp,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,3,4,5,5,5,4,4,5,4,5,0,,,,4,2,3,2,4,3,3,3,4,2
-Baseline,42998.34722,R_rjOTrz2ARvNdXdT,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,3,3,2,4,3,3,4,5,5,3,5,1,5,5,5,5,5,4,3,5,4,4,4,4,3
+Baseline,2017-09-20,R_3hbyKs4NvTeCMTp,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,3,4,5,5,5,4,4,5,4,5,0,,,,4,2,3,2,4,3,3,3,4,2
+Baseline,2017-09-20,R_rjOTrz2ARvNdXdT,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,3,3,2,4,3,3,4,5,5,3,5,1,5,5,5,5,5,4,3,5,4,4,4,4,3
 Baseline,2017-09-20 8:49,R_1BYo7ueEo6PrltM,Special Educator,BELTON 124,Mill Creek Upper Elementary,3,4,3,5,3,3,4,4,5,4,4,1,4,4,4,4,4,4,4,3,3,4,3,4,3
-Baseline,42998.37083,R_1MTet4nyCnxxL0F,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,4,3,2,5,4,3,5,5,5,4,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-20,R_1MTet4nyCnxxL0F,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,4,3,2,5,4,3,5,5,5,4,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-20 9:04,R_3XjAuN3r5c05wfn,Classroom Teacher,MALDEN R-I,Malden High,1,1,2,4,5,1,4,4,4,4,4,1,4,4,4,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-20 9:09,R_3kcE4lUDAKZK6OF,Classroom Teacher,BELTON 124,Kentucky Trail Elementary,3,4,4,5,5,4,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-20 9:15,R_331QkNBJDlXqnGi,Special Educator,FT. ZUMWALT R-II,Twin Chimneys Elementary School,2,3,2,5,1,5,5,5,5,5,5,0,,,,5,5,5,5,5,5,5,5,5,5
@@ -1333,18 +1333,18 @@ Baseline,2017-09-20 9:56,R_zScxJCZMDrpYzUB,Classroom Teacher,BELTON 124,Mill Cre
 Baseline,2017-09-20 9:58,R_2eQ1Pleh3i6beN4,Special Educator,BELTON 124,Mill Creek Upper Elementary,4,3,3,3,3,3,2,2,4,4,4,1,4,5,4,4,3,4,4,4,4,4,4,4,3
 Baseline,2017-09-20 9:58,R_Zx9GXHoEZUMgKsh,Classroom Teacher,FT. ZUMWALT R-II,Twin Chimneys Elementary School,4,4,,4,4,3,5,5,5,4,5,1,5,3,5,4,5,4,4,4,4,4,4,4,3
 Baseline,2017-09-20 10:26,R_4Obwi5gKlsBXofn,Special Educator,FT. ZUMWALT R-II,Twin Chimneys Elementary School,3,4,3,4,2,3,5,5,4,4,5,1,4,4,5,5,4,4,4,5,4,5,4,4,4
-Baseline,42998.44861,R_1P0I1VQ2MyLOMP9,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,3,4,5,3,1,4,5,4,5,5,1,1,1,1,1,1,5,5,5,4,5,2,4,4
+Baseline,2017-09-20,R_1P0I1VQ2MyLOMP9,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,3,4,5,3,1,4,5,4,5,5,1,1,1,1,1,1,5,5,5,4,5,2,4,4
 Baseline,2017-09-20 11:09,R_22RqG6LNQAk1Ka0,Special Educator,BELTON 124,Mill Creek Upper Elementary,4,4,3,5,5,4,5,5,4,4,5,1,5,5,5,5,4,5,5,5,5,5,4,4,4
-Baseline,42998.48264,R_26fM3P8VnG2GIjx,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,5,4,5,4,2,4,3,5,5,5,1,5,4,3,3,3,5,5,5,5,5,4,5,5
+Baseline,2017-09-20,R_26fM3P8VnG2GIjx,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,5,4,5,4,2,4,3,5,5,5,1,5,4,3,3,3,5,5,5,5,5,4,5,5
 Baseline,2017-09-20 11:57,R_3iVTpqAweOV6U1X,Classroom Teacher,FARMINGTON R-VII,Lincoln Intermediate,1,4,2,3,4,2,5,5,5,4,5,1,4,5,5,4,4,4,3,4,4,4,3,3,3
 Baseline,2017-09-20 12:29,R_1JDys2quNnS28ef,Classroom Teacher,BELTON 124,Mill Creek Upper Elementary,2,3,2,4,4,3,5,5,5,4,4,1,5,4,5,4,4,5,5,5,4,5,4,3,3
 Baseline,2017-09-20 13:34,R_eLMbxyLJp8AhSBb,Classroom Teacher,BELTON 124,Mill Creek Upper Elementary,4,4,3,4,2,2,4,4,4,4,4,1,2,4,4,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-20 13:34,R_3fDkm9R4Le7RrUk,Instructional Coach,FT. ZUMWALT R-II,Twin Chimneys Elementary School,2,2,2,2,2,2,3,2,2,2,2,1,2,2,2,2,3,2,2,2,2,5,2,2,2
-Baseline,42998.56528,R_3Rsm2DQVPA6Z8hv,Building Administrator,SEDALIA 200,Parkview Elementary,,,,,,,,,,,,0,,,,5,5,,,,,,,,
+Baseline,2017-09-20,R_3Rsm2DQVPA6Z8hv,Building Administrator,SEDALIA 200,Parkview Elementary,,,,,,,,,,,,0,,,,5,5,,,,,,,,
 Baseline,2017-09-20 13:39,R_9LjhKEbh0Fp5c1r,Classroom Teacher,FT. ZUMWALT R-II,Twin Chimneys Elementary School,2,3,4,5,5,4,5,5,5,4,4,1,4,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-20,R_2rOzKKQka1Z9bNE,Other,SEDALIA 200,Parkview Elementary,5,5,5,5,5,5,5,5,5,5,5,0,,,,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-20 13:40,R_1BQ3bLTndaAJY9n,School Counselor,BELTON 124,Mill Creek Upper Elementary,,,,,,,,,,,,0,,,,5,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-20 13:40,R_12QJIFPiun9GcMU,Classroom Teacher,FT. ZUMWALT R-II,Twin Chimneys Elementary School,1,2,2,2,1,2,5,5,5,4,5,1,5,5,4,4,5,4,4,4,4,4,4,4,4
-Baseline,42998.56944,R_2rOzKKQka1Z9bNE,Other,SEDALIA 200,Parkview Elementary,5,5,5,5,5,5,5,5,5,5,5,0,,,,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-20 14:05,R_7TAVn0tHVhbftFn,Classroom Teacher,BELTON 124,Mill Creek Upper Elementary,4,3,4,4,4,2,4,4,5,3,4,1,3,5,5,5,5,4,5,4,4,5,4,3,3
 Baseline,2017-09-20 14:15,R_Odrq55zgcVF49MZ,Classroom Teacher,BELTON 124,Mill Creek Upper Elementary,3,2,1,2,1,1,5,5,5,5,5,1,5,5,5,5,4,2,4,4,3,4,2,3,2
 Baseline,2017-09-20 14:37,R_W0D98haxkaflNND,Classroom Teacher,BELTON 124,Mill Creek Upper Elementary,3,3,3,4,4,4,4,4,4,4,4,1,2,3,4,4,4,,,4,4,3,4,4,4
@@ -1352,52 +1352,53 @@ Baseline,2017-09-20 14:38,R_2QM3ff3DJGM4qfQ,Classroom Teacher,MALDEN R-I,Malden 
 Baseline,2017-09-20 14:50,R_RnlP4swfMwvm0aB,Special Educator,MALDEN R-I,Malden Elementary,5,5,2,5,2,5,4,2,5,2,2,1,5,5,5,2,2,5,5,5,5,4,4,4,4
 Baseline,2017-09-20 14:54,R_0xLk1lNvkgN2wX7,Classroom Teacher,MALDEN R-I,Malden Elementary,1,2,2,4,2,2,4,4,4,2,4,1,4,4,5,4,4,4,3,4,3,4,3,3,3
 Baseline,2017-09-20 14:57,R_2YtiwNMbn4qtCso,School Counselor,BELTON 124,Mill Creek Upper Elementary,,,,,,,,,,,,1,4,5,5,5,5,5,,5,5,5,5,5,4
-Baseline,42998.625,R_3pm9hO0yB6FjaCR,Other,SEDALIA 200,Parkview Elementary,4,5,4,5,5,4,5,5,4,,,0,,,,5,5,5,5,5,5,5,,5,
+Baseline,2017-09-20,R_3pm9hO0yB6FjaCR,Other,SEDALIA 200,Parkview Elementary,4,5,4,5,5,4,5,5,4,,,0,,,,5,5,5,5,5,5,5,,5,
 Baseline,2017-09-20 15:23,R_1QfHrt5FDLpF4FO,Classroom Teacher,BELTON 124,Mill Creek Upper Elementary,1,1,2,4,4,2,4,5,5,1,4,0,,,,1,5,4,4,4,4,3,3,4,1
-Baseline,42998.65139,R_2pM16GknW9i3ywY,Special Educator,SEDALIA 200,Parkview Elementary,1,5,4,5,5,5,5,5,5,5,5,0,,,,5,5,5,5,5,5,5,5,5,5
-Baseline,42998.65556,R_3nfpYNXsQc3z8me,Classroom Teacher,SEDALIA 200,Parkview Elementary,3,4,3,4,3,2,4,5,5,5,5,1,3,4,2,4,2,5,5,5,5,5,5,5,5
-Baseline,42998.65625,R_2q2eL2fYCJRxfMd,School Counselor,SEDALIA 200,Parkview Elementary,,,,,,,,,,,,0,,,,4,4,5,5,5,5,5,5,5,5
-Baseline,42998.65694,R_2Sxao0ubK8ujula,Classroom Teacher,SEDALIA 200,Parkview Elementary,2,4,4,4,4,3,2,4,5,2,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
-Baseline,42998.65694,R_3CUcSIbECftzIJI,Special Educator,SEDALIA 200,Parkview Elementary,4,3,3,5,3,3,5,4,4,4,4,0,,,,4,5,5,5,5,5,5,5,5,5
-Baseline,42998.65694,R_1mDXpjN2yms4Uzl,Other,SEDALIA 200,Parkview Elementary,4,4,4,5,3,3,5,5,4,4,5,0,,,,5,5,5,5,5,5,5,4,4,3
-Baseline,42998.65764,R_1NeRASDDaJ5AlFL,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,4,3,5,4,4,4,5,5,4,5,1,4,5,5,5,5,5,5,5,5,5,5,5,5
-Baseline,42998.65764,R_3nIZ1H3LwL22tvp,Classroom Teacher,SEDALIA 200,Parkview Elementary,3,2,2,4,2,2,4,2,2,1,2,1,5,5,4,4,4,5,5,5,5,5,4,4,4
-Baseline,42998.65833,R_db7Fes48KoOrBZL,Special Educator,SEDALIA 200,Parkview Elementary,3,4,2,5,3,2,5,4,4,4,4,1,3,4,5,2,4,4,4,4,4,5,4,3,3
-Baseline,42998.65833,R_1qfuXZX6GycU80k,Special Educator,SEDALIA 200,Parkview Elementary,3,5,4,5,5,3,5,5,5,5,5,0,,,,5,5,5,5,5,5,5,5,5,5
-Baseline,42998.65833,R_3IY1JwNEk1QDkwG,Classroom Teacher,SEDALIA 200,Parkview Elementary,1,4,4,4,2,4,5,5,5,4,5,1,4,5,5,5,5,5,5,5,5,5,5,5,4
-Baseline,42998.65833,R_RRnFRJlZS1lvfVf,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,5,5,5,5,5,5,5,5,5,5,1,5,5,5,5,5,5,4,5,4,5,5,5,4
-Baseline,42998.65903,R_3iL38A6cQ21oMnH,Classroom Teacher,SEDALIA 200,Parkview Elementary,1,4,3,4,2,4,5,5,5,3,4,1,4,4,4,4,4,4,4,4,3,4,3,4,3
-Baseline,42998.65903,R_2Vpv8MLiL6JCaZV,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,4,5,5,4,4,5,5,4,2,5,1,5,5,5,5,5,4,4,4,4,4,4,4,4
-Baseline,42998.65903,R_2zuUjluEv8Slc5H,Classroom Teacher,SEDALIA 200,Parkview Elementary,1,3,5,5,5,4,5,5,4,5,5,1,5,4,5,5,5,5,4,4,5,5,4,5,4
-Baseline,42998.65903,R_ABcBdD1cF4SewWl,Classroom Teacher,SEDALIA 200,Parkview Elementary,2,4,4,4,4,3,4,5,4,5,5,1,5,3,4,4,3,4,4,5,4,4,5,5,5
-Baseline,42998.65903,R_TpGeKgb1Zc52rGV,Classroom Teacher,SEDALIA 200,Parkview Elementary,2,1,3,4,4,2,5,4,4,2,5,1,4,5,4,4,4,5,5,5,5,5,5,5,5
-Baseline,42998.65972,R_1QG7sU2qfxLI4Bt,Classroom Teacher,SEDALIA 200,Parkview Elementary,2,3,2,3,3,2,4,4,4,3,3,1,4,5,4,4,4,4,4,4,4,4,4,4,4
-Baseline,42998.66111,R_2wKpA7JiBG552rK,Other,SEDALIA 200,Parkview Elementary,4,4,4,4,4,4,5,4,4,4,4,1,2,4,4,4,4,5,5,5,5,5,4,4,4
-Baseline,42998.66181,R_3snqIqn0J04rsop,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,5,4,5,4,3,5,5,5,5,5,1,5,5,4,5,4,5,4,5,5,5,5,4,5
-Baseline,42998.6625,R_6SeXjOs5ilw46sN,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,5,4,5,5,5,5,5,5,5,5,1,4,5,5,5,5,5,4,4,5,5,4,5,5
-Baseline,42998.66319,R_1odTWMYmY7e9Zeq,Classroom Teacher,SEDALIA 200,Parkview Elementary,5,5,4,5,5,4,5,5,5,5,5,1,5,4,5,5,5,4,4,5,5,5,5,5,4
-Baseline,42998.66389,R_1NyQeoVuU1HAIIV,Classroom Teacher,SEDALIA 200,Parkview Elementary,2,2,2,5,3,3,5,4,5,3,5,1,4,4,4,4,5,5,4,4,3,5,4,5,1
-Baseline,42998.66528,R_2sEU47IOqWrDiq5,Classroom Teacher,SEDALIA 200,Parkview Elementary,5,5,4,4,2,4,5,5,5,2,4,1,5,5,5,5,5,4,3,4,4,4,3,4,2
+Baseline,2017-09-20,R_2pM16GknW9i3ywY,Special Educator,SEDALIA 200,Parkview Elementary,1,5,4,5,5,5,5,5,5,5,5,0,,,,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-20,R_3nfpYNXsQc3z8me,Classroom Teacher,SEDALIA 200,Parkview Elementary,3,4,3,4,3,2,4,5,5,5,5,1,3,4,2,4,2,5,5,5,5,5,5,5,5
+Baseline,2017-09-20,R_2q2eL2fYCJRxfMd,School Counselor,SEDALIA 200,Parkview Elementary,,,,,,,,,,,,0,,,,4,4,5,5,5,5,5,5,5,5
+Baseline,2017-09-20,R_2Sxao0ubK8ujula,Classroom Teacher,SEDALIA 200,Parkview Elementary,2,4,4,4,4,3,2,4,5,2,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-20,R_3CUcSIbECftzIJI,Special Educator,SEDALIA 200,Parkview Elementary,4,3,3,5,3,3,5,4,4,4,4,0,,,,4,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-20,R_1mDXpjN2yms4Uzl,Other,SEDALIA 200,Parkview Elementary,4,4,4,5,3,3,5,5,4,4,5,0,,,,5,5,5,5,5,5,5,4,4,3
+Baseline,2017-09-20,R_1NeRASDDaJ5AlFL,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,4,3,5,4,4,4,5,5,4,5,1,4,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-20,R_3nIZ1H3LwL22tvp,Classroom Teacher,SEDALIA 200,Parkview Elementary,3,2,2,4,2,2,4,2,2,1,2,1,5,5,4,4,4,5,5,5,5,5,4,4,4
+Baseline,2017-09-20,R_db7Fes48KoOrBZL,Special Educator,SEDALIA 200,Parkview Elementary,3,4,2,5,3,2,5,4,4,4,4,1,3,4,5,2,4,4,4,4,4,5,4,3,3
+Baseline,2017-09-20,R_1qfuXZX6GycU80k,Special Educator,SEDALIA 200,Parkview Elementary,3,5,4,5,5,3,5,5,5,5,5,0,,,,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-20,R_3IY1JwNEk1QDkwG,Classroom Teacher,SEDALIA 200,Parkview Elementary,1,4,4,4,2,4,5,5,5,4,5,1,4,5,5,5,5,5,5,5,5,5,5,5,4
+Baseline,2017-09-20,R_RRnFRJlZS1lvfVf,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,5,5,5,5,5,5,5,5,5,5,1,5,5,5,5,5,5,4,5,4,5,5,5,4
+Baseline,2017-09-20,R_3iL38A6cQ21oMnH,Classroom Teacher,SEDALIA 200,Parkview Elementary,1,4,3,4,2,4,5,5,5,3,4,1,4,4,4,4,4,4,4,4,3,4,3,4,3
+Baseline,2017-09-20,R_2Vpv8MLiL6JCaZV,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,4,5,5,4,4,5,5,4,2,5,1,5,5,5,5,5,4,4,4,4,4,4,4,4
+Baseline,2017-09-20,R_2zuUjluEv8Slc5H,Classroom Teacher,SEDALIA 200,Parkview Elementary,1,3,5,5,5,4,5,5,4,5,5,1,5,4,5,5,5,5,4,4,5,5,4,5,4
+Baseline,2017-09-20,R_ABcBdD1cF4SewWl,Classroom Teacher,SEDALIA 200,Parkview Elementary,2,4,4,4,4,3,4,5,4,5,5,1,5,3,4,4,3,4,4,5,4,4,5,5,5
+Baseline,2017-09-20,R_TpGeKgb1Zc52rGV,Classroom Teacher,SEDALIA 200,Parkview Elementary,2,1,3,4,4,2,5,4,4,2,5,1,4,5,4,4,4,5,5,5,5,5,5,5,5
+Baseline,2017-09-20,R_1QG7sU2qfxLI4Bt,Classroom Teacher,SEDALIA 200,Parkview Elementary,2,3,2,3,3,2,4,4,4,3,3,1,4,5,4,4,4,4,4,4,4,4,4,4,4
+Baseline,2017-09-20,R_2wKpA7JiBG552rK,Other,SEDALIA 200,Parkview Elementary,4,4,4,4,4,4,5,4,4,4,4,1,2,4,4,4,4,5,5,5,5,5,4,4,4
+Baseline,2017-09-20,R_3snqIqn0J04rsop,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,5,4,5,4,3,5,5,5,5,5,1,5,5,4,5,4,5,4,5,5,5,5,4,5
+Baseline,2017-09-20,R_6SeXjOs5ilw46sN,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,5,4,5,5,5,5,5,5,5,5,1,4,5,5,5,5,5,4,4,5,5,4,5,5
+Baseline,2017-09-20,R_1odTWMYmY7e9Zeq,Classroom Teacher,SEDALIA 200,Parkview Elementary,5,5,4,5,5,4,5,5,5,5,5,1,5,4,5,5,5,4,4,5,5,5,5,5,4
+Baseline,2017-09-20,R_1NyQeoVuU1HAIIV,Classroom Teacher,SEDALIA 200,Parkview Elementary,2,2,2,5,3,3,5,4,5,3,5,1,4,4,4,4,5,5,4,4,3,5,4,5,1
+Baseline,2017-09-20,R_2sEU47IOqWrDiq5,Classroom Teacher,SEDALIA 200,Parkview Elementary,5,5,4,4,2,4,5,5,5,2,4,1,5,5,5,5,5,4,3,4,4,4,3,4,2
 Baseline,2017-09-20 16:00,R_1i8Ju3XqxYg7Oeb,Special Educator,MALDEN R-I,Malden Elementary,4,5,5,5,4,4,5,5,5,5,5,1,5,5,5,5,5,4,4,5,4,5,4,4,4
-Baseline,42998.66667,R_1M4WM257lq7leJL,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,5,4,4,5,4,5,5,5,4,5,1,4,4,5,4,4,4,4,5,5,5,4,5,2
-Baseline,42998.66736,R_1NwPdHwRaYdxKI6,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,3,3,5,2,4,4,5,4,4,5,1,4,5,3,4,4,4,4,4,4,4,4,4,4
-Baseline,42998.67014,R_3JJJsC3qJjhQT7a,Other,SEDALIA 200,Parkview Elementary,4,4,4,4,4,4,5,5,5,5,5,0,,,,5,5,5,5,5,5,5,4,4,3
-Baseline,42998.67083,R_3pfgGcnjeoBHTrv,Instructional Coach,SEDALIA 200,Parkview Elementary,2,4,2,4,4,4,5,4,4,4,4,0,,,,4,4,5,5,5,5,5,5,5,3
-Baseline,42998.67083,R_3s5HsYeDYKLbBIi,Classroom Teacher,SEDALIA 200,Parkview Elementary,5,4,4,5,4,5,5,5,5,5,5,1,4,5,5,5,5,5,5,5,5,5,5,5,5
-Baseline,42998.68056,R_3L0xGIRZEJRxGqD,Other,SEDALIA 200,Parkview Elementary,3,3,4,5,4,4,5,4,4,4,5,0,,,,5,5,5,5,5,5,5,3,4,4
-Baseline,42998.69028,R_2VfGKdDnS3EZvxC,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,5,4,5,4,4,5,5,5,4,5,1,5,5,5,5,5,5,4,5,5,5,5,4,4
-Baseline,42998.69236,R_1QL20O9TZsfGV4s,Classroom Teacher,SEDALIA 200,Parkview Elementary,1,4,2,4,4,1,5,4,5,3,4,1,5,5,4,5,5,5,5,5,5,5,5,4,5
+Baseline,2017-09-20,R_1M4WM257lq7leJL,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,5,4,4,5,4,5,5,5,4,5,1,4,4,5,4,4,4,4,5,5,5,4,5,2
+Baseline,2017-09-20,R_1NwPdHwRaYdxKI6,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,3,3,5,2,4,4,5,4,4,5,1,4,5,3,4,4,4,4,4,4,4,4,4,4
+Baseline,2017-09-20,R_3JJJsC3qJjhQT7a,Other,SEDALIA 200,Parkview Elementary,4,4,4,4,4,4,5,5,5,5,5,0,,,,5,5,5,5,5,5,5,4,4,3
+Baseline,2017-09-20,R_3pfgGcnjeoBHTrv,Instructional Coach,SEDALIA 200,Parkview Elementary,2,4,2,4,4,4,5,4,4,4,4,0,,,,4,4,5,5,5,5,5,5,5,3
+Baseline,2017-09-20,R_3s5HsYeDYKLbBIi,Classroom Teacher,SEDALIA 200,Parkview Elementary,5,4,4,5,4,5,5,5,5,5,5,1,4,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-20,R_3L0xGIRZEJRxGqD,Other,SEDALIA 200,Parkview Elementary,3,3,4,5,4,4,5,4,4,4,5,0,,,,5,5,5,5,5,5,5,3,4,4
+Baseline,2017-09-20,R_2VfGKdDnS3EZvxC,Classroom Teacher,SEDALIA 200,Parkview Elementary,4,5,4,5,4,4,5,5,5,4,5,1,5,5,5,5,5,5,4,5,5,5,5,4,4
+Baseline,2017-09-20,R_1QL20O9TZsfGV4s,Classroom Teacher,SEDALIA 200,Parkview Elementary,1,4,2,4,4,1,5,4,5,3,4,1,5,5,4,5,5,5,5,5,5,5,5,4,5
 Baseline,2017-09-20 16:38,R_9AFOG4Mmwx2SaIN,Classroom Teacher,BELTON 124,Mill Creek Upper Elementary,5,4,4,4,2,3,4,3,5,5,5,1,4,4,5,5,5,4,5,5,5,5,4,4,3
 Baseline,2017-09-20 16:59,R_2QrN2NSFWB6jb5k,Special Educator,MALDEN R-I,Malden High,3,3,3,3,2,3,4,2,3,3,2,0,,,,4,4,4,4,4,4,3,3,3,3
-Baseline,42998.71944,R_1QhMAYS6wHIX1cO,Special Educator,SEDALIA 200,Parkview Elementary,5,4,4,5,4,4,5,5,5,5,4,0,,,,5,4,5,5,5,5,5,4,5,4
+Baseline,2017-09-20,R_1QhMAYS6wHIX1cO,Special Educator,SEDALIA 200,Parkview Elementary,5,4,4,5,4,4,5,5,5,5,4,0,,,,5,4,5,5,5,5,5,4,5,4
 Baseline,2017-09-20 18:05,R_1H06ZUNQKnPusWg,Classroom Teacher,FT. ZUMWALT R-II,Twin Chimneys Elementary School,4,5,3,4,3,3,5,5,4,4,5,1,4,4,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-20 18:33,R_30hRoA0zcqiFNes,Classroom Teacher,FT. ZUMWALT R-II,Twin Chimneys Elementary School,3,2,2,4,4,3,4,4,5,3,5,1,5,5,4,4,5,4,4,4,4,4,4,4,4
-Baseline,42998.83819,R_bPACUWmztF0UqJz,Other,SEDALIA 200,Parkview Elementary,1,5,1,4,2,1,5,5,5,2,4,0,,,,4,4,4,4,5,4,3,4,2,4
+Baseline,2017-09-20,R_bPACUWmztF0UqJz,Other,SEDALIA 200,Parkview Elementary,1,5,1,4,2,1,5,5,5,2,4,0,,,,4,4,4,4,5,4,3,4,2,4
 Baseline,2017-09-20 20:33,R_31yNqRCPIYPdmsp,Classroom Teacher,BELTON 124,Mill Creek Upper Elementary,5,5,4,4,4,4,5,5,5,4,4,1,4,4,4,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-20 20:45,R_Req1H6OeAcAvUQh,Classroom Teacher,FT. ZUMWALT R-II,Twin Chimneys Elementary School,2,2,2,4,2,2,5,5,5,5,5,1,5,4,5,5,5,5,5,5,5,5,5,5,4
 Baseline,2017-09-20 21:46,R_3P5fXj4LmTQdsT5,Classroom Teacher,MALDEN R-I,Malden Elementary,2,3,4,5,3,3,5,3,4,2,4,1,5,4,4,5,5,4,4,5,5,4,4,4,4
+Baseline,2017-09-21,R_11Yo6eAnSkHx1vx,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,3,4,2,4,2,2,4,5,4,5,5,0,,,,4,5,5,4,5,5,4,4,3,2
 Baseline,2017-09-21 6:41,R_3rUsyU0iZ9blN0d,Classroom Teacher,HAYTI R-II,Hayti High School,4,4,2,3,5,2,1,5,5,4,5,0,,,,4,5,5,5,5,5,5,4,4,3
-Baseline,42999.28819,R_2sX6nxTV8XplUFi,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,1,3,4,4,3,5,5,5,4,4,1,5,5,4,4,5,4,4,5,4,5,5,5,5
+Baseline,2017-09-21,R_2sX6nxTV8XplUFi,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,1,3,4,4,3,5,5,5,4,4,1,5,5,4,4,5,4,4,5,4,5,5,5,5
 Baseline,2017-09-21 7:40,R_2Qg2sqeRGHcShik,Classroom Teacher,MALDEN R-I,Malden Elementary,2,4,4,4,4,3,5,5,5,5,5,1,4,4,4,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-21 7:42,R_2QAkOwRbRgInMlo,Classroom Teacher,CAMERON R-I,Cameron Veterans Middle School,5,5,5,5,5,,5,5,5,5,5,1,5,5,5,5,5,5,5,5,4,5,4,4,5
 Baseline,2017-09-21 7:58,R_2S5ZDMnFUYXhTxw,Classroom Teacher,MALDEN R-I,Malden High,2,4,4,4,4,3,5,5,5,4,5,1,5,5,4,5,4,5,5,5,5,5,5,5,5
@@ -1413,9 +1414,9 @@ Baseline,2017-09-21 10:38,R_1FDiV6GUPImrKUy,Classroom Teacher,BELTON 124,Mill Cr
 Baseline,2017-09-21 10:47,R_21Eun7uQg1mMDMS,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Middle,2,5,5,5,4,4,5,5,4,5,5,0,,,,4,4,,,,4,4,4,4,4
 Baseline,2017-09-21 11:09,R_3nIsn5UkxIhbnNl,Classroom Teacher,BELTON 124,Mill Creek Upper Elementary,2,2,2,4,3,3,4,5,5,3,5,1,4,5,5,2,2,4,4,4,4,4,4,4,3
 Baseline,2017-09-21 11:17,R_2sWTbsR9wGGW62r,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Lower,2,4,2,5,4,4,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,4,4
-Baseline,42999.48194,R_1FzT989wYIxRViz,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,1,1,4,1,1,4,5,5,5,4,0,,,,4,3,4,3,5,5,2,1,1,1
+Baseline,2017-09-21,R_1FzT989wYIxRViz,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,1,1,4,1,1,4,5,5,5,4,0,,,,4,3,4,3,5,5,2,1,1,1
 Baseline,2017-09-21 11:44,R_ByumoSPLaPcpKBb,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Upper,3,3,2,4,4,3,3,4,4,2,3,1,3,3,2,3,4,4,5,4,4,5,4,5,3
-Baseline,42999.49861,R_1FCwzVPfjDscPBA,Special Educator,SEDALIA 200,Parkview Elementary,3,2,2,4,3,4,4,4,4,4,4,0,,,,5,5,5,4,5,5,4,4,4,4
+Baseline,2017-09-21,R_1FCwzVPfjDscPBA,Special Educator,SEDALIA 200,Parkview Elementary,3,2,2,4,3,4,4,4,4,4,4,0,,,,5,5,5,4,5,5,4,4,4,4
 Baseline,2017-09-21 11:59,R_2Xnd9Fo6wR854C5,Building Administrator,BELTON 124,Bosco,,,,,,,,,,,,0,,,,4,4,,,,,,,,
 Baseline,2017-09-21 12:12,R_2v7I4gzDN6ty614,Special Educator,BELTON 124,Bosco,2,4,2,4,3,2,4,5,5,5,5,1,2,5,5,4,2,4,3,3,3,5,4,4,2
 Baseline,2017-09-21 12:18,R_24uh36nXCBa9szJ,Classroom Teacher,MALDEN R-I,Malden High,1,2,5,5,5,5,5,4,5,2,3,0,,,,4,4,5,5,5,5,5,5,5,5
@@ -1456,7 +1457,6 @@ Baseline,2017-09-21 15:59,R_CdZ3OqQE7FS4ZXP,Classroom Teacher,FT. ZUMWALT R-II,N
 Baseline,2017-09-21 16:03,R_3FOo7HW5dlHQROi,Classroom Teacher,FT. ZUMWALT R-II,Westoff Elementary School,2,2,2,4,2,2,4,5,5,4,5,1,4,4,2,2,2,5,5,5,5,5,5,5,3
 Baseline,2017-09-21 16:04,R_1QthyNrNzmkCo8N,Classroom Teacher,FT. ZUMWALT R-II,Westoff Elementary School,1,1,1,5,5,1,4,5,5,3,4,1,3,4,5,4,2,4,3,4,4,2,3,4,2
 Baseline,2017-09-21 16:04,R_8k8GsiNVEvmjv1L,Special Educator,FT. ZUMWALT R-II,Westoff Elementary School,4,4,4,4,4,4,4,4,5,5,4,0,,,,4,4,5,5,5,5,5,4,5,5
-Baseline,2017-09-21,R_11Yo6eAnSkHx1vx,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,3,4,2,4,2,2,4,5,4,5,5,0,,,,4,5,5,4,5,5,4,4,3,2
 Baseline,2017-09-21 16:17,R_3qJNttMWLpsiaQ5,Classroom Teacher,FT. ZUMWALT R-II,North High School,2,3,2,4,2,2,4,5,5,2,5,1,5,5,5,4,3,4,2,4,2,4,4,4,1
 Baseline,2017-09-21 16:21,R_1PZODzgCTo7CS67,Classroom Teacher,FT. ZUMWALT R-II,West Middle School,2,4,2,3,3,1,5,4,5,4,4,1,4,5,5,5,5,5,5,5,3,5,3,4,2
 Baseline,2017-09-21 17:29,R_b0ZLEgqwWKOMU4p,Classroom Teacher,FT. ZUMWALT R-II,North High School,2,4,4,5,3,2,4,4,5,3,4,1,2,4,4,4,3,5,4,4,4,5,3,4,4
@@ -1464,7 +1464,7 @@ Baseline,2017-09-21 18:04,R_3MPxAsZtug5mGLc,Classroom Teacher,FT. ZUMWALT R-II,N
 Baseline,2017-09-21 18:20,R_1JCqaVxQIgZUR6c,Classroom Teacher,FT. ZUMWALT R-II,Twin Chimneys Elementary School,2,4,4,4,4,3,5,5,5,5,5,1,5,5,5,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-21 18:24,R_2AM8uJfvrEQtd7E,Classroom Teacher,FT. ZUMWALT R-II,North High School,1,3,1,5,4,1,1,1,5,5,5,1,2,2,2,1,2,1,1,1,1,1,1,1,1
 Baseline,2017-09-21 18:46,R_3e5eD4CraagFpEX,Classroom Teacher,FT. ZUMWALT R-II,North High School,3,4,3,4,4,3,4,2,2,2,2,1,2,3,4,4,4,4,4,4,4,4,4,4,2
-Baseline,42999.78472,R_SNc5M7n0M3KHOi5,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,5,4,2,4,2,3,5,5,5,4,5,1,5,4,4,5,5,,,,,,,,
+Baseline,2017-09-21,R_SNc5M7n0M3KHOi5,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,5,4,2,4,2,3,5,5,5,4,5,1,5,4,4,5,5,,,,,,,,
 Baseline,2017-09-21 19:20,R_3J2ucXy0gsiS3RD,Classroom Teacher,FT. ZUMWALT R-II,Westoff Elementary School,4,2,2,3,4,2,5,4,5,4,5,1,5,5,5,4,3,4,2,4,2,3,4,2,1
 Baseline,2017-09-21 19:52,R_3Ho7tOSe7o7sRh1,Classroom Teacher,FT. ZUMWALT R-II,Westoff Elementary School,2,1,1,4,2,2,5,5,5,3,5,1,3,4,5,4,4,4,5,5,5,5,4,4,4
 Baseline,2017-09-21 20:23,R_RQV8Ig9OJ9YNZsZ,Classroom Teacher,FT. ZUMWALT R-II,Westoff Elementary School,3,2,2,3,4,4,5,5,5,4,5,1,5,5,5,5,5,5,5,5,5,5,5,4,5
@@ -1476,6 +1476,15 @@ Baseline,2017-09-21 21:02,R_2c8HgB1ELjPNj9s,Classroom Teacher,FT. ZUMWALT R-II,W
 Baseline,2017-09-21 21:25,R_UDU2anyjt7zqw6t,Building Administrator,FT. ZUMWALT R-II,Emge Elementary School,,,,,,,,,,,,0,,,,4,2,,,,,,,,
 Baseline,2017-09-21 21:48,R_u48nAvefRLq4cA9,Classroom Teacher,BELTON 124,Mill Creek Upper Elementary,1,3,3,4,2,1,4,5,5,2,5,1,4,5,5,5,3,4,5,5,5,5,3,2,2
 Baseline,2017-09-21 22:31,R_10rvT8YCmqKOtDv,Classroom Teacher,FT. ZUMWALT R-II,Westoff Elementary School,4,5,4,4,5,5,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-22,R_3Okb5ZSvQoOI7E5,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,3,4,3,5,4,4,,4,5,2,4,1,3,3,3,3,3,4,4,4,4,4,4,2,3
+Baseline,2017-09-22,R_3EzfrQ8wkP7rEcf,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,4,4,4,4,2,2,5,5,5,5,4,1,4,5,5,5,4,4,4,4,4,4,4,4,3
+Baseline,2017-09-22,R_tGuCsQMPlGHO3M5,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,2,3,4,2,2,2,4,2,5,4,5,1,2,5,4,2,2,4,3,4,4,3,4,2,3
+Baseline,2017-09-22,R_3nGdqP5zvk7Vrma,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,,5,5,5,4,5,5,5,5,5,5,1,5,5,5,5,5,5,2,5,4,5,5,5,2
+Baseline,2017-09-22,R_Xhrwb6Xu5TI70id,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,5,5,5,5,5,5,4,5,4,5,5,1,4,5,4,5,4,5,5,4,5,2,4,4,3
+Baseline,2017-09-22,R_2w4B8YuGJAiGsOe,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,4,4,2,5,4,5,5,5,5,4,5,1,4,5,5,3,2,5,5,5,5,5,5,5,5
+Baseline,2017-09-22,R_r7HHrGzXiD5nntT,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,2,1,1,2,3,1,4,3,4,2,2,1,2,2,1,3,3,4,4,4,4,4,4,4,4
+Baseline,2017-09-22,R_cLShl5qej8amkud,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,4,4,5,5,5,5,4,4,5,5,5,0,,,,4,4,4,4,4,4,5,4,5,4
+Baseline,2017-09-22,R_3O9rZw9YXVyrnzO,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,5,5,5,5,5,5,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-22 4:43,R_3KD4JpFCUn02lvj,Building Administrator,FT. ZUMWALT R-II,East High School,,,,,,,,,,,,0,,,,4,3,,,,,,,,
 Baseline,2017-09-22 5:10,R_03wpeZcgDfDKVmV,Classroom Teacher,FT. ZUMWALT R-II,East High School,2,4,2,5,5,2,4,4,4,2,5,1,4,2,5,4,2,4,4,4,5,4,3,4,2
 Baseline,2017-09-22 5:12,R_1oFRySucgQatOFj,Classroom Teacher,FT. ZUMWALT R-II,West Middle School,4,4,3,5,4,3,5,5,5,4,5,1,4,5,5,5,5,4,3,4,5,5,3,4,2
@@ -1562,8 +1571,8 @@ Baseline,2017-09-22 7:40,R_3MJriGenxDgM3un,Classroom Teacher,FT. ZUMWALT R-II,We
 Baseline,2017-09-22 7:40,R_PC1rHavkTujMy4x,Other,FT. ZUMWALT R-II,West High School,4,5,2,4,4,4,5,5,4,4,5,0,,,,4,4,5,5,5,4,4,3,3,2
 Baseline,2017-09-22 7:43,R_3freNOJ9yh6owhk,Classroom Teacher,FT. ZUMWALT R-II,West High School,2,4,2,2,2,2,5,4,4,2,3,1,4,4,2,5,5,5,3,5,5,5,5,5,3
 Baseline,2017-09-22 7:49,R_rr09bnE9tVSNC5b,Special Educator,FT. ZUMWALT R-II,Westoff Elementary School,4,4,4,5,3,4,5,5,5,4,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
-Baseline,43000.32639,R_25NGb15jXnT036A,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,4,1,2,4,2,2,4,5,5,4,5,1,5,5,5,5,2,5,5,5,5,5,5,5,5
 Baseline,2017-09-22 7:50,R_xonAG7Ri98eQQZX,Classroom Teacher,FT. ZUMWALT R-II,West High School,3,4,4,5,4,3,4,5,5,4,4,1,4,4,4,4,4,4,3,3,3,3,3,3,4
+Baseline,2017-09-22,R_25NGb15jXnT036A,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,4,1,2,4,2,2,4,5,5,4,5,1,5,5,5,5,2,5,5,5,5,5,5,5,5
 Baseline,2017-09-22 7:51,R_1jrWGya2gy8cKnp,School Counselor,FT. ZUMWALT R-II,West High School,,,,,,,,,,,,1,4,5,5,4,4,5,5,5,4,5,5,5,5
 Baseline,2017-09-22 7:51,R_bENXbcXABQiKMO5,Classroom Teacher,FT. ZUMWALT R-II,West High School,4,5,5,5,5,4,4,5,5,5,5,1,5,4,4,5,5,4,3,5,3,5,3,5,4
 Baseline,2017-09-22 7:53,R_2rVpdyp9JzLyjpR,Classroom Teacher,FT. ZUMWALT R-II,East High School,1,3,1,3,2,1,2,2,2,2,2,1,2,4,4,2,2,1,3,3,3,2,1,2,3
@@ -1585,27 +1594,27 @@ Baseline,2017-09-22 8:35,R_9HSHcDAkryy0KJj,Classroom Teacher,FT. ZUMWALT R-II,No
 Baseline,2017-09-22 8:35,R_2vk3XRsi8xJuaRG,Building Administrator,FT. ZUMWALT R-II,West High School,,,,,,,,,,,,1,4,4,5,4,2,,,,,,,,
 Baseline,2017-09-22 8:38,R_W0DyHBkHFh10BW1,Classroom Teacher,FT. ZUMWALT R-II,West High School,4,2,2,4,2,1,4,5,5,2,4,1,4,4,4,4,4,4,4,4,4,4,3,4,2
 Baseline,2017-09-22 8:39,R_25ubukT74yqYk8b,Classroom Teacher,FT. ZUMWALT R-II,North High School,2,3,2,5,5,3,4,4,5,4,5,1,4,4,4,4,3,4,2,4,4,4,4,4,2
-Baseline,43000.36389,R_1i7ZgE0igcdyHGq,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,2,4,3,5,4,4,5,5,5,4,4,0,,,,5,4,5,4,5,5,4,4,4,4
 Baseline,2017-09-22 8:44,R_2SB9pKayVyrl1bG,Classroom Teacher,FT. ZUMWALT R-II,North High School,1,4,1,1,2,2,4,4,4,4,3,1,4,4,4,4,4,4,4,4,4,4,4,4,4
-Baseline,43000.36667,R_2uPALPx9IVwAaJL,School Counselor,SEDALIA 200,Smith-Cotton High School,,,,,,,,,,,,0,,,,2,2,5,5,5,5,5,5,5,5
+Baseline,2017-09-22,R_1i7ZgE0igcdyHGq,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,2,4,3,5,4,4,5,5,5,4,4,0,,,,5,4,5,4,5,5,4,4,4,4
+Baseline,2017-09-22,R_2uPALPx9IVwAaJL,School Counselor,SEDALIA 200,Smith-Cotton High School,,,,,,,,,,,,0,,,,2,2,5,5,5,5,5,5,5,5
+Baseline,2017-09-22,R_2vYYLnJn7XqDb7B,School Counselor,SEDALIA 200,Smith-Cotton High School,,,,,,,,,,,,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-22 8:49,R_2tDaKx4t0opsL04,Classroom Teacher,FT. ZUMWALT R-II,West High School,5,5,4,5,4,4,5,5,5,4,5,1,5,5,4,5,4,4,4,4,4,5,5,5,5
-Baseline,43000.36736,R_2vYYLnJn7XqDb7B,School Counselor,SEDALIA 200,Smith-Cotton High School,,,,,,,,,,,,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-22 8:50,R_0UH4QC4A28mySvD,School Counselor,FT. ZUMWALT R-II,North High School,,,,,,,,,,,,1,4,2,1,3,4,5,5,5,4,3,4,5,3
 Baseline,2017-09-22 8:57,R_27lEJg2p9Ya3wE1,Classroom Teacher,MALDEN R-I,Malden High,2,2,3,3,4,3,3,4,4,4,5,1,2,4,2,2,3,4,4,4,4,4,4,4,4
 Baseline,2017-09-22 8:57,R_1lzs1noZIR5CZvE,Classroom Teacher,FT. ZUMWALT R-II,West High School,2,2,2,5,4,3,5,5,5,3,5,1,4,5,4,5,4,5,4,4,4,4,4,4,3
-Baseline,43000.37361,R_4UtTsXTKlPDkYrD,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,2,2,5,4,3,5,5,5,5,5,1,4,4,4,4,4,3,3,3,3,3,3,3,4
+Baseline,2017-09-22,R_4UtTsXTKlPDkYrD,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,2,2,5,4,3,5,5,5,5,5,1,4,4,4,4,4,3,3,3,3,3,3,3,4
 Baseline,2017-09-22 9:04,R_2Bmxodr0WzpIpNs,Special Educator,FT. ZUMWALT R-II,West High School,2,3,2,4,2,4,4,4,5,2,4,0,,,,4,4,5,4,4,4,4,4,4,4
-Baseline,43000.38056,R_2xY8tFhHCF4T3ps,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,4,3,5,2,2,3,4,4,4,4,1,3,4,2,2,2,4,4,4,4,3,3,2,2
+Baseline,2017-09-22,R_2xY8tFhHCF4T3ps,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,4,3,5,2,2,3,4,4,4,4,1,3,4,2,2,2,4,4,4,4,3,3,2,2
 Baseline,2017-09-22 9:10,R_1F8GzHzNSFwAnk5,Classroom Teacher,FT. ZUMWALT R-II,West High School,,2,2,5,2,4,5,5,5,5,5,1,4,4,5,5,5,4,3,4,4,4,3,4,2
 Baseline,2017-09-22 9:18,R_2BeXMilx2EtSV3O,Classroom Teacher,FT. ZUMWALT R-II,Westoff Elementary School,5,5,5,5,4,4,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-22 9:19,R_2QzZmu28n18JrBx,Classroom Teacher,FT. ZUMWALT R-II,West High School,5,4,4,5,5,4,5,5,5,5,5,1,5,5,5,4,4,5,5,5,5,5,5,5,5
-Baseline,43000.38958,R_3HPvdpd9NFixnhv,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,1,1,4,2,1,4,4,5,2,4,1,1,2,1,3,2,3,3,3,3,4,4,4,2
-Baseline,43000.39028,R_2XoDCByDKh82BtD,Special Educator,SEDALIA 200,Smith-Cotton High School,2,4,4,5,5,5,5,5,5,4,5,1,3,5,5,3,3,5,3,5,5,5,4,5,3
-Baseline,43000.39097,R_1IzySosgdHhpUqF,Other,SEDALIA 200,Smith-Cotton High School,4,4,4,5,4,5,5,5,5,4,4,0,,,,5,5,5,5,5,5,5,4,4,5
+Baseline,2017-09-22,R_3HPvdpd9NFixnhv,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,1,1,4,2,1,4,4,5,2,4,1,1,2,1,3,2,3,3,3,3,4,4,4,2
+Baseline,2017-09-22,R_2XoDCByDKh82BtD,Special Educator,SEDALIA 200,Smith-Cotton High School,2,4,4,5,5,5,5,5,5,4,5,1,3,5,5,3,3,5,3,5,5,5,4,5,3
+Baseline,2017-09-22,R_1IzySosgdHhpUqF,Other,SEDALIA 200,Smith-Cotton High School,4,4,4,5,4,5,5,5,5,4,4,0,,,,5,5,5,5,5,5,5,4,4,5
 Baseline,2017-09-22 9:24,R_12FuSyMKbzdaBLa,Classroom Teacher,FT. ZUMWALT R-II,North High School,1,3,2,4,3,4,5,3,5,4,5,1,4,5,5,4,3,4,4,5,5,4,5,4,3
-Baseline,43000.39236,R_2vc9py2qr5Htg9T,Building Administrator,SEDALIA 200,Smith-Cotton High School,,,,,,,,,,,,0,,,,2,1,,,,,,,,
-Baseline,43000.39306,R_2wLyB3gsnIHVPSG,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,2,5,4,2,5,4,4,4,5,1,5,5,5,5,3,4,4,4,4,4,4,3,2
-Baseline,43000.39722,R_1DNIUeyYRk00IGH,Other,SEDALIA 200,Smith-Cotton High School,4,3,3,4,2,2,4,4,4,3,3,0,,,,4,4,4,4,4,4,4,4,4,4
+Baseline,2017-09-22,R_2vc9py2qr5Htg9T,Building Administrator,SEDALIA 200,Smith-Cotton High School,,,,,,,,,,,,0,,,,2,1,,,,,,,,
+Baseline,2017-09-22,R_2wLyB3gsnIHVPSG,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,2,5,4,2,5,4,4,4,5,1,5,5,5,5,3,4,4,4,4,4,4,3,2
+Baseline,2017-09-22,R_1DNIUeyYRk00IGH,Other,SEDALIA 200,Smith-Cotton High School,4,3,3,4,2,2,4,4,4,3,3,0,,,,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-22 9:33,R_3lXFBnKEHjX6Ib9,Classroom Teacher,FT. ZUMWALT R-II,West High School,2,5,2,5,4,1,5,5,5,4,5,1,3,5,4,5,4,4,4,5,5,2,3,4,2
 Baseline,2017-09-22 9:33,R_1DZiIHzZlZXC9hn,Classroom Teacher,FT. ZUMWALT R-II,West Middle School,3,4,2,5,5,4,5,5,5,2,4,0,,,,4,4,5,5,5,5,5,5,5,5
 Baseline,2017-09-22 9:34,R_VWo5B7rnE14DZJf,Classroom Teacher,FT. ZUMWALT R-II,Twin Chimneys Elementary School,4,4,4,5,5,4,5,5,5,4,5,1,4,5,5,5,5,5,5,5,5,5,3,4,4
@@ -1622,11 +1631,11 @@ Baseline,2017-09-22 10:19,R_1DG9wXyYKFm5xCR,School Counselor,FT. ZUMWALT R-II,We
 Baseline,2017-09-22 10:40,R_aW4i3GzfYpuGDbr,School Counselor,FT. ZUMWALT R-II,West Middle School,,,,,,,,,,,,1,2,5,5,3,4,4,3,4,3,4,4,4,3
 Baseline,2017-09-22 10:41,R_1OMMIc1GhihyYxj,Classroom Teacher,MALDEN R-I,Malden Elementary,2,1,4,5,3,4,5,5,5,2,5,1,5,5,1,5,5,5,3,4,5,4,4,4,3
 Baseline,2017-09-22 10:42,R_3pbU1xytJKOLXp4,Classroom Teacher,FT. ZUMWALT R-II,East High School,1,5,3,5,3,3,4,4,4,5,5,1,4,5,4,4,4,3,4,3,3,4,4,4,3
-Baseline,43000.44722,R_w6idVZ1D9aHmuul,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,5,5,5,5,5,5,5,5,5,5,1,4,4,5,4,5,5,5,5,5,5,5,5,5
-Baseline,43000.44861,R_1JL2vS1orYmkhP0,Special Educator,SEDALIA 200,Smith-Cotton High School,4,4,3,4,3,2,5,4,5,4,5,1,3,4,5,4,3,4,4,4,5,5,5,3,4
-Baseline,43000.45347,R_1yJBYoWutjRFglj,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,2,5,4,2,5,5,5,2,2,1,2,4,4,2,2,4,3,4,4,4,3,3,2
+Baseline,2017-09-22,R_w6idVZ1D9aHmuul,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,4,5,5,5,5,5,5,5,5,5,5,1,4,4,5,4,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-22,R_1JL2vS1orYmkhP0,Special Educator,SEDALIA 200,Smith-Cotton High School,4,4,3,4,3,2,5,4,5,4,5,1,3,4,5,4,3,4,4,4,5,5,5,3,4
+Baseline,2017-09-22,R_1yJBYoWutjRFglj,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,2,5,4,2,5,5,5,2,2,1,2,4,4,2,2,4,3,4,4,4,3,3,2
 Baseline,2017-09-22 11:01,R_3rNjeb6DbW3kndF,Special Educator,FT. ZUMWALT R-II,North High School,2,4,4,5,,4,5,5,5,5,5,1,5,5,5,5,5,5,2,4,5,5,4,4,2
-Baseline,43000.46319,R_3eeJ8cZ8Vz1BiJQ,Other,SEDALIA 200,Smith-Cotton High School,4,4,4,4,4,4,4,4,4,4,4,0,,,,4,4,3,3,3,3,3,2,2,2
+Baseline,2017-09-22,R_3eeJ8cZ8Vz1BiJQ,Other,SEDALIA 200,Smith-Cotton High School,4,4,4,4,4,4,4,4,4,4,4,0,,,,4,4,3,3,3,3,3,2,2,2
 Baseline,2017-09-22 11:12,R_3mgBmN7o5RTIs8a,Classroom Teacher,MALDEN R-I,Malden High,2,2,2,2,2,2,4,4,4,4,4,1,2,5,2,2,2,4,4,4,3,4,3,2,3
 Baseline,2017-09-22 11:13,R_2roWwKoC0ewhhxn,Classroom Teacher,FT. ZUMWALT R-II,West High School,1,2,3,3,4,3,2,4,4,2,4,1,4,4,4,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-22 11:22,R_2aWuXIoSFTcS8KI,Classroom Teacher,FT. ZUMWALT R-II,West Middle School,4,4,3,4,2,1,2,2,2,4,5,1,1,2,2,2,1,3,4,3,4,4,2,4,4
@@ -1636,36 +1645,28 @@ Baseline,2017-09-22 11:51,R_oXY9JirIvLVbsbv,Classroom Teacher,FT. ZUMWALT R-II,W
 Baseline,2017-09-22 12:07,R_1JOsRQKvkCW1TF0,Special Educator,FT. ZUMWALT R-II,East High School,2,2,3,4,4,3,4,4,4,2,3,0,,,,3,4,5,4,5,5,5,3,4,3
 Baseline,2017-09-22 12:14,R_3EcMO01R8ZaSJg0,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Middle,2,3,2,4,4,3,1,3,5,3,4,0,,,,2,3,2,2,2,2,2,2,3,2
 Baseline,2017-09-22 12:17,R_3ktbj3XjjbBUqVO,Classroom Teacher,FT. ZUMWALT R-II,West High School,2,2,2,2,2,2,5,5,5,2,5,1,5,5,5,5,4,5,3,5,5,5,5,5,3
-Baseline,43000.51667,R_27TMzn9CRPX2u0p,Special Educator,SEDALIA 200,Smith-Cotton High School,1,3,1,5,4,4,5,5,5,4,5,0,,,,4,1,5,4,5,4,5,4,5,3
+Baseline,2017-09-22,R_27TMzn9CRPX2u0p,Special Educator,SEDALIA 200,Smith-Cotton High School,1,3,1,5,4,4,5,5,5,4,5,0,,,,4,1,5,4,5,4,5,4,5,3
 Baseline,2017-09-22 12:25,R_302EGZCCkYdLsqi,Classroom Teacher,FT. ZUMWALT R-II,West Middle School,2,2,2,4,4,3,5,5,5,5,4,1,4,5,5,4,5,4,5,4,5,5,4,4,4
-Baseline,43000.51806,R_3PiP1WYNpuJnYRi,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,5,4,5,3,4,2,5,5,5,5,1,4,4,4,4,4,4,3,4,4,4,4,4,4
+Baseline,2017-09-22,R_3PiP1WYNpuJnYRi,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,5,4,5,3,4,2,5,5,5,5,1,4,4,4,4,4,4,3,4,4,4,4,4,4
 Baseline,2017-09-22 12:27,R_2eUTtpEr3oAc3md,Classroom Teacher,FT. ZUMWALT R-II,North High School,2,2,2,2,2,2,1,4,4,4,4,1,3,4,4,4,2,2,1,2,2,4,1,2,1
 Baseline,2017-09-22 12:30,R_2zp6mZp5CZHdE4A,Classroom Teacher,FT. ZUMWALT R-II,West Middle School,4,3,3,5,4,4,5,5,5,5,5,1,5,5,3,5,5,3,,3,4,4,4,4,2
-Baseline,43000.53264,R_XonrhNeEfMkzAsh,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,2,2,2,2,2,2,2,2,2,2,0,,,,2,2,,,,,,,,
+Baseline,2017-09-22,R_XonrhNeEfMkzAsh,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,2,2,2,2,2,2,2,2,2,2,0,,,,2,2,,,,,,,,
 Baseline,2017-09-22 12:52,R_2CKxwE3NSH293qg,Other,FT. ZUMWALT R-II,St. Peters Elementary School,4,2,3,5,4,4,5,5,5,5,5,0,,,,5,5,5,4,5,5,5,4,5,4
 Baseline,2017-09-22 13:01,R_1P7N6I3D7pGSvjJ,Building Administrator,FT. ZUMWALT R-II,West Middle School,,,,,,,,,,,,0,,,,3,3,,,,,,,,
 Baseline,2017-09-22 13:06,R_z5NNBLBDPJFuZO1,Special Educator,FT. ZUMWALT R-II,West High School,2,3,2,4,4,4,4,5,5,5,5,1,5,5,5,4,4,5,4,5,5,5,4,4,3
 Baseline,2017-09-22 13:12,R_2dSCXyMDXw48erV,Classroom Teacher,FT. ZUMWALT R-II,Westoff Elementary School,3,3,3,3,2,1,5,5,5,4,4,1,3,3,2,2,2,3,4,4,2,2,4,2,1
-Baseline,2017-09-22,R_3Okb5ZSvQoOI7E5,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,3,4,3,5,4,4,,4,5,2,4,1,3,3,3,3,3,4,4,4,4,4,4,2,3
 Baseline,2017-09-22 13:31,R_1pQdHWCi2cdWehu,Classroom Teacher,FT. ZUMWALT R-II,East High School,2,4,3,5,5,4,5,4,5,5,5,1,2,5,5,4,4,4,5,5,5,4,2,3,2
-Baseline,2017-09-22,R_3EzfrQ8wkP7rEcf,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,4,4,4,4,2,2,5,5,5,5,4,1,4,5,5,5,4,4,4,4,4,4,4,4,3
-Baseline,2017-09-22,R_tGuCsQMPlGHO3M5,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,2,3,4,2,2,2,4,2,5,4,5,1,2,5,4,2,2,4,3,4,4,3,4,2,3
 Baseline,2017-09-22 13:36,R_Y6vGCDRb0VsdO3n,Classroom Teacher,FT. ZUMWALT R-II,West High School,2,4,2,4,2,2,4,4,4,4,4,1,5,5,5,4,4,4,4,4,3,4,3,4,2
 Baseline,2017-09-22 13:36,R_0vyh8MkN1Zm2sa5,Classroom Teacher,FT. ZUMWALT R-II,West Middle School,2,5,5,4,5,4,5,5,5,5,5,1,3,4,5,4,4,5,5,5,5,5,4,5,5
-Baseline,43000.575,R_2e25Y42CYjKTif4,Special Educator,SEDALIA 200,Smith-Cotton High School,5,5,5,5,5,5,5,5,5,5,5,1,4,4,4,4,4,4,4,4,4,4,4,4,4
-Baseline,2017-09-22,R_3nGdqP5zvk7Vrma,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,,5,5,5,4,5,5,5,5,5,5,1,5,5,5,5,5,5,2,5,4,5,5,5,2
-Baseline,2017-09-22,R_Xhrwb6Xu5TI70id,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,5,5,5,5,5,5,4,5,4,5,5,1,4,5,4,5,4,5,5,4,5,2,4,4,3
-Baseline,2017-09-22,R_2w4B8YuGJAiGsOe,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,4,4,2,5,4,5,5,5,5,4,5,1,4,5,5,3,2,5,5,5,5,5,5,5,5
-Baseline,2017-09-22,R_r7HHrGzXiD5nntT,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,2,1,1,2,3,1,4,3,4,2,2,1,2,2,1,3,3,4,4,4,4,4,4,4,4
-Baseline,2017-09-22,R_cLShl5qej8amkud,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,4,4,5,5,5,5,4,4,5,5,5,0,,,,4,4,4,4,4,4,5,4,5,4
+Baseline,2017-09-22,R_2e25Y42CYjKTif4,Special Educator,SEDALIA 200,Smith-Cotton High School,5,5,5,5,5,5,5,5,5,5,5,1,4,4,4,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-22 14:31,R_3M3BCfByW5XwjQG,Classroom Teacher,HAYTI R-II,Mathis Elementary,1,1,1,2,1,1,4,2,2,1,1,1,5,5,2,2,2,4,3,4,4,4,3,2,2
 Baseline,2017-09-22 14:52,R_3kG8YfuNRdgzZOz,Classroom Teacher,FT. ZUMWALT R-II,West High School,1,3,3,4,3,4,5,5,5,5,4,1,5,5,5,3,5,5,4,5,4,5,3,4,2
-Baseline,43000.64167,R_1psQSu6VNTMAvUc,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,2,5,2,4,4,5,5,5,5,1,3,4,5,3,4,4,4,5,4,4,4,4,3
+Baseline,2017-09-22,R_1psQSu6VNTMAvUc,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,2,4,2,5,2,4,4,5,5,5,5,1,3,4,5,3,4,4,4,5,4,4,4,4,3
 Baseline,2017-09-22 15:37,R_30wWEtyeropM7MX,Classroom Teacher,FT. ZUMWALT R-II,North High School,1,2,2,4,3,2,3,4,4,3,4,1,4,3,3,4,4,4,3,4,3,4,4,4,2
-Baseline,2017-09-22,R_3O9rZw9YXVyrnzO,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,5,5,5,5,5,5,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-22 16:54,R_ZlVk8ji8wkcwCqJ,Classroom Teacher,MALDEN R-I,Malden Elementary,2,2,2,5,3,2,3,5,5,5,5,1,3,5,5,5,5,5,5,5,5,5,4,4,5
 Baseline,2017-09-22 17:41,R_32ShB6bxYFzeBDt,Classroom Teacher,FT. ZUMWALT R-II,West Middle School,2,2,2,2,1,2,4,5,5,5,4,1,2,2,2,1,1,1,2,2,1,1,1,2,1
 Baseline,2017-09-22 17:44,R_RlDU3DYa9cmhwhr,Building Administrator,FT. ZUMWALT R-II,Westoff Elementary School,,,,,,,,,,,,0,,,,3,2,,,,,,,,
+Baseline,2017-09-23,R_264EBfxODsuvsGZ,Other,SEDALIA 200,Smith-Cotton Junior High School,4,5,4,5,4,4,4,1,5,4,1,1,5,5,5,5,5,5,5,5,5,5,5,4,4
 Baseline,2017-09-23 6:12,R_1EWmvcL4AeNvE9B,Classroom Teacher,FT. ZUMWALT R-II,Emge Elementary School,2,3,3,4,5,2,5,5,5,4,5,1,4,5,5,5,5,4,5,5,4,4,4,3,4
 Baseline,2017-09-23 7:01,R_2pJosqiYcNx7hJD,Special Educator,FT. ZUMWALT R-II,Emge Elementary School,4,4,2,3,3,2,4,4,5,2,3,1,4,4,4,4,3,4,2,4,3,3,4,3,2
 Baseline,2017-09-23 7:24,R_2COHaTsNsUkmDLk,Classroom Teacher,FT. ZUMWALT R-II,Emge Elementary School,3,2,2,2,2,2,2,2,4,2,2,1,4,4,4,4,2,4,3,3,3,3,3,3,4
@@ -1677,16 +1678,15 @@ Baseline,2017-09-23 11:40,R_2aEnUnrq7HAbxGG,Instructional Coach,FT. ZUMWALT R-II
 Baseline,2017-09-23 12:47,R_1HidDKQBvQbkqzS,Classroom Teacher,FT. ZUMWALT R-II,West High School,5,2,3,4,2,2,1,2,2,2,4,1,2,4,4,3,2,3,3,3,3,3,3,3,3
 Baseline,2017-09-23 15:51,R_xyo5WcPgBkPVHHj,Classroom Teacher,FT. ZUMWALT R-II,Emge Elementary School,4,3,5,5,4,3,5,5,5,4,,1,5,5,5,5,5,4,4,4,4,4,3,4,4
 Baseline,2017-09-23 16:11,R_20YFi26686W9qiF,Classroom Teacher,CAMERON R-I,Cameron Intermediate School,4,4,2,3,3,2,5,4,4,2,4,1,1,4,4,3,3,5,4,4,4,4,3,3,3
-Baseline,2017-09-23,R_264EBfxODsuvsGZ,Other,SEDALIA 200,Smith-Cotton Junior High School,4,5,4,5,4,4,4,1,5,4,1,1,5,5,5,5,5,5,5,5,5,5,5,4,4
 Baseline,2017-09-23 21:28,R_AgJZRcqIvU7LzgJ,Classroom Teacher,FT. ZUMWALT R-II,West Middle School,1,2,2,5,4,4,5,5,5,5,5,1,4,5,5,5,5,5,5,5,5,5,5,5,3
 Baseline,2017-09-24 2:17,R_265fs5JrCVD5fN9,Classroom Teacher,FT. ZUMWALT R-II,St. Peters Elementary School,3,3,3,4,4,2,5,5,5,4,4,1,5,4,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-24 9:27,R_1ozreQXnvmhWp5P,Classroom Teacher,FT. ZUMWALT R-II,Twin Chimneys Elementary School,2,3,3,4,5,4,5,5,5,2,5,1,5,5,5,5,5,5,5,5,5,5,5,5,3
-Baseline,43002.46944,R_1OHL4scBi5mXOK4,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,2,1,5,1,1,4,4,4,1,4,0,,,,4,2,5,5,5,5,4,3,3,2
+Baseline,2017-09-24,R_1OHL4scBi5mXOK4,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,2,1,5,1,1,4,4,4,1,4,0,,,,4,2,5,5,5,5,4,3,3,2
 Baseline,2017-09-24 12:03,R_3GpTDfDfnpcsmGq,Classroom Teacher,FT. ZUMWALT R-II,St. Peters Elementary School,2,2,2,4,3,2,5,4,5,3,4,1,5,5,4,5,4,4,3,3,4,4,4,3,3
 Baseline,2017-09-24 13:51,R_2ZVwh99UvGwiy6l,Classroom Teacher,FT. ZUMWALT R-II,South High School,2,3,2,5,3,2,2,4,5,4,5,1,3,4,4,5,4,3,3,5,3,5,3,4,2
 Baseline,2017-09-24 14:10,R_26g21GJHAT4Q1br,Classroom Teacher,FT. ZUMWALT R-II,West High School,1,5,2,4,5,1,5,1,5,1,5,1,3,5,5,5,5,5,5,5,5,5,1,4,1
 Baseline,2017-09-24 15:10,R_3sAkcSV7OYmqqjF,Special Educator,FT. ZUMWALT R-II,North High School,3,2,3,2,2,2,3,1,4,4,4,1,2,4,3,3,2,4,3,4,4,4,4,3,3
-Baseline,43002.68403,R_3oWUEZHN0qq53TB,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,2,2,3,4,4,3,5,5,5,4,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
+Baseline,2017-09-24,R_3oWUEZHN0qq53TB,Classroom Teacher,SEDALIA 200,Heber Hunt Elementary School,2,2,3,4,4,3,5,5,5,4,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-24 16:41,R_2atU6XIqUvWhHob,Classroom Teacher,FT. ZUMWALT R-II,South High School,3,4,3,,4,3,5,5,5,5,5,1,4,4,4,5,4,4,4,4,4,5,5,5,4
 Baseline,2017-09-24 17:22,R_STd8MKW98zBtpe1,Classroom Teacher,FT. ZUMWALT R-II,West Middle School,1,5,4,5,3,5,5,5,5,5,5,1,4,4,3,4,2,4,4,4,4,5,3,4,3
 Baseline,2017-09-24 17:56,R_2aFXHZLHH10lgU9,Special Educator,FT. ZUMWALT R-II,Hope High School,2,2,2,3,2,2,4,4,4,2,5,1,4,4,4,4,4,4,4,4,4,2,4,2,3
@@ -1697,6 +1697,7 @@ Baseline,2017-09-24 18:56,R_1MWz8cwVqjyIp7f,Classroom Teacher,FT. ZUMWALT R-II,E
 Baseline,2017-09-24 19:04,R_3ikeCC82bsxCX8C,Classroom Teacher,FT. ZUMWALT R-II,North High School,2,5,2,5,3,2,5,4,4,4,4,1,4,4,5,4,3,4,4,4,4,1,3,3,4
 Baseline,2017-09-24 19:16,R_37OymdFM5GZEeqZ,Classroom Teacher,UNIVERSITY ACADEMY,University Academy Middle,2,4,4,5,4,4,5,5,5,3,5,1,3,4,5,4,4,5,4,5,4,5,5,5,4
 Baseline,2017-09-24 22:01,R_1EZGZdWyMGLGfdC,Classroom Teacher,FT. ZUMWALT R-II,North High School,2,2,2,2,2,2,4,4,4,5,5,1,4,4,4,4,4,4,4,4,4,5,4,4,4
+Baseline,2017-09-25,R_248nnW5uctASz9K,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,3,3,3,4,3,3,5,5,5,5,5,1,5,5,5,4,3,4,5,4,4,5,5,4,4
 Baseline,2017-09-25 4:47,R_0TgICPtLj02YN0d,Building Administrator,FT. ZUMWALT R-II,Twin Chimneys Elementary School,,,,,,,,,,,,0,,,,4,5,,,,,,,,
 Baseline,2017-09-25 4:59,R_PYbN3Xgi9c6wbgB,Classroom Teacher,FT. ZUMWALT R-II,Twin Chimneys Elementary School,2,3,2,4,5,4,5,5,5,2,5,1,4,4,4,4,4,4,5,5,4,4,5,3,4
 Baseline,2017-09-25 5:45,R_2vbHrHtPYSSzzsF,Classroom Teacher,FT. ZUMWALT R-II,West High School,1,1,4,5,2,2,4,4,4,2,4,1,2,4,2,3,3,5,5,5,5,4,4,4,3
@@ -1739,7 +1740,6 @@ Baseline,2017-09-25 8:58,R_20ZKvaRt6a9JZgA,Other,CAMERON R-I,Parkview Elementary
 Baseline,2017-09-25 8:59,R_2QhyXc8RcfuVWMs,Classroom Teacher,FT. ZUMWALT R-II,South Middle School,4,3,3,4,2,2,4,3,4,2,4,0,,,,3,3,4,4,3,3,3,4,2,1
 Baseline,2017-09-25 9:01,R_21h0c4BBWz4oDsX,Building Administrator,CAMERON R-I,Cameron High School,,,,,,,,,,,,0,,,,4,3,,,,,,,,
 Baseline,2017-09-25 9:01,R_3Ebgs0lHGKYCs3M,Classroom Teacher,FT. ZUMWALT R-II,West High School,4,4,4,4,4,2,4,5,5,2,4,1,4,4,5,5,4,5,3,5,5,4,4,4,2
-Baseline,2017-09-25,R_248nnW5uctASz9K,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,3,3,3,4,3,3,5,5,5,5,5,1,5,5,5,4,3,4,5,4,4,5,5,4,4
 Baseline,2017-09-25 9:06,R_WcA4xRuPzU0M9yN,Other,FT. ZUMWALT R-II,South Middle School,5,5,4,4,4,3,5,5,5,5,3,0,,,,5,5,5,5,5,5,5,4,4,4
 Baseline,2017-09-25 9:09,R_svV7Vb4WNTCeHXb,Classroom Teacher,CAMERON R-I,Cameron Veterans Middle School,4,5,3,5,5,4,5,5,5,5,5,1,5,5,5,4,4,4,4,5,5,4,4,4,5
 Baseline,2017-09-25 9:15,R_svPoAaKdCNTtVFn,Classroom Teacher,FT. ZUMWALT R-II,West Middle School,2,5,4,5,4,5,4,4,4,2,3,0,,,,2,2,5,5,5,4,4,3,4,3
@@ -1804,6 +1804,7 @@ Baseline,2017-09-25 19:27,R_2s6VVs992ON3Q3q,Classroom Teacher,BELTON 124,Mill Cr
 Baseline,2017-09-25 19:54,R_DV3l9W1Bgb51FpT,Classroom Teacher,FT. ZUMWALT R-II,North High School,5,2,3,4,4,2,5,4,3,3,4,1,4,4,5,4,2,4,3,4,3,4,2,2,3
 Baseline,2017-09-25 19:55,R_w14EDNIDe9nBLPj,Classroom Teacher,CAMERON R-I,Cameron Veterans Middle School,3,4,2,5,3,2,4,5,5,2,4,1,2,4,5,2,3,4,5,4,4,3,3,4,2
 Baseline,2017-09-25 21:45,R_AmJlWbfjPQsQbu1,Classroom Teacher,FT. ZUMWALT R-II,Twin Chimneys Elementary School,4,2,2,3,2,1,5,5,5,2,4,1,4,4,3,4,5,,,,,,,,
+Baseline,2017-09-26,R_2CTTZPWsCWeUrEh,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,4,2,3,3,4,3,4,5,5,4,5,1,5,4,4,5,5,5,5,5,4,4,4,4,4
 Baseline,2017-09-26 5:36,R_3q7mEY76Eda2A3y,Classroom Teacher,FT. ZUMWALT R-II,South Middle School,4,4,4,5,4,4,5,5,5,5,5,1,5,5,5,5,5,4,4,4,4,4,4,4,3
 Baseline,2017-09-26 5:42,R_2t9FknNG0afHJ31,Special Educator,FT. ZUMWALT R-II,South Middle School,3,4,3,5,4,3,5,4,5,4,4,1,4,5,4,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-26 6:03,R_1116Slk9WbVSm4o,Special Educator,FT. ZUMWALT R-II,South Middle School,2,2,1,1,5,1,3,2,5,2,2,1,3,5,5,5,4,4,4,4,3,2,2,2,5
@@ -1855,7 +1856,6 @@ Baseline,2017-09-26 13:30,R_2aS21GoZf9ESKIJ,Special Educator,CAMERON R-I,Cameron
 Baseline,2017-09-26 13:35,R_C9uQ2ytriCiBVOp,Special Educator,FT. ZUMWALT R-II,East High School,2,2,2,4,4,2,5,4,5,5,4,1,5,5,5,5,5,4,4,4,4,4,4,4,4
 Baseline,2017-09-26 13:43,R_1mxceyQtwN2QLi1,Special Educator,FT. ZUMWALT R-II,Dubray Middle School,1,5,3,4,3,4,4,5,4,4,5,1,5,5,4,5,4,4,4,4,4,5,4,3,3
 Baseline,2017-09-26 13:43,R_2AFIPk7pwppfXuD,Other,FT. ZUMWALT R-II,Dubray Middle School,4,3,2,4,2,2,4,4,5,4,5,0,,,,4,4,2,3,3,3,4,4,4,4
-Baseline,2017-09-26,R_2CTTZPWsCWeUrEh,Special Educator,SEDALIA 200,Smith-Cotton Junior High School,4,2,3,3,4,3,4,5,5,4,5,1,5,4,4,5,5,5,5,5,4,4,4,4,4
 Baseline,2017-09-26 13:45,R_2rGTrdrgFa6I6NY,School Counselor,CAMERON R-I,Cameron Intermediate School,,,,,,,,,,,,1,5,5,5,5,5,5,5,5,5,5,5,5,4
 Baseline,2017-09-26 13:50,R_2B2NwBBacRfE1Bw,Special Educator,CAMERON R-I,Cameron Intermediate School,4,4,4,5,4,4,5,4,5,4,5,0,,,,5,5,5,5,5,5,4,4,4,3
 Baseline,2017-09-26 13:57,R_2UeZQZAVL55IZ0h,Special Educator,FT. ZUMWALT R-II,Dubray Middle School,5,5,4,4,4,,5,5,5,5,5,1,5,5,5,5,5,4,4,4,4,5,5,5,5
@@ -1900,6 +1900,7 @@ Baseline,2017-09-26 20:33,R_6oih0Rm7PE9HquJ,Classroom Teacher,CAMERON R-I,Parkvi
 Baseline,2017-09-26 20:35,R_1Lus1lAfmHBA5gI,School Counselor,CAMERON R-I,Parkview Elementary,,,,,,,,,,,,0,,,,5,5,5,5,5,5,5,5,5,5
 Baseline,2017-09-26 20:48,R_PMnDZd3007u0zYZ,Special Educator,CAMERON R-I,Parkview Elementary,4,3,2,4,4,2,5,4,5,4,5,1,5,5,5,4,3,5,5,5,5,5,5,4,3
 Baseline,2017-09-26 20:50,R_1kUGxRUdjYnyglE,Classroom Teacher,CAMERON R-I,Parkview Elementary,,,3,4,4,3,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,4,4,4,4
+Baseline,2017-09-27,R_1pM8cR20elFbLk2,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,4,4,3,4,4,4,4,4,4,4,4,1,4,4,4,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-27 3:47,R_2b3FVcmCDXHu3sK,Classroom Teacher,FT. ZUMWALT R-II,Dubray Middle School,4,2,1,4,4,2,5,4,5,2,4,1,4,4,4,4,2,4,4,4,3,4,3,4,3
 Baseline,2017-09-27 4:31,R_STZHTtsZex0iKKB,Other,FT. ZUMWALT R-II,J.L. Mudd Elementary School,4,4,5,4,4,4,4,5,5,4,5,0,,,,5,4,5,2,5,5,4,4,5,5
 Baseline,2017-09-27 5:53,R_1f3izZMSQCfeE64,Classroom Teacher,FT. ZUMWALT R-II,J.L. Mudd Elementary School,2,2,2,3,2,1,4,4,5,3,4,1,2,4,4,4,4,5,4,4,4,4,4,4,4
@@ -1952,9 +1953,8 @@ Baseline,2017-09-27 9:27,R_2VxpIAMBHjxkh3C,Building Administrator,FT. ZUMWALT R-
 Baseline,2017-09-27 9:30,R_cUXNuYZ8QHDiqe5,Special Educator,PATTONVILLE R-III,Holman Middle School,4,4,4,4,4,3,5,4,4,4,4,1,4,4,2,2,3,3,4,3,3,2,2,3,2
 Baseline,2017-09-27 9:31,R_3lY4NF7MeIWeyt9,Classroom Teacher,FT. ZUMWALT R-II,North High School,2,1,2,2,3,2,1,4,4,2,4,1,3,4,4,2,1,4,2,3,3,4,3,3,2
 Baseline,2017-09-27 9:31,R_VOvEDjIWr9AfEyd,Special Educator,FT. ZUMWALT R-II,West Middle School,5,5,4,5,4,3,5,5,5,5,5,1,4,5,5,5,5,5,4,5,5,5,4,5,4
-Baseline,43005.39653,R_3O9p0BkHHp1hwU7,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,2,2,2,2,1,4,5,5,4,4,1,1,4,1,1,1,3,3,4,4,4,2,4,1
+Baseline,2017-09-27,R_3O9p0BkHHp1hwU7,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,2,2,2,2,1,4,5,5,4,4,1,1,4,1,1,1,3,3,4,4,4,2,4,1
 Baseline,2017-09-27 9:32,R_8H1XAerg06mqIjT,Classroom Teacher,FT. ZUMWALT R-II,West Middle School,2,3,1,5,5,2,1,5,5,5,5,1,4,4,5,5,5,5,5,5,5,5,5,5,5
-Baseline,2017-09-27,R_1pM8cR20elFbLk2,Classroom Teacher,SEDALIA 200,Smith-Cotton Junior High School,4,4,3,4,4,4,4,4,4,4,4,1,4,4,4,4,4,4,4,4,4,4,4,4,4
 Baseline,2017-09-27 9:38,R_3ndxBdiMVQBIbwa,Classroom Teacher,FT. ZUMWALT R-II,West Middle School,2,4,4,5,2,2,5,5,5,2,5,1,3,3,2,3,3,5,5,5,4,5,4,3,2
 Baseline,2017-09-27 9:39,R_2E1dnKrtGhMTG1s,Special Educator,FT. ZUMWALT R-II,West Middle School,2,4,4,5,5,5,5,4,4,2,5,1,4,4,5,4,4,3,4,3,2,4,4,4,3
 Baseline,2017-09-27 9:47,R_3CUXPw2yLlXtsyH,Classroom Teacher,FT. ZUMWALT R-II,Rock Creek Elementary School,4,4,4,5,5,5,5,5,5,5,5,1,5,4,5,4,3,3,4,4,3,5,4,5,5
@@ -2049,7 +2049,7 @@ Baseline,2017-09-28 11:25,R_1fZarySFpJ2B9wl,Classroom Teacher,FT. ZUMWALT R-II,N
 Baseline,2017-09-28 12:06,R_28HXPEFciLr5lZq,Special Educator,MALDEN R-I,Malden High,4,4,5,4,2,2,4,4,5,4,5,0,,,,4,5,4,4,5,4,4,4,4,4
 Baseline,2017-09-28 12:25,R_1F2JCjdWD1Op8GM,Other,FT. ZUMWALT R-II,South High School,2,3,3,4,3,2,2,3,4,4,4,1,3,4,4,3,3,4,3,4,3,4,3,4,3
 Baseline,2017-09-28 12:46,R_1pMuBR4GkeyNC7W,Special Educator,FT. ZUMWALT R-II,West Middle School,2,2,2,4,2,2,5,5,2,2,2,1,5,5,5,5,5,5,5,5,5,5,5,5,5
-Baseline,43006.53264,R_Byrh3NlbsOCFCTf,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,2,2,3,3,1,4,1,5,1,1,0,,,,3,3,4,3,5,4,4,4,3,4
+Baseline,2017-09-28,R_Byrh3NlbsOCFCTf,Classroom Teacher,SEDALIA 200,Smith-Cotton High School,1,2,2,3,3,1,4,1,5,1,1,0,,,,3,3,4,3,5,4,4,4,3,4
 Baseline,2017-09-28 12:50,R_12sdyRtEWSS1i44,Classroom Teacher,CAMERON R-I,Parkview Elementary,5,4,4,4,3,3,5,5,5,4,5,1,4,4,5,4,4,5,5,4,4,4,4,4,4
 Baseline,2017-09-28 12:58,R_3oWN3jkh9Tv0xUl,Classroom Teacher,FT. ZUMWALT R-II,North Middle School,4,4,4,4,3,4,2,4,5,5,4,1,2,2,4,4,4,4,4,5,4,3,3,4,4
 Baseline,2017-09-28 13:22,R_UPJVpFP7PZxsQ6Z,Classroom Teacher,FT. ZUMWALT R-II,South High School,5,5,5,5,5,5,5,5,5,5,5,1,5,5,5,5,5,5,5,5,5,5,5,5,5

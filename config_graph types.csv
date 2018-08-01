@@ -1,0 +1,3 @@
+graphtype.id,measure,data.level,group.by.var,graph.avg.group.by.var
+1,participation,district,"school,year",
+2,participation,school,"school,year,role","year,role"

@@ -51,11 +51,12 @@
     
     #Function Directories
       setwd(rproj.dir)
-      source("FUN_FirstletterCap.r")  
+      source("FUN_FirstletterCap.r")
+      source("FUN_ColClassConvert.r")
       
     #Data & Output Directories
     source.dir <- paste(rproj.dir,"/data_source/", sep = "")
-    target.dir <- paste(wd,"R script outputs/",
+    target.dir <- paste(wd,"r_script_outputs/",
                           "Output_",
                           gsub(":",".",Sys.time()), sep = "")
     dir.create(target.dir)
@@ -73,7 +74,7 @@
 
 ########################################################################################################################################################      
 ### DATA CLEANING & PREP ###
-#{ #START OF DATA CLEANING & PREP BRACKET
+{ #SECTION COLLAPSE BRACKET
 
   setwd(source.dir)
 
@@ -98,6 +99,13 @@
                     c(grep("responseid", names(cwis.df)),which(!grepl("responseid", names(cwis.df))))
                     ]
     
+    #Column Class Conversions
+      ColClassConvert(cwis.df)
+    
+    #Capitalize First Letter of character variables
+      cwis.df[,names(cwis.df) %in% c("year","role","district","school")] <- 
+                apply(cwis.df[,names(cwis.df) %in% c("year","role","district","school")], 2, FirstLetterCap_MultElements)
+      
   #Add useful variables for analysis 
     
     #Useful vectors for selecting cwis answer variables
@@ -158,43 +166,207 @@
     ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
     ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
     
+}    
+
+########################################################################################################################################################      
+### Powerpoint Configurations ###
     
-      
+  #Useful colors
+    titlegreen <- rgb(118,153,48, maxColorValue=255)
+    notesgrey <- rgb(131,130,105, maxColorValue=255)
+    graphlabelsgrey <- "#5a6b63"
+    graphgridlinesgrey <- "#e6e6e6"
+    purpleshade <- "#d0abd6"
+    purpleheader <- "#3d2242"
+    purplegraphshade <- "#402339"
+    backgroundgreen <- "#94c132"
+    subtextgreen <- "#929e78"
+    
+    bar_series_fill.cols <- c("#800080","#ff33ff")
+    
+    #notesgray <- rgb(131,130,105, maxColorValue=255)
+  
+  #Text formatting
+    title.format <- textProperties(color = titlegreen, font.size = 48, font.weight = "bold")
+    title.format.small <- textProperties(color = titlegreen, font.size = 40, font.weight = "bold")
+    subtitle.format <- textProperties(color = notesgrey, font.size = 28, font.weight = "bold")
+    section.title.format <- textProperties(color = "white", font.size = 48, font.weight = "bold")
+    notes.format <- textProperties(color = notesgrey, font.size = 14)
+    
+
 ########################################################################################################################################################      
 ### PRODUCING DATA, TABLES, & CHARTS ###
 
 #{ #SECTION COLLAPSE BRACKET
   
-  # School & district name selections
-    #school.names <- readline(prompt = "Enter school names for repeated measures reports or 'all'.")
-    school.ids <- "all"
-    if(tolower(school.ids) %in% "all" %>% any){school.ids <- dat.df$school.id %>% unique}else{}   #If user has designated school names as "all", code will create reports for all school names present in the data
-
-  #Progress bar for loop
-    progress.bar.i <- txtProgressBar(min = 0, max = 100, style = 3)
-    maxrow <- length(school.ids)
-
-  #i <- 1 #LOOP TESTER
-  #for(i in c(1,110:115)){   #LOOP TESTER
-  for(i in 1:length(school.names)){   #START OF LOOP BY SCHOOL
+  # District name selection
+    #district.names <- readline(prompt = "Enter district names for repeated measures reports or 'all'.")
+    district.ids <- "all"
+    if(tolower(district.ids) %in% "all" %>% any){district.ids <- dat.df$district %>% unique}else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
+    cwis.df %>% group_by(district) %>% summarize(count = length(unique(school))) #Check how many schools in each district
   
-    # Create data frame for this loop - restrict to responses from school name i
-    school.id.i <- school.ids[i] %>% tolower
-    #school.id.i <- school.names[i] %>% tolower 
+  # Load Graph Config
+    setwd(rproj.dir)
     
-    if(school.id.i %in% c("district office","other") %>% any){next()}else{}
+    config.graphtypes.df <- read.csv("config_graph types.csv", stringsAsFactors = FALSE)
+    config.graphs.df <- read.csv("config_graphs.csv", stringsAsFactors = FALSE) %>% 
+      left_join(., config.graphtypes.df, by = c("graph.type" = "graphtype.id"))
     
-    dat.df.i <- dat.df[dat.df$school.id == school.id.i,] 
-    district.name.i <- dat.df.i$district %>% unique %>% as.character %>% FirstLetterCap()
-    school.name.i <- dat.df.i$school %>% unique %>% as.character %>% FirstLetterCap()
+  ### LOOP BY DISTRICT ###
     
-    #if(length(district.name.i) > 1){
-    #  print(c(school.id.i,district.name.i))
-    #  next()
-    #}else{}
+  # Progress bar for loop
+    #progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
+    #maxrow.b <- length(district.ids)
+
+  b <- 19 #LOOP TESTER
+  #for(b in c(1,110:115)){   #LOOP TESTER
+  #for(b in 1:length(district.names)){   #START OF LOOP BY DISTRICT
+  
+    # Create data frame for this loop - restrict to responses from district name i
+      district.id.b <- district.ids[b]
+  
+      if(district.id.b %in% c("district office","other") %>% any){next()}else{}
+      
+      dat.df.b <- dat.df[dat.df$district == district.id.b & !dat.df$school %in% c("District Office","Other"),] 
+      #district.name.b <- dat.df.b$district %>% unique
     
-    #S2 Table for slide 2 "Participation Details"
-    {
+    ### LOOP BY GRAPH ###
+      
+      c = 1 #LOOP TESTER
+      #for(c in 1:dim(config)){
+          
+        group_by.c <- config.graphs.df$group.by.var[c] %>% strsplit(., ",") %>% unlist
+        graphdata.tib <-  dat.df.b %>% group_by(!!! syms(group_by.c)) %>% summarize(count = length(unique(responseid)))
+        graph.avg.group.by.var.c <- config.graphs.df$graph.avg.group.by.var[c] %>% strsplit(., ",") %>% unlist
+        
+        graph.avg.attributes.fun <- function(x){
+          if(!is.null(graph.avg.group.by.var.c)){
+            result <- group_by(x, !!! syms(graph.avg.group.by.var.c)) 
+          }else{
+            result <- as.data.frame(x) %>% 
+              select(count)
+          }
+          return(result)
+        }
+        
+        graph.avg <- 
+          dat.df %>% 
+          filter(year != "Baseline") %>%
+          group_by(!!! syms(group_by.c)) %>% 
+          summarize(count = length(unique(responseid))) %>% 
+          graph.avg.attributes.fun %>%
+          summarize(avg = mean(count))  
+       
+        #Graph Label Heights defined based on ratio of tallest to shortest columns
+          height.ratio.threshold <- 10
+          if(max(graphdata.tib$count)/min(graphdata.tib$count) < height.ratio.threshold){
+              
+              graph.label.heights <- rep(min(graphdata.tib$count)/2, length(graphdata.tib$count))
+            
+            }else{
+              graph.label.heights <- vector()
+              
+              above.label.vectorposition <- which(graphdata.tib$count/max(graphdata.tib$count) < 1/height.ratio.threshold)
+              
+              graph.label.heights[above.label.vectorposition] <- 
+                graphdata.tib$count[which(graphdata.tib$count/max(graphdata.tib$count) < 1/height.ratio.threshold)] + 5
+              
+              graph.label.heights[is.na(graph.label.heights)] <- 
+                min(graphdata.tib$count[which(graphdata.tib$count/max(graphdata.tib$count) >= 1/height.ratio.threshold)])/2
+          }
+        
+        
+        #Graph
+        slide.graph <- 
+          #! NEXT STEP: MAKE GGPLOT CALL AES BASED ON GRAPH CONFIGURATIONS FILE
+          ggplot(data = graphdata.tib, 
+            aes(school,count, group = year, fill = factor(year))
+          ) + 
+          
+          geom_bar(
+            alpha = 0.7,
+            position = "dodge", 
+            stat = "identity"
+          ) +
+          
+          scale_fill_manual(
+            values = c(bar_series_fill.cols)
+          ) +
+          
+          geom_hline(
+            yintercept = graph.avg,
+            color = "darkgrey",
+            linetype = "dashed",
+            alpha = 0.8
+          ) +
+          
+          geom_text(
+            aes(                                                          #data labels inside base of columns
+              y = graph.label.heights, 
+              label = graphdata.tib$count %>% format(., nsmall = 1)
+            ), 
+            position = position_dodge(width = 1),
+            size = 3,
+            color = "black") + 
+          
+          theme(panel.background = element_blank(),
+                panel.grid.major.y = element_blank(),
+                panel.grid.major.x = element_line(color = graphgridlinesgrey),
+                axis.text.x = element_blank(),
+                axis.text.y = element_text(size = 15, color = graphlabelsgrey),
+                axis.ticks = element_blank()
+          ) +     
+          
+          coord_flip() 
+        
+      }  
+        
+        
+      
+      
+      
+      geom_errorbar(
+        aes(ymin =graph.avg+3, ymax = graph.avg), 
+        position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+        color = "black", 
+        width = 1,
+        size = 1,
+        alpha = 0.5) +
+        
+        
+        
+        
+        
+      
+       
+        
+        geom_errorbar(
+          mapping = aes(ymin = score_state_avg, ymax = score_state_avg), 
+          color = "#fae029", 
+          width = 0.9,
+          size = 1.2) +
+        ylim(0,5) +
+        labs(x = "", y = "") +
+        scale_x_discrete(labels = c("Effective Teaching and Learning",
+                                    "Common Formative Assessment",
+                                    "Data-based Decision-making",
+                                    "Leadership",
+                                    "Professional Development") %>% rev
+        ) +
+       
+      
+      slide.graph
+      
+      
+    } 
+      
+      
+      
+      
+      
+      
+ ########################################################################################################################################     
+      
       s2.mtx <- table(dat.df.i$role %>% as.character) %>% as.matrix
       s2.df <- cbind(row.names(s2.mtx),s2.mtx[,1]) %>% as.data.frame
       names(s2.df) <- c("Role","# Responses")
@@ -527,7 +699,7 @@
       s20.outputs.df$avg.progress <- s20.outputs.df$avg.progress %>% as.character %>% as.numeric %>% round(., digits = 1)
       s20.outputs.df <- s20.outputs.df[c(3,4,1,2),]
     }
-  } #END OF LOOP BY SCHOOL
+  } #END OF LOOP BY DISTRICT
 
 } #SECTION COLLAPSE BRACKET
 
@@ -535,7 +707,7 @@
 ### EXPORTING RESULTS TO POWERPOINT ###
 
 #j <- 1 #LOOP TESTER
-for(j in 1:length(school.names)){    #START LOOP J BY SCHOOL
+for(j in 1:length(district.names)){    #START LOOP J BY SCHOOL
   j <- i
   
   #Copy template file into target directory & rename with individual report name 
@@ -548,7 +720,7 @@ for(j in 1:length(school.names)){    #START LOOP J BY SCHOOL
                           "CWIS Report_",
                           district.name.i,
                           "_",
-                          school.id.i,
+                          district.id.i,
                           ".pptx", sep="") 
   file.copy(template.file, target.file.j)
   
@@ -597,7 +769,7 @@ for(j in 1:length(school.names)){    #START LOOP J BY SCHOOL
       title.format
     )
     subtitle.j <- pot(
-      paste("SCHOOL REPORT: ",school.id.i %>% toupper),
+      paste("SCHOOL REPORT: ",district.id.i %>% toupper),
       subtitle.format
     )
     
