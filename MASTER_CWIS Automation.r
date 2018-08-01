@@ -234,91 +234,139 @@
       
       c = 1 #LOOP TESTER
       #for(c in 1:dim(config)){
+        
+        #Read necessary pieces of config file  
+          group_by.c <- config.graphs.df$data.group.by.var[c] %>% 
+            strsplit(., ",") %>% 
+            unlist
           
-        group_by.c <- config.graphs.df$group.by.var[c] %>% strsplit(., ",") %>% unlist
-        graphdata.tib <-  dat.df.b %>% group_by(!!! syms(group_by.c)) %>% summarize(count = length(unique(responseid)))
-        graph.avg.group.by.var.c <- config.graphs.df$graph.avg.group.by.var[c] %>% strsplit(., ",") %>% unlist
+          graph.avg.group.by.var.c <- 
+            config.graphs.df$graph.avg.group.by.var[c] %>% 
+            strsplit(., ",") %>% 
+            unlist
         
-        graph.avg.attributes.fun <- function(x){
-          if(!is.null(graph.avg.group.by.var.c)){
-            result <- group_by(x, !!! syms(graph.avg.group.by.var.c)) 
-          }else{
-            result <- as.data.frame(x) %>% 
-              select(count)
+        #Defining graph dataset
+          
+          #dat.df.b$role %>% unique %>% rep(., 2) %>% as.data.frame() %>% left_join(., graphdata.tib, by = c("." = "role"))
+          graphdata.allcombinations.df <- dat.df.b[,names(dat.df.b) %in% group_by.c[2:length(group_by.c)]] %>% unique()
+          
+          graph.data.level.restriction.fun <- function(x){
+            if(config.graphs.df$data.level[c] == "district"){
+              result <- x
+            }else{
+              result <- x %>% filter(school == x$school %>% unique %>% .[c]) #! will need to change so not indexing on c
+            }
+            return(result)
           }
-          return(result)
-        }
+            
+          graphdata.tib <-  
+            dat.df.b %>% 
+            group_by(!!! syms(group_by.c)) %>% 
+            summarize(measure.var = length(unique(responseid))) %>%
+            graph.data.level.restriction.fun %>%
+            left_join(graphdata.allcombinations.df,., by = c("year","role"), all.x = TRUE)
         
-        graph.avg <- 
-          dat.df %>% 
-          filter(year != "Baseline") %>%
-          group_by(!!! syms(group_by.c)) %>% 
-          summarize(count = length(unique(responseid))) %>% 
-          graph.avg.attributes.fun %>%
-          summarize(avg = mean(count))  
+        #Define graph average line(s)  
+          graph.avg.attributes.fun <- function(x){
+            if(!is.null(graph.avg.group.by.var.c)){
+              result <- group_by(x, !!! syms(graph.avg.group.by.var.c)) 
+            }else{
+              result <- as.data.frame(x) %>% 
+                select(count)
+            }
+            return(result)
+          }
+          
+          graph.avg <- 
+            dat.df %>% 
+            filter(year != "Baseline") %>%
+            group_by(!!! syms(group_by.c)) %>% 
+            summarize(count = length(unique(responseid))) %>% 
+            graph.avg.attributes.fun %>%
+            summarize(avg = mean(count))  
        
         #Graph Label Heights defined based on ratio of tallest to shortest columns
-          height.ratio.threshold <- 10
-          if(max(graphdata.tib$count)/min(graphdata.tib$count) < height.ratio.threshold){
-              
-              graph.label.heights <- rep(min(graphdata.tib$count)/2, length(graphdata.tib$count))
+          
+          create.graph.label.heights <- function(x){
+            var <- x$measure.var
+            min <- min(var, na.rm = TRUE)
+            max <- max(var, na.rm = TRUE)
+            height.ratio.threshold <- 10
+            height.ratio <- max/min
             
+            print(paste("Max: ",max,"  Min: ",min,"  Ratio: ",height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
+            
+            if(height.ratio < height.ratio.threshold){ 
+              result <- rep(min/2, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
             }else{
-              graph.label.heights <- vector()
-              
-              above.label.vectorposition <- which(graphdata.tib$count/max(graphdata.tib$count) < 1/height.ratio.threshold)
-              
-              graph.label.heights[above.label.vectorposition] <- 
-                graphdata.tib$count[which(graphdata.tib$count/max(graphdata.tib$count) < 1/height.ratio.threshold)] + 5
-              
-              graph.label.heights[is.na(graph.label.heights)] <- 
-                min(graphdata.tib$count[which(graphdata.tib$count/max(graphdata.tib$count) >= 1/height.ratio.threshold)])/2
+              result <- vector(length = length(var))
+              above.label.vectorposition <- var/max < 1/height.ratio.threshold
+              result[above.label.vectorposition] <-   #labels for columns above threshold, position is height of bar plus 1/10 of max bar height 
+                var[above.label.vectorposition] + max/10
+              result[result == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
+                min(var[!above.label.vectorposition])/2
+            }
+          print(paste("Graph Label Heights: ",paste(result, collapse = ", "),sep=""))
+          return(result)
           }
-        
+          
+          graph.label.heights <- create.graph.label.heights(graphdata.tib)
         
         #Graphs
-        slide.graph <- 
-          ggplot(data = graphdata.tib, 
-            aes(school,count, group = year, fill = factor(year))
-          ) + 
           
-          geom_bar(
-            alpha = 0.7,
-            position = "dodge", 
-            stat = "identity"
-          ) +
+          graph.x <- config.graphs.df$graph.x[c]
           
-          scale_fill_manual(
-            values = c(bar_series_fill.cols)
-          ) +
-          
-          geom_hline(
-            yintercept = graph.avg %>% as.numeric(),
-            color = "darkgrey",
-            linetype = "dashed",
-            alpha = 0.8
-          ) +
-          
-          geom_text(
-            aes(                                                          #data labels inside base of columns
-              y = graph.label.heights, 
-              label = graphdata.tib$count %>% format(., nsmall = 1)
-            ), 
-            position = position_dodge(width = 1),
-            size = 3,
-            color = "black") + 
-          
-          theme(panel.background = element_blank(),
-                panel.grid.major.y = element_blank(),
-                panel.grid.major.x = element_line(color = graphgridlinesgrey),
-                axis.text.x = element_blank(),
-                axis.text.y = element_text(size = 15, color = graphlabelsgrey),
-                axis.ticks = element_blank()
-          ) +     
-          
-          coord_flip() 
+          slide.graph <- 
+            ggplot(data = graphdata.tib, 
+              aes(x = (!!! syms(graph.x)), y = measure.var, group = year, fill = factor(year)) #graph 1
+              #aes(x = role, y = measure.var, group = year, fill = factor(year)) #graph 2
+            ) + 
+            
+            geom_bar(
+              alpha = 0.7,
+              position = "dodge", 
+              stat = "identity"
+            ) +
+            
+            scale_fill_manual(
+              values = c(bar_series_fill.cols)
+            ) +
+            
+            #geom_hline(
+            #  yintercept = graph.avg %>% as.numeric(),
+            #  color = "darkgrey",
+            #  linetype = "dashed",
+            #  alpha = 0.8
+            #) +
+            
+            geom_errorbar(
+              aes(y = graph.avg$avg %>% as.numeric)
+            ) +
+            
+            geom_text(
+              aes(                                                          #data labels inside base of columns
+                y = graph.label.heights, 
+                label = graphdata.tib$measure.var %>% format(., nsmall = 1)
+              ), 
+              position = position_dodge(width = 1),
+              size = 3,
+              color = "black") + 
+            
+            theme(panel.background = element_blank(),
+                  panel.grid.major.y = element_blank(),
+                  panel.grid.major.x = element_line(color = graphgridlinesgrey),
+                  axis.text.x = element_blank(),
+                  axis.text.y = element_text(size = 15, color = graphlabelsgrey),
+                  axis.ticks = element_blank()
+            ) +     
+            
+            coord_flip() 
         
-      #}  
+        slide.graph
+  
+        
+        
+    #}  
         
         
       
