@@ -157,7 +157,7 @@
         cbind(
           1:dim(x)[2],
           names(x),
-          apply(x, 2, DisplayUniqueVals) %>% unlist,
+          apply(x, 2, DisplayUniqueColVals) %>% unlist,
           .
         ) %>% 
         as.data.frame() %>%

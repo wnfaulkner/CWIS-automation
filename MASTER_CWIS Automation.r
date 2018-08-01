@@ -74,7 +74,7 @@
 
 ########################################################################################################################################################      
 ### DATA CLEANING & PREP ###
-{ #SECTION COLLAPSE BRACKET
+#{ #SECTION COLLAPSE BRACKET
 
   setwd(source.dir)
 
@@ -100,7 +100,7 @@
                     ]
     
     #Column Class Conversions
-      ColClassConvert(cwis.df)
+      cwis.df <- ColClassConvert(cwis.df)
     
     #Capitalize First Letter of character variables
       cwis.df[,names(cwis.df) %in% c("year","role","district","school")] <- 
@@ -166,7 +166,7 @@
     ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
     ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
     
-}    
+#}    
 
 ########################################################################################################################################################      
 ### Powerpoint Configurations ###
@@ -276,9 +276,8 @@
           }
         
         
-        #Graph
+        #Graphs
         slide.graph <- 
-          #! NEXT STEP: MAKE GGPLOT CALL AES BASED ON GRAPH CONFIGURATIONS FILE
           ggplot(data = graphdata.tib, 
             aes(school,count, group = year, fill = factor(year))
           ) + 
@@ -294,7 +293,7 @@
           ) +
           
           geom_hline(
-            yintercept = graph.avg,
+            yintercept = graph.avg %>% as.numeric(),
             color = "darkgrey",
             linetype = "dashed",
             alpha = 0.8
@@ -319,7 +318,7 @@
           
           coord_flip() 
         
-      }  
+      #}  
         
         
       
