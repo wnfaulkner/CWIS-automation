@@ -1,28 +1,30 @@
 #RESHAPE DATA INTO LONG FORMAT BASED ON SPLITTING COLUMN ON A CHARACTER
 
-  SplitColReshape <- function(x){ #parameters/arguments to add: id.var (if none, default is row.names(x)), split.varname, split.char
-    if(!is.data.frame(x)){stop("Input not a data frame.")}
-    id.varname <- "slide.type.id"
-    split.varname <- "slide.graph.type" 
-    split.char <- ","
+  SplitColReshape.ToLong <- function(df, id.varname, split.varname, split.char){ #parameters/arguments to add: id.var (if none, default is row.names(x)), split.varname, split.char
+    
+    if(!is.data.frame(df)){stop("Input not a data frame.")}
+  
+    if(!exists("split.char")){
+      split.varname <- readline(prompt = "Enter the variable name that will be split and used to reshape data: ")
+    }
     
     if(!exists("split.char")){
-      split.col <- readline(prompt = "Enter the variable name that will be split and used to reshape data: ")
+      split.varname <- readline(prompt = "Enter the variable name that will be split and used to reshape data: ")
     }
     
     if(!exists("split.char")){
       split.char <- readline(prompt = "Enter the character(s) you would like to split your variable on: ")
     }
     
-    #id.var <- x[,names(x)==id.varname]
+    id.var <- df[,names(df)==id.varname]
+    split.var <- df[,names(df)==split.varname]
     
     reshape.df <- 
-      data.frame(id.var = id.var, split.var = x[,names(x) == split.varname]) %>% 
+      data.frame(id.var = id.var, split.var = df[,names(df) == split.varname]) %>% 
       mutate(split.var = strsplit(as.character(split.var),",")) %>% 
       unnest(split.var, .drop = NA) %>%
-      full_join(., x, by = c("id.var" = id.varname))
-      #reshape.df[order(reshape.df$id.var),]
-    
+      full_join(., df, by = c("id.var" = id.varname))
+
     result <- reshape.df[order(reshape.df$id.var),!names(reshape.df) == split.varname]
     
     names(result)[names(result)=="id.var"] <- id.varname
