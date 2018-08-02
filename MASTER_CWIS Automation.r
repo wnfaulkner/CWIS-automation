@@ -101,6 +101,7 @@
       cwis.df <-  cwis.df[, #Put "responseid" in first column
                     c(grep("responseid", names(cwis.df)),which(!grepl("responseid", names(cwis.df))))
                     ]
+    ##########################################################################################################################################
     #Column Class Conversions
       cwis.df <- ColClassConvert(cwis.df)
     
@@ -207,15 +208,15 @@
     if(tolower(district.ids) %in% "all" %>% any){district.ids <- dat.df$district %>% unique}else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
     dat.df %>% 
       group_by(district,year) %>% 
-      summarize(num.responding.schools = length(unique(school))) %>%  #Check how many schools in each district
+      summarize(num.responding.schools = length(unique(school)))  #Check how many schools in each district
       
   # Load Graph Config
     setwd(rproj.dir)
     
     config.slidetypes.df <- read.csv("config_slide types.csv", stringsAsFactors = FALSE)
     config.graphtypes.df <- read.csv("config_graph types.csv", stringsAsFactors = FALSE)
-    #config.graphs.df <- read.csv("config_slide types.csv", stringsAsFactors = FALSE) %>% 
-    #  left_join(., config.graphtypes.df, by = c("graph.type" = "graphtype.id"))
+    config.graphs.df <- SplitColReshape(config.slidetypes.df) %>%
+      left_join(., config.graphtypes.df, by = c("slide.graph.type" = "graphtype.id")
     
   ### LOOP BY DISTRICT ###
     

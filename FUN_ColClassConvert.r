@@ -1,9 +1,10 @@
 #RESHAPE DATA INTO LONG FORMAT BASED ON SPLITTING COLUMN ON A CHARACTER
-  
-  SplitColReshape <- function(x){
+
+  SplitColReshape <- function(x){ #parameters/arguments to add: id.var (if none, default is row.names(x)), split.varname, split.char
     if(!is.data.frame(x)){stop("Input not a data frame.")}
-    split.colname <- "slide.graph.type" #! SHOULD LEARN HOW TO INCLUDE THESE AS ARGUMENTS OF THE FUNCTION!
-    split.char <- "," #!
+    id.varname <- "slide.type.id"
+    split.varname <- "slide.graph.type" 
+    split.char <- ","
     
     if(!exists("split.char")){
       split.col <- readline(prompt = "Enter the variable name that will be split and used to reshape data: ")
@@ -13,14 +14,21 @@
       split.char <- readline(prompt = "Enter the character(s) you would like to split your variable on: ")
     }
     
-    x[,names(x)==split.col] %>% strsplit(., split.char)
+    #id.var <- x[,names(x)==id.varname]
     
+    reshape.df <- 
+      data.frame(id.var = id.var, split.var = x[,names(x) == split.varname]) %>% 
+      mutate(split.var = strsplit(as.character(split.var),",")) %>% 
+      unnest(split.var, .drop = NA) %>%
+      full_join(., x, by = c("id.var" = id.varname))
+      #reshape.df[order(reshape.df$id.var),]
     
+    result <- reshape.df[order(reshape.df$id.var),!names(reshape.df) == split.varname]
+    
+    names(result)[names(result)=="id.var"] <- id.varname
+    names(result)[names(result)=="split.var"] <- split.varname
+    return(result)
   }
-  
-  
-
-
 
 
 #CONVERT DATA FRAME COLUMNS ACCORDING TO USER INPUT
@@ -172,6 +180,7 @@
   return(result)
   }
   
+  #! 1. MAKE SO CAN DESIGNATE ALL COLUMNS THE SAME; 2. MAKE SO CAN DESIGNATE ONLY CERTAIN COLUMNS WANT TO CHANGE (E.G. "end")
   ColClassConvert <- function(x){
     
     if(!is.data.frame(x)){stop("Input not a data frame.")}
