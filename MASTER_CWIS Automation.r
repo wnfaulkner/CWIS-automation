@@ -27,7 +27,7 @@
     #library(devtools)
     library(magrittr)
     library(googlesheets)
-    library(dplyr)
+    library(tidyr)
     library(ReporteRs)
     library(ggplot2)
     library(stringr)
@@ -114,7 +114,7 @@
     #Useful vectors for selecting cwis answer variables
       cwis.vars.v <- grep("_", names(cwis.df))
       cwis.varnames.v <- names(cwis.df)[grep("_", names(cwis.df))]
-      cwis.areas.v <- cwis.varnames.v %>% strsplit(.,"_") %>% sapply(., `[[`, 1) %>% unique
+      cwis.modules.v <- cwis.varnames.v %>% strsplit(.,"_") %>% sapply(., `[[`, 1) %>% unique
     
     #Create dummy variables for implementation (4 or above = 1)
       impbinary.df <- cwis.df[,cwis.vars.v] %>% apply(., c(1:2), function(x){ifelse(x>=4,1,0)}) %>% as.data.frame
@@ -124,15 +124,18 @@
       cwis.df$school.id <- paste(cwis.df$district, cwis.df$school,sep = "_") %>% tolower
       cwis.df$school.id <- gsub("\\/"," ",cwis.df$school.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
       
-    #Create final data frame: merge cwis.df and impbinary.df
-      dat.df <- cbind(cwis.df, impbinary.df) 
+    #Create final data frames: 1. Wide; 2. Long for original CWIS data; 3. Long for impbinary data (both long include all original id variables)
+      dat.wide.df <- cbind(cwis.df, impbinary.df)
+      dat.idvars.df <- cwis.df[,!names(cwis.df) %in% cwis.varnames.v]
+      dat.response.long.df <- gather(cwis.df, key = "question", value = "response", cwis.varnames.v, factor_key = FALSE)
+      dat.impbinary.long.df <- gather(cbind(dat.idvars.df,impbinary.df), key = "question", value = "response", names(impbinary.df), factor_key = FALSE) %>% 
         
     #Loop: state average implementation rates [a], results in imp.state.df
-      imp.state.df <- data.frame(cwis.area = cwis.areas.v)
+      imp.state.df <- data.frame(cwis.module = cwis.modules.v)
       #a <- 1 # LOOP TESTER
-      for(a in 1:length(cwis.areas.v)){
-        imp.state.df$imp.rate[imp.state.df[,1]==cwis.areas.v[a]] <- 
-          impbinary.df[,grep(cwis.areas.v[a], names(impbinary.df))] %>%
+      for(a in 1:length(cwis.modules.v)){
+        imp.state.df$imp.rate[imp.state.df[,1]==cwis.modules.v[a]] <- 
+          impbinary.df[,grep(cwis.modules.v[a], names(impbinary.df))] %>%
           apply(., 2, function(x){mean(x, na.rm = TRUE)}) %>% 
           mean() 
       }
@@ -140,7 +143,7 @@
 ## BUILD VARIABLE/QUESTION LOOKUP TABLE
     
   #Variable names & questions, adjusting for collapsed columns
-    vars.df <- names(dat.df) %>% as.data.frame(., stringsAsFactors = FALSE)
+    vars.df <- names(dat.df.wide) %>% as.data.frame(., stringsAsFactors = FALSE)
     names(vars.df) <- "q.id"
     vars.df <- left_join(vars.df, cwis.embed.helper.df, by = "q.id")
     
@@ -205,8 +208,8 @@
   # District name selection
     #district.names <- readline(prompt = "Enter district names for repeated measures reports or 'all'.")
     district.ids <- "all"
-    if(tolower(district.ids) %in% "all" %>% any){district.ids <- dat.df$district %>% unique}else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
-    dat.df %>% 
+    if(tolower(district.ids) %in% "all" %>% any){district.ids <- dat.df.wide$district %>% unique}else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
+    dat.df.wide %>% 
       group_by(district,year) %>% 
       summarize(num.responding.schools = length(unique(school)))  #Check how many schools in each district
       
@@ -215,8 +218,10 @@
     
     config.slidetypes.df <- read.csv("config_slide types.csv", stringsAsFactors = FALSE)
     config.graphtypes.df <- read.csv("config_graph types.csv", stringsAsFactors = FALSE)
+    
     config.graphs.df <- SplitColReshape(config.slidetypes.df) %>%
-      left_join(., config.graphtypes.df, by = c("slide.graph.type" = "graphtype.id")
+      left_join(., config.graphtypes.df, by = c("slide.graph.type" = "graphtype.id")) %>% 
+      filter(!is.na(slide.graph.type))
     
   ### LOOP BY DISTRICT ###
     
@@ -230,25 +235,81 @@
   
     # Create data frame for this loop - restrict to responses from district name i
       district.id.b <- district.ids[b]
-      dat.df.b <- dat.df[dat.df$district == district.id.b,] 
+      dat.df.wide.b <- dat.df.wide[dat.df.wide$district == district.id.b,] 
 
-    ### LOOP BY GRAPH ###
+    ### LOOP "c" BY GRAPH TYPE###
       
-      c = 1 #LOOP TESTER
-      #for(c in 1:dim(config)){
+      #c = 1 #LOOP TESTER: NO LOOPS
+      #c = 3 #LOOP TESTER: ONE LOOP VAR
+      c = 8 #LOOP TESTER: TWO LOOP VARS
+      #for(c in 1:dim(config.graphs.df)[1]){
+      
+        c.list.c <- list(c=c)
         
-        #Read necessary pieces of config file  
-          group_by.c <- config.graphs.df$data.group.by.var[c] %>% 
-            strsplit(., ",") %>% 
-            unlist
+        #Make data frame with configurations for graphs      
+          slide.loop.vars.c <- config.graphs.df$slide.loop.var[c] %>% strsplit(., ",") %>% unlist %>% trimws(., which = "both")
           
-          graph.avg.group.by.var.c <- 
-            config.graphs.df$graph.avg.group.by.var[c] %>% 
-            strsplit(., ",") %>% 
-            unlist
+          if(length(slide.loop.vars.c) == 0){
+            config.graphs.df.c <- config.graphs.df[c,]
+          }
+          
+          if(length(slide.loop.vars.c) != 0){
         
-        #Defining graph dataset
+            loop.unique.d <- dat.df.wide.b[names(dat.df.wide.b) %in% slide.loop.vars.c] %>% unique %>% expand.grid()  #unique items for each loop that will specify graph (e.g. school name)
+            #loop.num.d <- dim(loop.unique.d)[1]  #number of graphs of this type that will be produced
+            
+            config.graphs.df.c <- 
+              config.graphs.df[  
+                rep(
+                  c.list.c[["c"]],
+                  dim(loop.unique.d)[1]
+                )
+              ,] %>%
+              cbind(.,loop.unique.d)
+          }
+        
+        ### LOOP "d" BY GRAPH ###
+        for(d in 1:dim(config.graphs.df.c)[1]){
+          config.graphs.df.d <- config.graphs.df.c[d,]
           
+        } ### END OF LOOP "D" BY GRAPH
+        
+      #} ### END OF LOOP "C" BY GRAPH TYPE
+        
+        
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          #Defining graph dataset
+          
+          #Read necessary pieces of config file  
+                  
+      
+            group_by.c <- config.graphs.df$data.group.by.var[c] %>% 
+              strsplit(., ",") %>% 
+              unlist
+            
+            graph.avg.group.by.var.c <- 
+              config.graphs.df$graph.avg.group.by.var[c] %>% 
+              strsplit(., ",") %>% 
+              unlist        
+      
+      
           data.level.filter <- function(x){
             if(config.graphs.df$data.level[c] == "district"){
               result <- x %>% 
@@ -260,18 +321,18 @@
             return(result)
           }
           
-          #dat.df.b$role %>% unique %>% rep(., 2) %>% as.data.frame() %>% left_join(., graphdata.tib, by = c("." = "role"))
+          #dat.df.wide.b$role %>% unique %>% rep(., 2) %>% as.data.frame() %>% left_join(., graphdata.tib, by = c("." = "role"))
           graphdata.allcombinations.df <- 
             expand.grid(
-              dat.df %>%
+              dat.df.wide %>%
                 data.level.filter %>%
-                .[,names(dat.df) == group_by.c[1]] %>% 
+                .[,names(dat.df.wide) == group_by.c[1]] %>% 
                 unique %>% 
                 as.vector
               , 
-              dat.df %>%
+              dat.df.wide %>%
                 data.level.filter %>%
-                .[,names(dat.df) == group_by.c[2]] %>% 
+                .[,names(dat.df.wide) == group_by.c[2]] %>% 
                 unique %>% 
                 as.vector
             )
@@ -293,7 +354,7 @@
           }
             
           graphdata.tib <-  
-            dat.df.b %>% 
+            dat.df.wide.b %>% 
             group_by(!!! syms(group_by.c)) %>% 
             summarize(measure.var = length(unique(responseid))) %>%
             graph.data.level.restriction.fun
@@ -311,15 +372,15 @@
               return(result)
             }
             
-            graphdata.tib <- 
-              dat.df %>% 
-              group_by(!!! syms(group_by.c)) %>% 
-              summarize(count = length(unique(responseid))) %>% 
-              graph.avg.attributes.fun %>%
-              summarize(avg = mean(count)) %>%
-              left_join(graphdata.tib,.,by=c("year", "role"))
+        #    graphdata.tib <- 
+        #      dat.df.wide %>% 
+        #      group_by(!!! syms(group_by.c)) %>% 
+        #      summarize(count = length(unique(responseid))) %>% 
+        #      graph.avg.attributes.fun %>%
+        #      summarize(avg = mean(count)) %>%
+        #      left_join(graphdata.tib,.,by=c("year", "role"))
             
-            graphdata.tib$avg[is.na(graphdata.tib$avg)] <- 0
+        #    graphdata.tib$avg[is.na(graphdata.tib$avg)] <- 0
        
         #Graph Label Heights defined based on ratio of tallest to shortest columns
           
@@ -348,10 +409,9 @@
           
           graph.label.heights.v <- create.graph.label.heights(graphdata.tib)
           graph.label.show.v <- ifelse(graphdata.tib$measure.var != 0,0.8,0)
-        
-        #Graphs
-          
           graph.x <- config.graphs.df$graph.x[c]
+        
+        ### GRAPH FORMATOIN WITH GGPLOT2 ###
           
           slide.graph <- 
             ggplot(data = graphdata.tib, 
@@ -376,13 +436,13 @@
             #  alpha = 0.8
             #) +
             
-            geom_errorbar(
-              aes(ymin =graph.avg.tib$avg+3, ymax = graph.avg.tib$avg), 
-              position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-              color = "black", 
-              width = 1,
-              size = 1,
-              alpha = 0.5) +
+            #geom_errorbar(
+            #  aes(ymin =graph.avg.tib$avg+3, ymax = graph.avg.tib$avg), 
+            #  position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+            #  color = "black", 
+            #  width = 1,
+            #  size = 1,
+            #  alpha = 0.5) +
             
             geom_text(
               aes(                                                          #data labels inside base of columns

@@ -1,11 +1,13 @@
-slide.type.id,slide.type.name,slide.data.level,slide.loop.var,slide.graph.type
-1,district cover,district,,
-2,district section title,district,,
-3,school section title,school,school,
-4,district dashboard,district,,"a,c"
-5,school dashboard,school,school,"b,d"
-6,district participation overall,district,,e
-7,district participation by school,district,,f
-8,district performance by school,district,,g
-9,district performance by school by module,district,"school,module",h
-10,school performance by ans.opt by module,school,"school,module",i
+slide.type.id,slide.type.name,slide.type.position,slide.data.level,slide.loop.var,slide.graph.type
+1,district cover,1,district,,
+2,presentation notes and instructions,2,district,,
+3,district section title participation,5,district,,
+4,district section title performance,8,district,,
+5,school section title,11,school,school,
+6,district dashboard,3,district,,"a,c"
+7,school dashboard,4,school,school,"b,d"
+8,district participation overall,6,district,,e
+9,district participation by school,7,district,,f
+10,district performance by school,9,district,,g
+11,district performance by school by module,10,district,"school,module",h
+12,school performance by ans.opt by module,12,school,"school,module",i
