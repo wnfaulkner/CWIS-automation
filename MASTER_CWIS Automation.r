@@ -88,6 +88,9 @@
     #Edit variable names
       names(cwis.df) <- cwis.df %>% names %>% tolower #Lower-case all variable names
       names(cwis.df)[names(cwis.df) == "id"] <- "responseid"
+      
+    #Recode role variable
+      cwis.df$role[cwis.df$role == "Teacher"] <- "Classroom Teacher"
     
     #Rearrange data columns
       cwis.df <- cwis.df[,   # CWIS response variables last, others first
@@ -98,7 +101,6 @@
       cwis.df <-  cwis.df[, #Put "responseid" in first column
                     c(grep("responseid", names(cwis.df)),which(!grepl("responseid", names(cwis.df))))
                     ]
-    
     #Column Class Conversions
       cwis.df <- ColClassConvert(cwis.df)
     
@@ -203,7 +205,7 @@
     #district.names <- readline(prompt = "Enter district names for repeated measures reports or 'all'.")
     district.ids <- "all"
     if(tolower(district.ids) %in% "all" %>% any){district.ids <- dat.df$district %>% unique}else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
-    cwis.df %>% group_by(district) %>% summarize(count = length(unique(school))) #Check how many schools in each district
+    dat.df %>% group_by(district,year) %>% summarize(num.responding.schools = length(unique(school))) #Check how many schools in each district
   
   # Load Graph Config
     setwd(rproj.dir)
@@ -224,12 +226,8 @@
   
     # Create data frame for this loop - restrict to responses from district name i
       district.id.b <- district.ids[b]
-  
-      if(district.id.b %in% c("district office","other") %>% any){next()}else{}
-      
-      dat.df.b <- dat.df[dat.df$district == district.id.b & !dat.df$school %in% c("District Office","Other"),] 
-      #district.name.b <- dat.df.b$district %>% unique
-    
+      dat.df.b <- dat.df[dat.df$district == district.id.b,] 
+
     ### LOOP BY GRAPH ###
       
       c = 1 #LOOP TESTER
@@ -247,14 +245,45 @@
         
         #Defining graph dataset
           
+          data.level.filter <- function(x){
+            if(config.graphs.df$data.level[c] == "district"){
+              result <- x %>% 
+                filter(district == district.id.b)
+            }else{
+              result <- x %>% 
+                filter(school == x$school %>% unique %>% .[c]) #! will need to change so not indexing on c
+            }
+            return(result)
+          }
+          
           #dat.df.b$role %>% unique %>% rep(., 2) %>% as.data.frame() %>% left_join(., graphdata.tib, by = c("." = "role"))
-          graphdata.allcombinations.df <- dat.df.b[,names(dat.df.b) %in% group_by.c[2:length(group_by.c)]] %>% unique()
+          graphdata.allcombinations.df <- 
+            expand.grid(
+              dat.df %>%
+                data.level.filter %>%
+                .[,names(dat.df) == group_by.c[1]] %>% 
+                unique %>% 
+                as.vector
+              , 
+              dat.df %>%
+                data.level.filter %>%
+                .[,names(dat.df) == group_by.c[2]] %>% 
+                unique %>% 
+                as.vector
+            )
+          names(graphdata.allcombinations.df) <- c(group_by.c[1],group_by.c[2])
+
           
           graph.data.level.restriction.fun <- function(x){
             if(config.graphs.df$data.level[c] == "district"){
-              result <- x
+              result <- x %>%
+                left_join(graphdata.allcombinations.df,., by = group_by.c[2], all.x = TRUE)
             }else{
-              result <- x %>% filter(school == x$school %>% unique %>% .[c]) #! will need to change so not indexing on c
+              result <- x %>% 
+                #filter(school == x$school %>% unique %>% .[c]) %>% #! will need to change so not indexing on c
+                left_join(graphdata.allcombinations.df,., by = c("year","role"), all.x = TRUE) %>% 
+                filter(role != "District Administrator") %>%
+                select(-school)
             }
             return(result)
           }
@@ -263,27 +292,30 @@
             dat.df.b %>% 
             group_by(!!! syms(group_by.c)) %>% 
             summarize(measure.var = length(unique(responseid))) %>%
-            graph.data.level.restriction.fun %>%
-            left_join(graphdata.allcombinations.df,., by = c("year","role"), all.x = TRUE)
+            graph.data.level.restriction.fun
+            
+          graphdata.tib$measure.var[is.na(graphdata.tib$measure.var)] <- 0
         
-        #Define graph average line(s)  
-          graph.avg.attributes.fun <- function(x){
-            if(!is.null(graph.avg.group.by.var.c)){
-              result <- group_by(x, !!! syms(graph.avg.group.by.var.c)) 
-            }else{
-              result <- as.data.frame(x) %>% 
-                select(count)
+          #Define graph average line(s) as new variable of graphdata.tib 
+            graph.avg.attributes.fun <- function(x){
+              if(!is.null(graph.avg.group.by.var.c)){
+                result <- group_by(x, !!! syms(graph.avg.group.by.var.c)) 
+              }else{
+                result <- as.data.frame(x) %>% 
+                  select(count)
+              }
+              return(result)
             }
-            return(result)
-          }
-          
-          graph.avg <- 
-            dat.df %>% 
-            filter(year != "Baseline") %>%
-            group_by(!!! syms(group_by.c)) %>% 
-            summarize(count = length(unique(responseid))) %>% 
-            graph.avg.attributes.fun %>%
-            summarize(avg = mean(count))  
+            
+            graphdata.tib <- 
+              dat.df %>% 
+              group_by(!!! syms(group_by.c)) %>% 
+              summarize(count = length(unique(responseid))) %>% 
+              graph.avg.attributes.fun %>%
+              summarize(avg = mean(count)) %>%
+              left_join(graphdata.tib,.,by=c("year", "role"))
+            
+            graphdata.tib$avg[is.na(graphdata.tib$avg)] <- 0
        
         #Graph Label Heights defined based on ratio of tallest to shortest columns
           
@@ -310,7 +342,8 @@
           return(result)
           }
           
-          graph.label.heights <- create.graph.label.heights(graphdata.tib)
+          graph.label.heights.v <- create.graph.label.heights(graphdata.tib)
+          graph.label.show.v <- ifelse(graphdata.tib$measure.var != 0,0.8,0)
         
         #Graphs
           
@@ -333,20 +366,25 @@
             ) +
             
             #geom_hline(
-            #  yintercept = graph.avg %>% as.numeric(),
+            #  yintercept = graph.avg.tib %>% as.numeric(),
             #  color = "darkgrey",
             #  linetype = "dashed",
             #  alpha = 0.8
             #) +
             
             geom_errorbar(
-              aes(y = graph.avg$avg %>% as.numeric)
-            ) +
+              aes(ymin =graph.avg.tib$avg+3, ymax = graph.avg.tib$avg), 
+              position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+              color = "black", 
+              width = 1,
+              size = 1,
+              alpha = 0.5) +
             
             geom_text(
               aes(                                                          #data labels inside base of columns
-                y = graph.label.heights, 
-                label = graphdata.tib$measure.var %>% format(., nsmall = 1)
+                y = graph.label.heights.v, 
+                label = graphdata.tib$measure.var %>% format(., nsmall = 0),
+                alpha = graph.label.show.v
               ), 
               position = position_dodge(width = 1),
               size = 3,
@@ -372,13 +410,7 @@
       
       
       
-      geom_errorbar(
-        aes(ymin =graph.avg+3, ymax = graph.avg), 
-        position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-        color = "black", 
-        width = 1,
-        size = 1,
-        alpha = 0.5) +
+     
         
         
         

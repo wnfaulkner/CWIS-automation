@@ -1,0 +1,11 @@
+slide.type.id,slide.type.name,slide.data.level,slide.loop.var,slide.graph.type
+1,district cover,district,,
+2,district section title,district,,
+3,school section title,school,school,
+4,district dashboard,district,,"1,3"
+5,school dashboard,school,school,"2,4"
+6,district participation overall,district,,5
+7,district participation by school,district,,6
+8,district performance by school,district,,7
+9,district performance by school by module,district,"school,module",8
+10,school performance by ans.opt by module,school,"school,module",9
