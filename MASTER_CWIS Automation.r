@@ -28,6 +28,7 @@
     library(magrittr)
     library(googlesheets)
     library(tidyr)
+    library(dplyr)
     library(ReporteRs)
     library(ggplot2)
     library(stringr)
@@ -127,8 +128,16 @@
     #Create final data frames: 1. Wide; 2. Long for original CWIS data; 3. Long for impbinary data (both long include all original id variables)
       dat.wide.df <- cbind(cwis.df, impbinary.df)
       dat.idvars.df <- cwis.df[,!names(cwis.df) %in% cwis.varnames.v]
-      dat.response.long.df <- gather(cwis.df, key = "question", value = "response", cwis.varnames.v, factor_key = FALSE)
-      dat.impbinary.long.df <- gather(cbind(dat.idvars.df,impbinary.df), key = "question", value = "response", names(impbinary.df), factor_key = FALSE) %>% 
+      dat.answer.long.df <- gather(cwis.df, key = "question", value = "answer", cwis.varnames.v, factor_key = FALSE)
+      dat.impbinary.long.df <- gather(cbind(dat.idvars.df,impbinary.df), key = "question", value = "answer", names(impbinary.df), factor_key = FALSE) 
+      dat.long.df <- rbind(dat.answer.long.df, dat.impbinary.long.df)
+      
+    #Creating additional useful variables for long data frames
+      # Variable for module
+        dat.long.df$module <- strsplit(dat.long.df$question, "_" ) %>% sapply(., `[[`, 1)
+        dat.long.df$impbinary <- ifelse(grepl("impbinary",dat.long.df$question),1,0)
+        
+        #dat.answer.long.df$module <- strsplit(dat.answer.long.df$question, "_" ) %>% sapply(., `[[`, 1)
         
     #Loop: state average implementation rates [a], results in imp.state.df
       imp.state.df <- data.frame(cwis.module = cwis.modules.v)
@@ -208,41 +217,49 @@
   # District name selection
     #district.names <- readline(prompt = "Enter district names for repeated measures reports or 'all'.")
     district.ids <- "all"
-    if(tolower(district.ids) %in% "all" %>% any){district.ids <- dat.df.wide$district %>% unique}else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
-    dat.df.wide %>% 
+    if(tolower(district.ids) %in% "all" %>% any){district.ids <- dat.wide.df$district %>% unique}else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
+    dat.wide.df %>% 
       group_by(district,year) %>% 
       summarize(num.responding.schools = length(unique(school)))  #Check how many schools in each district
       
-  # Load Graph Config
-    setwd(rproj.dir)
-    
-    config.slidetypes.df <- read.csv("config_slide types.csv", stringsAsFactors = FALSE)
-    config.graphtypes.df <- read.csv("config_graph types.csv", stringsAsFactors = FALSE)
-    
-    config.graphs.df <- SplitColReshape(config.slidetypes.df) %>%
-      left_join(., config.graphtypes.df, by = c("slide.graph.type" = "graphtype.id")) %>% 
-      filter(!is.na(slide.graph.type))
-    
-  ### LOOP BY DISTRICT ###
-    
-  # Progress bar for loop
-    #progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
-    #maxrow.b <- length(district.ids)
-
-  b <- 19 #LOOP TESTER
-  #for(b in c(1,110:115)){   #LOOP TESTER
-  #for(b in 1:length(district.names)){   #START OF LOOP BY DISTRICT
-  
-    # Create data frame for this loop - restrict to responses from district name i
-      district.id.b <- district.ids[b]
-      dat.df.wide.b <- dat.df.wide[dat.df.wide$district == district.id.b,] 
-
-    ### LOOP "c" BY GRAPH TYPE###
+    # Load Graph Config
+      setwd(rproj.dir)
       
+      config.slidetypes.df <- read.csv("config_slide types.csv", stringsAsFactors = FALSE)
+      config.graphtypes.df <- read.csv("config_graph types.csv", stringsAsFactors = FALSE)
+      
+      config.graphs.df <- SplitColReshape.ToLong(config.slidetypes.df, id.var = "slide.type.id",split.varname = "slide.graph.type",split.char = ",") %>%
+        left_join(., config.graphtypes.df, by = c("slide.graph.type" = "graphtype.id")) %>% 
+        filter(!is.na(slide.graph.type))
+  
+    ###                       ###    
+  # ### LOOP "b" BY DISTRICT  ###
+    ###                       ###
+      
+    # Progress bar for loop
+      #progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
+      #maxrow.b <- length(district.ids)
+  
+    b <- 19 #LOOP TESTER (19 = "Raytown C-2")
+    #for(b in c(1,110:115)){   #LOOP TESTER
+    #for(b in 1:length(district.names)){   #START OF LOOP BY DISTRICT
+    
+      # Create data frames for this loop - restrict to district id i
+        district.id.b <- district.ids[b]
+        dat.wide.df.b <- dat.wide.df[dat.wide.df$district == district.id.b,] 
+        dat.answer.long.df <- dat.answer.long.df[dat.answer.long.df$district == district.id.b,]
+        dat.impbinary.long.df.b <- dat.impbinary.long.df[dat.impbinary.long.df$district == district.id.b,] 
+        dat.long.df.b <- dat.long.df[dat.long.df$district == district.id.b,]
+  
+      ###                         ###
+  #   ### LOOP "c" BY GRAPH TYPE  ###
+      ###                         ###
+        
       #c = 1 #LOOP TESTER: NO LOOPS
       #c = 3 #LOOP TESTER: ONE LOOP VAR
-      c = 8 #LOOP TESTER: TWO LOOP VARS
-      #for(c in 1:dim(config.graphs.df)[1]){
+      #c = 8 #LOOP TESTER: TWO LOOP VARS
+      config.graphs.ls <- list()
+      for(c in 1:dim(config.graphs.df)[1]){
       
         c.list.c <- list(c=c)
         
@@ -255,59 +272,160 @@
           
           if(length(slide.loop.vars.c) != 0){
         
-            loop.unique.d <- dat.df.wide.b[names(dat.df.wide.b) %in% slide.loop.vars.c] %>% unique %>% expand.grid()  #unique items for each loop that will specify graph (e.g. school name)
-            #loop.num.d <- dim(loop.unique.d)[1]  #number of graphs of this type that will be produced
+            loop.unique.df <- 
+              dat.long.df.b[names(dat.long.df.b) %in% slide.loop.vars.c] %>% 
+              apply(., 2, unique) %>% as.data.frame %>%
+              expand.grid(., stringsAsFactors = FALSE) %>%
+              as.data.frame #unique items for each loop that will specify graph (e.g. school name)
+            loop.unique.df <- loop.unique.df[order(loop.unique.df[,names(loop.unique.df)==slide.loop.vars.c[1]]),] %>% as.data.frame
+            names(loop.unique.df) <- slide.loop.vars.c
             
             config.graphs.df.c <- 
               config.graphs.df[  
                 rep(
                   c.list.c[["c"]],
-                  dim(loop.unique.d)[1]
+                  dim(loop.unique.df)[1]
                 )
               ,] %>%
-              cbind(.,loop.unique.d)
+              cbind(.,loop.unique.df)
           }
+          config.graphs.ls[[c]] <- config.graphs.df.c
+          #print(config.graphs.df.c)
+      } ### END OF LOOP "C" BY GRAPH TYPE ###
+          
         
-        ### LOOP "d" BY GRAPH ###
-        for(d in 1:dim(config.graphs.df.c)[1]){
-          config.graphs.df.d <- config.graphs.df.c[d,]
-          
-        } ### END OF LOOP "D" BY GRAPH
-        
-      #} ### END OF LOOP "C" BY GRAPH TYPE
-        
-        
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          #Defining graph dataset
-          
-          #Read necessary pieces of config file  
-                  
+      ###                   ###
+#     ### LOOP "d" BY GRAPH ###
+      ###                   ###
       
-            group_by.c <- config.graphs.df$data.group.by.var[c] %>% 
-              strsplit(., ",") %>% 
-              unlist
+      #d = 1 #LOOP TESTER 
+      #for(d in 1:3){ #LOOP TESTER
+      for(d in 1:length(config.graphs.ls)){
+        
+        config.graphs.df.d <- config.graphs.ls[[d]]
+        
+        for(i in 1:dim(config.graphs.df.d)[1]){
+          
+          config.graphs.df.i <- config.graphs.df.d[i,]
+          
+          #School-level slides should not include an iteration for the District Office 
+          if(
+              config.graphs.df.i$data.level == "school" && 
+              config.graphs.df.i[,names(config.graphs.df.i) == config.graphs.df.i$data.restriction] %>% as.character == "District Office"
+          ){next()}
             
-            graph.avg.group.by.var.c <- 
-              config.graphs.df$graph.avg.group.by.var[c] %>% 
-              strsplit(., ",") %>% 
-              unlist        
+          group_by.c <- config.graphs.df.i$data.group.by.var %>% #! will be moved into "c" loop
+            strsplit(., ",") %>% 
+            unlist
+          
+          #Create data frame of all possible answers (role, module, year, answer)
+            
+            if(config.graphs.df.i$graph.x == "school"){
+              allx.df <- dat.long.df.b
+            }else{
+              allx.df <- dat.long.df
+            }
+            allx <- allx.df %>%
+              filter( allx.df$impbinary == 0 ) %>%
+              .[,names(allx.df) == config.graphs.df.i$graph.x] %>% 
+              as.data.frame %>% 
+              apply(., 2, function(x){x[!is.na(x)] %>% unique}) %>%
+              .[,1]
+            
+            if(config.graphs.df.i$graph.x != "year"){
+              allx <- expand.grid(unique(dat.answer.long.df$year), allx)
+            }else{
+              allx <- allx %>% as.data.frame()
+            }
+            
+            names(allx) <- group_by.c
+            
+          #Summarize Function: participation vs. performance 
+            summarize.fun <- function(x){
+              if(config.graphs.df.i$data.measure == "participation"){
+                result <- summarize(x, measure.var =  length(unique(responseid)))
+              }
+              if(config.graphs.df.i$data.measure == "implementation"){
+                result <- x %>% 
+                  filter(impbinary == 1) %>%
+                  summarize(measure.var = mean(answer, na.rm = TRUE))
+              }
+              if(config.graphs.df.i$data.measure == "performance"){
+                result <- x %>%
+                  filter(impbinary == 0, !is.na(answer)) %>%
+                  summarize(measure.var = length(unique(responseid)))
+              }
+            return(result)
+            }
+          
+          #Data restriction function: district vs. school
+            graph.data.restriction.fun <- function(x){
+              
+              if(config.graphs.df.i$data.restriction == ""){
+                result <- x
+              }
+              
+              if(config.graphs.df.i$data.restriction != ""){
+                result <- 
+                  x %>% 
+                  filter(
+                    x[,names(x) == config.graphs.df.i$data.restriction] == 
+                    config.graphs.df.i[,names(config.graphs.df.i) == config.graphs.df.i$data.restriction] %>% as.character
+                  )
+              }
+              return(result)
+            }
+          
+          graphdata.tib.d <-  
+            dat.long.df.b %>%
+            graph.data.restriction.fun %>%
+            group_by(!!! syms(group_by.c)) %>%
+            summarize.fun %>%
+            left_join(allx, ., by = c(group_by.c))
+          graphdata.tib.d$measure.var[is.na(graphdata.tib.d$measure.var)] <- 0
+           
+          #graphdata.ls[[d]] <- graphdata.tib.d 
+          print(i)
+          print(config.graphs.df.i[,names(config.graphs.df.i) == config.graphs.df.i$data.restriction] %>% as.character)
+          print(config.graphs.df.i[,names(config.graphs.df.i) == config.graphs.df.i$data.level] %>% as.character)
+          print(graphdata.tib.d)
+        
+        } ### END OF LOOP "i" BY GRAPH ###
+        
+          
+      } ### END OF LOOP "D" BY GRAPH ###
+     
+        
+        
+        
+        
+        group_by.c <- config.graphs.df$data.group.by.var[c] %>% 
+          strsplit(., ",") %>% 
+          unlist
+        
+        graph.avg.group.by.var.c <- 
+          config.graphs.df$graph.avg.group.by.var[c] %>% 
+          strsplit(., ",") %>% 
+          unlist    
+        
+        
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+
       
       
           data.level.filter <- function(x){
