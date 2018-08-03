@@ -304,35 +304,35 @@
         
         config.graphs.df.d <- config.graphs.ls[[d]]
         
-        for(i in 1:dim(config.graphs.df.d)[1]){
+        for(e in 1:dim(config.graphs.df.d)[1]){
           
-          config.graphs.df.i <- config.graphs.df.d[i,]
+          config.graphs.df.e <- config.graphs.df.d[e,]
           
           #School-level slides should not include an iteration for the District Office 
           if(
-              config.graphs.df.i$data.level == "school" && 
-              config.graphs.df.i[,names(config.graphs.df.i) == config.graphs.df.i$data.restriction] %>% as.character == "District Office"
+              config.graphs.df.e$data.level == "school" && 
+              config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.restriction] %>% as.character == "District Office"
           ){next()}
             
-          group_by.c <- config.graphs.df.i$data.group.by.var %>% #! will be moved into "c" loop
+          group_by.c <- config.graphs.df.e$data.group.by.var %>% #! will be moved into "c" loop
             strsplit(., ",") %>% 
             unlist
           
           #Create data frame of all possible answers (role, module, year, answer)
             
-            if(config.graphs.df.i$graph.x == "school"){
+            if(config.graphs.df.e$graph.x == "school"){
               allx.df <- dat.long.df.b
             }else{
               allx.df <- dat.long.df
             }
             allx <- allx.df %>%
               filter( allx.df$impbinary == 0 ) %>%
-              .[,names(allx.df) == config.graphs.df.i$graph.x] %>% 
+              .[,names(allx.df) == config.graphs.df.e$graph.x] %>% 
               as.data.frame %>% 
               apply(., 2, function(x){x[!is.na(x)] %>% unique}) %>%
               .[,1]
             
-            if(config.graphs.df.i$graph.x != "year"){
+            if(config.graphs.df.e$graph.x != "year"){
               allx <- expand.grid(unique(dat.answer.long.df$year), allx)
             }else{
               allx <- allx %>% as.data.frame()
@@ -342,15 +342,15 @@
             
           #Summarize Function: participation vs. performance 
             summarize.fun <- function(x){
-              if(config.graphs.df.i$data.measure == "participation"){
+              if(config.graphs.df.e$data.measure == "participation"){
                 result <- summarize(x, measure.var =  length(unique(responseid)))
               }
-              if(config.graphs.df.i$data.measure == "implementation"){
+              if(config.graphs.df.e$data.measure == "implementation"){
                 result <- x %>% 
                   filter(impbinary == 1) %>%
                   summarize(measure.var = mean(answer, na.rm = TRUE))
               }
-              if(config.graphs.df.i$data.measure == "performance"){
+              if(config.graphs.df.e$data.measure == "performance"){
                 result <- x %>%
                   filter(impbinary == 0, !is.na(answer)) %>%
                   summarize(measure.var = length(unique(responseid)))
@@ -361,16 +361,16 @@
           #Data restriction function: district vs. school
             graph.data.restriction.fun <- function(x){
               
-              if(config.graphs.df.i$data.restriction == ""){
+              if(config.graphs.df.e$data.restriction == ""){
                 result <- x
               }
               
-              if(config.graphs.df.i$data.restriction != ""){
+              if(config.graphs.df.e$data.restriction != ""){
                 result <- 
                   x %>% 
                   filter(
-                    x[,names(x) == config.graphs.df.i$data.restriction] == 
-                    config.graphs.df.i[,names(config.graphs.df.i) == config.graphs.df.i$data.restriction] %>% as.character
+                    x[,names(x) == config.graphs.df.e$data.restriction] == 
+                    config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.restriction] %>% as.character
                   )
               }
               return(result)
@@ -386,14 +386,14 @@
            
           #graphdata.ls[[d]] <- graphdata.tib.d 
           print(i)
-          print(config.graphs.df.i[,names(config.graphs.df.i) == config.graphs.df.i$data.restriction] %>% as.character)
-          print(config.graphs.df.i[,names(config.graphs.df.i) == config.graphs.df.i$data.level] %>% as.character)
+          print(config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.restriction] %>% as.character)
+          print(config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.level] %>% as.character)
           print(graphdata.tib.d)
         
-        } ### END OF LOOP "i" BY GRAPH ###
+        } ### END OF LOOP "e" BY GRAPH ###
         
           
-      } ### END OF LOOP "D" BY GRAPH ###
+      } ### END OF LOOP "d" BY GRAPH ###
      
         
         
