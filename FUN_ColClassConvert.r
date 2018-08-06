@@ -40,18 +40,18 @@
   #4. Once all entered, convert to 
 
 #TESTING OBJECTS
-  x2 <- data.frame(
-	  factor.name = c("a","xa","222","xa"),
-	  character.name = c("char","a","b","cd"),
-	  logical.name = c(TRUE, FALSE,TRUE,FALSE),
-	  integer.name = c(1,2,3,4) %>% as.integer,
-	  numeric.name = c(1.1,2.2,3.3,4.4)
-	)
-  x2$character.name <- x2$character.name %>% as.character
+  #x2 <- data.frame(
+	#  factor.name = c("a","xa","222","xa"),
+	#  character.name = c("char","a","b","cd"),
+	#  logical.name = c(TRUE, FALSE,TRUE,FALSE),
+	#  integer.name = c(1,2,3,4) %>% as.integer,
+	#  numeric.name = c(1.1,2.2,3.3,4.4)
+	#)
+  #x2$character.name <- x2$character.name %>% as.character
   
-  x1 <- data.frame(numeric.name = c(1.1,2.2,3.3))
+  #x1 <- data.frame(numeric.name = c(1.1,2.2,3.3))
   
-  x <- x2
+  #x <- x2
   
   ConvertToFactor <- function(x){
     if(!is.null(dim(x))){stop("Input is not an atomic vector.")}
