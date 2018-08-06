@@ -292,6 +292,7 @@
           }
           config.graphs.ls[[c]] <- config.graphs.df.c
           #print(config.graphs.df.c)
+          
       } ### END OF LOOP "C" BY GRAPH TYPE ###
           
         
@@ -321,13 +322,14 @@
             strsplit(., ",") %>% 
             unlist
           
-          #Create data frame of all possible answers (role, module, year, answer)
+          #Create data frame"allx.df" of all possible answers for x-axis (role, module, year, answer)
             
             if(config.graphs.df.e$graph.x == "school"){
               allx.df <- dat.long.df.b
             }else{
               allx.df <- dat.long.df
             }
+            
             allx <- allx.df %>%
               filter( allx.df$impbinary == 0 ) %>%
               .[,names(allx.df) == config.graphs.df.e$graph.x] %>% 
@@ -344,7 +346,8 @@
             
             names(allx) <- group_by.c
             
-            #Summarize Function: participation vs. performance 
+          #Summarize Function: participation vs. performance 
+            
             summarize.fun <- function(x){
               if(config.graphs.df.e$data.measure == "participation"){
                 result <- summarize(x, measure.var =  length(unique(responseid)))
@@ -389,7 +392,7 @@
           graphdata.tib.d$measure.var[is.na(graphdata.tib.d$measure.var)] <- 0
            
           graphdata.ls.index <- length(graphdata.ls.d) + 1
-          graphdata.ls.d[[graphdata.ls.index]] <- graphdata.tib.d 
+          graphdata.ls.d[[graphdata.ls.index]] <- list(configs = config.graphs.df.e, graphdata = graphdata.tib.d)
 
           #print(e)
           #print(config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.restriction] %>% as.character)
@@ -413,22 +416,32 @@
 #   ### LOOP "f" BY DISTRICT  ###
     ###                       ###
     
-    for(f in 1:length(graphdata.ls.b)){
+    
+    f <- 1
+    #for(f in 1:length(graphdata.ls.b)){
+      
      
       #Graph Label Heights defined based on ratio of tallest to shortest columns
         
-        create.graph.label.heights <- function(x){
-          var <- x$measure.var
+        create.graph.label.heights <- function(df, measure.var, height.ratio.threshold){
+          
+          if(!is.data.frame(as.data.frame(df))){stop("Input cannot be coerced into data frame.")}
+          
+          df <- as.data.frame(df)
+          
+          var <- df[,names(df) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric")
           min <- min(var, na.rm = TRUE)
           max <- max(var, na.rm = TRUE)
-          height.ratio.threshold <- 10
+          height.ratio.threshold <- height.ratio.threshold
           height.ratio <- max/min
           
-          print(paste("Max: ",max,"  Min: ",min,"  Ratio: ",height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
+          #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
           
           if(height.ratio < height.ratio.threshold){ 
             result <- rep(min/2, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
-          }else{
+          }
+          
+          if(min == 0 | height.ratio >= height.ratio.threshold){
             result <- vector(length = length(var))
             above.label.vectorposition <- var/max < 1/height.ratio.threshold
             result[above.label.vectorposition] <-   #labels for columns above threshold, position is height of bar plus 1/10 of max bar height 
@@ -436,72 +449,98 @@
             result[result == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
               min(var[!above.label.vectorposition])/2
           }
-        print(paste("Graph Label Heights: ",paste(result, collapse = ", "),sep=""))
-        return(result)
+          #print(paste("Graph Label Heights: ",paste(result, collapse = ", "),sep=""))
+          return(result)
         }
         
-        graph.label.heights.v <- create.graph.label.heights(graphdata.tib)
-        graph.label.show.v <- ifelse(graphdata.tib$measure.var != 0,0.8,0)
-        graph.x <- config.graphs.df$graph.x[c]
-      
-      ### GRAPH FORMATOIN WITH GGPLOT2 ###
+        ###                       ###    
+    #   ### LOOP "g" BY GRAPH     ###
+        ###                       ###
         
-        slide.graph <- 
-          ggplot(data = graphdata.tib, 
-            aes(x = (!!! syms(graph.x)), y = measure.var, group = year, fill = factor(year)) #graph 1
-            #aes(x = role, y = measure.var, group = year, fill = factor(year)) #graph 2
-          ) + 
+        slide.graphs.ls.g <- list()
+        progress.bar.g <- txtProgressBar(min = 0, max = 100, style = 3)
+        #g <- 1  #LOOP TESTER
+        #for(g in 1:5){ #LOOP TESTER
+        for(g in 1:length(graphdata.ls.b[[f]])){
           
-          geom_bar(
-            alpha = 0.7,
-            position = "dodge", 
-            stat = "identity"
-          ) +
-          
-          scale_fill_manual(
-            values = c(bar_series_fill.cols)
-          ) +
-          
-          #geom_hline(
-          #  yintercept = graph.avg.tib %>% as.numeric(),
-          #  color = "darkgrey",
-          #  linetype = "dashed",
-          #  alpha = 0.8
-          #) +
-          
-          #geom_errorbar(
-          #  aes(ymin =graph.avg.tib$avg+3, ymax = graph.avg.tib$avg), 
-          #  position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-          #  color = "black", 
-          #  width = 1,
-          #  size = 1,
-          #  alpha = 0.5) +
-          
-          geom_text(
-            aes(                                                          #data labels inside base of columns
-              y = graph.label.heights.v, 
-              label = graphdata.tib$measure.var %>% format(., nsmall = 0),
-              alpha = graph.label.show.v
-            ), 
-            position = position_dodge(width = 1),
-            size = 3,
-            color = "black") + 
-          
-          theme(panel.background = element_blank(),
-                panel.grid.major.y = element_blank(),
-                panel.grid.major.x = element_line(color = graphgridlinesgrey),
-                axis.text.x = element_blank(),
-                axis.text.y = element_text(size = 15, color = graphlabelsgrey),
-                axis.ticks = element_blank()
-          ) +     
-          
-          coord_flip() 
-      
-      slide.graph
-
+          graphdata.df.g <- graphdata.ls.b[[f]][[g]]["graphdata"] %>% as.data.frame()
+          config.graphs.df.g <- graphdata.ls.b[[f]][[g]]["configs"] %>% as.data.frame()
+          graph.label.heights.v <- create.graph.label.heights(df = graphdata.df.g, measure.var = "graphdata.measure.var", height.ratio.threshold = 10)
+          graph.label.show.v <- ifelse(graphdata.df.g$graphdata.measure.var != 0,0.8,0)
+          graph.x <- paste("graphdata.",config.graphs.df.g$configs.graph.x,sep="")
         
+          ### GRAPH FORMATOIN WITH GGPLOT2 ###
+          
+            slide.graph.g <- 
+              ggplot(data = graphdata.df.g, 
+                aes(x = (!!! syms(graph.x)), y = graphdata.measure.var, group = graphdata.year, fill = factor(graphdata.year)) #graph 1
+                #aes(x = role, y = measure.var, group = year, fill = factor(year)) #graph 2
+              ) + 
+              
+              geom_bar(
+                alpha = 0.7,
+                position = "dodge", 
+                stat = "identity"
+              ) +
+              
+              scale_fill_manual(
+                values = c(bar_series_fill.cols)
+              ) +
+            
+              geom_text( #!FORMATTING: NUMBER OF DECIMAL PLACES, PERCENTAGE SIGNS
+                aes(                                                          #data labels inside base of columns
+                  y = graph.label.heights.v, 
+                  label = graphdata.df.g$graphdata.measure.var %>% format(., nsmall = 0),
+                  alpha = graph.label.show.v
+                ), 
+                position = position_dodge(width = 1),
+                size = 3,
+                color = "black") + 
+              
+              theme(panel.background = element_blank(),
+                    panel.grid.major.y = element_blank(),
+                    panel.grid.major.x = element_line(color = graphgridlinesgrey),
+                    axis.text.x = element_blank(),
+                    axis.text.y = element_text(size = 15, color = graphlabelsgrey),
+                    axis.ticks = element_blank()
+              ) +     
+              
+              coord_flip() 
+            
+            
+            
+            #geom_hline(
+            #  yintercept = graph.avg.tib %>% as.numeric(),
+            #  color = "darkgrey",
+            #  linetype = "dashed",
+            #  alpha = 0.8
+            #) +
+            
+            #geom_errorbar(
+            #  aes(ymin =graph.avg.tib$avg+3, ymax = graph.avg.tib$avg), 
+            #  position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+            #  color = "black", 
+            #  width = 1,
+            #  size = 1,
+            #  alpha = 0.5) +
+            
+          
+          #slide.graphs.ls.index <- length(slide.graphs.ls)+1
+          slide.graphs.ls.g[[g]] <- slide.graph.g
+          #print(g)
+          #print(slide.graphs.ls[[slide.graphs.ls.index]])
+          #print(slide.graph.g)
+          #print(f)
+            #print(g)
+            #print(slide.graph.g)
+            #print(graphdata.ls.b[[f]][[g]])
         
-    #}  
+      setTxtProgressBar(progress.bar.b, 100*g/length(graphdata.ls.b[[f]]))
+    }  ### END OF LOOP "g" BY GRAPH ###
+    
+    slide.graphs.ls.f[[f]] <- slide.graphs.ls.g
+    
+  } ### END OF LOOP "f" BY DISTRICT
         
         
       
