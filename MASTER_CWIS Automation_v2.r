@@ -412,7 +412,7 @@
     close(progress.bar.b)  
 
 ########################################################################################################################################################      
-### CHARTS  ###
+### GRAPHS  ###
 
     ###                       ###    
 #   ### LOOP "f" BY DISTRICT  ###
@@ -420,9 +420,10 @@
     
     slide.graphs.ls.f <- list()
     progress.bar.f <- txtProgressBar(min = 0, max = 100, style = 3)
-    f <- 1 #LOOP TESTER
+    
+    #f <- 1 #LOOP TESTER
     #for(f in 1:2){ #LOOP TESTER
-    #for(f in 1:length(graphdata.ls.b)){
+    for(f in 1:length(graphdata.ls.b)){
       
      
       #Graph Label Heights defined based on ratio of tallest to shortest columns
@@ -456,89 +457,161 @@
           #print(paste("Graph Label Heights: ",paste(result, collapse = ", "),sep=""))
           return(result)
         }
+      
+      ###                       ###    
+  #   ### LOOP "g" BY GRAPH     ###
+      ###                       ###
+    
+      slide.graphs.ls.g <- list()
+      #progress.bar.g <- txtProgressBar(min = 0, max = 100, style = 3)
+      
+      #g <- 1  #LOOP TESTER
+      #for(g in 1:2) #LOOP TESTER
+      for(g in 1:length(graphdata.ls.b[[f]]))
+        local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
+        g<-g #same as above
         
-        ###                       ###    
-    #   ### LOOP "g" BY GRAPH     ###
-        ###                       ###
+        graphdata.df.g <- graphdata.ls.b[[f]][[g]]["graphdata"] %>% as.data.frame()
+        config.graphs.df.g <- graphdata.ls.b[[f]][[g]]["configs"] %>% as.data.frame()
         
-        slide.graphs.ls.g <- list()
-        #progress.bar.g <- txtProgressBar(min = 0, max = 100, style = 3)
-        #g <- 1  #LOOP TESTER
-        #for(g in 1:2) #LOOP TESTER
-        for(g in 1:length(graphdata.ls.b[[f]]))
-          local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
-          g<-g
-          graphdata.df.g <- graphdata.ls.b[[f]][[g]]["graphdata"] %>% as.data.frame()
-          config.graphs.df.g <- graphdata.ls.b[[f]][[g]]["configs"] %>% as.data.frame()
-          graph.label.heights.v <- create.graph.label.heights(df = graphdata.df.g, measure.var = "graphdata.measure.var", height.ratio.threshold = 10)
-          graph.labels.show.v <- ifelse(graphdata.df.g$graphdata.measure.var != 0,0.8,0)
-          graph.x <- paste("graphdata.",config.graphs.df.g$configs.graph.x,sep="")
+        graph.label.heights.v <- create.graph.label.heights(df = graphdata.df.g, measure.var = "graphdata.measure.var", height.ratio.threshold = 10)
+        graph.labels.show.v <- ifelse(graphdata.df.g$graphdata.measure.var != 0,0.8,0)
+        graph.x <- paste("graphdata.",config.graphs.df.g$configs.graph.x,sep="")
+      
+        ### GRAPH FORMATION WITH GGPLOT2 ###
         
-          ### GRAPH FORMATOIN WITH GGPLOT2 ###
-         
-          
-            slide.graph.g <- 
-              ggplot(data = graphdata.df.g, 
-                #aes_(x = graphdata.df.g$graphdata.school, y = graphdata.df.g$graphdata.measure.var, group = graphdata.df.g$graphdata.year, fill = factor(graphdata.df.g$graphdata.year)) #graph 1
-                aes(x = (!!! syms(graph.x)), 
-                     y = graphdata.measure.var, 
-                     group = graphdata.year, 
-                     fill = factor(graphdata.year)
-                ) #graph 1
-              ) + 
-              
-              geom_bar(
-                alpha = 0.7,
-                position = "dodge", 
-                stat = "identity"
-              ) +
-        
-              scale_fill_manual(
-                values = c(bar_series_fill.cols)
-              ) +
+          slide.graph.g <- 
+            ggplot(data = graphdata.df.g, 
+              #aes_(x = graphdata.df.g$graphdata.school, y = graphdata.df.g$graphdata.measure.var, group = graphdata.df.g$graphdata.year, fill = factor(graphdata.df.g$graphdata.year)) #graph 1
+              aes(x = (!!! syms(graph.x)), 
+                   y = graphdata.measure.var, 
+                   group = graphdata.year, 
+                   fill = factor(graphdata.year)
+              ) #graph 1
+            ) + 
             
-              geom_text( #!FORMATTING: NUMBER OF DECIMAL PLACES, PERCENTAGE SIGNS
-                aes(                                                          #data labels inside base of columns
-                  y = graph.label.heights.v, 
-                  label = graphdata.measure.var %>% format(., nsmall = 0),
-                  alpha = graph.labels.show.v
-                ), 
-                position = position_dodge(width = 1),
-                size = 3,
-                color = "black") + 
-              
-              theme(panel.background = element_blank(),
-                    panel.grid.major.y = element_blank(),
-                    panel.grid.major.x = element_line(color = graphgridlinesgrey),
-                    axis.text.x = element_blank(),
-                    axis.text.y = element_text(size = 15, color = graphlabelsgrey),
-                    axis.ticks = element_blank()
-              ) +     
-              
-              coord_flip() 
-          #Sys.sleep(0.1)
-          #print(slide.graph.g)
+            geom_bar(
+              alpha = 0.7,
+              position = "dodge", 
+              stat = "identity"
+            ) +
+      
+            scale_fill_manual(
+              values = c(bar_series_fill.cols)
+            ) +
           
-          #slide.graphs.ls.index <- length(slide.graphs.ls)+1
-          slide.graphs.ls.g[[g]] <<- slide.graph.g
+            geom_text( #!FORMATTING: NUMBER OF DECIMAL PLACES, PERCENTAGE SIGNS
+              aes(                                                          #data labels inside base of columns
+                y = graph.label.heights.v, 
+                label = graphdata.measure.var %>% format(., nsmall = 0),
+                alpha = graph.labels.show.v
+              ), 
+              position = position_dodge(width = 1),
+              size = 3,
+              color = "black") + 
+            
+            theme(panel.background = element_blank(),
+                  panel.grid.major.y = element_blank(),
+                  panel.grid.major.x = element_line(color = graphgridlinesgrey),
+                  axis.text.x = element_blank(),
+                  axis.text.y = element_text(size = 15, color = graphlabelsgrey),
+                  axis.ticks = element_blank()
+            ) +     
+            
+            coord_flip() 
+        #Sys.sleep(0.1)
+        #print(slide.graph.g)
+        
+        #slide.graphs.ls.index <- length(slide.graphs.ls)+1
+        slide.graphs.ls.g[[g]] <<- slide.graph.g
         
       #setTxtProgressBar(progress.bar.g, 100*g/length(graphdata.ls.b[[f]]))
     })  ### END OF LOOP "g" BY GRAPH ###
-  
 
 
-
-
-  
+      #geom_hline(
+      #  yintercept = graph.avg.tib %>% as.numeric(),
+      #  color = "darkgrey",
+      #  linetype = "dashed",
+      #  alpha = 0.8
+      #) +
+      
+      #geom_errorbar(
+      #  aes(ymin =graph.avg.tib$avg+3, ymax = graph.avg.tib$avg), 
+      #  position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+      #  color = "black", 
+      #  width = 1,
+      #  size = 1,
+      #  alpha = 0.5) +
+      
+      #geom_errorbar(
+      #  mapping = aes(ymin = score_state_avg, ymax = score_state_avg), 
+      #  color = "#fae029", 
+      #  width = 0.9,
+      #  size = 1.2) +
+      #  ylim(0,5) +
+      #  labs(x = "", y = "") +
+      #  scale_x_discrete(labels = c("Effective Teaching and Learning",
+      #                              "Common Formative Assessment",
+      #                              "Data-based Decision-making",
+      #                              "Leadership",
+      #                              "Professional Development") %>% rev
+      #  ) +
+        
+ 
     slide.graphs.ls.f[[f]] <- slide.graphs.ls.g
     setTxtProgressBar(progress.bar.f, 100*f/length(graphdata.ls.b))
     
   } ### END OF LOOP "f" BY DISTRICT
+
+########################################################################################################################################################      
+### GRAPHS  ###        
         
-        
+    ###                       ###    
+#   ### LOOP "h" BY DISTRICT  ###
+    ###                       ###
+    
+    ppt.ls.h <- list()
+    progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
+    
+    h <- 1 #LOOP TESTER
+    #for(f in 1:2){ #LOOP TESTER
+    for(h in 1:length(slide.graphs.ls.f)){
+      ppt.h <- pptx(template = target.path.h)
+      target.filename.h <-  paste(target.dir,
+                                  "/",
+                                  "CWIS Report_",
+                                  district.name.i,
+                                  "_",
+                                  school.name.i,
+                                  ".pptx", sep="") 
+      file.copy(template.file, target.file.j)
       
-      
-      
+      ppt.ls.h[[h]]["target.filename"] <- target.path.h
+      ppt.ls.h[[h]]["ppt"] <- ppt.h
+    }     
+
+    
+########################################################################################################################################################      
+### GRAPHS  ###
+    
+    dir.create(target.dir)  
+    lapply(ppt.ls.h, function(x){writeDoc(x, file = x["target.filename"])})
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
      
         
 #create.slide.graph <- function(input){
@@ -553,45 +626,7 @@
 
         
     
-    #geom_hline(
-    #  yintercept = graph.avg.tib %>% as.numeric(),
-    #  color = "darkgrey",
-    #  linetype = "dashed",
-    #  alpha = 0.8
-    #) +
-    
-    #geom_errorbar(
-    #  aes(ymin =graph.avg.tib$avg+3, ymax = graph.avg.tib$avg), 
-    #  position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-    #  color = "black", 
-    #  width = 1,
-    #  size = 1,
-    #  alpha = 0.5) +
-    
-        
-      
-       
-        
-        geom_errorbar(
-          mapping = aes(ymin = score_state_avg, ymax = score_state_avg), 
-          color = "#fae029", 
-          width = 0.9,
-          size = 1.2) +
-        ylim(0,5) +
-        labs(x = "", y = "") +
-        scale_x_discrete(labels = c("Effective Teaching and Learning",
-                                    "Common Formative Assessment",
-                                    "Data-based Decision-making",
-                                    "Leadership",
-                                    "Professional Development") %>% rev
-        ) +
-       
-      
-      slide.graph
-      
-      
-    } 
-      
+ 
       
       
       
