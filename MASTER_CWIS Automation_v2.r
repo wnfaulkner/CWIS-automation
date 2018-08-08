@@ -35,6 +35,7 @@
     library(reshape2)
     library(xlsx)
     library(jsonlite)
+    library(rlang)
   
       
 ### LOAD DATA ###
@@ -43,11 +44,12 @@
   #Directories
     
     #M900
-      #wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-04 CWIS Automation for CW/"
-      #rproj.dir <- ""
+      rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
+      wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-05 Repeated Measures/"
+    
     #Thinkpad T470
-      rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"  
-      wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-05 Repeated Measures/"
+      #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"  
+      #wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-05 Repeated Measures/"
 
     
     #Function Directories
@@ -152,7 +154,7 @@
 ## BUILD VARIABLE/QUESTION LOOKUP TABLE
     
   #Variable names & questions, adjusting for collapsed columns
-    vars.df <- names(dat.df.wide) %>% as.data.frame(., stringsAsFactors = FALSE)
+    vars.df <- names(dat.wide.df) %>% as.data.frame(., stringsAsFactors = FALSE)
     names(vars.df) <- "q.id"
     vars.df <- left_join(vars.df, cwis.embed.helper.df, by = "q.id")
     
