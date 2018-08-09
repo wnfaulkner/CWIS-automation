@@ -186,35 +186,9 @@
 #}    
 
 ########################################################################################################################################################      
-### Powerpoint Configurations ###
-    
-  #Useful colors
-    titlegreen <- rgb(118,153,48, maxColorValue=255)
-    notesgrey <- rgb(131,130,105, maxColorValue=255)
-    graphlabelsgrey <- "#5a6b63"
-    graphgridlinesgrey <- "#e6e6e6"
-    purpleshade <- "#d0abd6"
-    purpleheader <- "#3d2242"
-    purplegraphshade <- "#402339"
-    backgroundgreen <- "#94c132"
-    subtextgreen <- "#929e78"
-    
-    bar_series_fill.cols <- c("#800080","#ff33ff")
-    
-    #notesgray <- rgb(131,130,105, maxColorValue=255)
-  
-  #Text formatting
-    title.format <- textProperties(color = titlegreen, font.size = 48, font.weight = "bold")
-    title.format.small <- textProperties(color = titlegreen, font.size = 40, font.weight = "bold")
-    subtitle.format <- textProperties(color = notesgrey, font.size = 28, font.weight = "bold")
-    section.title.format <- textProperties(color = "white", font.size = 48, font.weight = "bold")
-    notes.format <- textProperties(color = notesgrey, font.size = 14)
-    
-
-########################################################################################################################################################      
 ### PRODUCING DATA  ###
 
-#{ #SECTION COLLAPSE BRACKET
+{ #SECTION COLLAPSE BRACKET
   
   # District name selection
     #district.names <- readline(prompt = "Enter district names for repeated measures reports or 'all'.")
@@ -410,7 +384,37 @@
       setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
     } ### END OF LOOP "b" BY DISTRICT     
     close(progress.bar.b)  
+} #END OF SECTION COLLAPSE BRACKET
 
+########################################################################################################################################################      
+### GRAPH & POWERPOINT Configurations ###
+    
+{ #SECTION COLLAPSE BRACKET
+    
+    #Useful colors
+    titlegreen <- rgb(118,153,48, maxColorValue=255)
+    notesgrey <- rgb(131,130,105, maxColorValue=255)
+    graphlabelsgrey <- "#5a6b63"
+    graphgridlinesgrey <- "#e6e6e6"
+    purpleshade <- "#d0abd6"
+    purpleheader <- "#3d2242"
+    purplegraphshade <- "#402339"
+    backgroundgreen <- "#94c132"
+    subtextgreen <- "#929e78"
+    
+    bar_series_fill.cols <- c("#800080","#ff33ff")
+    
+    #notesgray <- rgb(131,130,105, maxColorValue=255)
+    
+    #Text formatting
+    title.format <- textProperties(color = titlegreen, font.size = 48, font.weight = "bold")
+    title.format.small <- textProperties(color = titlegreen, font.size = 40, font.weight = "bold")
+    subtitle.format <- textProperties(color = notesgrey, font.size = 28, font.weight = "bold")
+    section.title.format <- textProperties(color = "white", font.size = 48, font.weight = "bold")
+    notes.format <- textProperties(color = notesgrey, font.size = 14)
+
+} # END OF SECTION COLLAPSE BRACKET
+    
 ########################################################################################################################################################      
 ### GRAPHS  ###
 
@@ -425,7 +429,6 @@
     #for(f in 1:2){ #LOOP TESTER
     for(f in 1:length(graphdata.ls.b)){
       
-     
       #Graph Label Heights defined based on ratio of tallest to shortest columns
         
         create.graph.label.heights <- function(df, measure.var, height.ratio.threshold){
@@ -474,16 +477,17 @@
         graphdata.df.g <- graphdata.ls.b[[f]][[g]]["graphdata"] %>% as.data.frame()
         config.graphs.df.g <- graphdata.ls.b[[f]][[g]]["configs"] %>% as.data.frame()
         
+        graph.label.text.v <- graphdata.df.g$graphdata.measure.var %>% format(., nsmall = 0) %>% trimws(., which = "both")
         graph.label.heights.v <- create.graph.label.heights(df = graphdata.df.g, measure.var = "graphdata.measure.var", height.ratio.threshold = 10)
-        graph.labels.show.v <- ifelse(graphdata.df.g$graphdata.measure.var != 0,0.8,0)
+        graph.labels.show.v <- ifelse(graphdata.df.g$graphdata.measure.var != 0, 0.8, 0)
         graph.x <- paste("graphdata.",config.graphs.df.g$configs.graph.x,sep="")
       
         ### GRAPH FORMATION WITH GGPLOT2 ###
-        
+          
           slide.graph.g <- 
             ggplot(data = graphdata.df.g, 
               #aes_(x = graphdata.df.g$graphdata.school, y = graphdata.df.g$graphdata.measure.var, group = graphdata.df.g$graphdata.year, fill = factor(graphdata.df.g$graphdata.year)) #graph 1
-              aes(x = (!!! syms(graph.x)), 
+              aes(x = graphdata.df.g[[graph.x]], 
                    y = graphdata.measure.var, 
                    group = graphdata.year, 
                    fill = factor(graphdata.year)
@@ -495,30 +499,37 @@
               position = "dodge", 
               stat = "identity"
             ) +
-      
-            scale_fill_manual(
-              values = c(bar_series_fill.cols)
-            ) +
-          
-            geom_text( #!FORMATTING: NUMBER OF DECIMAL PLACES, PERCENTAGE SIGNS
-              aes(                                                          #data labels inside base of columns
-                y = graph.label.heights.v, 
-                label = graphdata.measure.var %>% format(., nsmall = 0),
-                alpha = graph.labels.show.v
-              ), 
-              position = position_dodge(width = 1),
-              size = 3,
-              color = "black") + 
             
             theme(panel.background = element_blank(),
                   panel.grid.major.y = element_blank(),
                   panel.grid.major.x = element_line(color = graphgridlinesgrey),
                   axis.text.x = element_blank(),
                   axis.text.y = element_text(size = 15, color = graphlabelsgrey),
-                  axis.ticks = element_blank()
+                  axis.ticks = element_blank(),
+                  axis.title = element_blank()
             ) +     
             
-            coord_flip() 
+            guides(fill = FALSE) +
+            
+            scale_fill_manual(
+              values = c(bar_series_fill.cols)
+            ) +
+            
+            #Data labels inside base of columns
+            geom_text( #!FORMATTING: NUMBER OF DECIMAL PLACES, PERCENTAGE SIGNS
+              aes(                                                          
+                y = graph.label.heights.v, 
+                label = graph.label.text.v,
+                alpha = graph.labels.show.v
+              ), 
+              position = position_dodge(width = 1),
+              size = 3,
+              color = "black",
+              show.legend = FALSE) +
+            
+            coord_flip()
+            
+            
         #Sys.sleep(0.1)
         #print(slide.graph.g)
         
