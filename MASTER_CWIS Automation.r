@@ -63,13 +63,7 @@
                           "Output_",
                           gsub(":",".",Sys.time()), sep = "")
     dir.create(target.dir)
-    
-    
-    
-  #Google Sheets
-    #cwis.ss <- 	gs_key("13--0r4jDrW8DgC4cBlrbwIOS7nLfHsjaLFqbk_9qjVs",verbose = TRUE)
-    #cwis.df <- 	gs_read(cwis.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
-
+   
   #Variable helper table
     cwis.embed.helper.ss <- gs_key("1FaBPQP8Gqwp5sI_0g793G6yjW5XNFbV8ji8N7i9oLjs",verbose = TRUE) 
     cwis.embed.helper.df <- 	gs_read(cwis.embed.helper.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
@@ -133,8 +127,8 @@
       cwis.df <- left_join(cwis.df,school.level.df, by = "school.id")
       
     #Capitalize First Letter of character variables
-      cwis.df[,names(cwis.df) %in% c("year","role","district","school")] <- 
-        apply(cwis.df[,names(cwis.df) %in% c("year","role","district","school")], 2, FirstLetterCap_MultElements)
+      cwis.df[,names(cwis.df) %in% c("year","role","district","school","school.level")] <- 
+        apply(cwis.df[,names(cwis.df) %in% c("year","role","district","school","school.level")], 2, FirstLetterCap_MultElements)
       
     #Create final data frames: 1. Wide; 2. Long for original CWIS data; 3. Long for impbinary data (both long include all original id variables)
       dat.wide.df <- cbind(cwis.df, impbinary.df)
@@ -145,7 +139,7 @@
       
     #Creating additional useful variables for long data frames
       # Variable for module
-        dat.long.df$module <- strsplit(dat.long.df$question, "_" ) %>% sapply(., `[[`, 1)
+        dat.long.df$module <- strsplit(dat.long.df$question, "_" ) %>% sapply(., `[[`, 1) %>% toupper()
         dat.long.df$impbinary <- ifelse(grepl("impbinary",dat.long.df$question),1,0)
         
         #dat.answer.long.df$module <- strsplit(dat.answer.long.df$question, "_" ) %>% sapply(., `[[`, 1)
@@ -315,17 +309,9 @@
               strsplit(., ",") %>% 
               unlist
           
-          #Create data frame"all.cats.df" of all possible answers for x-axis (role, module, year, answer)
+          #Create data frame "all.cats.df.e" of all possible answers for x-axis (role, module, year, answer)
             
-            #if(config.graphs.df.e$graph.cat.varname == "school"){
-            #  print(c(d,e))
-            #  config.graphs.df.e$graph.cat.varname <- "school.level" 
-            #  all.cats.df <- dat.long.df
-            #}else{
-            #  all.cats.df <- dat.long.df
-            #}
-            
-            all.cats <- dat.long.df %>%
+            all.cats.e <- dat.long.df %>%
               filter( dat.long.df$impbinary == 0 ) %>%
               .[,names(dat.long.df) == config.graphs.df.e$graph.cat.varname] %>% 
               as.data.frame %>% 
@@ -334,12 +320,12 @@
               .[,1]
             
             if(config.graphs.df.e$graph.cat.varname != "year"){
-              all.cats.df <- expand.grid(unique(dat.answer.long.df$year), all.cats)
+              all.cats.df.e <- expand.grid(unique(dat.answer.long.df$year), all.cats.e)
             }else{
-              all.cats.df <- all.cats %>% as.data.frame()
+              all.cats.df.e <- all.cats.e %>% as.data.frame()
             }
             
-            names(all.cats.df) <- group_by.c
+            names(all.cats.df.e) <- group_by.c
             
           #Summarize Function: participation vs. performance 
             
@@ -383,7 +369,7 @@
             graph.data.restriction.fun %>%
             group_by(!!! syms(group_by.c)) %>%
             summarize.fun %>%
-            left_join(all.cats.df, ., by = c(group_by.c))
+            left_join(all.cats.df.e, ., by = c(group_by.c))
           graphdata.tib.d$measure.var[is.na(graphdata.tib.d$measure.var)] <- 0
            
           graphdata.ls.index <- length(graphdata.ls.d) + 1
@@ -459,17 +445,20 @@
       ###                       ###
     
       slide.graphs.ls.g <- list()
-      #progress.bar.g <- txtProgressBar(min = 0, max = 100, style = 3)
-      #g <- 1  #LOOP TESTER
+      progress.bar.g <- txtProgressBar(min = 0, max = 100, style = 3)
+      #g <- 3  #LOOP TESTER
       #for(g in 1:2) #LOOP TESTER
-      for(g in 1:length(graphdata.ls.b[[f]]))
+      for(g in 1:(length(graphdata.ls.b[[f]])-1))
         local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         g<-g #same as above
         
         ### GRAPH INPUTS FOR GGPLOT ###
         
           graphdata.df.g <- graphdata.ls.b[[f]][[g]]["graphdata"] %>% as.data.frame()
+          names(graphdata.df.g) <- gsub("graphdata.","",names(graphdata.df.g))
+          
           config.graphs.df.g <- graphdata.ls.b[[f]][[g]]["configs"] %>% as.data.frame()
+          names(config.graphs.df.g) <- gsub("configs.","",names(config.graphs.df.g))
           
           #Graph Data LabelS 
           
@@ -504,27 +493,56 @@
               return(result)
             }
             
-            graph.label.text.v <- graphdata.df.g$graphdata.measure.var %>% format(., nsmall = 0) %>% trimws(., which = "both")
-            graph.label.heights.v <- create.graph.label.heights.fun(df = graphdata.df.g, measure.var = "graphdata.measure.var", height.ratio.threshold = 10)
-            graph.labels.show.v <- ifelse(graphdata.df.g$graphdata.measure.var != 0, 0.8, 0)
+            graph.label.text.v <- graphdata.df.g$measure.var %>% format(., nsmall = 0) %>% trimws(., which = "both")
+            graph.label.heights.v <- create.graph.label.heights.fun(df = graphdata.df.g, measure.var = "measure.var", height.ratio.threshold = 10)
+            graph.labels.show.v <- ifelse(graphdata.df.g$measure.var != 0, 0.8, 0)
             
           #Graph Orientation
-            graph.coord.flip.g <- ifelse(config.graphs.df.g$configs.graph.type.orientation == "bar", TRUE, FALSE)
-            
+            graph.coord.flip.g <- ifelse(config.graphs.df.g$graph.type.orientation == "bar", TRUE, FALSE)
+          
           #Graph Category Names
-            graph.cat.varname <- paste("graphdata.",config.graphs.df.g$configs.graph.cat.varname,sep="")
-            graph.cat.v <- graphdata.df.g[[graph.cat.varname]]
+            graph.cat.varname <- config.graphs.df.g$graph.cat.varname
             
+            if(config.graphs.df.g$graph.cat.varname == "answer" && config.graphs.df.g$module %in% c("LEAD","PD")){
+              names(graphdata.df.g)[grepl("answer",names(graphdata.df.g))]  <- "answer.opt.agreement"
+              graph.cat.varname <- "answer.opt.agreement"
+            }
+            
+            if(config.graphs.df.g$graph.cat.varname == "answer" && !config.graphs.df.g$module %in% c("LEAD","PD")){
+              names(graphdata.df.g)[grepl("answer",names(graphdata.df.g))] <- "answer.opt.freq"
+              graph.cat.varname <- "answer.opt.freq"
+            }
+            
+            
+            #graph.cat.v <- graphdata.df.g[[graph.cat.varname]]
+            
+            #year, school.level, module, answer
+            graph.cat.order.ls <-
+                  list(
+                    year = c("Baseline","2017-18 SY"),
+                    school.level = c("Elem.","Middle","High"),
+                    role = c("Special Educator","Classroom Teacher","Instructional Coach","Media Specialist","School Counselor","School Social Worker","Building Administrator","Other"),
+                    module = c("CFA", "ETL","DBDM","LEAD","PD"),
+                    answer.opt.freq = c("Always","Most of the time","About half of the time","Sometimes","Never"),
+                    answer.opt.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
+                  )
+            
+            #When graphs are car as opposed to columns, have to reverse order because the coord_flip() command does a mirror image
+            if(graph.coord.flip.g){
+              graph.order.g <- graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., levels = graph.cat.order.ls[(names(graphdata.df.g)[2])] %>% unlist %>% rev)
+            }else{
+              graph.order.g <- graph.cat.order.ls[(names(graphdata.df.g)[2])]  %>% unlist %>% factor(., levels = graph.cat.order.ls[(names(graphdata.df.g)[2])] %>% unlist)        
+            }
+              
       
         ### GRAPH FORMATION WITH GGPLOT2 ###
           
           slide.graph.g <- 
             ggplot(data = graphdata.df.g, 
-              #aes_(x = graphdata.df.g$graphdata.school, y = graphdata.df.g$graphdata.measure.var, group = graphdata.df.g$graphdata.year, fill = factor(graphdata.df.g$graphdata.year)) #graph 1
               aes(x = graphdata.df.g[[graph.cat.varname]], 
-                   y = graphdata.measure.var, 
-                   group = graphdata.year, 
-                   fill = factor(graphdata.year)
+                   y = measure.var, 
+                   group = year, 
+                   fill = factor(year)
               ) #graph 1
             ) + 
             
@@ -559,19 +577,22 @@
               position = position_dodge(width = 1),
               size = 3,
               color = "black",
-              show.legend = FALSE)
+              show.legend = FALSE) +
+          
+          #Graph category axis ordering
+            scale_x_discrete(limits=levels(graph.order.g))
           
           #Graph Orientation
             if(graph.coord.flip.g){
-              slide.graph.g <- slide.graph.g +
+              slide.graph.g <- 
+                slide.graph.g +
                 coord_flip() +
+                #scale_y_discrete(limits = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., )) +
                 theme(
                   axis.text.x = element_blank(),
                   axis.text.y = element_text(size = 15, color = graphlabelsgrey)
                 )
             }
-          
-            
             
         #Sys.sleep(0.1)
         #print(slide.graph.g)
@@ -579,9 +600,9 @@
         #slide.graphs.ls.index <- length(slide.graphs.ls)+1
         slide.graphs.ls.g[[g]] <<- slide.graph.g
         
-      #setTxtProgressBar(progress.bar.g, 100*g/length(graphdata.ls.b[[f]]))
+      setTxtProgressBar(progress.bar.g, 100*g/length(graphdata.ls.b[[f]]))
     })  ### END OF LOOP "g" BY GRAPH ###
-
+  close(progress.bar.g)
 
       #geom_hline(
       #  yintercept = graph.avg.tib %>% as.numeric(),
@@ -631,9 +652,17 @@
     h <- 1 #LOOP TESTER
     #for(f in 1:2){ #LOOP TESTER
     for(h in 1:length(slide.graphs.ls.f)){
+      if(j == 1){
+        template.file <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/2017-09 CWIS automation/Report Template/CWIS Template.pptx"
+      }
+      
       ppt.h <- pptx(template = target.path.h)
       
-      
+      ppt.h <- addSlide(
+        doc = ppt.h,
+        
+        
+      )
       
       target.filename.h <-  paste(target.dir,
                                   "/",
