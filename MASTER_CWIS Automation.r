@@ -161,7 +161,8 @@
       }
 
 ## BUILD VARIABLE/QUESTION LOOKUP TABLE
-    
+
+{ #BEGIN SECTION COLLAPSE BRACKET
   #Variable names & questions, adjusting for collapsed columns
     vars.df <- names(dat.wide.df) %>% as.data.frame(., stringsAsFactors = FALSE)
     names(vars.df) <- "q.id"
@@ -192,7 +193,7 @@
     ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
     ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
     
-#}    
+}    
 
 ########################################################################################################################################################      
 ### PRODUCING GRAPH DATA  ###
@@ -229,7 +230,8 @@
     #for(b in c(1,110:115)){   #LOOP TESTER
     graphdata.ls.b <- list()
     for(b in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
-    
+      
+      loop.start.time.b <- Sys.time()
       if(b == 1){print("CALCULATING GRAPH SOURCE DATA FRAMES...")}
       
       # Create data frames for this loop - restrict to district id i
@@ -283,15 +285,19 @@
       } ### END OF LOOP "C" BY GRAPH TYPE ###
           
         
-      ###                   ###
-#     ### LOOP "d" BY GRAPH ###
-      ###                   ###
+      ###                         ###
+#     ### LOOP "d" BY GRAPH TYPE  ###
+      ###                         ###
       
       graphdata.ls.d <- list()
       
       #d = 1 #LOOP TESTER 
       #for(d in 1:3){ #LOOP TESTER
       for(d in 1:length(config.graphs.ls)){
+        
+        ###                   ###
+#       ### LOOP "d" BY GRAPH ###
+        ###                   ###
         
         config.graphs.df.d <- config.graphs.ls[[d]]
         
@@ -300,38 +306,40 @@
           config.graphs.df.e <- config.graphs.df.d[e,]
           
           #School-level slides should not include an iteration for the District Office 
-          if(
-              config.graphs.df.e$data.level == "school" && 
-              config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.restriction] %>% as.character == "District Office"
-          ){next()}
-            
-          group_by.c <- config.graphs.df.e$data.group.by.var %>% #! will be moved into "c" loop
-            strsplit(., ",") %>% 
-            unlist
+            if(
+                config.graphs.df.e$data.level == "school" && 
+                config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.restriction] %>% as.character == "District Office"
+            ){next()}
+              
+            group_by.c <- config.graphs.df.e$data.group.by.var %>% #! will be moved into "c" loop
+              strsplit(., ",") %>% 
+              unlist
           
-          #Create data frame"allx.df" of all possible answers for x-axis (role, module, year, answer)
+          #Create data frame"all.cats.df" of all possible answers for x-axis (role, module, year, answer)
             
-            if(config.graphs.df.e$graph.cat.varname == "school"){
-              allx.df <- dat.long.df.b
-            }else{
-              allx.df <- dat.long.df
-            }
+            #if(config.graphs.df.e$graph.cat.varname == "school"){
+            #  print(c(d,e))
+            #  config.graphs.df.e$graph.cat.varname <- "school.level" 
+            #  all.cats.df <- dat.long.df
+            #}else{
+            #  all.cats.df <- dat.long.df
+            #}
             
-            allx <- allx.df %>%
-              filter( allx.df$impbinary == 0 ) %>%
-              .[,names(allx.df) == config.graphs.df.e$graph.cat.varname] %>% 
+            all.cats <- dat.long.df %>%
+              filter( dat.long.df$impbinary == 0 ) %>%
+              .[,names(dat.long.df) == config.graphs.df.e$graph.cat.varname] %>% 
               as.data.frame %>% 
               apply(., 2, function(x){x[!is.na(x)] %>% unique}) %>%
               as.data.frame %>%
               .[,1]
             
             if(config.graphs.df.e$graph.cat.varname != "year"){
-              allx <- expand.grid(unique(dat.answer.long.df$year), allx)
+              all.cats.df <- expand.grid(unique(dat.answer.long.df$year), all.cats)
             }else{
-              allx <- allx %>% as.data.frame()
+              all.cats.df <- all.cats %>% as.data.frame()
             }
             
-            names(allx) <- group_by.c
+            names(all.cats.df) <- group_by.c
             
           #Summarize Function: participation vs. performance 
             
@@ -375,7 +383,7 @@
             graph.data.restriction.fun %>%
             group_by(!!! syms(group_by.c)) %>%
             summarize.fun %>%
-            left_join(allx, ., by = c(group_by.c))
+            left_join(all.cats.df, ., by = c(group_by.c))
           graphdata.tib.d$measure.var[is.na(graphdata.tib.d$measure.var)] <- 0
            
           graphdata.ls.index <- length(graphdata.ls.d) + 1
@@ -392,6 +400,10 @@
       } ### END OF LOOP "d" BY GRAPH ###
      
       graphdata.ls.b[[b]] <- graphdata.ls.d
+      
+      graphdata.ls.b[[b]]['loop.duration'] <- Sys.time()-loop.start.time.b  #100*b/maxrow.b
+      est.time.remaining <- (lapply(graphdata.ls.b, function(x){x['loop.duration']}) %>% unlist %>% mean())*(maxrow.b-b)
+      print(paste("Estimated time remaining: ",est.time.remaining," sec",sep = ""))
       setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
     } ### END OF LOOP "b" BY DISTRICT     
     close(progress.bar.b)  

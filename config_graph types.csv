@@ -1,10 +1,10 @@
 graph.type.id,graph.type.name,graph.type.orientation,data.level,data.measure,data.restriction,data.group.by.var,graph.average,graph.avg.group.by.var,graph.cat.varname,graph.arrows,graph.constant.y.scale
-a,district participation by school,bar,district,participation,,"year,school",yes,,school,0,0
+a,district participation by school,bar,district,participation,,"year,school.level",yes,,school.level,0,0
 b,school participation by role,bar,school,participation,school,"year,role",yes,"year,role",role,0,0
 c,district performance by module,bar,district,implementation,,"year,module",yes,"year, module",module,0,1
 d,school performance by module,bar,school,implementation,school,"year,module",yes,"year, module",module,0,1
 e,district participation,bar,district,participation,,year,no,,year,1,0
-f,district participation by school,bar,district,participation,,"year,school",yes,,school,1,0
-g,district performance by school,column,district,implementation,,"year,school",yes,,school,0,1
-h,district performance by school by module,column,district,implementation,module,"year,school",yes,,school,0,1
+f,district participation by school,bar,district,participation,,"year,school.level",yes,,school.level,1,0
+g,district performance by school,column,district,implementation,,"year,school.level",yes,,school.level,0,1
+h,district performance by school by module,column,district,implementation,module,"year,school.level",yes,,school.level,0,1
 i,school performance module by answer,column,school,performance,module,"year,answer",no,,answer,0,1
