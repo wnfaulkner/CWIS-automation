@@ -108,10 +108,6 @@
     #Column Class Conversions
       cwis.df <- ColClassConvert(cwis.df)
     
-    #Capitalize First Letter of character variables
-      cwis.df[,names(cwis.df) %in% c("year","role","district","school")] <- 
-                apply(cwis.df[,names(cwis.df) %in% c("year","role","district","school")], 2, FirstLetterCap_MultElements)
-      
   #Add useful variables for analysis 
     
     #Useful vectors for selecting cwis answer variables
@@ -126,6 +122,19 @@
     #Create school.id variable which is concatenation of school and district
       cwis.df$school.id <- paste(cwis.df$district, cwis.df$school,sep = "_") %>% tolower
       cwis.df$school.id <- gsub("\\/"," ",cwis.df$school.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
+    
+#####!FAKE CREATE SCHOOL LEVEL VARIABLE (HIGH, MIDDLE, ELEMENTARY)
+      school.level.df <- data.frame( 
+        school.id = cwis.df$school.id %>% unique,
+        school.level = sample(c("high","middle","elem."),length(unique(cwis.df$school.id)), replace = TRUE),
+        stringsAsFactors = FALSE
+      )
+      
+      cwis.df <- left_join(cwis.df,school.level.df, by = "school.id")
+      
+    #Capitalize First Letter of character variables
+      cwis.df[,names(cwis.df) %in% c("year","role","district","school")] <- 
+        apply(cwis.df[,names(cwis.df) %in% c("year","role","district","school")], 2, FirstLetterCap_MultElements)
       
     #Create final data frames: 1. Wide; 2. Long for original CWIS data; 3. Long for impbinary data (both long include all original id variables)
       dat.wide.df <- cbind(cwis.df, impbinary.df)
@@ -186,9 +195,9 @@
 #}    
 
 ########################################################################################################################################################      
-### PRODUCING DATA  ###
+### PRODUCING GRAPH DATA  ###
 
-{ #SECTION COLLAPSE BRACKET
+#{ #SECTION COLLAPSE BRACKET
   
   # District name selection
     #district.names <- readline(prompt = "Enter district names for repeated measures reports or 'all'.")
@@ -205,7 +214,7 @@
       config.graphtypes.df <- read.csv("config_graph types.csv", stringsAsFactors = FALSE)
       
       config.graphs.df <- SplitColReshape.ToLong(config.slidetypes.df, id.var = "slide.type.id",split.varname = "slide.graph.type",split.char = ",") %>%
-        left_join(., config.graphtypes.df, by = c("slide.graph.type" = "graphtype.id")) %>% 
+        left_join(., config.graphtypes.df, by = c("slide.graph.type" = "graph.type.id")) %>% 
         filter(!is.na(slide.graph.type))
   
     ###                       ###    
@@ -221,6 +230,8 @@
     graphdata.ls.b <- list()
     for(b in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
     
+      if(b == 1){print("CALCULATING GRAPH SOURCE DATA FRAMES...")}
+      
       # Create data frames for this loop - restrict to district id i
         district.id.b <- district.ids[b]
         dat.wide.df.b <- dat.wide.df[dat.wide.df$district == district.id.b,] 
@@ -300,7 +311,7 @@
           
           #Create data frame"allx.df" of all possible answers for x-axis (role, module, year, answer)
             
-            if(config.graphs.df.e$graph.x == "school"){
+            if(config.graphs.df.e$graph.cat.varname == "school"){
               allx.df <- dat.long.df.b
             }else{
               allx.df <- dat.long.df
@@ -308,13 +319,13 @@
             
             allx <- allx.df %>%
               filter( allx.df$impbinary == 0 ) %>%
-              .[,names(allx.df) == config.graphs.df.e$graph.x] %>% 
+              .[,names(allx.df) == config.graphs.df.e$graph.cat.varname] %>% 
               as.data.frame %>% 
               apply(., 2, function(x){x[!is.na(x)] %>% unique}) %>%
               as.data.frame %>%
               .[,1]
             
-            if(config.graphs.df.e$graph.x != "year"){
+            if(config.graphs.df.e$graph.cat.varname != "year"){
               allx <- expand.grid(unique(dat.answer.long.df$year), allx)
             }else{
               allx <- allx %>% as.data.frame()
@@ -384,10 +395,10 @@
       setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
     } ### END OF LOOP "b" BY DISTRICT     
     close(progress.bar.b)  
-} #END OF SECTION COLLAPSE BRACKET
+#} #END OF SECTION COLLAPSE BRACKET
 
 ########################################################################################################################################################      
-### GRAPH & POWERPOINT Configurations ###
+### GRAPH & POWERPOINT CONFIGURATIONS ###
     
 { #SECTION COLLAPSE BRACKET
     
@@ -429,37 +440,7 @@
     #for(f in 1:2){ #LOOP TESTER
     for(f in 1:length(graphdata.ls.b)){
       
-      #Graph Label Heights defined based on ratio of tallest to shortest columns
-        
-        create.graph.label.heights <- function(df, measure.var, height.ratio.threshold){
-          
-          if(!is.data.frame(as.data.frame(df))){stop("Input cannot be coerced into data frame.")}
-          
-          df <- as.data.frame(df)
-          
-          var <- df[,names(df) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric")
-          min <- min(var, na.rm = TRUE)
-          max <- max(var, na.rm = TRUE)
-          height.ratio.threshold <- height.ratio.threshold
-          height.ratio <- max/min
-          
-          #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
-          
-          if(height.ratio < height.ratio.threshold){ 
-            result <- rep(min/2, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
-          }
-          
-          if(min == 0 | height.ratio >= height.ratio.threshold){
-            result <- vector(length = length(var))
-            above.label.vectorposition <- var/max < 1/height.ratio.threshold
-            result[above.label.vectorposition] <-   #labels for columns above threshold, position is height of bar plus 1/10 of max bar height 
-              var[above.label.vectorposition] + max/10
-            result[result == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
-              min(var[!above.label.vectorposition])/2
-          }
-          #print(paste("Graph Label Heights: ",paste(result, collapse = ", "),sep=""))
-          return(result)
-        }
+      if(f == 1){print("FORMING GRAPHS IN GGPLOT...")}
       
       ###                       ###    
   #   ### LOOP "g" BY GRAPH     ###
@@ -467,27 +448,68 @@
     
       slide.graphs.ls.g <- list()
       #progress.bar.g <- txtProgressBar(min = 0, max = 100, style = 3)
-      
       #g <- 1  #LOOP TESTER
       #for(g in 1:2) #LOOP TESTER
       for(g in 1:length(graphdata.ls.b[[f]]))
         local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         g<-g #same as above
         
-        graphdata.df.g <- graphdata.ls.b[[f]][[g]]["graphdata"] %>% as.data.frame()
-        config.graphs.df.g <- graphdata.ls.b[[f]][[g]]["configs"] %>% as.data.frame()
+        ### GRAPH INPUTS FOR GGPLOT ###
         
-        graph.label.text.v <- graphdata.df.g$graphdata.measure.var %>% format(., nsmall = 0) %>% trimws(., which = "both")
-        graph.label.heights.v <- create.graph.label.heights(df = graphdata.df.g, measure.var = "graphdata.measure.var", height.ratio.threshold = 10)
-        graph.labels.show.v <- ifelse(graphdata.df.g$graphdata.measure.var != 0, 0.8, 0)
-        graph.x <- paste("graphdata.",config.graphs.df.g$configs.graph.x,sep="")
+          graphdata.df.g <- graphdata.ls.b[[f]][[g]]["graphdata"] %>% as.data.frame()
+          config.graphs.df.g <- graphdata.ls.b[[f]][[g]]["configs"] %>% as.data.frame()
+          
+          #Graph Data LabelS 
+          
+            #Graph Label Heights (defined based on ratio of tallest to shortest columns)
+              create.graph.label.heights.fun <- function(df, measure.var, height.ratio.threshold){
+              
+              if(!is.data.frame(as.data.frame(df))){stop("Input cannot be coerced into data frame.")}
+              
+              df <- as.data.frame(df)
+              
+              var <- df[,names(df) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric")
+              min <- min(var, na.rm = TRUE)
+              max <- max(var, na.rm = TRUE)
+              height.ratio.threshold <- height.ratio.threshold
+              height.ratio <- max/min
+              
+              #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
+              
+              if(height.ratio < height.ratio.threshold){ 
+                result <- rep(min/2, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
+              }
+              
+              if(min == 0 | height.ratio >= height.ratio.threshold){
+                result <- vector(length = length(var))
+                above.label.vectorposition <- var/max < 1/height.ratio.threshold
+                result[above.label.vectorposition] <-   #labels for columns above threshold, position is height of bar plus 1/10 of max bar height 
+                  var[above.label.vectorposition] + max/10
+                result[result == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
+                  min(var[!above.label.vectorposition])/2
+              }
+              #print(paste("Graph Label Heights: ",paste(result, collapse = ", "),sep=""))
+              return(result)
+            }
+            
+            graph.label.text.v <- graphdata.df.g$graphdata.measure.var %>% format(., nsmall = 0) %>% trimws(., which = "both")
+            graph.label.heights.v <- create.graph.label.heights.fun(df = graphdata.df.g, measure.var = "graphdata.measure.var", height.ratio.threshold = 10)
+            graph.labels.show.v <- ifelse(graphdata.df.g$graphdata.measure.var != 0, 0.8, 0)
+            
+          #Graph Orientation
+            graph.coord.flip.g <- ifelse(config.graphs.df.g$configs.graph.type.orientation == "bar", TRUE, FALSE)
+            
+          #Graph Category Names
+            graph.cat.varname <- paste("graphdata.",config.graphs.df.g$configs.graph.cat.varname,sep="")
+            graph.cat.v <- graphdata.df.g[[graph.cat.varname]]
+            
       
         ### GRAPH FORMATION WITH GGPLOT2 ###
           
           slide.graph.g <- 
             ggplot(data = graphdata.df.g, 
               #aes_(x = graphdata.df.g$graphdata.school, y = graphdata.df.g$graphdata.measure.var, group = graphdata.df.g$graphdata.year, fill = factor(graphdata.df.g$graphdata.year)) #graph 1
-              aes(x = graphdata.df.g[[graph.x]], 
+              aes(x = graphdata.df.g[[graph.cat.varname]], 
                    y = graphdata.measure.var, 
                    group = graphdata.year, 
                    fill = factor(graphdata.year)
@@ -502,9 +524,9 @@
             
             theme(panel.background = element_blank(),
                   panel.grid.major.y = element_blank(),
-                  panel.grid.major.x = element_line(color = graphgridlinesgrey),
-                  axis.text.x = element_blank(),
-                  axis.text.y = element_text(size = 15, color = graphlabelsgrey),
+                  panel.grid.major.x = element_blank(),
+                  axis.text.x = element_text(size = 12, color = graphlabelsgrey),
+                  axis.text.y = element_blank(),
                   axis.ticks = element_blank(),
                   axis.title = element_blank()
             ) +     
@@ -525,9 +547,18 @@
               position = position_dodge(width = 1),
               size = 3,
               color = "black",
-              show.legend = FALSE) +
-            
-            coord_flip()
+              show.legend = FALSE)
+          
+          #Graph Orientation
+            if(graph.coord.flip.g){
+              slide.graph.g <- slide.graph.g +
+                coord_flip() +
+                theme(
+                  axis.text.x = element_blank(),
+                  axis.text.y = element_text(size = 15, color = graphlabelsgrey)
+                )
+            }
+          
             
             
         #Sys.sleep(0.1)
@@ -576,7 +607,7 @@
   } ### END OF LOOP "f" BY DISTRICT
 
 ########################################################################################################################################################      
-### GRAPHS  ###        
+### POWERPOINT SLIDE CREATION  ###        
         
     ###                       ###    
 #   ### LOOP "h" BY DISTRICT  ###
@@ -589,12 +620,16 @@
     #for(f in 1:2){ #LOOP TESTER
     for(h in 1:length(slide.graphs.ls.f)){
       ppt.h <- pptx(template = target.path.h)
+      
+      
+      
       target.filename.h <-  paste(target.dir,
                                   "/",
                                   "CWIS Report_",
                                   district.name.i,
                                   "_",
                                   school.name.i,
+                                  gsub(":",".",Sys.time()),
                                   ".pptx", sep="") 
       file.copy(template.file, target.file.j)
       
@@ -604,7 +639,7 @@
 
     
 ########################################################################################################################################################      
-### GRAPHS  ###
+### WRITE POWERPOINTS TO FILE  ###
     
     dir.create(target.dir)  
     lapply(ppt.ls.h, function(x){writeDoc(x, file = x["target.filename"])})
