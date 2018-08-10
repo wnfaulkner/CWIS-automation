@@ -71,7 +71,7 @@
 
 ########################################################################################################################################################      
 ### DATA CLEANING & PREP ###
-#{ #SECTION COLLAPSE BRACKET
+{ #SECTION COLLAPSE BRACKET
 
   setwd(source.dir)
 
@@ -100,7 +100,7 @@
                     ]
     ##########################################################################################################################################
     #Column Class Conversions
-      cwis.df <- ColClassConvert(cwis.df)
+      #cwis.df <- ColClassConvert(cwis.df)
     
   #Add useful variables for analysis 
     
@@ -154,45 +154,46 @@
           mean() 
       }
 
-## BUILD VARIABLE/QUESTION LOOKUP TABLE
-
-{ #BEGIN SECTION COLLAPSE BRACKET
-  #Variable names & questions, adjusting for collapsed columns
-    vars.df <- names(dat.wide.df) %>% as.data.frame(., stringsAsFactors = FALSE)
-    names(vars.df) <- "q.id"
-    vars.df <- left_join(vars.df, cwis.embed.helper.df, by = "q.id")
-    
-  #Remove repeated parts of questions
-    question.full.remove.strings <- c(
-      "Please ",
-      "Please use the agreement scale to respond to each prompt representing your",
-      "Please use the frequency scale to respond to each prompt representing your",
-      " - Classroom Teacher - ",
-      "\\[Field-2\\]",
-      "\\[Field-3\\]",
-      "\\\n"
-    )
-    vars.df$question.full <- gsub(paste(question.full.remove.strings, collapse = "|"),
-                                  "",
-                                  vars.df$question.full)
-    
-  #Answer Options
-    ans.opt.always.df <-  cbind(
-      c(5:1),
-      c("Always","Most of the time","About half the time","Sometimes","Never"),
-      c("Strongly agree","Agree","Neither agree or disagree","Disagree","Strongly disagree")
-    ) %>% as.data.frame
-    names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
-    ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
-    ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
-    ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
-    
-}    
+  ## BUILD VARIABLE/QUESTION LOOKUP TABLE
+  
+  { #BEGIN SECTION COLLAPSE BRACKET
+    #Variable names & questions, adjusting for collapsed columns
+      vars.df <- names(dat.wide.df) %>% as.data.frame(., stringsAsFactors = FALSE)
+      names(vars.df) <- "q.id"
+      vars.df <- left_join(vars.df, cwis.embed.helper.df, by = "q.id")
+      
+    #Remove repeated parts of questions
+      question.full.remove.strings <- c(
+        "Please ",
+        "Please use the agreement scale to respond to each prompt representing your",
+        "Please use the frequency scale to respond to each prompt representing your",
+        " - Classroom Teacher - ",
+        "\\[Field-2\\]",
+        "\\[Field-3\\]",
+        "\\\n"
+      )
+      vars.df$question.full <- gsub(paste(question.full.remove.strings, collapse = "|"),
+                                    "",
+                                    vars.df$question.full)
+      
+    #Answer Options
+      ans.opt.always.df <-  cbind(
+        c(5:1),
+        c("Always","Most of the time","About half the time","Sometimes","Never"),
+        c("Strongly agree","Agree","Neither agree or disagree","Disagree","Strongly disagree")
+      ) %>% as.data.frame
+      names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
+      ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
+      ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
+      ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
+      
+  }#END SECTION COLLAPSE BRACKET
+}#END SECTION COLLAPSE BRACKET
 
 ########################################################################################################################################################      
 ### PRODUCING GRAPH DATA  ###
 
-#{ #SECTION COLLAPSE BRACKET
+{ #SECTION COLLAPSE BRACKET
   
   # District name selection
     #district.names <- readline(prompt = "Enter district names for repeated measures reports or 'all'.")
@@ -205,8 +206,8 @@
     # Load Graph Config
       setwd(rproj.dir)
       
-      config.slidetypes.df <- read.csv("config_slide types.csv", stringsAsFactors = FALSE)
-      config.graphtypes.df <- read.csv("config_graph types.csv", stringsAsFactors = FALSE)
+      config.slidetypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE)
+      config.graphtypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "",header = TRUE, stringsAsFactors = FALSE)
       
       config.graphs.df <- SplitColReshape.ToLong(config.slidetypes.df, id.var = "slide.type.id",split.varname = "slide.graph.type",split.char = ",") %>%
         left_join(., config.graphtypes.df, by = c("slide.graph.type" = "graph.type.id")) %>% 
@@ -393,7 +394,7 @@
       setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
     } ### END OF LOOP "b" BY DISTRICT     
     close(progress.bar.b)  
-#} #END OF SECTION COLLAPSE BRACKET
+} #END OF SECTION COLLAPSE BRACKET
 
 ########################################################################################################################################################      
 ### GRAPH & POWERPOINT CONFIGURATIONS ###
@@ -649,14 +650,26 @@
     ppt.ls.h <- list()
     progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
     
+    
+    
     h <- 1 #LOOP TESTER
     #for(f in 1:2){ #LOOP TESTER
-    for(h in 1:length(slide.graphs.ls.f)){
-      if(j == 1){
-        template.file <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/2017-09 CWIS automation/Report Template/CWIS Template.pptx"
-      }
+    #for(h in 1:length(slide.graphs.ls.f)){
       
-      ppt.h <- pptx(template = target.path.h)
+      template.file <- paste(wd,
+                           "Report Template/CWIS Template.pptx",
+                           sep = "")
+      target.path.h <-  paste(target.dir,
+                                "/",
+                                "CWIS Report_",
+                                district.ids[h],
+                                "_",
+                                gsub(":",".",Sys.time()),
+                                ".pptx", sep="") 
+    
+      file.copy(template.file, target.path.h)
+      
+      ppt.h <- pptx( template = target.path.h )
       
       ppt.h <- addSlide(
         doc = ppt.h,
@@ -664,16 +677,7 @@
         
       )
       
-      target.filename.h <-  paste(target.dir,
-                                  "/",
-                                  "CWIS Report_",
-                                  district.name.i,
-                                  "_",
-                                  school.name.i,
-                                  gsub(":",".",Sys.time()),
-                                  ".pptx", sep="") 
-      file.copy(template.file, target.file.j)
-      
+    
       ppt.ls.h[[h]]["target.filename"] <- target.path.h
       ppt.ls.h[[h]]["ppt"] <- ppt.h
     }     
