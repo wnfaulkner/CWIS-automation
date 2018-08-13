@@ -219,10 +219,13 @@
     # Progress bar for loop
       progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
       maxrow.b <- length(district.ids)
-  
+      
+      graphdata.ls.b <- list()
+      config.graphs.ls.b <- list()
+      
     #b <- 2 #LOOP TESTER (19 = "Raytown C-2")
     #for(b in c(1,110:115)){   #LOOP TESTER
-    graphdata.ls.b <- list()
+    
     for(b in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
       
       loop.start.time.b <- Sys.time()
@@ -242,7 +245,8 @@
       #c = 1 #LOOP TESTER: NO LOOPS
       #c = 3 #LOOP TESTER: ONE LOOP VAR
       #c = 8 #LOOP TESTER: TWO LOOP VARS
-      config.graphs.ls <- list()
+      config.graphs.ls.c <- list()
+      
       for(c in 1:dim(config.graphs.df)[1]){
       
         c.list.c <- list(c=c)
@@ -273,11 +277,11 @@
               ,] %>%
               cbind(.,loop.unique.df)
           }
-          config.graphs.ls[[c]] <- config.graphs.df.c
+          config.graphs.ls.c[[c]] <- config.graphs.df.c
           #print(config.graphs.df.c)
           
       } ### END OF LOOP "C" BY GRAPH TYPE ###
-          
+      config.graphs.ls.b[[b]] <- config.graphs.ls.c    
         
       ###                         ###
 #     ### LOOP "d" BY GRAPH TYPE  ###
@@ -293,7 +297,7 @@
 #       ### LOOP "d" BY GRAPH ###
         ###                   ###
         
-        config.graphs.df.d <- config.graphs.ls[[d]]
+        config.graphs.df.d <- config.graphs.ls.c[[d]]
         
         for(e in 1:dim(config.graphs.df.d)[1]){
           
@@ -457,9 +461,9 @@
            
           graphdata.ls.index <- length(graphdata.ls.d) + 1
           graphdata.ls.d[[graphdata.ls.index]] <- list(
-            district = district.id.b,
+            #district = district.id.b,
             #school = config.graphs.df.e$school
-            configs = config.graphs.df.e, 
+            #configs = config.graphs.df.e, 
             graphdata = graphdata.df.e)
 
           #print(c(d,e))
@@ -516,6 +520,8 @@
 ########################################################################################################################################################      
 ### PRODUCING GRAPHS THEMSELVES  ###
 
+{#SECTION COLLAPSE BRACKET
+  
     ###                       ###    
 #   ### LOOP "f" BY DISTRICT  ###
     ###                       ###
@@ -727,25 +733,27 @@
             #['graph']
             #['configs']
 
+}#END SECTION COLLAPSE BRACKET
+    
 ########################################################################################################################################################      
 ### POWERPOINT SLIDE CREATION  ###        
     
     
-  config.slideobjects.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.objects",header = TRUE, stringsAsFactors = FALSE) %>%
-  SplitColReshape.ToLong(.,id.varname = "object.id",split.varname = "slide.type.id",split.char = ",")
-  config.slideobjects.df$slide.type.id <- config.slideobjects.df$slide.type.id %>% as.numeric
-  full_join(config.slidetypes.df, config.slideobjects.df, by = "slide.type.id")
+  config.pot.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE)
+   
+    
+# SplitColReshape.ToLong(.,id.varname = "object.id",split.varname = "slide.type.id",split.char = ",")
+# config.slideobjects.df$slide.type.id <- config.slideobjects.df$slide.type.id %>% as.numeric
+# full_join(config.slidetypes.df, config.slideobjects.df, by = "slide.type.id")
 
     ###                       ###    
 #   ### LOOP "h" BY DISTRICT  ###
     ###                       ###
     
-    ppt.ls.h <- list()
+    #ppt.ls.h <- list()
     progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
-    
-    
-    
-    h <- 1 #LOOP TESTER
+  
+    h <- 6 #LOOP TESTER
     #for(h in 1:2){ #LOOP TESTER
     #for(h in 1:length(slide.graphs.ls.f)){
       
@@ -764,27 +772,94 @@
         file.copy(template.file, target.path.h)
         
         ppt.h <- pptx( template = target.path.h )
+        options("ReporteRs-fontsize" = 20)
+        options("ReporteRs-default-font" = "Calibri")
       
-      #Add slides
-        
+      ###                           ###    
+#     ### LOOP "i" BY SLIDE TYPE    ###
+      ###                           ###
+
         i <- 1 #LOOP TESTER
         #for(i in 1:2){ #LOOP TESTER
-        #for(i in 1:length(slide.graphs.ls.f)){
+        #for(i in 1:(lapply(slide.graphs.ls.f,lengths)[[h]] %>% length)){
           
           
-          slide.layout.i <- 
-        
-        
-          ppt.h <- addSlide(
-            doc = ppt.h,
-            slide.layout = 
-            
-          )
-        }
+          
+          config.slide.i <- config.slidetypes.df[i,]
+          slide.type.i <- config.slide.i$slide.type.id
+          layout.i <- config.slide.i$slide.layout
+          config.pot.i <- config.pot.df[config.pot.df$slide.type.id == slide.type.i,]
+          
+          config.graph.i <- config.graphs.ls.b[[h]][sapply(config.graphs.ls.b[[h]], '[',1) %>% sapply(., function(x){unique(x)==slide.type.i})]
+          ppt.h <- addSlide( ppt.h, slide.layout = layout.i, bookmark = i)
+          
+          for(j in 1:dim(config.pot.i)[1]){
+  
+            #add.pot <- function(target.ppt, df){
+              pot.j <- 
+                pot(
+                  config.pot.i$content.static[j],
+                  textProperties(
+                    color = config.pot.i$color[j] %>% 
+                      strsplit(.,",") %>% 
+                      unlist %>% 
+                      as.numeric %>% 
+                      rgb(red = .[1],green = .[2],blue = .[3] ,maxColorValue = 255) 
+                      %>% .[1], 
+                    font.size = config.pot.i$font.size[j], 
+                    font.weight = ifelse(is.na(config.pot.i$font.weight[j]),'normal',config.pot.i$font.weight[j])
+                  )
+                )
+                
+              ppt.h <- 
+                addParagraph(
+                  ppt.h,
+                  pot.j,
+                  height = config.pot.i$height[j],
+                  width = config.pot.i$width[j],
+                  offx = config.pot.i$offx[j],
+                  offy = config.pot.i$offy[j],
+                  par.properties = parProperties(
+                    text.align=config.pot.i$text.align[j], 
+                    padding=0
+                  )
+                )
+          }
+          #}
+          #add.pot(ppt.h, config.pot.i)
+          
+          writeDoc(ppt.h, file = target.path.h) #test Slide 1 build
+          
+          
+          #Add.Slide.With.Configs <- function(ppt.object, config.table){
+          #  result <- addSlide(x,
+          #                     slide.layout = )
+          #  return(result)
+          #}
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          #}
     
-      ppt.ls.h[[h]]["target.filename"] <- target.path.h
-      ppt.ls.h[[h]]["ppt"] <- ppt.h
-    }     
+      #ppt.ls.h[[h]]["target.filename"] <- target.path.h
+      #ppt.ls.h[[h]]["ppt"] <- ppt.h
+    #}     
 
     
 ########################################################################################################################################################      
