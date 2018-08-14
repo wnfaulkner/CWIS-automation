@@ -27,6 +27,7 @@
     #library(devtools)
     library(magrittr)
     library(googlesheets)
+    library(plyr) 
     library(tidyr)
     library(dplyr)
     library(ReporteRs)
@@ -206,11 +207,12 @@
       setwd(rproj.dir)
       
       config.slidetypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE)
-      config.graphtypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE)
+      load.config.graphtypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE)
       
-      config.graphs.df <- SplitColReshape.ToLong(config.slidetypes.df, id.var = "slide.type.id",split.varname = "slide.graph.type",split.char = ",") %>%
-        left_join(., config.graphtypes.df, by = c("slide.graph.type" = "graph.type.id")) %>% 
+      config.graphtypes.df <- SplitColReshape.ToLong(config.slidetypes.df, id.var = "slide.type.id",split.varname = "slide.graph.type",split.char = ",") %>%
+        left_join(., load.config.graphtypes.df, by = c("slide.graph.type" = "graph.type.id")) %>% 
         filter(!is.na(slide.graph.type))
+      config.graphtypes.df <- config.graphtypes.df[,grep("slide.type.id|loop|data|graph",names(config.graphtypes.df))]
   
     ###                       ###    
 #   ### LOOP "b" BY DISTRICT  ###
@@ -236,53 +238,113 @@
         dat.answer.long.df.b <- dat.answer.long.df[dat.answer.long.df$district == district.id.b,]
         dat.impbinary.long.df.b <- dat.impbinary.long.df[dat.impbinary.long.df$district == district.id.b,] 
         dat.long.df.b <- dat.long.df[dat.long.df$district == district.id.b,]
-  
-      ###                         ###
-  #   ### LOOP "c" BY GRAPH TYPE  ###
-      ###                         ###
-      
-      config.graphs.ls.c <- list()
         
-      #c = 1 #LOOP TESTER: NO LOOPS
-      #c = 3 #LOOP TESTER: ONE LOOP VAR
-      #c = 8 #LOOP TESTER: TWO LOOP VARS
-      for(c in 1:dim(config.graphs.df)[1]){
-      
-        c.list.c <- list(c=c)
+#FUN  #Loop Expander Function (for creating full config tables)  
+      loop.expander.fun <- function(configs, loop.varname, intersperse.varname, source.data){
+        output.ls <- list()
         
-        #Make data frame with configurations for graphs      
-          slide.loop.vars.c <- config.graphs.df$slide.loop.var[c] %>% strsplit(., ",") %>% unlist %>% trimws(., which = "both")
+        ###                                   ###
+#       ### LOOP "c" BY LINE OF CONFIG OBJECT ###
+        ###                                   ###
+        
+        #c = 1 #LOOP TESTER: NO LOOPS
+        #c = 3 #LOOP TESTER: ONE LOOP VAR
+        #c = 8 #LOOP TESTER: TWO LOOP VARS
+        #for(c in 1:3){
+        for(c in 1:dim(configs)[1]){
+        
+          c.list.c <- list(c=c)
           
-          if(any(is.na(slide.loop.vars.c))){
-            config.graphs.df.c <- config.graphs.df[c,]
-          }
-          
-          if(any(!is.na(slide.loop.vars.c))){
-        
-            loop.unique.df <- 
-              dat.long.df.b[names(dat.long.df.b) %in% slide.loop.vars.c] %>% 
-              lapply(., unique) %>%
-              expand.grid(., stringsAsFactors = FALSE) %>%
-              as.data.frame #unique items for each loop that will specify graph (e.g. school name)
-            loop.unique.df <- loop.unique.df[order(loop.unique.df[,names(loop.unique.df)==slide.loop.vars.c[1]]),] %>% as.data.frame
-            names(loop.unique.df) <- slide.loop.vars.c
+          #Make data frame with configurations repeated out across all unique combinations of loop.varname in source.data      
+            slide.loop.vars.c <- configs[c,names(configs)==loop.varname] %>% strsplit(., ",") %>% unlist %>% trimws(., which = "both")
             
-            config.graphs.df.c <- 
-              config.graphs.df[  
-                rep(
-                  c.list.c[["c"]],
-                  dim(loop.unique.df)[1]
-                )
-              ,] %>%
-              cbind(.,loop.unique.df)
+            if(any(is.na(slide.loop.vars.c))){
+              configs.c <- configs[c,]
+            }
+            
+            if(any(!is.na(slide.loop.vars.c))){
+          
+              loop.unique.df <- 
+                source.data[names(source.data) %in% slide.loop.vars.c] %>% 
+                lapply(., unique) %>%
+                expand.grid(., stringsAsFactors = FALSE) %>%
+                as.data.frame #unique items for each loop that will specify graph (e.g. school name)
+              loop.unique.df <- loop.unique.df[order(loop.unique.df[,names(loop.unique.df)==slide.loop.vars.c[1]]),] %>% as.data.frame
+              names(loop.unique.df) <- slide.loop.vars.c
+              
+              configs.c <- 
+                configs[  
+                  rep(
+                    c.list.c[["c"]],
+                    dim(loop.unique.df)[1]
+                  )
+                ,] %>%
+                cbind(.,loop.unique.df)
+            }
+            output.ls[[c]] <- configs.c
+            #print(configs.c)
+            
+        } ### END OF LOOP "C" BY ROW OF CONFIG INPUT ###
+        
+        output.df <- rbind.fill(output.ls) %>% mutate(row.id = row.names(.))
+        
+        #Intersperse section titles: 
+          if(!missing(intersperse.varname)){
+            
+            #for each unique slide.type.id meeting these conditions:
+              #select lines with only that unique slide.type.id
+              #slide.type.position == slide.type.position of previously selected lines + 1
+            #order by variable that has same name as slide.loop.var (e.g. 'school')
+            #re-attach to original data.frame
+          
+            #Name of loop variable (will be used to order data-frame in b-loop)
+              loop.var.b <- output.df[output.df$slide.layout == "section" & !is.na(output.df$slide.loop.var),] %>%
+                select(slide.loop.var) %>%
+                unlist %>%
+                unique 
+            
+            #Slide Type IDs that need to be interspersed
+              loop.index.b <- output.df[output.df$slide.layout == "section" & !is.na(output.df$slide.loop.var),] %>% 
+                select(slide.type.position) %>% 
+                unique
+            
+            #Separate out lines of output.df where: slide.layout == "section" && !is.na(slide.loop.var)
+              intersperse.df <- output.df[output.df$slide.type.position %in% c(loop.index.b,loop.index.b+1),]
+              non.intersperse.df <- output.df[!(output.df$row.id %in% intersperse.df$row.id),]
+            intersperse.ls <- list()
+    
+            #b=1 #LOOP TESTER
+            for(b in 1:length(loop.index.b)){
+              intersperse.df.b <-  output.df[output.df$slide.type.position %in% c(loop.index.b[b],loop.index.b[b]+1),]
+              intersperse.df.b <- intersperse.df.b[order(intersperse.df.b[,names(intersperse.df.b) == loop.var.b]),] %>%
+                mutate(row.id = paste(b,".",1:dim(.)[1],sep = ""))
+              intersperse.ls[[b]] <- intersperse.df.b
+            }
+            
+              #! This function still not ready to handle more than one set of interspersed titles because would need to figure out how to order 
+              #! list elements and non-interspersed slides by slide.type.position. Right now will do fine as long as all interspersed lines are at
+              #! the end of the expanded config table (but not if there are non-interspersed variables that come below any interspersed vars in the
+              #! config table).
+              output.df <- rbind(non.intersperse.df,rbind.fill(intersperse.ls))
+              
           }
-          config.graphs.ls.c[[c]] <- config.graphs.df.c
-          #print(config.graphs.df.c)
-          
-      } ### END OF LOOP "C" BY GRAPH TYPE ###
+        return(output.df)
+      }
       
-        #config.graphs.ls.b[[b]] <- config.graphs.ls.c    
-          
+      config.graphs.df <- 
+        loop.expander.fun(
+          configs = config.graphs.df, 
+          loop.varname = "slide.loop.var", 
+          source.data = dat.long.df.b
+        )
+      
+      config.slides.df <- 
+        loop.expander.fun(
+          configs <- config.slidetypes.df, 
+          loop.varname <- "slide.loop.var",
+          intersperse.varname = "slide.type.position",
+          source.data = dat.long.df.b)
+      
         ###                         ###
   #     ### LOOP "d" BY GRAPH TYPE  ###
         ###                         ###
