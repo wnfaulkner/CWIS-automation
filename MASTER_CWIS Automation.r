@@ -859,23 +859,17 @@ close(progress.bar.c)
 #{ #SECTION COLLAPSE BRACKET   
     
   config.pot.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE)
-   
-    
-# SplitColReshape.ToLong(.,id.varname = "object.id",split.varname = "slide.type.id",split.char = ",")
-# config.slideobjects.df$slide.type.id <- config.slideobjects.df$slide.type.id %>% as.numeric
-# full_join(config.slidetypes.df, config.slideobjects.df, by = "slide.type.id")
-
     ###                       ###    
 #   ### LOOP "h" BY DISTRICT  ###
     ###                       ###
     
     #ppt.ls.h <- list()
     progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
-  
-    h <- 6 #LOOP TESTER
+    maxrow.h <- sapply(config.slides.ls.b, dim)[1,] %>% sum
+    #h <- 6 #LOOP TESTER
     #for(h in 1:2){ #LOOP TESTER
-    #for(h in 1:length(graphs.ls.f)){
-    
+    for(h in 1:length(config.slides.ls.b)){
+      
       #Set up target file
         template.file <- paste(wd,
                              "Report Template/CWIS Template.pptx",
@@ -925,7 +919,7 @@ close(progress.bar.c)
               next()
             }
             
-            print(c(i,j))
+            #print(c(i,j))
             
             pot.content.j <- 
               paste(
@@ -973,19 +967,16 @@ close(progress.bar.c)
                 )
               )
             
-          }
+          } #END OF LOOP "j" BY POT OBJECT (ROW OF POT CONFIG TABLE)
           
           writeDoc(ppt.h, file = target.path.h) #test Slide 1 build
         
+        setTxtProgressBar(progress.bar.h, 100*(i + config.slides.ls.b[1:(h-1)] %>% sapply(., dim) %>% .[1,] %>% sum)/maxrow.h)
+          
         } #END OF LOOP "i" BY SLIDE
           
-          #Add.Slide.With.Configs <- function(ppt.object, config.table){
-          #  result <- addSlide(x,
-          #                     slide.layout = )
-          #  return(result)
-          #}
-          
-          
+    } # END OF LOOP "h" BY DISTRICT      
+    close(progress.bar.h)      
           
           
           
