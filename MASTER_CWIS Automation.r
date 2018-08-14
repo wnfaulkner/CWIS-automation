@@ -3,7 +3,10 @@
 #########################################################
 
 
+########################################################################################################################################################      
 ### INITIAL SETUP ###
+ 
+{ #SECTION COLLAPSE BRACKET
   
   rm(list=ls()) #Remove lists
   options(java.parameters = "- Xmx1024m") #helps r not to fail when importing large xlsx files with xlsx package
@@ -38,9 +41,13 @@
     library(jsonlite)
     library(rlang)
   
-      
-### LOAD DATA ###
+} #END SECTION COLLAPSE BRACKET    
+    
+########################################################################################################################################################      
+### ESTABLISH DIRECTORIES ###
 
+{ #SECTION COLLAPSE BRACKET
+  
 # Main data
   #Directories
     
@@ -70,6 +77,12 @@
     cwis.embed.helper.df <- 	gs_read(cwis.embed.helper.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
     cwis.embed.helper.df$q.id <- tolower(cwis.embed.helper.df$q.id)
 
+} #END SECTION COLLAPSE BRACKET
+
+#OUTPUTS
+  #rproj.dir: directory for R project; also contains source data, additional function scripts, and config tables.
+  #wd: working directory for output files
+    
 ########################################################################################################################################################      
 ### DATA CLEANING & PREP ###
 { #SECTION COLLAPSE BRACKET
@@ -380,7 +393,7 @@
       #data frame where each line represents a slide
 
 ########################################################################################################################################################      
-### PRODUCING GRAPH DATA & GRAPHS THEMSELVES ###
+### PRODUCING GRAPH DATA ###
 
 {# SECTION COLLAPSE BRACKET
      
@@ -576,8 +589,8 @@
     } ### END OF LOOP "d" BY GRAPH ###
 
   graphdata.ls.c[[c]] <- graphdata.ls.d
-  #graphdata.ls.b[[b]]['loop.duration'] <- Sys.time()-loop.start.time.b  #100*b/maxrow.b
-  #est.time.remaining <- (lapply(graphdata.ls.b, function(x){x['loop.duration']}) %>% unlist %>% mean())*(maxrow.b-b)
+  #graphdata.ls.c[[b]]['loop.duration'] <- Sys.time()-loop.start.time.b  #100*b/maxrow.b
+  #est.time.remaining <- (lapply(graphdata.ls.c, function(x){x['loop.duration']}) %>% unlist %>% mean())*(maxrow.b-b)
   #print(paste("Estimated time remaining: ",est.time.remaining," sec",sep = ""))
   setTxtProgressBar(progress.bar.c, 100*c/maxrow.c)
   
@@ -594,7 +607,7 @@ close(progress.bar.c)
 ########################################################################################################################################################      
 ### PRODUCING GRAPHS THEMSELVES  ###
 
-#{#SECTION COLLAPSE BRACKET
+{#SECTION COLLAPSE BRACKET
   
   ###                       ###    
 # ### LOOP "f" BY DISTRICT  ###
@@ -602,12 +615,15 @@ close(progress.bar.c)
   
   graphs.ls.f <- list()
   progress.bar.f <- txtProgressBar(min = 0, max = 100, style = 3)
+  maxrow.f <- graphdata.ls.c %>% lengths %>% sum
+  district.id.f <- district.ids[f]
   
-  f <- 1 #LOOP TESTER
+  #f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  #for(f in 1:length(district.ids)){
+  for(f in 1:length(district.ids)){
     
     if(f == 1){print("FORMING GRAPHS IN GGPLOT...")}
+    config.graphs.df.f <- config.graphs.ls.b[[f]]
     
     ###                       ###    
 #   ### LOOP "g" BY GRAPH     ###
@@ -616,107 +632,106 @@ close(progress.bar.c)
     #Loop output object(s)
       graphs.ls.g <- list()
     
-    g <- 2  #LOOP TESTER
+    #g <- 2  #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    #for(g in 1:(length(graphdata.ls.b[[f]])-1))
+    for(g in 1:(length(graphdata.ls.c[[f]])-1))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         g<-g #same as above
         
         ### GRAPH INPUTS FOR GGPLOT ###
         
         #GRAPH DATA & CONFIGS DATA FRAMES
-        #district.id.g <- graphdata.ls.b[[f]][[g]]['district']
-        graphdata.df.g <- graphdata.ls.b[[f]][[g]] %>% as.data.frame()
-        names(graphdata.df.g) <- gsub("graphdata.","",names(graphdata.df.g))
-        
-        config.graphs.df.g <- config.graphs.ls.b[[f]][[g]] %>% as.data.frame()
-        names(config.graphs.df.g) <- gsub("configs.","",names(config.graphs.df.g))
-        
-        graph.cat.varname <- config.graphs.df.g$graph.cat.varname  
+          graphdata.df.g <- graphdata.ls.c[[f]][[g]] %>% as.data.frame()
+          names(graphdata.df.g) <- gsub("graphdata.","",names(graphdata.df.g))
+          
+          config.graphs.df.g <- config.graphs.df.f[g,] %>% as.data.frame()
+          names(config.graphs.df.g) <- gsub("configs.","",names(config.graphs.df.g))
+          
+          graph.cat.varname <- config.graphs.df.g$graph.cat.varname  
         
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
         
-        slide.graph.g <- 
-          ggplot(data = graphdata.df.g, 
-                 aes(x = graphdata.df.g[[graph.cat.varname]], 
-                     y = measure.var, 
-                     group = year, 
-                     fill = factor(year)
-                 ) #graph 1
-          ) + 
+          slide.graph.g <- 
+            ggplot(data = graphdata.df.g, 
+                   aes(x = graphdata.df.g[[graph.cat.varname]], 
+                       y = measure.var, 
+                       group = year, 
+                       fill = factor(year)
+                   ) #graph 1
+            ) + 
+            
+            geom_bar(
+              alpha = 0.7,
+              position = "dodge", 
+              stat = "identity"
+            ) +
+            
+            theme(panel.background = element_blank(),
+                  panel.grid.major.y = element_blank(),
+                  panel.grid.major.x = element_blank(),
+                  axis.text.x = element_text(size = 12, color = "#5a6b63"),
+                  axis.text.y = element_blank(),
+                  axis.ticks = element_blank(),
+                  axis.title = element_blank()
+            ) +     
+            
+            guides(fill = FALSE) +
+            
+            scale_fill_manual(
+              values = c("#800080","#ff33ff")
+            ) 
           
-          geom_bar(
-            alpha = 0.7,
-            position = "dodge", 
-            stat = "identity"
-          ) +
-          
-          theme(panel.background = element_blank(),
-                panel.grid.major.y = element_blank(),
-                panel.grid.major.x = element_blank(),
-                axis.text.x = element_text(size = 12, color = graphlabelsgrey),
-                axis.text.y = element_blank(),
-                axis.ticks = element_blank(),
-                axis.title = element_blank()
-          ) +     
-          
-          guides(fill = FALSE) +
-          
-          scale_fill_manual(
-            values = c(bar_series_fill.cols)
-          ) 
-        
         #GRAPH DATA LABELS 
         
-        #FUN        #Graph Label Heights (defined based on ratio of tallest to shortest columns)
-        create.graph.label.heights.fun <- function(df, measure.var, height.ratio.threshold){
+#FUN      #Graph Label Heights (defined based on ratio of tallest to shortest columns)
+            create.graph.label.heights.fun <- function(df, measure.var, height.ratio.threshold){
+              
+              if(!is.data.frame(as.data.frame(df))){stop("Input cannot be coerced into data frame.")}
+              
+              df <- as.data.frame(df)
+              
+              var <- df[,names(df) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric")
+              min <- min(var, na.rm = TRUE)
+              max <- max(var, na.rm = TRUE)
+              height.ratio.threshold <- height.ratio.threshold
+              height.ratio <- ifelse(max == 0, 0, max/min)
+              
+              #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
+              
+              if(height.ratio < height.ratio.threshold){ 
+                result <- rep(min/2 + 1, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
+              }
+              
+              if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
+                result <- vector(length = length(var))
+                above.label.vectorposition <- var/max < 1/height.ratio.threshold
+                result[above.label.vectorposition] <-   #labels for columns above threshold, position is height of bar plus 1/10 of max bar height 
+                  var[above.label.vectorposition] + max/10
+                result[result == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
+                  min(var[!above.label.vectorposition])/2
+              }
+              #print(paste("Graph Label Heights: ",paste(result, collapse = ", "),sep=""))
+              return(result)
+            }
+            
+          #!FORMATTING: NUMBER OF DECIMAL PLACES, PERCENTAGE SIGNS
+          graph.label.text.v <- graphdata.df.g$measure.var %>% round(.,2) %>% trimws(., which = "both") 
+          graph.label.heights.v <- create.graph.label.heights.fun(df = graphdata.df.g, measure.var = "measure.var", height.ratio.threshold = 10)
+          graph.labels.show.v <- ifelse(graphdata.df.g$measure.var != 0, 0.8, 0)  
           
-          if(!is.data.frame(as.data.frame(df))){stop("Input cannot be coerced into data frame.")}
+          #Add Data labels to graph
+          slide.graph.g <- slide.graph.g +
+            geom_text( 
+              aes(                                                          
+                y = graph.label.heights.v, 
+                label = graph.label.text.v,
+                alpha = graph.labels.show.v
+              ), 
+              position = position_dodge(width = 1),
+              size = 3,
+              color = "black",
+              show.legend = FALSE)
           
-          df <- as.data.frame(df)
-          
-          var <- df[,names(df) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric")
-          min <- min(var, na.rm = TRUE)
-          max <- max(var, na.rm = TRUE)
-          height.ratio.threshold <- height.ratio.threshold
-          height.ratio <- ifelse(max == 0, 0, max/min)
-          
-          #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
-          
-          if(height.ratio < height.ratio.threshold){ 
-            result <- rep(min/2 + 1, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
-          }
-          
-          if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
-            result <- vector(length = length(var))
-            above.label.vectorposition <- var/max < 1/height.ratio.threshold
-            result[above.label.vectorposition] <-   #labels for columns above threshold, position is height of bar plus 1/10 of max bar height 
-              var[above.label.vectorposition] + max/10
-            result[result == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
-              min(var[!above.label.vectorposition])/2
-          }
-          #print(paste("Graph Label Heights: ",paste(result, collapse = ", "),sep=""))
-          return(result)
-        }
-        
-        #!FORMATTING: NUMBER OF DECIMAL PLACES, PERCENTAGE SIGNS
-        graph.label.text.v <- graphdata.df.g$measure.var %>% round(.,2) %>% trimws(., which = "both") 
-        graph.label.heights.v <- create.graph.label.heights.fun(df = graphdata.df.g, measure.var = "measure.var", height.ratio.threshold = 10)
-        graph.labels.show.v <- ifelse(graphdata.df.g$measure.var != 0, 0.8, 0)  
-        
-        #Add Data labels to graph
-        slide.graph.g <- slide.graph.g +
-          geom_text( 
-            aes(                                                          
-              y = graph.label.heights.v, 
-              label = graph.label.text.v,
-              alpha = graph.labels.show.v
-            ), 
-            position = position_dodge(width = 1),
-            size = 3,
-            color = "black",
-            show.legend = FALSE)
-        
         #GRAPH AVERAGES
         graphdata.df.g$avg.alpha <- 
           ifelse(
@@ -783,32 +798,30 @@ close(progress.bar.c)
             #scale_y_discrete(limits = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., )) +
             theme(
               axis.text.x = element_blank(),
-              axis.text.y = element_text(size = 15, color = graphlabelsgrey)
+              axis.text.y = element_text(size = 15, color = "#5a6b63")
             )
         }
         
         #Sys.sleep(0.1)
         #print(slide.graph.g)
         
-        graphs.ls.g[[g]] <<- list( graph = slide.graph.g, configs = config.graphs.df.g)
-        #        graphs.ls.g[[g]][[2]] <<- config.graphs.df.g
-        setTxtProgressBar(progress.bar.g, 100*g/length(graphdata.ls.b[[f]]))
+        graphs.ls.g[[g]] <<- slide.graph.g
+        setTxtProgressBar(progress.bar.f, 100*(g + graphdata.ls.c[1:(f-1)] %>% lengths %>% sum)/maxrow.f)
+        
       })  ### END OF LOOP "g" BY GRAPH ###
-    close(progress.bar.g)
+    #close(progress.bar.g)
     
     graphs.ls.f[[f]] <- graphs.ls.g
-    setTxtProgressBar(progress.bar.f, 100*f/length(graphdata.ls.b))
     
   } ### END OF LOOP "f" BY DISTRICT
+  close(progress.bar.f)
   
-  #Result:
-  #slide.graph.ls.f
-  #[[district]]
-  #[[graph]]
-  #['graph']
-  #['configs']
+}#END SECTION COLLAPSE BRACKET
   
-#}#END SECTION COLLAPSE BRACKET
+#OUTPUT:
+  #graph.ls.f
+    #[[district]]
+      #ggplot object
 
 ########################################################################################################################################################      
 ### POWERPOINT GLOBAL CONFIGURATIONS ###
@@ -843,7 +856,7 @@ close(progress.bar.c)
 ########################################################################################################################################################      
 ### POWERPOINT SLIDE CREATION  ###        
 
-{ #SECTION COLLAPSE BRACKET   
+#{ #SECTION COLLAPSE BRACKET   
     
   config.pot.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE)
    
@@ -987,14 +1000,23 @@ close(progress.bar.c)
           
           
           
-} #END SECTION COLLAPSE BRACKET          
+#} #END SECTION COLLAPSE BRACKET          
           
-          
-          #}
-    
-      #ppt.ls.h[[h]]["target.filename"] <- target.path.h
-      #ppt.ls.h[[h]]["ppt"] <- ppt.h
-    #}     
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+         
 
     
 ########################################################################################################################################################      
@@ -1026,7 +1048,7 @@ close(progress.bar.c)
 
 #}
 
-#input <- graphdata.ls.b[[6]][[1]]
+#input <- graphdata.ls.c[[6]][[1]]
 #lapply(input, create.slide.graph)
 
         
