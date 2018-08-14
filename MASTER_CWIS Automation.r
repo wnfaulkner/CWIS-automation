@@ -192,7 +192,7 @@
 }#END SECTION COLLAPSE BRACKET
 
 ########################################################################################################################################################      
-### PRODUCING GRAPH DATA  ###
+### PRODUCING GRAPH & SLIDE CONFIGURATION TABLES ###
 
 #{ #SECTION COLLAPSE BRACKET
   
@@ -203,7 +203,7 @@
       group_by(district,year) %>% 
       summarize(num.responding.schools = length(unique(school)))  #Check how many schools in each district
       
-    # Load Graph Config
+    # Load Graph & Slide Type Config Tables
       setwd(rproj.dir)
       
       config.slidetypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE)
@@ -213,39 +213,41 @@
         left_join(., load.config.graphtypes.df, by = c("slide.graph.type" = "graph.type.id")) %>% 
         filter(!is.na(slide.graph.type))
       config.graphtypes.df <- config.graphtypes.df[,grep("slide.type.id|loop|data|graph",names(config.graphtypes.df))]
-  
-    ###                       ###    
-#   ### LOOP "b" BY DISTRICT  ###
-    ###                       ###
+    
+    # Expand Graph & Slide Config Tables for each district according to looping variables
+      
+      ###                       ###    
+#     ### LOOP "b" BY DISTRICT  ###
+      ###                       ###
       
     # Progress bar for loop
       progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
       maxrow.b <- length(district.ids)
       
+      config.graphs.ls.b <- list()
+      config.slides.ls.b <- list()
       graphdata.ls.b <- list()
       config.graphs.ls.b <- list()
       
-    b <- 2 #LOOP TESTER (19 = "Raytown C-2")
-    #for(b in c(1,110:115)){   #LOOP TESTER
-    #for(b in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
+    #b <- 2 #LOOP TESTER (19 = "Raytown C-2")
+    #for(b in c(1,2)){   #LOOP TESTER
+    for(b in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
       
       loop.start.time.b <- Sys.time()
       if(b == 1){print("CALCULATING GRAPH SOURCE DATA FRAMES...")}
+      print(c(b,100*b/length(district.ids)))
       
       # Create data frames for this loop - restrict to district id i
         district.id.b <- district.ids[b]
-        dat.wide.df.b <- dat.wide.df[dat.wide.df$district == district.id.b,] 
-        dat.answer.long.df.b <- dat.answer.long.df[dat.answer.long.df$district == district.id.b,]
-        dat.impbinary.long.df.b <- dat.impbinary.long.df[dat.impbinary.long.df$district == district.id.b,] 
+        #dat.wide.df.b <- dat.wide.df[dat.wide.df$district == district.id.b,] 
+        #dat.answer.long.df.b <- dat.answer.long.df[dat.answer.long.df$district == district.id.b,]
+        #dat.impbinary.long.df.b <- dat.impbinary.long.df[dat.impbinary.long.df$district == district.id.b,] 
         dat.long.df.b <- dat.long.df[dat.long.df$district == district.id.b,]
+        #print(head(dat.long.df.b))
         
 #FUN  #Loop Expander Function (for creating full config tables)  
       loop.expander.fun <- function(configs, loop.varname, intersperse.varname, source.data){
         output.ls <- list()
-        
-        ###                                   ###
-#       ### LOOP "c" BY LINE OF CONFIG OBJECT ###
-        ###                                   ###
         
         #c = 1 #LOOP TESTER: NO LOOPS
         #c = 3 #LOOP TESTER: ONE LOOP VAR
@@ -333,10 +335,11 @@
       
       config.graphs.df <- 
         loop.expander.fun(
-          configs = config.graphs.df, 
+          configs = config.graphtypes.df, 
           loop.varname = "slide.loop.var", 
           source.data = dat.long.df.b
         )
+      config.graphs.ls.b[[b]] <- config.graphs.df
       
       config.slides.df <- 
         loop.expander.fun(
@@ -344,6 +347,9 @@
           loop.varname <- "slide.loop.var",
           intersperse.varname = "slide.type.position",
           source.data = dat.long.df.b)
+      config.slides.ls.b[[b]] <- config.slides.df
+      
+    
       
         ###                         ###
   #     ### LOOP "d" BY GRAPH TYPE  ###
@@ -358,9 +364,9 @@
           
           config.graphs.df.d <- config.graphs.ls.c[[d]]
           
-          ###                         ###
-  #       ### LOOP "d" BY GRAPH TYPE  ###
-          ###                         ###
+          ###                    ###
+  #       ### LOOP "e" BY GRAPH  ###
+          ###                    ###
           
           for(e in 1:dim(config.graphs.df.d)[1]){
             
