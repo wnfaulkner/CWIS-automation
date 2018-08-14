@@ -59,11 +59,11 @@
       source("FUN_ColClassConvert.r")
       
     #Data & Output Directories
-    source.dir <- paste(rproj.dir,"/data_source/", sep = "")
-    target.dir <- paste(wd,"r_script_outputs/",
-                          "Output_",
-                          gsub(":",".",Sys.time()), sep = "")
-    dir.create(target.dir)
+      source.dir <- paste(rproj.dir,"/data_source/", sep = "")
+      target.dir <- paste(wd,"r_script_outputs/",
+                            "Output_",
+                            gsub(":",".",Sys.time()), sep = "")
+      dir.create(target.dir)
    
   #Variable helper table
     cwis.embed.helper.ss <- gs_key("1FaBPQP8Gqwp5sI_0g793G6yjW5XNFbV8ji8N7i9oLjs",verbose = TRUE) 
@@ -194,14 +194,14 @@
 ########################################################################################################################################################      
 ### PRODUCING GRAPH & SLIDE CONFIGURATION TABLES ###
 
-#{ #SECTION COLLAPSE BRACKET
+{ #SECTION COLLAPSE BRACKET
   
   # District name selection
     district.ids <- "all"
     if(tolower(district.ids) %in% "all" %>% any){district.ids <- dat.wide.df$district %>% unique}else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
     dat.wide.df %>% 
       group_by(district,year) %>% 
-      summarize(num.responding.schools = length(unique(school)))  #Check how many schools in each district
+      dplyr::summarize(num.responding.schools = length(unique(school)))  #Check how many schools in each district
       
     # Load Graph & Slide Type Config Tables
       setwd(rproj.dir)
@@ -220,28 +220,24 @@
 #     ### LOOP "b" BY DISTRICT  ###
       ###                       ###
       
+    # Loop Outputs 
+      config.graphs.ls.b <- list()
+      config.slides.ls.b <- list()
+    
     # Progress bar for loop
       progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
       maxrow.b <- length(district.ids)
-      
-      config.graphs.ls.b <- list()
-      config.slides.ls.b <- list()
-      graphdata.ls.b <- list()
-      config.graphs.ls.b <- list()
       
     #b <- 2 #LOOP TESTER (19 = "Raytown C-2")
     #for(b in c(1,2)){   #LOOP TESTER
     for(b in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
       
       loop.start.time.b <- Sys.time()
-      if(b == 1){print("CALCULATING GRAPH SOURCE DATA FRAMES...")}
-      print(c(b,100*b/length(district.ids)))
+      if(b == 1){print("FORMING GRAPH & SLIDE CONFIG TABLES...")}
+      #print(c(b,100*b/length(district.ids)))
       
       # Create data frames for this loop - restrict to district id i
         district.id.b <- district.ids[b]
-        #dat.wide.df.b <- dat.wide.df[dat.wide.df$district == district.id.b,] 
-        #dat.answer.long.df.b <- dat.answer.long.df[dat.answer.long.df$district == district.id.b,]
-        #dat.impbinary.long.df.b <- dat.impbinary.long.df[dat.impbinary.long.df$district == district.id.b,] 
         dat.long.df.b <- dat.long.df[dat.long.df$district == district.id.b,]
         #print(head(dat.long.df.b))
         
@@ -332,14 +328,26 @@
           }
         return(output.df)
       }
-      
+
+#FUN  #Replace NAs in a vector with a replacement value
+      na.sub <- function(vector,na.replacement){
+        vector[is.na(vector)] <- na.replacement
+        return(vector)
+      }       
+
+#FUN  #School-level slides should not include an iteration for the District Office 
+      remove.district.office.fun <- function(x){
+        x[!(grepl("school", x$slide.loop.var) & (x$school %>% na.sub(.,"")) == "District Office"),]
+      }
+
       config.graphs.df <- 
         loop.expander.fun(
           configs = config.graphtypes.df, 
           loop.varname = "slide.loop.var", 
           source.data = dat.long.df.b
         )
-      config.graphs.ls.b[[b]] <- config.graphs.df
+      
+      config.graphs.ls.b[[b]] <- config.graphs.df %>% remove.district.office.fun(.)
       
       config.slides.df <- 
         loop.expander.fun(
@@ -347,221 +355,452 @@
           loop.varname <- "slide.loop.var",
           intersperse.varname = "slide.type.position",
           source.data = dat.long.df.b)
-      config.slides.ls.b[[b]] <- config.slides.df
+      config.slides.ls.b[[b]] <- config.slides.df %>% remove.district.office.fun(.)
       
-    
-      
-        ###                         ###
-  #     ### LOOP "d" BY GRAPH TYPE  ###
-        ###                         ###
-        
-        graphdata.ls.d <- list()
-        config.graphs.ls.d <- list()
-        
-        #d = 1 #LOOP TESTER 
-        #for(d in 1:3){ #LOOP TESTER
-        for(d in 1:length(config.graphs.ls.c)){
-          
-          config.graphs.df.d <- config.graphs.ls.c[[d]]
-          
-          ###                    ###
-  #       ### LOOP "e" BY GRAPH  ###
-          ###                    ###
-          
-          for(e in 1:dim(config.graphs.df.d)[1]){
-            
-            config.graphs.df.e <- config.graphs.df.d[e,]
-            
-            #School-level slides should not include an iteration for the District Office 
-              if(
-                  config.graphs.df.e$data.level == "school" && 
-                  config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.restriction] %>% as.character == "District Office"
-              ){next()}
-                
-              group_by.e <- config.graphs.df.e$data.group.by.var %>% 
-                strsplit(., ",") %>% 
-                unlist
-            
-            #Create data frame "all.cats.df.e" of all possible answers for x-axis (role, module, year, answer)
-              
-              all.cats.e <- dat.long.df %>%
-                filter( dat.long.df$impbinary == 0 ) %>%
-                .[,names(dat.long.df) == config.graphs.df.e$graph.cat.varname] %>% 
-                as.data.frame %>% 
-                apply(., 2, function(x){x[!is.na(x)] %>% unique}) %>%
-                as.data.frame %>%
-                .[,1]
-              
-              if(config.graphs.df.e$graph.cat.varname != "year"){
-                all.cats.df.e <- expand.grid(unique(dat.answer.long.df$year), all.cats.e)
-              }else{
-                all.cats.df.e <- all.cats.e %>% as.data.frame()
-              }
-              
-              names(all.cats.df.e) <- group_by.e
-              
-  #FUN      #Data Summarize Function: participation vs. performance 
-              summarize.data.fun <- function(x){
-                if(config.graphs.df.e$data.measure == "participation"){
-                  result <- 
-                    summarize(x, measure.var =  length(unique(responseid)))
-                }
-                if(config.graphs.df.e$data.measure == "implementation"){
-                  result <- x %>% 
-                    filter(impbinary == 1) %>%
-                    summarize(measure.var = mean(answer, na.rm = TRUE))
-                }
-                if(config.graphs.df.e$data.measure == "performance"){
-                  result <- x %>%
-                    filter(impbinary == 0, !is.na(answer)) %>%
-                    summarize(measure.var = length(unique(responseid)))
-                }
-                return(result)
-              }
-            
-  #FUN      #Data restriction function: district vs. school
-              graph.data.restriction.fun <- function(x){
-                  
-                if(config.graphs.df.e$data.level == "district"){
-                  y <- x
-                }
-                
-                if(config.graphs.df.e$data.level == "school"){
-                  y <- 
-                    x %>% 
-                    filter(school == config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.level]) 
-                }
-                  
-                if(is.na(config.graphs.df.e$data.restriction)){
-                  result <- y
-                }
-                
-                if(!is.na(config.graphs.df.e$data.restriction)){
-                  result <- 
-                    y %>% 
-                    filter(
-                      y[,names(y) == config.graphs.df.e$data.restriction] == 
-                      config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.restriction]
-                    )
-                }
-                
-                return(result)
-              }
-              
-            #Form final data frame (no averages)
-              graphdata.df.e <-  
-                dat.long.df.b %>%
-                graph.data.restriction.fun %>%
-                group_by(!!! syms(group_by.e)) %>%
-                summarize.data.fun %>%
-                left_join(all.cats.df.e, ., by = c(group_by.e))
-              graphdata.df.e$measure.var[is.na(graphdata.df.e$measure.var)] <- 0
-              
-  #FUN      #Average data restriction function
-              avg.data.restriction.fun <- function(x){
-                
-                if(config.graphs.df.e$data.level == "district"){
-                  y <- x
-                }
-                
-                if(config.graphs.df.e$data.level == "school"){
-                  y <- 
-                    x %>% 
-                    filter(district == district.id.b) 
-                }
-                
-                if(is.na(config.graphs.df.e$data.restriction)){
-                  result <- y
-                }
-                
-                if(!is.na(config.graphs.df.e$data.restriction)){
-                  result <- 
-                    y %>%
-                    filter(
-                      y[,names(y)==config.graphs.df.e$data.restriction] == 
-                        config.graphs.df.e[,names(config.graphs.df.e)==config.graphs.df.e$data.restriction]
-                    )
-                }
-                
-                
-                return(result)
-              }
-            
-  #FUN      #Average Summary Function
-              summarize.avg.fun <- function(x){
-                if(config.graphs.df.e$data.measure == "participation"){
-                  result <- x %>%
-                    summarize(avg = length(unique(responseid))/length(unique(school.id)))#participation
-                }
-                if(config.graphs.df.e$data.measure == "implementation"){
-                  result <- x %>% 
-                    filter(.,impbinary == 1) %>%
-                    summarize(., avg = mean(answer, na.rm = TRUE))#implementation
-                  
-                }
-                if(config.graphs.df.e$data.measure == "performance"){
-                  result <- x %>%
-                    filter(impbinary == 0, !is.na(answer)) %>%
-                    summarize(avg = length(unique(responseid))/length(unique(school.id)))
-                }
-                return(result)
-              }
-            
-            #Add average variable to final data frame
-              graph.avg.df.e <- 
-                dat.long.df %>%
-                avg.data.restriction.fun(.) %>%
-                group_by(!!! syms(group_by.e)) %>%
-                summarize.avg.fun(.)
-  #FUN
-              left.join.NA <- function(.x, .y, .by, na.replacement) {
-                result <- left_join(x = .x, y = .y, by = .by, stringsAsFactors = FALSE) %>% 
-                  mutate_all(funs(replace(., which(is.na(.)), na.replacement)))
-                return(result)
-              }
-                
-              graphdata.df.e <- 
-                left.join.NA(
-                  .x = graphdata.df.e, 
-                  .y = graph.avg.df.e, 
-                  .by = c(group_by.e),
-                  na.replacement = 0
-                )
-             
-            storage.ls.index <- length(graphdata.ls.d) + 1
-            graphdata.ls.d[[storage.ls.index]] <- list(
-              #district = district.id.b,
-              #school = config.graphs.df.e$school
-              #configs = config.graphs.df.e, 
-              graphdata = graphdata.df.e)
-            config.graphs.ls.d[[storage.ls.index]] <- config.graphs.df.e
-  
-            #print(c(d,e))
-            #print(config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.restriction] %>% as.character)
-            #print(config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.level] %>% as.character)
-            #print(graphdata.df.e)
-            #print(graphdata.ls.d[[graphdata.ls.index]])
-          
-          } ### END OF LOOP "e" BY GRAPH ###
-          
-            
-        } ### END OF LOOP "d" BY GRAPH TYPE ###
-     
-      graphdata.ls.b[[b]] <- graphdata.ls.d
-      config.graphs.ls.b[[b]] <- config.graphs.ls.d 
-      #graphdata.ls.b[[b]]['district'] <- district.id.b
-      
-      graphdata.ls.b[[b]]['loop.duration'] <- Sys.time()-loop.start.time.b  #100*b/maxrow.b
-      est.time.remaining <- (lapply(graphdata.ls.b, function(x){x['loop.duration']}) %>% unlist %>% mean())*(maxrow.b-b)
-      print(paste("Estimated time remaining: ",est.time.remaining," sec",sep = ""))
       setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
-    } ### END OF LOOP "b" BY DISTRICT     
-    close(progress.bar.b)  
 
-#} #END OF SECTION COLLAPSE BRACKET
+    } # END OF LOOP 'b' BY DISTRICT
+    close(progress.bar.b)
+    
+} # END SECTION COLLAPSE BRACKET
 
 ########################################################################################################################################################      
-### GRAPH & POWERPOINT CONFIGURATIONS ###
+### PRODUCING GRAPH DATA & GRAPHS THEMSELVES ###
+
+{ # SECTION COLLAPSE BRACKET
+     
+###                       ###    
+### LOOP "c" BY DISTRICT  ###
+###                       ###
+      
+  # Loop outputs
+    graphdata.ls.c <- list()
+    #graphs.ls.c <- list()
+  
+  # Progress bar for loop
+    progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
+    maxrow.c <- length(district.ids)
+  
+  #c <- 2 #LOOP TESTER (19 = "Raytown C-2")
+  #for(c in c(1,2)){   #LOOP TESTER
+  for(c in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
+      
+                                  ###                         ###
+                            #     ### LOOP "d" BY GRAPH TYPE  ###
+                                  ###                         ###
+                                  
+                                  #graphdata.ls.d <- list()
+                                  #config.graphs.ls.d <- list()
+                                  
+                                  #d = 1 #LOOP TESTER 
+                                  #for(d in 1:3){ #LOOP TESTER
+                                  #for(d in 1:length(config.graphs.ls.c)){
+                                    
+    dat.long.df.c <- dat.long.df[dat.long.df$district == district.ids[c],]
+    config.graphs.df.c <- config.graphs.ls.b[[c]]
+    graphdata.ls.d <- list()
+    
+    ###                    ###
+#   ### LOOP "d" BY GRAPH  ###
+    ###                    ###
+    
+    #for(d in 1:2){ #LOOP TESTER
+    for(d in 1:dim(config.graphs.df.c)[1]){
+      
+      config.graphs.df.d <- config.graphs.df.c[d,]
+      
+        group_by.d <- config.graphs.df.d$data.group.by.var %>% 
+          strsplit(., ",") %>% 
+          unlist
+      
+      #Create data frame "all.cats.df.e" of all possible answers for x-axis (role, module, year, answer)
+        
+        all.cats.d <- dat.long.df %>%
+          filter( dat.long.df$impbinary == 0 ) %>%
+          .[,names(dat.long.df) == config.graphs.df.d$graph.cat.varname] %>% 
+          as.data.frame %>% 
+          apply(., 2, function(x){x[!is.na(x)] %>% unique}) %>%
+          as.data.frame %>%
+          .[,1]
+        
+        if(config.graphs.df.d$graph.cat.varname != "year"){
+          all.cats.df.d <- expand.grid(unique(dat.answer.long.df$year), all.cats.d)
+        }else{
+          all.cats.df.d <- all.cats.d %>% as.data.frame()
+        }
+        
+        names(all.cats.df.d) <- group_by.d
+        
+#FUN  #Data restriction function: district vs. school
+        graph.data.restriction.fun <- function(x){
+          
+          if(config.graphs.df.d$data.level == "district"){
+            y <- x
+          }
+          
+          if(config.graphs.df.d$data.level == "school"){
+            y <- 
+              x %>% 
+              filter(school == config.graphs.df.d[,names(config.graphs.df.d) == config.graphs.df.d$data.level]) 
+          }
+          
+          if(is.na(config.graphs.df.d$data.restriction)){
+            result <- y
+          }
+          
+          if(!is.na(config.graphs.df.d$data.restriction)){
+            result <- 
+              y %>% 
+              filter(
+                y[,names(y) == config.graphs.df.d$data.restriction] == 
+                  config.graphs.df.d[,names(config.graphs.df.d) == config.graphs.df.d$data.restriction]
+              )
+          }
+          
+          return(result)
+        }
+        
+#FUN  #Data Summarize Function: participation vs. implementation vs. performance 
+        summarize.data.fun <- function(x){
+          if(config.graphs.df.d$data.measure == "participation"){
+            result <- 
+              dplyr::summarize(x, measure.var =  length(unique(responseid)))
+          }
+          if(config.graphs.df.d$data.measure == "implementation"){
+            result <- x %>% 
+              filter(impbinary == 1) %>%
+              dplyr::summarize(measure.var = mean(answer, na.rm = TRUE))
+          }
+          if(config.graphs.df.d$data.measure == "performance"){
+            result <- x %>%
+              filter(impbinary == 0, !is.na(answer)) %>%
+              dplyr::summarize(measure.var = length(unique(responseid)))
+          }
+          return(result)
+        }
+      
+      #Form final data frame (no averages)
+        graphdata.df.d <-  
+          dat.long.df.c %>%
+          graph.data.restriction.fun %>%
+          group_by(!!! syms(group_by.d)) %>%
+          summarize.data.fun %>%
+          left_join(all.cats.df.d, ., by = c(group_by.d))
+        graphdata.df.d$measure.var[is.na(graphdata.df.d$measure.var)] <- 0
+        
+  #FUN      #Average data restriction function
+        avg.data.restriction.fun <- function(x){
+          
+          if(config.graphs.df.d$data.level == "district"){
+            y <- x
+          }
+          
+          if(config.graphs.df.d$data.level == "school"){
+            y <- 
+              x %>% 
+              filter(district == district.id.b) 
+          }
+          
+          if(is.na(config.graphs.df.d$data.restriction)){
+            result <- y
+          }
+          
+          if(!is.na(config.graphs.df.d$data.restriction)){
+            result <- 
+              y %>%
+              filter(
+                y[,names(y)==config.graphs.df.d$data.restriction] == 
+                  config.graphs.df.d[,names(config.graphs.df.d)==config.graphs.df.d$data.restriction]
+              )
+          }
+          
+          
+          return(result)
+        }
+      
+  #FUN      #Average Summary Function
+        summarize.avg.fun <- function(x){
+          if(config.graphs.df.d$data.measure == "participation"){
+            result <- x %>%
+              dplyr::summarize(avg = length(unique(responseid))/length(unique(school.id)))#participation
+          }
+          if(config.graphs.df.d$data.measure == "implementation"){
+            result <- x %>% 
+              filter(.,impbinary == 1) %>%
+              dplyr::summarize(., avg = mean(answer, na.rm = TRUE))#implementation
+            
+          }
+          if(config.graphs.df.d$data.measure == "performance"){
+            result <- x %>%
+              filter(impbinary == 0, !is.na(answer)) %>%
+              dplyr::summarize(avg = length(unique(responseid))/length(unique(school.id)))
+          }
+          return(result)
+        }
+      
+      #Add average variable to final data frame
+        graph.avg.df.d <- 
+          dat.long.df %>%
+          avg.data.restriction.fun(.) %>%
+          group_by(!!! syms(group_by.d)) %>%
+          summarize.avg.fun(.)
+  #FUN
+        left.join.NA <- function(.x, .y, .by, na.replacement) {
+          result <- left_join(x = .x, y = .y, by = .by, stringsAsFactors = FALSE) %>% 
+            mutate_all(funs(replace(., which(is.na(.)), na.replacement)))
+          return(result)
+        }
+          
+        graphdata.df.d <- 
+          left.join.NA(
+            .x = graphdata.df.d, 
+            .y = graph.avg.df.d, 
+            .by = c(group_by.d),
+            na.replacement = 0
+          )
+       
+      storage.ls.index <- length(graphdata.ls.d) + 1
+      graphdata.ls.d[[storage.ls.index]] <- graphdata.df.d
+      
+      #print(c(d))
+      #print(config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.restriction] %>% as.character)
+      #print(config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.level] %>% as.character)
+      #print(graphdata.df.e)
+      #print(graphdata.ls.d[[graphdata.ls.index]])
+    
+    } ### END OF LOOP "d" BY GRAPH ###
+
+  graphdata.ls.c[[c]] <- graphdata.ls.d
+      #graphdata.ls.b[[b]]['loop.duration'] <- Sys.time()-loop.start.time.b  #100*b/maxrow.b
+      #est.time.remaining <- (lapply(graphdata.ls.b, function(x){x['loop.duration']}) %>% unlist %>% mean())*(maxrow.b-b)
+      #print(paste("Estimated time remaining: ",est.time.remaining," sec",sep = ""))
+  setTxtProgressBar(progress.bar.c, 100*c/maxrow.c)
+  
+} ### END OF LOOP "c" BY DISTRICT     
+close(progress.bar.c)  
+
+} #END OF SECTION COLLAPSE BRACKET
+
+########################################################################################################################################################      
+### PRODUCING GRAPHS THEMSELVES  ###
+
+{#SECTION COLLAPSE BRACKET
+  
+  ###                       ###    
+  #   ### LOOP "f" BY DISTRICT  ###
+  ###                       ###
+  
+  slide.graphs.ls.f <- list()
+  progress.bar.f <- txtProgressBar(min = 0, max = 100, style = 3)
+  
+  #f <- 1 #LOOP TESTER
+  #for(f in 1:2){ #LOOP TESTER
+  for(f in 1:length(graphdata.ls.b)){
+    
+    if(f == 1){print("FORMING GRAPHS IN GGPLOT...")}
+    
+    ###                       ###    
+    #   ### LOOP "g" BY GRAPH     ###
+    ###                       ###
+    
+    slide.graphs.ls.g <- list()
+    progress.bar.g <- txtProgressBar(min = 0, max = 100, style = 3)
+    #g <- 2  #LOOP TESTER
+    #for(g in 1:2) #LOOP TESTER
+    for(g in 1:(length(graphdata.ls.b[[f]])-1))
+      local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
+        g<-g #same as above
+        
+        ### GRAPH INPUTS FOR GGPLOT ###
+        
+        #GRAPH DATA & CONFIGS DATA FRAMES
+        #district.id.g <- graphdata.ls.b[[f]][[g]]['district']
+        graphdata.df.g <- graphdata.ls.b[[f]][[g]] %>% as.data.frame()
+        names(graphdata.df.g) <- gsub("graphdata.","",names(graphdata.df.g))
+        
+        config.graphs.df.g <- config.graphs.ls.b[[f]][[g]] %>% as.data.frame()
+        names(config.graphs.df.g) <- gsub("configs.","",names(config.graphs.df.g))
+        
+        graph.cat.varname <- config.graphs.df.g$graph.cat.varname  
+        
+        ### BASE GRAPH FORMATION WITH GGPLOT2 ###
+        
+        slide.graph.g <- 
+          ggplot(data = graphdata.df.g, 
+                 aes(x = graphdata.df.g[[graph.cat.varname]], 
+                     y = measure.var, 
+                     group = year, 
+                     fill = factor(year)
+                 ) #graph 1
+          ) + 
+          
+          geom_bar(
+            alpha = 0.7,
+            position = "dodge", 
+            stat = "identity"
+          ) +
+          
+          theme(panel.background = element_blank(),
+                panel.grid.major.y = element_blank(),
+                panel.grid.major.x = element_blank(),
+                axis.text.x = element_text(size = 12, color = graphlabelsgrey),
+                axis.text.y = element_blank(),
+                axis.ticks = element_blank(),
+                axis.title = element_blank()
+          ) +     
+          
+          guides(fill = FALSE) +
+          
+          scale_fill_manual(
+            values = c(bar_series_fill.cols)
+          ) 
+        
+        #GRAPH DATA LABELS 
+        
+        #FUN        #Graph Label Heights (defined based on ratio of tallest to shortest columns)
+        create.graph.label.heights.fun <- function(df, measure.var, height.ratio.threshold){
+          
+          if(!is.data.frame(as.data.frame(df))){stop("Input cannot be coerced into data frame.")}
+          
+          df <- as.data.frame(df)
+          
+          var <- df[,names(df) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric")
+          min <- min(var, na.rm = TRUE)
+          max <- max(var, na.rm = TRUE)
+          height.ratio.threshold <- height.ratio.threshold
+          height.ratio <- ifelse(max == 0, 0, max/min)
+          
+          #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
+          
+          if(height.ratio < height.ratio.threshold){ 
+            result <- rep(min/2 + 1, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
+          }
+          
+          if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
+            result <- vector(length = length(var))
+            above.label.vectorposition <- var/max < 1/height.ratio.threshold
+            result[above.label.vectorposition] <-   #labels for columns above threshold, position is height of bar plus 1/10 of max bar height 
+              var[above.label.vectorposition] + max/10
+            result[result == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
+              min(var[!above.label.vectorposition])/2
+          }
+          #print(paste("Graph Label Heights: ",paste(result, collapse = ", "),sep=""))
+          return(result)
+        }
+        
+        #!FORMATTING: NUMBER OF DECIMAL PLACES, PERCENTAGE SIGNS
+        graph.label.text.v <- graphdata.df.g$measure.var %>% round(.,2) %>% trimws(., which = "both") 
+        graph.label.heights.v <- create.graph.label.heights.fun(df = graphdata.df.g, measure.var = "measure.var", height.ratio.threshold = 10)
+        graph.labels.show.v <- ifelse(graphdata.df.g$measure.var != 0, 0.8, 0)  
+        
+        #Add Data labels to graph
+        slide.graph.g <- slide.graph.g +
+          geom_text( 
+            aes(                                                          
+              y = graph.label.heights.v, 
+              label = graph.label.text.v,
+              alpha = graph.labels.show.v
+            ), 
+            position = position_dodge(width = 1),
+            size = 3,
+            color = "black",
+            show.legend = FALSE)
+        
+        #GRAPH AVERAGES
+        graphdata.df.g$avg.alpha <- 
+          ifelse(
+            graphdata.df.g$year != "Baseline" & graphdata.df.g$avg != 0,
+            0.8,
+            0.3
+          )
+        
+        slide.graph.g <- 
+          slide.graph.g +
+          
+          geom_errorbar(
+            aes(
+              ymin =graphdata.df.g$avg, 
+              ymax = graphdata.df.g$avg,
+              alpha = graphdata.df.g$avg.alpha
+            ), 
+            position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+            color = "black", 
+            width = 1,
+            size = 1,
+            show.legend = FALSE
+          )
+        
+        #GRAPH CATEGORY NAMES, CORRECTING CATEGORY AXIS ORDERING
+        #!potential function 
+        
+        if(config.graphs.df.g$graph.cat.varname == "answer" && config.graphs.df.g$module %in% c("LEAD","PD")){
+          names(graphdata.df.g)[grepl("answer",names(graphdata.df.g))]  <- "answer.opt.agreement"
+          graph.cat.varname <- "answer.opt.agreement"
+        }
+        
+        if(config.graphs.df.g$graph.cat.varname == "answer" && !config.graphs.df.g$module %in% c("LEAD","PD")){
+          names(graphdata.df.g)[grepl("answer",names(graphdata.df.g))] <- "answer.opt.freq"
+          graph.cat.varname <- "answer.opt.freq"
+        }
+        
+        #year, school.level, module, answer
+        graph.cat.order.ls <-
+          list(
+            year = c("Baseline","2017-18 SY"),
+            school.level = c("Elem.","Middle","High"),
+            role = c("Special Educator","Classroom Teacher","Instructional Coach","Media Specialist","School Counselor","School Social Worker","Building Administrator","Other"),
+            module = c("CFA", "ETL","DBDM","LEAD","PD"),
+            answer.opt.freq = c("Always","Most of the time","About half of the time","Sometimes","Never"),
+            answer.opt.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
+          )
+        
+        #When graphs are car as opposed to columns, have to reverse order because the coord_flip() command does a mirror image
+        if(config.graphs.df.g$graph.type.orientation == "bar"){
+          graph.order.g <- graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., levels = graph.cat.order.ls[(names(graphdata.df.g)[2])] %>% unlist %>% rev)
+        }else{
+          graph.order.g <- graph.cat.order.ls[(names(graphdata.df.g)[2])]  %>% unlist %>% factor(., levels = graph.cat.order.ls[(names(graphdata.df.g)[2])] %>% unlist)        
+        }
+        
+        #Graph category axis ordering
+        slide.graph.g <- slide.graph.g + scale_x_discrete(limits=levels(graph.order.g))
+        
+        #GRAPH ORIENTATION
+        if(config.graphs.df.g$graph.type.orientation == "bar"){
+          slide.graph.g <- 
+            slide.graph.g +
+            coord_flip() +
+            #scale_y_discrete(limits = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., )) +
+            theme(
+              axis.text.x = element_blank(),
+              axis.text.y = element_text(size = 15, color = graphlabelsgrey)
+            )
+        }
+        
+        #Sys.sleep(0.1)
+        #print(slide.graph.g)
+        
+        slide.graphs.ls.g[[g]] <<- list( graph = slide.graph.g, configs = config.graphs.df.g)
+        #        slide.graphs.ls.g[[g]][[2]] <<- config.graphs.df.g
+        setTxtProgressBar(progress.bar.g, 100*g/length(graphdata.ls.b[[f]]))
+      })  ### END OF LOOP "g" BY GRAPH ###
+    close(progress.bar.g)
+    
+    slide.graphs.ls.f[[f]] <- slide.graphs.ls.g
+    setTxtProgressBar(progress.bar.f, 100*f/length(graphdata.ls.b))
+    
+  } ### END OF LOOP "f" BY DISTRICT
+  
+  #Result:
+  #slide.graph.ls.f
+  #[[district]]
+  #[[graph]]
+  #['graph']
+  #['configs']
+  
+}#END SECTION COLLAPSE BRACKET
+
+########################################################################################################################################################      
+### POWERPOINT GLOBAL CONFIGURATIONS ###
     
 { #SECTION COLLAPSE BRACKET
     
@@ -587,291 +826,8 @@
     section.title.format <- textProperties(color = "white", font.size = 48, font.weight = "bold")
     notes.format <- textProperties(color = notesgrey, font.size = 14)
     
-    #config.slides.ls.k <- list()
-      
-    #for(k in 1:length(district.ids)){
-    #  district.id.k <- district.ids[k]
-    #  config.slides.k <- config.slidetypes.df
-    #  config.slides.ls.l <- list()
-    #  
-    #  for(l in 1:dim(config.slidetypes.df)[1]){
-    #  #config.slides.l <- config.slidetypes.df[l,]
-    #  
-    #  config.slides.k$slide.loop.var[l] <-
-    #    ifelse(
-    #      is.na(config.slides.k[l,]$slide.loop.var),
-    #      "",
-    #      dat.long.df[
-    #        dat.long.df$district == district.id.k,
-    #        names(dat.long.df) == config.slides.k[l,]$slide.loop.var
-    #      ] %>% 
-    #      unique %>% 
-    #      paste(.,collapse = ",")
-    #    )
-    #  }
-      
-    #  dat.long.df[dat.long.df$district == district.id.k,]
-    #  config.slidetypes.df[k,]
-      
-      #output df: slide.id,
-      
-      
-    #}
-    #Table for all slides with configs
-    #config.graphs.df.h <- rbind.fill(config.graphs.ls.b[[h]])
-    
-    #Could do full_join, except there are some slides with 2 graphs
-    #config.1graph.slidetypes.df <- config.slidetypes.df[!grepl(",",config.slidetypes.df$slide.graph.type),]
-    
-    #slides.df.h <- 
-    #  left_join(
-    #    config.1graph.slidetypes.df, 
-    #    config.graphs.df.h, 
-    #    by = c("slide.type.id","slide.type.name","slide.type.position","slide.layout","slide.loop.var","slide.graph.type")
-    #  )
-    
-    #slides.df.h <- slides.df.h[order(slides.df.h$slide.type.position),!grepl("graph",names(slides.df.h))] %>% 
-    #  mutate(slide.id = seq_along(slides.df.h$slide.type.id))
-    
-    #config.2graph.slidetypes.df <- config.slidetypes.df[grepl(",",config.slidetypes.df$slide.graph.type),] 
-    #config.2graph.singleslide <- config.2graph.slidetypes.df[is.na(config.2graph.slidetypes.df$slide.loop.var),]
-    
-    #left_join(
-    #  config.2graph.singleslide,
-    #  config.graphs.df.h,
-    #  by = c("slide.type.id","slide.type.name","slide.type.position","slide.layout","slide.loop.var","slide.graph.type")
-    #)
-    
-    #config.2graph.loopslide <- config.2graph.slidetypes.df[!is.na(config.2graph.slidetypes.df$slide.loop.var),]
-    
-    #left_join(
-    #  config.2graph.loopslide,
-    #  config.graphs.df.h,
-    # all.y = TRUE,
-    #  by = c("slide.type.id","slide.type.name","slide.type.position","slide.layout","slide.loop.var","slide.graph.type")
-    #)
-    
-    
     
 } # END OF SECTION COLLAPSE BRACKET
-    
-########################################################################################################################################################      
-### PRODUCING GRAPHS THEMSELVES  ###
-
-{#SECTION COLLAPSE BRACKET
-  
-    ###                       ###    
-#   ### LOOP "f" BY DISTRICT  ###
-    ###                       ###
-    
-    slide.graphs.ls.f <- list()
-    progress.bar.f <- txtProgressBar(min = 0, max = 100, style = 3)
-    
-    #f <- 1 #LOOP TESTER
-    #for(f in 1:2){ #LOOP TESTER
-    for(f in 1:length(graphdata.ls.b)){
-      
-      if(f == 1){print("FORMING GRAPHS IN GGPLOT...")}
-      
-      ###                       ###    
-  #   ### LOOP "g" BY GRAPH     ###
-      ###                       ###
-    
-      slide.graphs.ls.g <- list()
-      progress.bar.g <- txtProgressBar(min = 0, max = 100, style = 3)
-      #g <- 2  #LOOP TESTER
-      #for(g in 1:2) #LOOP TESTER
-      for(g in 1:(length(graphdata.ls.b[[f]])-1))
-        local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
-        g<-g #same as above
-        
-        ### GRAPH INPUTS FOR GGPLOT ###
-          
-          #GRAPH DATA & CONFIGS DATA FRAMES
-            #district.id.g <- graphdata.ls.b[[f]][[g]]['district']
-            graphdata.df.g <- graphdata.ls.b[[f]][[g]] %>% as.data.frame()
-            names(graphdata.df.g) <- gsub("graphdata.","",names(graphdata.df.g))
-            
-            config.graphs.df.g <- config.graphs.ls.b[[f]][[g]] %>% as.data.frame()
-            names(config.graphs.df.g) <- gsub("configs.","",names(config.graphs.df.g))
-            
-            graph.cat.varname <- config.graphs.df.g$graph.cat.varname  
-      
-        ### BASE GRAPH FORMATION WITH GGPLOT2 ###
-          
-          slide.graph.g <- 
-            ggplot(data = graphdata.df.g, 
-              aes(x = graphdata.df.g[[graph.cat.varname]], 
-                   y = measure.var, 
-                   group = year, 
-                   fill = factor(year)
-              ) #graph 1
-            ) + 
-            
-            geom_bar(
-              alpha = 0.7,
-              position = "dodge", 
-              stat = "identity"
-            ) +
-            
-            theme(panel.background = element_blank(),
-                  panel.grid.major.y = element_blank(),
-                  panel.grid.major.x = element_blank(),
-                  axis.text.x = element_text(size = 12, color = graphlabelsgrey),
-                  axis.text.y = element_blank(),
-                  axis.ticks = element_blank(),
-                  axis.title = element_blank()
-            ) +     
-            
-            guides(fill = FALSE) +
-            
-            scale_fill_manual(
-              values = c(bar_series_fill.cols)
-            ) 
-          
-          #GRAPH DATA LABELS 
-          
-#FUN        #Graph Label Heights (defined based on ratio of tallest to shortest columns)
-              create.graph.label.heights.fun <- function(df, measure.var, height.ratio.threshold){
-                
-                if(!is.data.frame(as.data.frame(df))){stop("Input cannot be coerced into data frame.")}
-                
-                df <- as.data.frame(df)
-                
-                var <- df[,names(df) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric")
-                min <- min(var, na.rm = TRUE)
-                max <- max(var, na.rm = TRUE)
-                height.ratio.threshold <- height.ratio.threshold
-                height.ratio <- ifelse(max == 0, 0, max/min)
-                
-                #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
-                
-                if(height.ratio < height.ratio.threshold){ 
-                  result <- rep(min/2 + 1, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
-                }
-                
-                if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
-                  result <- vector(length = length(var))
-                  above.label.vectorposition <- var/max < 1/height.ratio.threshold
-                  result[above.label.vectorposition] <-   #labels for columns above threshold, position is height of bar plus 1/10 of max bar height 
-                    var[above.label.vectorposition] + max/10
-                  result[result == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
-                    min(var[!above.label.vectorposition])/2
-                }
-                #print(paste("Graph Label Heights: ",paste(result, collapse = ", "),sep=""))
-                return(result)
-              }
-              
-              #!FORMATTING: NUMBER OF DECIMAL PLACES, PERCENTAGE SIGNS
-              graph.label.text.v <- graphdata.df.g$measure.var %>% round(.,2) %>% trimws(., which = "both") 
-              graph.label.heights.v <- create.graph.label.heights.fun(df = graphdata.df.g, measure.var = "measure.var", height.ratio.threshold = 10)
-              graph.labels.show.v <- ifelse(graphdata.df.g$measure.var != 0, 0.8, 0)  
-                
-              #Add Data labels to graph
-                slide.graph.g <- slide.graph.g +
-                  geom_text( 
-                    aes(                                                          
-                      y = graph.label.heights.v, 
-                      label = graph.label.text.v,
-                      alpha = graph.labels.show.v
-                    ), 
-                    position = position_dodge(width = 1),
-                    size = 3,
-                    color = "black",
-                    show.legend = FALSE)
-            
-        #GRAPH AVERAGES
-          graphdata.df.g$avg.alpha <- 
-            ifelse(
-              graphdata.df.g$year != "Baseline" & graphdata.df.g$avg != 0,
-              0.8,
-              0.3
-            )
-          
-          slide.graph.g <- 
-            slide.graph.g +
-            
-            geom_errorbar(
-              aes(
-                ymin =graphdata.df.g$avg, 
-                ymax = graphdata.df.g$avg,
-                alpha = graphdata.df.g$avg.alpha
-              ), 
-              position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-              color = "black", 
-              width = 1,
-              size = 1,
-              show.legend = FALSE
-            )
-                      
-        #GRAPH CATEGORY NAMES, CORRECTING CATEGORY AXIS ORDERING
-#!potential function 
-
-          if(config.graphs.df.g$graph.cat.varname == "answer" && config.graphs.df.g$module %in% c("LEAD","PD")){
-            names(graphdata.df.g)[grepl("answer",names(graphdata.df.g))]  <- "answer.opt.agreement"
-            graph.cat.varname <- "answer.opt.agreement"
-          }
-          
-          if(config.graphs.df.g$graph.cat.varname == "answer" && !config.graphs.df.g$module %in% c("LEAD","PD")){
-            names(graphdata.df.g)[grepl("answer",names(graphdata.df.g))] <- "answer.opt.freq"
-            graph.cat.varname <- "answer.opt.freq"
-          }
-          
-          #year, school.level, module, answer
-          graph.cat.order.ls <-
-            list(
-              year = c("Baseline","2017-18 SY"),
-              school.level = c("Elem.","Middle","High"),
-              role = c("Special Educator","Classroom Teacher","Instructional Coach","Media Specialist","School Counselor","School Social Worker","Building Administrator","Other"),
-              module = c("CFA", "ETL","DBDM","LEAD","PD"),
-              answer.opt.freq = c("Always","Most of the time","About half of the time","Sometimes","Never"),
-              answer.opt.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
-            )
-          
-          #When graphs are car as opposed to columns, have to reverse order because the coord_flip() command does a mirror image
-          if(config.graphs.df.g$graph.type.orientation == "bar"){
-            graph.order.g <- graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., levels = graph.cat.order.ls[(names(graphdata.df.g)[2])] %>% unlist %>% rev)
-          }else{
-            graph.order.g <- graph.cat.order.ls[(names(graphdata.df.g)[2])]  %>% unlist %>% factor(., levels = graph.cat.order.ls[(names(graphdata.df.g)[2])] %>% unlist)        
-          }
-          
-          #Graph category axis ordering
-          slide.graph.g <- slide.graph.g + scale_x_discrete(limits=levels(graph.order.g))
-          
-        #GRAPH ORIENTATION
-          if(config.graphs.df.g$graph.type.orientation == "bar"){
-            slide.graph.g <- 
-              slide.graph.g +
-              coord_flip() +
-              #scale_y_discrete(limits = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., )) +
-              theme(
-                axis.text.x = element_blank(),
-                axis.text.y = element_text(size = 15, color = graphlabelsgrey)
-              )
-          }
-            
-        #Sys.sleep(0.1)
-        #print(slide.graph.g)
-        
-        slide.graphs.ls.g[[g]] <<- list( graph = slide.graph.g, configs = config.graphs.df.g)
-#        slide.graphs.ls.g[[g]][[2]] <<- config.graphs.df.g
-      setTxtProgressBar(progress.bar.g, 100*g/length(graphdata.ls.b[[f]]))
-    })  ### END OF LOOP "g" BY GRAPH ###
-    close(progress.bar.g)
-    
-    slide.graphs.ls.f[[f]] <- slide.graphs.ls.g
-    setTxtProgressBar(progress.bar.f, 100*f/length(graphdata.ls.b))
-    
-  } ### END OF LOOP "f" BY DISTRICT
-    
-    #Result:
-      #slide.graph.ls.f
-        #[[district]]
-          #[[graph]]
-            #['graph']
-            #['configs']
-
-}#END SECTION COLLAPSE BRACKET
     
 ########################################################################################################################################################      
 ### POWERPOINT SLIDE CREATION  ###        
