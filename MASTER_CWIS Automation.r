@@ -901,27 +901,27 @@ close(progress.bar.c)
 
         #i <- 1 #LOOP TESTER
         #for(i in 1:2){ #LOOP TESTER
-        for(i in 1:dim(slides.df.h)[1]){
+        for(i in 1:dim(config.slides.ls.b[[h]])[1]){
           
-          config.slide.i <- slides.df.h[i,]
-          slide.type.i <- config.slide.i$slide.type.id
+          config.slide.i <- config.slides.ls.b[[h]] %>% .[i,]
+          slide.type.id.i <- config.slide.i$slide.type.id
           layout.i <- config.slide.i$slide.layout
           
           
-          config.pot.i <- config.pot.df[config.pot.df$slide.type.id == slide.type.i,]
+          config.pot.i <- config.pot.df[config.pot.df$slide.type.id == slide.type.id.i,]
           
-          config.graph.i <- config.graphs.ls.b[[h]][sapply(config.graphs.ls.b[[h]], '[',1) %>% sapply(., function(x){unique(x)==slide.type.i})]
+          config.graph.i <- config.graphs.ls.b[[h]] %>% filter(slide.type.id == slide.type.id.i)#[sapply(config.graphs.ls.b[[h]], '[',2) %>% sapply(., function(x){unique(x)==slide.type.id.i})]
           ppt.h <- addSlide( ppt.h, slide.layout = layout.i)
           
           ###                         ###    
 #         ### LOOP "j" BY POT OBJECT  ###
           ###                         ###
           
-          #j <- 3 #LOOP TESTER
+          #j <- 1 #LOOP TESTER
           #for(j in 1:2){ #LOOP TESTER
           for(j in 1:dim(config.pot.i)[1]){
             if(dim(config.pot.i)[1] < 1){
-              print(paste("No text objects for slide.id: ",slides.df.h$slide.id[i],sep = ""))
+              print(paste("No text objects for slide.id: ",config.slide.i$slide.id,sep = ""))
               next()
             }
             
