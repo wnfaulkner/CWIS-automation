@@ -191,6 +191,12 @@
   }#END SECTION COLLAPSE BRACKET
 }#END SECTION COLLAPSE BRACKET
 
+#OUTPUTS
+  #dat.long.df: long format data frame with cwis responses
+  #ans.opt.always.df: data frame with columns corresponding to answer numbers and answer text,
+    #including both frequency scale (e.g. 'always', 'most of the time') and agreement scale (e.g.
+    #'strongly agree', 'agree').
+
 ########################################################################################################################################################      
 ### PRODUCING GRAPH & SLIDE CONFIGURATION TABLES ###
 
@@ -363,11 +369,20 @@
     close(progress.bar.b)
     
 } # END SECTION COLLAPSE BRACKET
+    
+#OUTPUTS:
+  #district.ids: vector with all district names in dat.long.df (length = 19 for baseline data)
+  #config.graphs.ls.b
+    #[[district]]
+      #data frame where each line represents a graph
+  #config.slides.ls.b
+    #[[district]]
+      #data frame where each line represents a slide
 
 ########################################################################################################################################################      
 ### PRODUCING GRAPH DATA & GRAPHS THEMSELVES ###
 
-{ # SECTION COLLAPSE BRACKET
+{# SECTION COLLAPSE BRACKET
      
 ###                       ###    
 ### LOOP "c" BY DISTRICT  ###
@@ -384,17 +399,7 @@
   #c <- 2 #LOOP TESTER (19 = "Raytown C-2")
   #for(c in c(1,2)){   #LOOP TESTER
   for(c in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
-      
-                                  ###                         ###
-                            #     ### LOOP "d" BY GRAPH TYPE  ###
-                                  ###                         ###
-                                  
-                                  #graphdata.ls.d <- list()
-                                  #config.graphs.ls.d <- list()
-                                  
-                                  #d = 1 #LOOP TESTER 
-                                  #for(d in 1:3){ #LOOP TESTER
-                                  #for(d in 1:length(config.graphs.ls.c)){
+    if(c == 1){print("Forming input data tables for graphs...")}
                                     
     dat.long.df.c <- dat.long.df[dat.long.df$district == district.ids[c],]
     config.graphs.df.c <- config.graphs.ls.b[[c]]
@@ -571,9 +576,9 @@
     } ### END OF LOOP "d" BY GRAPH ###
 
   graphdata.ls.c[[c]] <- graphdata.ls.d
-      #graphdata.ls.b[[b]]['loop.duration'] <- Sys.time()-loop.start.time.b  #100*b/maxrow.b
-      #est.time.remaining <- (lapply(graphdata.ls.b, function(x){x['loop.duration']}) %>% unlist %>% mean())*(maxrow.b-b)
-      #print(paste("Estimated time remaining: ",est.time.remaining," sec",sep = ""))
+  #graphdata.ls.b[[b]]['loop.duration'] <- Sys.time()-loop.start.time.b  #100*b/maxrow.b
+  #est.time.remaining <- (lapply(graphdata.ls.b, function(x){x['loop.duration']}) %>% unlist %>% mean())*(maxrow.b-b)
+  #print(paste("Estimated time remaining: ",est.time.remaining," sec",sep = ""))
   setTxtProgressBar(progress.bar.c, 100*c/maxrow.c)
   
 } ### END OF LOOP "c" BY DISTRICT     
@@ -581,33 +586,39 @@ close(progress.bar.c)
 
 } #END OF SECTION COLLAPSE BRACKET
 
+#OUTPUTS:
+    #graphdata.ls.c
+      #[[district]]
+        #data frame where each line represents a graph
+    
 ########################################################################################################################################################      
 ### PRODUCING GRAPHS THEMSELVES  ###
 
-{#SECTION COLLAPSE BRACKET
+#{#SECTION COLLAPSE BRACKET
   
   ###                       ###    
-  #   ### LOOP "f" BY DISTRICT  ###
+# ### LOOP "f" BY DISTRICT  ###
   ###                       ###
   
-  slide.graphs.ls.f <- list()
+  graphs.ls.f <- list()
   progress.bar.f <- txtProgressBar(min = 0, max = 100, style = 3)
   
-  #f <- 1 #LOOP TESTER
+  f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  for(f in 1:length(graphdata.ls.b)){
+  #for(f in 1:length(district.ids)){
     
     if(f == 1){print("FORMING GRAPHS IN GGPLOT...")}
     
     ###                       ###    
-    #   ### LOOP "g" BY GRAPH     ###
+#   ### LOOP "g" BY GRAPH     ###
     ###                       ###
     
-    slide.graphs.ls.g <- list()
-    progress.bar.g <- txtProgressBar(min = 0, max = 100, style = 3)
-    #g <- 2  #LOOP TESTER
+    #Loop output object(s)
+      graphs.ls.g <- list()
+    
+    g <- 2  #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    for(g in 1:(length(graphdata.ls.b[[f]])-1))
+    #for(g in 1:(length(graphdata.ls.b[[f]])-1))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         g<-g #same as above
         
@@ -779,13 +790,13 @@ close(progress.bar.c)
         #Sys.sleep(0.1)
         #print(slide.graph.g)
         
-        slide.graphs.ls.g[[g]] <<- list( graph = slide.graph.g, configs = config.graphs.df.g)
-        #        slide.graphs.ls.g[[g]][[2]] <<- config.graphs.df.g
+        graphs.ls.g[[g]] <<- list( graph = slide.graph.g, configs = config.graphs.df.g)
+        #        graphs.ls.g[[g]][[2]] <<- config.graphs.df.g
         setTxtProgressBar(progress.bar.g, 100*g/length(graphdata.ls.b[[f]]))
       })  ### END OF LOOP "g" BY GRAPH ###
     close(progress.bar.g)
     
-    slide.graphs.ls.f[[f]] <- slide.graphs.ls.g
+    graphs.ls.f[[f]] <- graphs.ls.g
     setTxtProgressBar(progress.bar.f, 100*f/length(graphdata.ls.b))
     
   } ### END OF LOOP "f" BY DISTRICT
@@ -797,7 +808,7 @@ close(progress.bar.c)
   #['graph']
   #['configs']
   
-}#END SECTION COLLAPSE BRACKET
+#}#END SECTION COLLAPSE BRACKET
 
 ########################################################################################################################################################      
 ### POWERPOINT GLOBAL CONFIGURATIONS ###
@@ -831,7 +842,8 @@ close(progress.bar.c)
     
 ########################################################################################################################################################      
 ### POWERPOINT SLIDE CREATION  ###        
-    
+
+{ #SECTION COLLAPSE BRACKET   
     
   config.pot.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE)
    
@@ -849,7 +861,7 @@ close(progress.bar.c)
   
     h <- 6 #LOOP TESTER
     #for(h in 1:2){ #LOOP TESTER
-    #for(h in 1:length(slide.graphs.ls.f)){
+    #for(h in 1:length(graphs.ls.f)){
     
       #Set up target file
         template.file <- paste(wd,
@@ -975,7 +987,7 @@ close(progress.bar.c)
           
           
           
-          
+} #END SECTION COLLAPSE BRACKET          
           
           
           #}
