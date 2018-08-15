@@ -407,7 +407,7 @@
   
   # Progress bar for loop
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
-    maxrow.c <- length(district.ids)
+    maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% .[1,] %>% sum
   
   #c <- 2 #LOOP TESTER (19 = "Raytown C-2")
   #for(c in c(1,2)){   #LOOP TESTER
@@ -579,6 +579,7 @@
        
       storage.ls.index <- length(graphdata.ls.d) + 1
       graphdata.ls.d[[storage.ls.index]] <- graphdata.df.d
+      setTxtProgressBar(progress.bar.c, 100*(d + config.graphs.ls.b[1:(c-1)] %>% sapply(., dim) %>% .[1,] %>% sum)/maxrow.c)
       
       #print(c(d))
       #print(config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.restriction] %>% as.character)
@@ -592,7 +593,7 @@
   #graphdata.ls.c[[b]]['loop.duration'] <- Sys.time()-loop.start.time.b  #100*b/maxrow.b
   #est.time.remaining <- (lapply(graphdata.ls.c, function(x){x['loop.duration']}) %>% unlist %>% mean())*(maxrow.b-b)
   #print(paste("Estimated time remaining: ",est.time.remaining," sec",sep = ""))
-  setTxtProgressBar(progress.bar.c, 100*c/maxrow.c)
+  #setTxtProgressBar(progress.bar.c, 100*c/maxrow.c)
   
 } ### END OF LOOP "c" BY DISTRICT     
 close(progress.bar.c)  
@@ -679,7 +680,7 @@ close(progress.bar.c)
             guides(fill = FALSE) +
             
             scale_fill_manual(
-              values = c("#800080","#ff33ff")
+              values = c("#660066","#c7c7c7")
             ) 
           
         #GRAPH DATA LABELS 
@@ -700,7 +701,9 @@ close(progress.bar.c)
               #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
               
               if(height.ratio < height.ratio.threshold){ 
-                result <- rep(min/2 + 1, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
+                result <- rep(min/2, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
+                #result <- rep(min/2 + (1/height.ratio.threshold)*(max-min), length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
+                
               }
               
               if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
@@ -717,7 +720,7 @@ close(progress.bar.c)
             
           #!FORMATTING: NUMBER OF DECIMAL PLACES, PERCENTAGE SIGNS
           graph.label.text.v <- graphdata.df.g$measure.var %>% round(.,2) %>% trimws(., which = "both") 
-          graph.label.heights.v <- create.graph.label.heights.fun(df = graphdata.df.g, measure.var = "measure.var", height.ratio.threshold = 10)
+          graph.label.heights.v <- create.graph.label.heights.fun(df = graphdata.df.g, measure.var = "measure.var", height.ratio.threshold = 8)
           graph.labels.show.v <- ifelse(graphdata.df.g$measure.var != 0, 0.8, 0)  
           
           #Add Data labels to graph
@@ -727,10 +730,11 @@ close(progress.bar.c)
               aes(                                                          
                 y = graph.label.heights.v, 
                 label = graph.label.text.v,
-                alpha = graph.labels.show.v
+                alpha = graph.labels.show.v,
+                size = 4, 
+                fontface = "bold"
               ), 
               position = position_dodge(width = 1),
-              size = 6,
               color = "black",
               show.legend = FALSE
             )
@@ -861,7 +865,7 @@ close(progress.bar.c)
 ########################################################################################################################################################      
 ### POWERPOINT SLIDE CREATION  ###        
 
-#{ #SECTION COLLAPSE BRACKET   
+{ #SECTION COLLAPSE BRACKET   
     
   config.pot.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE)
     ###                       ###    
@@ -872,9 +876,9 @@ close(progress.bar.c)
       progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
       maxrow.h <- sapply(config.slides.ls.b, dim)[1,] %>% sum
     
-    h <- 6 #LOOP TESTER
+    #h <- 6 #LOOP TESTER
     #for(h in 1:2){ #LOOP TESTER
-    #for(h in 1:length(config.slides.ls.b)){
+    for(h in 1:length(config.slides.ls.b)){
       
       #Set up target file
         template.file <- paste(wd,
@@ -949,7 +953,7 @@ close(progress.bar.c)
           #for(k in 1:2){ #LOOP TESTER
           for(k in 1:dim(config.graphs.df.i)[1]){
             if(dim(config.graphs.df.i)[1] < 1){
-              print(paste("No graph objects for slide.id: ",config.slide.df.i$slide.type.id,sep = ""))
+              #print(paste("No graph objects for slide.id: ",config.slide.df.i$slide.type.id,sep = ""))
               next()
             }
             
@@ -1055,7 +1059,7 @@ close(progress.bar.c)
           
           
           
-#} #END SECTION COLLAPSE BRACKET          
+} #END SECTION COLLAPSE BRACKET          
           
 
         
