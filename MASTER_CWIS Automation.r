@@ -231,7 +231,7 @@
       config.graphtypes.df <- SplitColReshape.ToLong(config.slidetypes.df, id.var = "slide.type.id",split.varname = "slide.graph.type",split.char = ",") %>%
         left_join(., load.config.graphtypes.df, by = c("slide.graph.type" = "graph.type.id")) %>% 
         filter(!is.na(slide.graph.type))
-      config.graphtypes.df <- config.graphtypes.df[,grep("slide.type.id|loop|data|graph",names(config.graphtypes.df))]
+      config.graphtypes.df <- config.graphtypes.df[,grep("slide.type.id|loop|data|graph|height|width|offx|offy",names(config.graphtypes.df))]
     
     # Expand Graph & Slide Config Tables for each district according to looping variables
       
@@ -616,13 +616,14 @@ close(progress.bar.c)
   graphs.ls.f <- list()
   progress.bar.f <- txtProgressBar(min = 0, max = 100, style = 3)
   maxrow.f <- graphdata.ls.c %>% lengths %>% sum
-  district.id.f <- district.ids[f]
+  
   
   #f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
   for(f in 1:length(district.ids)){
     
     if(f == 1){print("FORMING GRAPHS IN GGPLOT...")}
+    district.id.f <- district.ids[f]
     config.graphs.df.f <- config.graphs.ls.b[[f]]
     
     ###                       ###    
@@ -634,7 +635,7 @@ close(progress.bar.c)
     
     #g <- 2  #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    for(g in 1:(length(graphdata.ls.c[[f]])-1))
+    for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         g<-g #same as above
         
@@ -720,7 +721,8 @@ close(progress.bar.c)
           graph.labels.show.v <- ifelse(graphdata.df.g$measure.var != 0, 0.8, 0)  
           
           #Add Data labels to graph
-          slide.graph.g <- slide.graph.g +
+          slide.graph.g <- 
+            slide.graph.g +
             geom_text( 
               aes(                                                          
                 y = graph.label.heights.v, 
@@ -728,9 +730,10 @@ close(progress.bar.c)
                 alpha = graph.labels.show.v
               ), 
               position = position_dodge(width = 1),
-              size = 3,
+              size = 6,
               color = "black",
-              show.legend = FALSE)
+              show.legend = FALSE
+            )
           
         #GRAPH AVERAGES
         graphdata.df.g$avg.alpha <- 
@@ -772,7 +775,7 @@ close(progress.bar.c)
         #year, school.level, module, answer
         graph.cat.order.ls <-
           list(
-            year = c("Baseline","2017-18 SY"),
+            year = c("Baseline","2017-2018 Sy"),
             school.level = c("Elem.","Middle","High"),
             role = c("Special Educator","Classroom Teacher","Instructional Coach","Media Specialist","School Counselor","School Social Worker","Building Administrator","Other"),
             module = c("CFA", "ETL","DBDM","LEAD","PD"),
@@ -782,13 +785,15 @@ close(progress.bar.c)
         
         #When graphs are car as opposed to columns, have to reverse order because the coord_flip() command does a mirror image
         if(config.graphs.df.g$graph.type.orientation == "bar"){
-          graph.order.g <- graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., levels = graph.cat.order.ls[(names(graphdata.df.g)[2])] %>% unlist %>% rev)
+          graph.order.g <- graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% rev)
         }else{
           graph.order.g <- graph.cat.order.ls[(names(graphdata.df.g)[2])]  %>% unlist %>% factor(., levels = graph.cat.order.ls[(names(graphdata.df.g)[2])] %>% unlist)        
         }
         
         #Graph category axis ordering
-        slide.graph.g <- slide.graph.g + scale_x_discrete(limits=levels(graph.order.g))
+        slide.graph.g <- 
+          slide.graph.g + 
+          scale_x_discrete(limits=levels(graph.order.g))
         
         #GRAPH ORIENTATION
         if(config.graphs.df.g$graph.type.orientation == "bar"){
@@ -819,7 +824,7 @@ close(progress.bar.c)
 }#END SECTION COLLAPSE BRACKET
   
 #OUTPUT:
-  #graph.ls.f
+  #graphs.ls.f
     #[[district]]
       #ggplot object
 
@@ -863,12 +868,13 @@ close(progress.bar.c)
 #   ### LOOP "h" BY DISTRICT  ###
     ###                       ###
     
-    #ppt.ls.h <- list()
-    progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
-    maxrow.h <- sapply(config.slides.ls.b, dim)[1,] %>% sum
-    #h <- 6 #LOOP TESTER
+    #Progress Bar
+      progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
+      maxrow.h <- sapply(config.slides.ls.b, dim)[1,] %>% sum
+    
+    h <- 6 #LOOP TESTER
     #for(h in 1:2){ #LOOP TESTER
-    for(h in 1:length(config.slides.ls.b)){
+    #for(h in 1:length(config.slides.ls.b)){
       
       #Set up target file
         template.file <- paste(wd,
@@ -883,39 +889,97 @@ close(progress.bar.c)
                                   ".pptx", sep="") 
       
         file.copy(template.file, target.path.h)
-        
+      
+      #Set up powerpoing object 
         ppt.h <- pptx( template = target.path.h )
         options("ReporteRs-fontsize" = 20)
         options("ReporteRs-default-font" = "Calibri")
+      
+      #Set up district-level inputs
+        config.graphs.df.h <- 
+          config.graphs.ls.b[[h]] %>%
+          mutate(row.i = config.graphs.ls.b[[h]] %>% .[,ncol(config.graphs.ls.b[[1]])] %>% seq_along(.))
         
+        config.slides.df.h <- config.slides.ls.b[[h]]
+        
+        graphs.ls.h <- graphs.ls.f[[h]]
      
       ###                     ###    
 #     ### LOOP "i" BY SLIDE   ###
       ###                     ###
 
-        #i <- 1 #LOOP TESTER
-        #for(i in 1:2){ #LOOP TESTER
+        #i <- 5 #LOOP TESTER
+        #for(i in 1:4){ #LOOP TESTER
         for(i in 1:dim(config.slides.ls.b[[h]])[1]){
           
-          config.slide.i <- config.slides.ls.b[[h]] %>% .[i,]
-          slide.type.id.i <- config.slide.i$slide.type.id
-          layout.i <- config.slide.i$slide.layout
+          config.slide.df.i <- config.slides.ls.b[[h]] %>% .[i,]
+          slide.type.id.i <- config.slide.df.i$slide.type.id
+          layout.i <- config.slide.df.i$slide.layout
+        
+        #SLIDE FORMATION
           
-          
-          config.pot.i <- config.pot.df[config.pot.df$slide.type.id == slide.type.id.i,]
-          
-          config.graph.i <- config.graphs.ls.b[[h]] %>% filter(slide.type.id == slide.type.id.i)#[sapply(config.graphs.ls.b[[h]], '[',2) %>% sapply(., function(x){unique(x)==slide.type.id.i})]
           ppt.h <- addSlide( ppt.h, slide.layout = layout.i)
+          ppt.h <- addPageNumber( ppt.h )
+          
+        #ADD GRAPHS
+          
+          #Graph Loop Inputs
+            config.graphs.df.i <- config.graphs.df.h %>% 
+              filter(slide.type.id == slide.type.id.i)
+            
+            if(is.na(config.slide.df.i$school)){
+              config.graphs.df.i <- config.graphs.df.i[is.na(config.graphs.df.i$school),]
+            }else{
+              config.graphs.df.i <- config.graphs.df.i[config.graphs.df.i$school == config.slide.df.i$school,]
+            }
+            
+            if(is.na(config.slide.df.i$module)){
+              config.graphs.df.i <- config.graphs.df.i[is.na(config.graphs.df.i$module),]
+            }else{
+              config.graphs.df.i <- config.graphs.df.i[config.graphs.df.i$module == config.slide.df.i$module,]
+            }
+         
+               
+
+          ###                   ###    
+#         ### LOOP "k" BY GRAPH ###
+          ###                   ###
+          
+          #k <- 1 #LOOP TESTER
+          #for(k in 1:2){ #LOOP TESTER
+          for(k in 1:dim(config.graphs.df.i)[1]){
+            if(dim(config.graphs.df.i)[1] < 1){
+              print(paste("No graph objects for slide.id: ",config.slide.df.i$slide.type.id,sep = ""))
+              next()
+            }
+            
+            graph.k <- graphs.ls.h[config.graphs.df.i$row.i %>% .[k]]
+            ppt.h <- 
+              addPlot(
+                ppt.h,
+                fun = print,
+                x = graph.k,
+                height = config.graphs.df.i$height[k],
+                width = config.graphs.df.i$width[k],
+                offx = config.graphs.df.i$offx[k],
+                offy = config.graphs.df.i$offy[k]
+              )
+          
+          } # END OF LOOP "k" BY GRAPH
+          
+          
           
           ###                         ###    
 #         ### LOOP "j" BY POT OBJECT  ###
           ###                         ###
-          
+            
+          config.pot.i <- config.pot.df[config.pot.df$slide.type.id == slide.type.id.i,]
+            
           #j <- 1 #LOOP TESTER
           #for(j in 1:2){ #LOOP TESTER
           for(j in 1:dim(config.pot.i)[1]){
             if(dim(config.pot.i)[1] < 1){
-              print(paste("No text objects for slide.id: ",config.slide.i$slide.id,sep = ""))
+              print(paste("No text objects for slide.id: ",config.slide.df.i$slide.id,sep = ""))
               next()
             }
             
