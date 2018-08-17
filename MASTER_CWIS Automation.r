@@ -641,7 +641,7 @@ close(progress.bar.c)
 ########################################################################################################################################################      
 ### PRODUCING GRAPHS THEMSELVES  ###
 
-{#SECTION COLLAPSE BRACKET
+#{#SECTION COLLAPSE BRACKET
   
   ###                       ###    
 # ### LOOP "f" BY DISTRICT  ###
@@ -667,10 +667,10 @@ close(progress.bar.c)
     #Loop output object(s)
       graphs.ls.g <- list()
     
-    #g <- 33  #LOOP TESTER
+    g <- 1  #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    for(g in 1:length(graphdata.ls.c[[f]]))
-      local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
+    #for(g in 1:length(graphdata.ls.c[[f]]))
+      #local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         g<-g #same as above
         
         ### GRAPH INPUTS FOR GGPLOT ###
@@ -694,8 +694,6 @@ close(progress.bar.c)
               graphdata.df.g <- graphdata.df.g %>% select(year, ans.text.freq, measure.var, avg)
               graph.cat.varname <- "ans.text.freq"
             }
-            
-            
           }else{}
           
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
@@ -724,7 +722,7 @@ close(progress.bar.c)
                   axis.title = element_blank()
             ) +     
             
-            guides(fill = FALSE) +
+            #guides(fill = FALSE) +
             
             scale_fill_manual(
               values = c("#660066","#c7c7c7")
@@ -765,8 +763,12 @@ close(progress.bar.c)
               return(result)
             }
             
-          #!FORMATTING: NUMBER OF DECIMAL PLACES, PERCENTAGE SIGNS
-          graph.label.text.v <- graphdata.df.g$measure.var %>% round(.,2) %>% trimws(., which = "both") 
+          if(config.graphs.df.g$data.measure == "implementation"){#!FORMATTING: NUMBER OF DECIMAL PLACES, PERCENTAGE SIGNS
+            graph.label.text.v <- as.character(100*graphdata.df.g$measure.var %>% round(., 2)) %>% paste(.,"%",sep="")
+          }else{
+            graph.label.text.v <- graphdata.df.g$measure.var %>% round(.,2) %>% trimws(., which = "both") 
+          }
+          
           graph.label.heights.v <- create.graph.label.heights.fun(df = graphdata.df.g, measure.var = "measure.var", height.ratio.threshold = 8)
           graph.labels.show.v <- ifelse(graphdata.df.g$measure.var != 0, 0.8, 0)  
           
@@ -794,21 +796,23 @@ close(progress.bar.c)
             0.3
           )
         
-        graph.g <- 
-          graph.g +
-          
-          geom_errorbar(
-            aes(
-              ymin =graphdata.df.g$avg, 
-              ymax = graphdata.df.g$avg,
-              alpha = graphdata.df.g$avg.alpha
-            ), 
-            position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-            color = "black", 
-            width = 1,
-            size = 1,
-            show.legend = FALSE
-          )
+        if(config.graphs.df.g$graph.average == "yes"){
+          graph.g <- 
+            graph.g +
+            
+            geom_errorbar(
+              aes(
+                ymin =graphdata.df.g$avg, 
+                ymax = graphdata.df.g$avg,
+                alpha = graphdata.df.g$avg.alpha
+              ), 
+              position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+              color = "black", 
+              width = 1,
+              size = 1,
+              show.legend = FALSE
+            )
+        }else{}
         
         #GRAPH CATEGORY NAMES, CORRECTING CATEGORY AXIS ORDERING
         #!potential function 
@@ -913,9 +917,9 @@ close(progress.bar.c)
       progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
       maxrow.h <- sapply(config.slides.ls.b, dim)[1,] %>% sum
     
-    #h <- 1 #LOOP TESTER
+    h <- 1 #LOOP TESTER
     #for(h in 1:2){ #LOOP TESTER
-    for(h in 1:length(config.slides.ls.b)){
+    #for(h in 1:length(config.slides.ls.b)){
       
       #Set up target file
         template.file <- paste(wd,
