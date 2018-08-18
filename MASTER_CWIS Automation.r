@@ -166,7 +166,7 @@
       cwis.df$school.level[is.na(cwis.df$school.level)] <- "Other"
       cwis.df$school.level[cwis.df$school.id == "belton 124_bosco"] <- "Other"
       cwis.df$school.level[cwis.df$school.id == "cameron r-i_cameron high school"] <- "High"
-      cwis.df$school.level[cwis.df$school.id == "poplar bluff r-i_poplar bluff early childhood center"] <- "Lower"
+      cwis.df$school.level[cwis.df$school.id == "poplar bluff r-i_poplar bluff early childhood center"] <- "Elem."
       cwis.df$school.level[cwis.df$school.id == "poplar bluff r-i_poplar bluff technical career center"] <- "Other"
       cwis.df$school.level[cwis.df$school.id == "sheldon r-viii_sheldon k-12"] <- "Other"
       
@@ -443,9 +443,9 @@
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% .[1,] %>% sum
   
-  #c <- 2 #LOOP TESTER (19 = "Raytown C-2")
+  c <- 2 #LOOP TESTER (19 = "Raytown C-2")
   #for(c in c(1,2)){   #LOOP TESTER
-  for(c in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
+  #for(c in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
     if(c == 1){print("Forming input data tables for graphs...")}
                                     
     dat.long.df.c <- dat.long.df[dat.long.df$district == district.ids[c],]
@@ -456,8 +456,9 @@
 #   ### LOOP "d" BY GRAPH  ###
     ###                    ###
     
+    d <- 2
     #for(d in 1:2){ #LOOP TESTER
-    for(d in 1:dim(config.graphs.df.c)[1]){
+    #for(d in 1:dim(config.graphs.df.c)[1]){
       
       config.graphs.df.d <- config.graphs.df.c[d,]
       
@@ -470,15 +471,15 @@
         all.cats.d <- dat.long.df %>%
           filter( dat.long.df$impbinary == 0 ) %>%
           .[,names(dat.long.df) == config.graphs.df.d$graph.cat.varname] %>% 
-          as.data.frame %>% 
+          as.data.frame(., stringsAsFactors = FALSE) %>% 
           apply(., 2, function(x){x[!is.na(x)] %>% unique}) %>%
-          as.data.frame %>%
+          as.data.frame(., stringsAsFactors = FALSE) %>%
           .[,1]
         
         if(config.graphs.df.d$graph.cat.varname != "year"){
-          all.cats.df.d <- expand.grid(unique(dat.answer.long.df$year), all.cats.d)
+          all.cats.df.d <- expand.grid(unique(dat.answer.long.df$year), all.cats.d) %>% apply(., 2, as.character) %>% as.data.frame(., stringsAsFactors = FALSE)
         }else{
-          all.cats.df.d <- all.cats.d %>% as.data.frame()
+          all.cats.df.d <- all.cats.d %>% as.data.frame(., stringsAsFactors = FALSE)
         }
         
         names(all.cats.df.d) <- group_by.d
@@ -521,7 +522,8 @@
           if(config.graphs.df.d$data.measure == "implementation"){
             result <- x %>% 
               filter(impbinary == 1) %>%
-              dplyr::summarize(measure.var = mean(answer, na.rm = TRUE))
+              dplyr::summarize(measure.var = mean(answer, na.rm = TRUE)) %>%
+              as.data.frame(., stringsAsFactors = FALSE)
           }
           if(config.graphs.df.d$data.measure == "performance"){
             result <- x %>%
@@ -593,6 +595,7 @@
       #Add average variable to final data frame
         graph.avg.df.d <- 
           dat.long.df %>%
+          #filter(district == district.ids[c]) %>%
           avg.data.restriction.fun(.) %>%
           group_by(!!! syms(group_by.d)) %>%
           summarize.avg.fun(.)
@@ -642,7 +645,7 @@ close(progress.bar.c)
 ########################################################################################################################################################      
 ### PRODUCING GRAPHS THEMSELVES  ###
 
-#{#SECTION COLLAPSE BRACKET
+{#SECTION COLLAPSE BRACKET
   
   ###                       ###    
 # ### LOOP "f" BY DISTRICT  ###
@@ -653,9 +656,9 @@ close(progress.bar.c)
   maxrow.f <- graphdata.ls.c %>% lengths %>% sum
   
   
-  f <- 1 #LOOP TESTER
+  #f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  #for(f in 1:length(district.ids)){
+  for(f in 1:length(district.ids)){
     
     if(f == 1){print("FORMING GRAPHS IN GGPLOT...")}
     district.id.f <- district.ids[f]
@@ -668,10 +671,10 @@ close(progress.bar.c)
     #Loop output object(s)
       graphs.ls.g <- list()
     
-    g <- 1  #LOOP TESTER
+    #g <- 1  #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    #for(g in 1:length(graphdata.ls.c[[f]]))
-      #local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
+    for(g in 1:length(graphdata.ls.c[[f]]))
+      local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         g<-g #same as above
         
         ### GRAPH INPUTS FOR GGPLOT ###
@@ -705,11 +708,12 @@ close(progress.bar.c)
                        y = measure.var, 
                        group = year, 
                        fill = factor(year)
+                       #alpha = I(0.1)
                    )
             ) + 
             
             geom_bar(
-              alpha = 0.7,
+              alpha = 1,
               position = "dodge", 
               stat = "identity"
             ) +
@@ -720,13 +724,15 @@ close(progress.bar.c)
                   axis.text.x = element_text(size = 12, color = "#5a6b63"),
                   axis.text.y = element_blank(),
                   axis.ticks = element_blank(),
-                  axis.title = element_blank()
+                  axis.title = element_blank(),
+                  legend.position = "top",
+                  legend.title = element_blank()
             ) +     
             
             #guides(fill = FALSE) +
             
             scale_fill_manual(
-              values = c("#660066","#c7c7c7")
+              values = c("#603356","#c7c7c7")
             ) 
           
         #GRAPH DATA LABELS 
@@ -794,7 +800,7 @@ close(progress.bar.c)
           ifelse(
             graphdata.df.g$year != "Baseline" & graphdata.df.g$avg != 0,
             0.8,
-            0.3
+            0.0
           )
         
         if(config.graphs.df.g$graph.average == "yes"){
@@ -821,10 +827,10 @@ close(progress.bar.c)
         #year, school.level, module, answer
         graph.cat.order.ls <-
           list(
-            year = c("Baseline","2017-18 Sy"),
+            year = c("Baseline","2017-18"),
             school.level = c("Elem.","Middle","High","Mult.","Other"),
             role = c("Special Educator","Classroom Teacher","Instructional Coach","Media Specialist","School Counselor","School Social Worker","Building Administrator","Other"),
-            module = c("CFA", "ETL","DBDM","LEAD","PD"),
+            module = c("CFA", "ETLP","DBDM","LEAD","PD"),
             ans.text.freq = c("Always","Most of the time","About half of the time","Sometimes","Never"),
             ans.text.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
           )
@@ -918,9 +924,9 @@ close(progress.bar.c)
       progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
       maxrow.h <- sapply(config.slides.ls.b, dim)[1,] %>% sum
     
-    h <- 1 #LOOP TESTER
+    #h <- 1 #LOOP TESTER
     #for(h in 1:2){ #LOOP TESTER
-    #for(h in 1:length(config.slides.ls.b)){
+    for(h in 1:length(config.slides.ls.b)){
       
       #Set up target file
         template.file <- paste(wd,
@@ -954,7 +960,7 @@ close(progress.bar.c)
 #     ### LOOP "i" BY SLIDE   ###
       ###                     ###
 
-        #i <- 5 #LOOP TESTER
+        #i <- 3 #LOOP TESTER
         #for(i in 1:4){ #LOOP TESTER
         for(i in 1:dim(config.slides.ls.b[[h]])[1]){
           
@@ -985,8 +991,7 @@ close(progress.bar.c)
               config.graphs.df.i <- config.graphs.df.i[config.graphs.df.i$module == config.slide.df.i$module,]
             }
          
-               
-
+            
           ###                   ###    
 #         ### LOOP "k" BY GRAPH ###
           ###                   ###
@@ -1013,8 +1018,7 @@ close(progress.bar.c)
           
           } # END OF LOOP "k" BY GRAPH
           
-          
-          
+  
           ###                         ###    
 #         ### LOOP "j" BY POT OBJECT  ###
           ###                         ###
@@ -1050,15 +1054,16 @@ close(progress.bar.c)
               pot(
                 pot.content.j,
                 textProperties(
-                  color = ifelse(
+                  color = alpha(ifelse(
                     !is.na(config.pot.i$color[j]),
                     config.pot.i$color[j] %>% 
                     strsplit(.,",") %>% unlist %>% as.numeric %>% 
                     rgb(red = .[1],green = .[2],blue = .[3] ,maxColorValue = 255) %>% .[1],
                     "black"
-                  ),
+                  ),1),
                   font.size = config.pot.i$font.size[j], 
                   font.weight = ifelse(is.na(config.pot.i$font.weight[j]),'normal',config.pot.i$font.weight[j])
+                  #alpha = 1
                   #shading.color = 'black'
                 )
               )
