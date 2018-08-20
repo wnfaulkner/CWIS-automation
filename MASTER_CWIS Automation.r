@@ -226,7 +226,7 @@
       ans.opt.always.df <-  cbind(
         c(5:1),
         c("Always","Most of the time","About half the time","Sometimes","Never"),
-        c("Strongly agree","Agree","Neither agree or disagree","Disagree","Strongly disagree")
+        c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
       ) %>% as.data.frame
       names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
       ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
@@ -443,9 +443,9 @@
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% .[1,] %>% sum
   
-  c <- 2 #LOOP TESTER (19 = "Raytown C-2")
+  #c <- 2 #LOOP TESTER (19 = "Raytown C-2")
   #for(c in c(1,2)){   #LOOP TESTER
-  #for(c in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
+  for(c in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
     if(c == 1){print("Forming input data tables for graphs...")}
                                     
     dat.long.df.c <- dat.long.df[dat.long.df$district == district.ids[c],]
@@ -456,9 +456,9 @@
 #   ### LOOP "d" BY GRAPH  ###
     ###                    ###
     
-    d <- 2
+    #d <- 19
     #for(d in 1:2){ #LOOP TESTER
-    #for(d in 1:dim(config.graphs.df.c)[1]){
+    for(d in 1:dim(config.graphs.df.c)[1]){
       
       config.graphs.df.d <- config.graphs.df.c[d,]
       
@@ -477,7 +477,7 @@
           .[,1]
         
         if(config.graphs.df.d$graph.cat.varname != "year"){
-          all.cats.df.d <- expand.grid(unique(dat.answer.long.df$year), all.cats.d) %>% apply(., 2, as.character) %>% as.data.frame(., stringsAsFactors = FALSE)
+          all.cats.df.d <- expand.grid(unique(dat.answer.long.df$year), all.cats.d) %>% as.data.frame(., stringsAsFactors = FALSE)
         }else{
           all.cats.df.d <- all.cats.d %>% as.data.frame(., stringsAsFactors = FALSE)
         }
@@ -528,7 +528,7 @@
           if(config.graphs.df.d$data.measure == "performance"){
             result <- x %>%
               filter(impbinary == 0, !is.na(answer)) %>%
-              dplyr::summarize(measure.var = length(unique(responseid)))
+              dplyr::summarize(measure.var = as.character(length(unique(responseid))))
           }
           return(result)
         }
@@ -671,7 +671,7 @@ close(progress.bar.c)
     #Loop output object(s)
       graphs.ls.g <- list()
     
-    #g <- 1  #LOOP TESTER
+    #g <- 34 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -705,7 +705,7 @@ close(progress.bar.c)
           graph.g <- 
             ggplot(data = graphdata.df.g, 
                    aes(x = graphdata.df.g[[graph.cat.varname]], 
-                       y = measure.var, 
+                       y = measure.var %>% as.numeric,
                        group = year, 
                        fill = factor(year)
                        #alpha = I(0.1)
@@ -760,7 +760,7 @@ close(progress.bar.c)
               
               if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
                 result <- vector(length = length(var))
-                above.label.vectorposition <- var/max < 1/height.ratio.threshold
+                above.label.vectorposition <- max/var > height.ratio.threshold
                 result[above.label.vectorposition] <-   #labels for columns above threshold, position is height of bar plus 1/10 of max bar height 
                   var[above.label.vectorposition] + max/10
                 result[result == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
@@ -773,10 +773,10 @@ close(progress.bar.c)
           if(config.graphs.df.g$data.measure == "implementation"){#!FORMATTING: NUMBER OF DECIMAL PLACES, PERCENTAGE SIGNS
             graph.label.text.v <- as.character(100*graphdata.df.g$measure.var %>% round(., 2)) %>% paste(.,"%",sep="")
           }else{
-            graph.label.text.v <- graphdata.df.g$measure.var %>% round(.,2) %>% trimws(., which = "both") 
+            graph.label.text.v <- graphdata.df.g$measure.var %>% as.numeric %>% round(.,2) %>% trimws(., which = "both") 
           }
           
-          graph.label.heights.v <- create.graph.label.heights.fun(df = graphdata.df.g, measure.var = "measure.var", height.ratio.threshold = 8)
+          graph.label.heights.v <- create.graph.label.heights.fun(df = graphdata.df.g, measure.var = "measure.var", height.ratio.threshold = 9)
           graph.labels.show.v <- ifelse(graphdata.df.g$measure.var != 0, 0.8, 0)  
           
           #Add Data labels to graph
@@ -829,9 +829,9 @@ close(progress.bar.c)
           list(
             year = c("Baseline","2017-18"),
             school.level = c("Elem.","Middle","High","Mult.","Other"),
-            role = c("Special Educator","Classroom Teacher","Instructional Coach","Media Specialist","School Counselor","School Social Worker","Building Administrator","Other"),
+            role = c("Special Educator","Classroom Teacher","Instructional Coach","School Counselor","School Social Worker","Building Administrator","Other"),
             module = c("CFA", "ETLP","DBDM","LEAD","PD"),
-            ans.text.freq = c("Always","Most of the time","About half of the time","Sometimes","Never"),
+            ans.text.freq = c("Always","Most of the time","About half the time","Sometimes","Never"),
             ans.text.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
           )
         
