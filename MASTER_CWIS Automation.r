@@ -443,12 +443,13 @@
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% .[1,] %>% sum
   
-  #c <- 2 #LOOP TESTER (19 = "Raytown C-2")
+  #c <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(c in c(1,2)){   #LOOP TESTER
   for(c in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
     if(c == 1){print("Forming input data tables for graphs...")}
                                     
     dat.long.df.c <- dat.long.df[dat.long.df$district == district.ids[c],]
+    district.id.c <- district.ids[c]
     config.graphs.df.c <- config.graphs.ls.b[[c]]
     graphdata.ls.d <- list()
     
@@ -456,7 +457,7 @@
 #   ### LOOP "d" BY GRAPH  ###
     ###                    ###
     
-    #d <- 19
+    #d <- 13
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:dim(config.graphs.df.c)[1]){
       
@@ -552,14 +553,14 @@
           if(config.graphs.df.d$data.level == "school"){
             y <- 
               x %>% 
-              filter(district == district.id.b) 
+              filter(district == district.id.c) 
           }
           
-          if(is.na(config.graphs.df.d$data.restriction)){
+          if(!config.graphs.df.d$data.restriction=="module" | is.na(config.graphs.df.d$data.restriction)){ #!Should look into a better way to deal with this restriction
             result <- y
           }
           
-          if(!is.na(config.graphs.df.d$data.restriction)){
+          if(config.graphs.df.d$data.restriction=="module" & !is.na(config.graphs.df.d$data.restriction)){
             result <- 
               y %>%
               filter(
@@ -595,7 +596,6 @@
       #Add average variable to final data frame
         graph.avg.df.d <- 
           dat.long.df %>%
-          #filter(district == district.ids[c]) %>%
           avg.data.restriction.fun(.) %>%
           group_by(!!! syms(group_by.d)) %>%
           summarize.avg.fun(.)
@@ -671,7 +671,7 @@ close(progress.bar.c)
     #Loop output object(s)
       graphs.ls.g <- list()
     
-    #g <- 34 #LOOP TESTER
+    #g <- 13 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
