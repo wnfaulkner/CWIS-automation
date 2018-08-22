@@ -671,7 +671,7 @@ close(progress.bar.c)
     #Loop output object(s)
       graphs.ls.g <- list()
     
-    #g <- 3 #LOOP TESTER
+    #g <- 1 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -703,16 +703,17 @@ close(progress.bar.c)
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
         
           graph.g <- 
-            ggplot(data = graphdata.df.g, 
-                   aes(x = graphdata.df.g[[graph.cat.varname]], 
-                       y = measure.var %>% as.numeric,
-                       group = year, 
-                       fill = factor(year)
-                       #alpha = I(0.1)
-                   )
+            ggplot(data = graphdata.df.g 
+                   
             ) + 
             
             geom_bar(
+              aes(x = graphdata.df.g[[graph.cat.varname]], 
+                  y = measure.var %>% as.numeric,
+                  group = year, 
+                  fill = factor(year)
+                  #alpha = I(0.1)
+              ),
               alpha = 1,
               position = "dodge", 
               stat = "identity"
@@ -777,16 +778,16 @@ close(progress.bar.c)
                 }
               
               #Label visibility
-                graph.labels.show.v <- ifelse(graphdata.df.g$measure.var != 0, 0.9, 0)  
+                graph.labels.show.v <- ifelse(var != 0, 1, 0)  
               
               #Label color
                 if(config.graphs.df.g$slide.graph.type == "e"){
-                  graph.labels.color.v <- rep(c("","#FFFFFF"),length(df[,1])/2) %>% rev
+                  graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(df[,1])/2) %>% rev
                 }else{
-                  graph.labels.color.v <- rep(c("","#FFFFFF"),length(df[,1])/2)
+                  graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(df[,1])/2)
                 }
-                graph.labels.color.v[var==0] <- ""
-                graph.labels.color.v[above.label.vectorposition] <- ""
+                graph.labels.color.v[var==0] <- "#000000"
+                graph.labels.color.v[above.label.vectorposition] <- "#000000"
               
               #result <- cbind(graph.labels.heights.v,graph.labels.text.v,graph.labels.color.v,graph.labels.show.v) %>% as.data.frame(., stringsAsFactors = FALSE)
                 result <- data.frame(
@@ -810,15 +811,21 @@ close(progress.bar.c)
             geom_text( 
               aes(                                                          
                 y = graph.labels.df$graph.labels.heights, 
+                x = graphdata.df.g[[graph.cat.varname]],
                 label = graph.labels.df$graph.labels.text,
-                #color = graph.labels.df$graph.labels.color,
-                alpha = graph.labels.df$graph.labels.show
-              ), 
-              size = 4, 
-              fontface = "bold",
+                alpha = graph.labels.df$graph.labels.show,
+                group = year
+                
+              ),
               
+              #lineheight = 10.0,
+              
+              color = "#000000", #graph.labels.df$graph.labels.color,
+              size = 4,
+              fontface = "bold",
               position = position_dodge(width = 1),
               show.legend = FALSE
+              
             )
           
         #GRAPH AVERAGES
@@ -834,6 +841,8 @@ close(progress.bar.c)
             graph.g +
             geom_errorbar(
               aes(
+                x = graphdata.df.g[[graph.cat.varname]],
+                group = year,
                 ymin =graphdata.df.g$avg, 
                 ymax = graphdata.df.g$avg,
                 alpha = graphdata.df.g$avg.alpha
