@@ -726,7 +726,8 @@ close(progress.bar.c)
                   axis.ticks = element_blank(),
                   axis.title = element_blank(),
                   legend.position = "top",
-                  legend.title = element_blank()
+                  legend.title = element_blank(),
+                  legend.text = element_text(size = 12)
             ) +     
             
             #guides(fill = FALSE) +
@@ -809,13 +810,11 @@ close(progress.bar.c)
                 y = graph.labels.df$graph.labels.heights, 
                 label = graph.labels.df$graph.labels.text,
                 alpha = graph.labels.df$graph.labels.show
-                
               ), 
               size = 4, 
               fontface = "bold",
               color = graph.labels.df$graph.labels.color,
               position = position_dodge(width = 1),
-              
               show.legend = FALSE
             )
           
@@ -830,7 +829,6 @@ close(progress.bar.c)
         if(config.graphs.df.g$graph.average == "yes"){
           graph.g <- 
             graph.g +
-            
             geom_errorbar(
               aes(
                 ymin =graphdata.df.g$avg, 
@@ -1049,7 +1047,7 @@ close(progress.bar.c)
             
           config.pot.i <- config.pot.df[config.pot.df$slide.type.id == slide.type.id.i,]
             
-          #j <- 1 #LOOP TESTER
+          #j <- 5 #LOOP TESTER
           #for(j in 1:2){ #LOOP TESTER
           for(j in 1:dim(config.pot.i)[1]){
             if(dim(config.pot.i)[1] < 1){
