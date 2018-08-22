@@ -671,7 +671,7 @@ close(progress.bar.c)
     #Loop output object(s)
       graphs.ls.g <- list()
     
-    #g <- 13 #LOOP TESTER
+    #g <- 23 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -738,60 +738,84 @@ close(progress.bar.c)
         #GRAPH DATA LABELS 
         
 #FUN      #Graph Label Heights (defined based on ratio of tallest to shortest columns)
-            create.graph.label.heights.fun <- function(df, measure.var, height.ratio.threshold){
+            create.graph.labels.fun <- function(df, measure.var, height.ratio.threshold){
               
               if(!is.data.frame(as.data.frame(df))){stop("Input cannot be coerced into data frame.")}
               
               df <- as.data.frame(df)
               
               var <- df[,names(df) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric")
-              min <- min(var, na.rm = TRUE)
-              max <- max(var, na.rm = TRUE)
-              height.ratio.threshold <- height.ratio.threshold
-              height.ratio <- ifelse(max == 0, 0, max/min)
               
-              #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
-              
-              if(height.ratio < height.ratio.threshold){ 
-                result <- rep(min/2, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
-                #result <- rep(min/2 + (1/height.ratio.threshold)*(max-min), length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
+              #Label Heights
+                min <- min(var, na.rm = TRUE)
+                max <- max(var, na.rm = TRUE)
+                height.ratio.threshold <- height.ratio.threshold
+                height.ratio <- ifelse(max == 0, 0, max/min)
                 
-              }
+                #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
+                
+                if(height.ratio < height.ratio.threshold){ 
+                  graph.labels.heights.v <- rep(min/3, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
+                }
+                
+                if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
+                  graph.labels.heights.v <- vector(length = length(var))
+                  above.label.vectorposition <- max/var > height.ratio.threshold
+                  graph.labels.heights.v[above.label.vectorposition] <-   #labels for columns above threshold, position is height of bar plus 1/10 of max bar height 
+                    var[above.label.vectorposition] + max/10
+                  graph.labels.heights.v[graph.labels.heights.v == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
+                    min(var[!above.label.vectorposition])/3
+                }
               
-              if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
-                result <- vector(length = length(var))
-                above.label.vectorposition <- max/var > height.ratio.threshold
-                result[above.label.vectorposition] <-   #labels for columns above threshold, position is height of bar plus 1/10 of max bar height 
-                  var[above.label.vectorposition] + max/10
-                result[result == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
-                  min(var[!above.label.vectorposition])/2
-              }
-              #print(paste("Graph Label Heights: ",paste(result, collapse = ", "),sep=""))
+              #Label Text
+                if(config.graphs.df.g$data.measure == "implementation"){
+                  graph.labels.text.v <- as.character(100*var %>% round(., 2)) %>% paste(.,"%",sep="")
+                }else{
+                  graph.labels.text.v <- var %>% as.numeric %>% round(.,2) %>% trimws(., which = "both") 
+                }
+              
+              #Label visibility
+                graph.labels.show.v <- ifelse(graphdata.df.g$measure.var != 0, 0.9, 0)  
+              
+              #Label color
+                if(config.graphs.df.g$slide.graph.type == "e"){
+                  graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(df[,1])/2) %>% rev
+                }else{
+                  graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(df[,1])/2)
+                }
+                #graph.labels.color.v[var==0] <- "000000"
+              
+              #result <- cbind(graph.labels.heights.v,graph.labels.text.v,graph.labels.color.v,graph.labels.show.v) %>% as.data.frame(., stringsAsFactors = FALSE)
+                result <- data.frame(
+                  graph.labels.text = graph.labels.text.v,
+                  graph.labels.heights = graph.labels.heights.v,
+                  graph.labels.show.v = graph.labels.show.v,
+                  graph.labels.color = graph.labels.color.v,
+                  stringsAsFactors = FALSE
+                )
+              
+              #print(paste("Graph Label Heights: ",paste(graph.labels.heights.v, collapse = ", "),sep=""))
               return(result)
             }
-            
-          if(config.graphs.df.g$data.measure == "implementation"){#!FORMATTING: NUMBER OF DECIMAL PLACES, PERCENTAGE SIGNS
-            graph.label.text.v <- as.character(100*graphdata.df.g$measure.var %>% round(., 2)) %>% paste(.,"%",sep="")
-          }else{
-            graph.label.text.v <- graphdata.df.g$measure.var %>% as.numeric %>% round(.,2) %>% trimws(., which = "both") 
-          }
           
-          graph.label.heights.v <- create.graph.label.heights.fun(df = graphdata.df.g, measure.var = "measure.var", height.ratio.threshold = 9)
-          graph.labels.show.v <- ifelse(graphdata.df.g$measure.var != 0, 0.8, 0)  
+          #Grach label data frame
+          graph.labels.df <- create.graph.labels.fun(df = graphdata.df.g, measure.var = "measure.var", height.ratio.threshold = 8.2)
           
           #Add Data labels to graph
           graph.g <- 
             graph.g +
             geom_text( 
               aes(                                                          
-                y = graph.label.heights.v, 
-                label = graph.label.text.v,
-                alpha = graph.labels.show.v,
-                size = 4, 
-                fontface = "bold"
+                y = graph.labels.df$graph.labels.heights, 
+                label = graph.labels.df$graph.labels.text,
+                alpha = graph.labels.df$graph.labels.show
+                
               ), 
+              size = 4, 
+              fontface = "bold",
+              color = graph.labels.df$graph.labels.color,
               position = position_dodge(width = 1),
-              color = "black",
+              
               show.legend = FALSE
             )
           
@@ -924,7 +948,7 @@ close(progress.bar.c)
       progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
       maxrow.h <- sapply(config.slides.ls.b, dim)[1,] %>% sum
     
-    #h <- 1 #LOOP TESTER
+    #h <- 8 #LOOP TESTER
     #for(h in 1:2){ #LOOP TESTER
     for(h in 1:length(config.slides.ls.b)){
       
