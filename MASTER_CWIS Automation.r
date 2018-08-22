@@ -671,7 +671,7 @@ close(progress.bar.c)
     #Loop output object(s)
       graphs.ls.g <- list()
     
-    #g <- 23 #LOOP TESTER
+    #g <- 3 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -733,7 +733,7 @@ close(progress.bar.c)
             #guides(fill = FALSE) +
             
             scale_fill_manual(
-              values = c("#603356","#c7c7c7")
+              values = c("#914E83","#c7c7c7")
             ) 
           
         #GRAPH DATA LABELS 
@@ -756,7 +756,8 @@ close(progress.bar.c)
                 #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
                 
                 if(height.ratio < height.ratio.threshold){ 
-                  graph.labels.heights.v <- rep(min/3, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
+                  graph.labels.heights.v <- rep(min/2, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
+                  above.label.vectorposition <- max/var > height.ratio.threshold
                 }
                 
                 if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
@@ -765,7 +766,7 @@ close(progress.bar.c)
                   graph.labels.heights.v[above.label.vectorposition] <-   #labels for columns above threshold, position is height of bar plus 1/10 of max bar height 
                     var[above.label.vectorposition] + max/10
                   graph.labels.heights.v[graph.labels.heights.v == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
-                    min(var[!above.label.vectorposition])/3
+                    min(var[!above.label.vectorposition])/2
                 }
               
               #Label Text
@@ -780,11 +781,12 @@ close(progress.bar.c)
               
               #Label color
                 if(config.graphs.df.g$slide.graph.type == "e"){
-                  graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(df[,1])/2) %>% rev
+                  graph.labels.color.v <- rep(c("","#FFFFFF"),length(df[,1])/2) %>% rev
                 }else{
-                  graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(df[,1])/2)
+                  graph.labels.color.v <- rep(c("","#FFFFFF"),length(df[,1])/2)
                 }
-                #graph.labels.color.v[var==0] <- "000000"
+                graph.labels.color.v[var==0] <- ""
+                graph.labels.color.v[above.label.vectorposition] <- ""
               
               #result <- cbind(graph.labels.heights.v,graph.labels.text.v,graph.labels.color.v,graph.labels.show.v) %>% as.data.frame(., stringsAsFactors = FALSE)
                 result <- data.frame(
@@ -809,11 +811,12 @@ close(progress.bar.c)
               aes(                                                          
                 y = graph.labels.df$graph.labels.heights, 
                 label = graph.labels.df$graph.labels.text,
+                #color = graph.labels.df$graph.labels.color,
                 alpha = graph.labels.df$graph.labels.show
               ), 
               size = 4, 
               fontface = "bold",
-              color = graph.labels.df$graph.labels.color,
+              
               position = position_dodge(width = 1),
               show.legend = FALSE
             )
