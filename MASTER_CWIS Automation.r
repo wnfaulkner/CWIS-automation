@@ -53,7 +53,7 @@
     
     #M900
       rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
-      wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-05 Repeated Measures/"
+      wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-08 Green Reports/"
     
     #Thinkpad T470
       #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"  
@@ -66,16 +66,19 @@
       source("FUN_ColClassConvert.r")
       
     #Data & Output Directories
-      source.dir <- paste(rproj.dir,"/data_source/", sep = "")
+      source.dir <- paste(wd,"/data_source/", sep = "")
       target.dir <- paste(wd,"r_script_outputs/",
                             "Output_",
                             gsub(":",".",Sys.time()), sep = "")
-      dir.create(target.dir)
+      dir.create(
+        target.dir, 
+        showWarnings = FALSE
+      )
    
   #Variable helper table
-    cwis.embed.helper.ss <- gs_key("1FaBPQP8Gqwp5sI_0g793G6yjW5XNFbV8ji8N7i9oLjs",verbose = TRUE) 
-    cwis.embed.helper.df <- 	gs_read(cwis.embed.helper.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
-    cwis.embed.helper.df$q.id <- tolower(cwis.embed.helper.df$q.id)
+    #cwis.embed.helper.ss <- gs_key("1FaBPQP8Gqwp5sI_0g793G6yjW5XNFbV8ji8N7i9oLjs",verbose = TRUE) 
+    #cwis.embed.helper.df <- 	gs_read(cwis.embed.helper.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
+    #cwis.embed.helper.df$q.id <- tolower(cwis.embed.helper.df$q.id)
 
 } #END SECTION COLLAPSE BRACKET
 
@@ -91,54 +94,94 @@
   setwd(source.dir)
 
   #Read data files
-    cwis.df <- read.csv("All Baseline and Year 1 data_20180724.csv",
-                        stringsAsFactors = FALSE,
-                        header = TRUE)
+
+#FUN #Select right 'n' characters of string
+    substrRight <- function(x, n){
+      substr(x, nchar(x)-n+1, nchar(x))
+    }
+    
+#FUN #Find most recently modified file in a directory    
+    most.recently.modified.file <- function(title.string.match, file.type, dir){
+      match.files.v <-
+        list.files()[
+          grepl(tolower(title.string.match), tolower(list.files())) &  #match title string
+          grepl(file.type, sapply(list.files(), function(x){substrRight(x, nchar(file.type))})) &           #match file type
+          !grepl("\\~\\$", list.files())       #restrict to non-temporary files
+        ]
+      
+      most.recent.match.file <- match.files.v[file.info(match.files.v)$mtime == sapply(match.files.v, function(x){file.info(x)$mtime}) %>% max]
+      return(most.recent.match.file)
+    }
+  
+    questions.df <- read.xlsx(
+      file =  
+        most.recently.modified.file(
+          title.string.match = "Crosswalk",
+          file.type = "xlsx",
+          dir = source.dir
+        ),
+      sheetIndex = 1,
+      stringsAsFactors = FALSE
+    )
+    
+    responses.df <- read.csv(
+      file =  
+        most.recently.modified.file(
+          title.string.match = "CWIS",
+          file.type = "csv",
+          dir = source.dir
+        ),
+      stringsAsFactors = FALSE,
+      header = TRUE
+    )
     
   #Initial informatics
     
+    
+    
+    
     #Edit variable names
-      names(cwis.df) <- cwis.df %>% names %>% tolower #Lower-case all variable names
-      names(cwis.df)[names(cwis.df) == "id"] <- "responseid"
+      names(responses.df) <- responses.df %>% names %>% tolower #Lower-case all variable names
+      names(responses.df)[names(responses.df) == "id"] <- "responseid"
       
     #Recode role variable
-      cwis.df$role[cwis.df$role == "Teacher"] <- "Classroom Teacher"
+      responses.df$role[responses.df$role == "Teacher"] <- "Classroom Teacher"
       
     #Standardize school names
-      cwis.df$school <- tolower(cwis.df$school) %>% gsub("elem\\.","elementary",.)
-      cwis.df$school <- gsub("sch\\.","school", cwis.df$school)
-      cwis.df$school <- gsub("co\\.","county", cwis.df$school)
-      cwis.df$school <- gsub("jr\\.","junior", cwis.df$school)
-      cwis.df$school <- gsub("sr\\.","senior", cwis.df$school)
-      cwis.df$school[grep("meramec valley early childhood", cwis.df$school)] <- "early childhood center"
+      responses.df$school <- tolower(responses.df$school) %>% gsub("elem\\.","elementary",.)
+      responses.df$school <- gsub("sch\\.","school", responses.df$school)
+      responses.df$school <- gsub("co\\.","county", responses.df$school)
+      responses.df$school <- gsub("jr\\.","junior", responses.df$school)
+      responses.df$school <- gsub("sr\\.","senior", responses.df$school)
+      responses.df$school[grep("meramec valley early childhood", responses.df$school)] <- "early childhood center"
     
     #Rearrange data columns
-      cwis.df <- cwis.df[,   # CWIS response variables last, others first
-          c(which(!grepl("_", names(cwis.df))),
-            grep("_", names(cwis.df)))
+      responses.df <- responses.df[,   # CWIS response variables last, others first
+          c(which(!grepl("_", names(responses.df))),
+            grep("_", names(responses.df)))
         ]
       
-      cwis.df <-  cwis.df[, #Put "responseid" in first column
-                    c(grep("responseid", names(cwis.df)),which(!grepl("responseid", names(cwis.df))))
+      responses.df <-  responses.df[, #Put "responseid" in first column
+                    c(grep("responseid", names(responses.df)),which(!grepl("responseid", names(responses.df))))
                     ]
     ##########################################################################################################################################
     #Column Class Conversions
-      #cwis.df <- ColClassConvert(cwis.df)
+      #responses.df <- ColClassConvert(responses.df)
     
   #Add useful variables for analysis 
     
     #Useful vectors for selecting cwis answer variables
-      cwis.vars.v <- grep("_", names(cwis.df))
-      cwis.varnames.v <- names(cwis.df)[grep("_", names(cwis.df))]
+      cwis.vars.v <- grep("_", names(responses.df))
+      cwis.varnames.v <- names(responses.df)[grep("_", names(responses.df))]
       cwis.modules.v <- cwis.varnames.v %>% strsplit(.,"_") %>% sapply(., `[[`, 1) %>% unique
     
     #Create dummy variables for implementation (4 or above = 1)
-      impbinary.df <- cwis.df[,cwis.vars.v] %>% apply(., c(1:2), function(x){ifelse(x>=4,1,0)}) %>% as.data.frame
+      impbinary.df <- responses.df[,cwis.vars.v] %>% apply(., c(1:2), function(x){ifelse(x>=4,1,0)}) %>% as.data.frame
       names(impbinary.df) <- paste(cwis.varnames.v,"_impbinary",sep="") 
     
     #Create school.id variable which is concatenation of school and district
-      cwis.df$school.id <- paste(cwis.df$district, cwis.df$school,sep = "_") %>% tolower
-      cwis.df$school.id <- gsub("\\/"," ",cwis.df$school.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
+      responses.df$school.id <- paste(responses.df$district, responses.df$school,sep = "_") %>% tolower
+      responses.df$school.id <- gsub("\\/"," ",responses.df$school.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
 
     #School Level Variable
       school.level.df <- 
@@ -150,36 +193,36 @@
           stringsAsFactors = FALSE) %>%
         mutate(school.id = paste(tolower(district.name),tolower(trimws(school.name, which = "both")),sep = "_"))
       
-      #x<- unique(cwis.df$school.id) %in% unique(school.level.df$school.id) %>% cbind(unique(cwis.df$school.id),.) %>% as.data.frame(.,stringsAsFactors = FALSE) 
+      #x<- unique(responses.df$school.id) %in% unique(school.level.df$school.id) %>% cbind(unique(responses.df$school.id),.) %>% as.data.frame(.,stringsAsFactors = FALSE) 
       #x[order(x$V1),] %>% filter(. == FALSE)# %>% .[23:57,]
-      #x<- unique(cwis.df$district) %in% unique(school.level.df$district.name) %>% cbind(unique(cwis.df$district),.) %>% as.data.frame()
+      #x<- unique(responses.df$district) %in% unique(school.level.df$district.name) %>% cbind(unique(responses.df$district),.) %>% as.data.frame()
       #x[order(x$V1),]
         
       #####!FAKE CREATE SCHOOL LEVEL VARIABLE (HIGH, MIDDLE, ELEMENTARY)
       #school.level.df <- data.frame( 
-      #  school.id = cwis.df$school.id %>% unique,
-      #  school.level = sample(c("high","middle","elem."),length(unique(cwis.df$school.id)), replace = TRUE),
+      #  school.id = responses.df$school.id %>% unique,
+      #  school.level = sample(c("high","middle","elem."),length(unique(responses.df$school.id)), replace = TRUE),
       #  stringsAsFactors = FALSE
       #)
       
-      cwis.df <- left_join(cwis.df,school.level.df %>% select(school.id, school.level), by = "school.id")
-      cwis.df$school.level[is.na(cwis.df$school.level)] <- "Other"
-      cwis.df$school.level[cwis.df$school.id == "belton 124_bosco"] <- "Other"
-      cwis.df$school.level[cwis.df$school.id == "cameron r-i_cameron high school"] <- "High"
-      cwis.df$school.level[cwis.df$school.id == "poplar bluff r-i_poplar bluff early childhood center"] <- "Elem."
-      cwis.df$school.level[cwis.df$school.id == "poplar bluff r-i_poplar bluff technical career center"] <- "Other"
-      cwis.df$school.level[cwis.df$school.id == "sheldon r-viii_sheldon k-12"] <- "Other"
+      responses.df <- left_join(responses.df,school.level.df %>% select(school.id, school.level), by = "school.id")
+      responses.df$school.level[is.na(responses.df$school.level)] <- "Other"
+      responses.df$school.level[responses.df$school.id == "belton 124_bosco"] <- "Other"
+      responses.df$school.level[responses.df$school.id == "cameron r-i_cameron high school"] <- "High"
+      responses.df$school.level[responses.df$school.id == "poplar bluff r-i_poplar bluff early childhood center"] <- "Elem."
+      responses.df$school.level[responses.df$school.id == "poplar bluff r-i_poplar bluff technical career center"] <- "Other"
+      responses.df$school.level[responses.df$school.id == "sheldon r-viii_sheldon k-12"] <- "Other"
       
-      cwis.df$school.level <- FirstLetterCap_MultElements(cwis.df$school.level)
+      responses.df$school.level <- FirstLetterCap_MultElements(responses.df$school.level)
       
     #Capitalize First Letter of character variables
-      cwis.df[,names(cwis.df) %in% c("year","role","district","school","school.level")] <- 
-        apply(cwis.df[,names(cwis.df) %in% c("year","role","district","school","school.level")], 2, FirstLetterCap_MultElements)
+      responses.df[,names(responses.df) %in% c("year","role","district","school","school.level")] <- 
+        apply(responses.df[,names(responses.df) %in% c("year","role","district","school","school.level")], 2, FirstLetterCap_MultElements)
       
     #Create final data frames: 1. Wide; 2. Long for original CWIS data; 3. Long for impbinary data (both long include all original id variables)
-      dat.wide.df <- cbind(cwis.df, impbinary.df)
-      dat.idvars.df <- cwis.df[,!names(cwis.df) %in% cwis.varnames.v]
-      dat.answer.long.df <- gather(cwis.df, key = "question", value = "answer", cwis.varnames.v, factor_key = FALSE)
+      dat.wide.df <- cbind(responses.df, impbinary.df)
+      dat.idvars.df <- responses.df[,!names(responses.df) %in% cwis.varnames.v]
+      dat.answer.long.df <- gather(responses.df, key = "question", value = "answer", cwis.varnames.v, factor_key = FALSE)
       dat.impbinary.long.df <- gather(cbind(dat.idvars.df,impbinary.df), key = "question", value = "answer", names(impbinary.df), factor_key = FALSE) 
       dat.long.df <- rbind(dat.answer.long.df, dat.impbinary.long.df)
       
