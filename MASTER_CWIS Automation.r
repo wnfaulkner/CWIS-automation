@@ -41,7 +41,20 @@
     library(jsonlite)
     library(rlang)
   
-} #END SECTION COLLAPSE BRACKET    
+} #END SECTION COLLAPSE BRACKET   
+
+########################################################################################################################################################      
+### USER INPUTS ###
+
+{ #SECTION COLLAPSE BRACKET
+  
+  year <- "2018"
+  #year <- readline("What year is this data from? (enter number in formay YYYY): ") %>% as.character
+  
+  semester <- "fall"
+  #semester <- readline("What semester is this data from? (enter 'Fall' or 'Spring'): ") %>% tolower
+  
+} #END SECTION COLLAPSE BRACKET
     
 ########################################################################################################################################################      
 ### ESTABLISH DIRECTORIES ###
@@ -75,11 +88,6 @@
         showWarnings = FALSE
       )
    
-  #Variable helper table
-    #cwis.embed.helper.ss <- gs_key("1FaBPQP8Gqwp5sI_0g793G6yjW5XNFbV8ji8N7i9oLjs",verbose = TRUE) 
-    #cwis.embed.helper.df <- 	gs_read(cwis.embed.helper.ss, ws = 1, range = NULL, literal = TRUE) %>% as.data.frame()
-    #cwis.embed.helper.df$q.id <- tolower(cwis.embed.helper.df$q.id)
-
 } #END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
@@ -87,7 +95,7 @@
   #wd: working directory for output files
     
 ########################################################################################################################################################      
-### DATA CLEANING & PREP ###
+### LOAD DATA ###
 
 { #SECTION COLLAPSE BRACKET
 
@@ -112,38 +120,199 @@
       most.recent.match.file <- match.files.v[file.info(match.files.v)$mtime == sapply(match.files.v, function(x){file.info(x)$mtime}) %>% max]
       return(most.recent.match.file)
     }
+    
+    #Questions Table (imported as list)
+      questions.ss <- gs_key("1WCS1IZkMpZDztHeEyTyzD_cMMs-aIfknxYtDKg0T-Rg",verbose = TRUE) 
+      questions.ls <- 	gs_read(questions.ss, ws = 1, range = NULL, literal = TRUE) %>% as.list() %>% lapply(., tolower)
+      questions.df <- do.call(cbind, questions.ls) %>% as.data.frame(., stringsAsFactors = FALSE)
+      
+      #questions.df <- read.xlsx(
+      #  file =  
+      #    most.recently.modified.file(
+      #      title.string.match = "Crosswalk",
+      #      file.type = "xlsx",
+      #      dir = source.dir
+      #    ),
+      #  sheetIndex = 1,
+      #  stringsAsFactors = FALSE
+      #)
+    
+    #Responses table (main data, imported as data frame)
+      responses.df <- read.csv(
+        file =  
+          most.recently.modified.file(
+            title.string.match = "CWIS",
+            file.type = "csv",
+            dir = source.dir
+          ),
+        stringsAsFactors = FALSE,
+        header = TRUE
+      )
+}#END SECTION COLLAPSE BRACKET
+
+#OUTPUTS
+  #questions.df
+  #responses.df
+
+########################################################################################################################################################      
+### INITIAL INFORMATICS & 'UNBRANCHING' (STACKING) OF BRANCHED VARIABLES ###
+
+{ #SECTION COLLAPSE BRACKET
   
-    questions.df <- read.xlsx(
-      file =  
-        most.recently.modified.file(
-          title.string.match = "Crosswalk",
-          file.type = "xlsx",
-          dir = source.dir
-        ),
-      sheetIndex = 1,
-      stringsAsFactors = FALSE
-    )
-    
-    responses.df <- read.csv(
-      file =  
-        most.recently.modified.file(
-          title.string.match = "CWIS",
-          file.type = "csv",
-          dir = source.dir
-        ),
-      stringsAsFactors = FALSE,
-      header = TRUE
-    )
-    
   #Initial informatics
-    
-    
-    
-    
+    #Remove extra header rows
+      dat.startrow <- which(substr(responses.df[,1],1,1) == "{") + 1
+      responses.df <- responses.df[dat.startrow:length(responses.df[,1]),]
+      
     #Edit variable names
       names(responses.df) <- responses.df %>% names %>% tolower #Lower-case all variable names
       names(responses.df)[names(responses.df) == "id"] <- "responseid"
+    
+    #Restrict questions.df to only rows for this year/semester
+      questions.df <- 
+        questions.df[
+          questions.df$year == year & questions.df$semester == semester,
+          
+        ]
       
+    #Add "x" to questions.df$row.1 so they match exactly with Qualtrics export as imported by R
+      
+#FUN #Function to output number of times specified substring occurs within vector of character strings
+      num.substring.matches <- 
+        function(pattern, vector){
+          sapply( gregexpr( pattern, as.character(vector)),
+          function(x) if( x[1]==-1 ){ 0 }else{ length(x) } )
+        }
+      
+      questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2] <- 
+        paste("x",questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2],sep="")
+      
+      #strsplit(questions.df$row.1, "_") %>% .[lapply(., length)==3] %>% lapply(., function(x){paste(x, collapse = )} 
+  
+  #Stacking Columns Split by Survey Branching
+    #"branch" refers to branching questions, so branch0 are columns without branches, and branch1 are columns that are part of branching questions
+    #"ans" refers to having answer options, so ans0 are columns without answer options, and ans1 are columns that are part of questions with multiple answer options
+      
+    branch0.ans0.colnames.v <- questions.df$row.1[num.substring.matches("_",questions.df$row.1)==0]
+    branch0.ans1.colnames.v <- questions.df$row.1[num.substring.matches("_",questions.df$row.1)==1 & substr(questions.df$row.1,1,1) == "q"]
+    branch1.ans0.colnames.v <- questions.df$row.1[num.substring.matches("_",questions.df$row.1)==1 & substr(questions.df$row.1,1,1) == "x"]
+    branch1.ans1.colnames.v <- questions.df$row.1[num.substring.matches("_",questions.df$row.1)==2]
+    
+    #branch.q.colnums.v <- which(responses.df %>% names %>% substr(.,1,1) == "x")
+    
+    #Make data frame of base variables (that require no stacking)  
+      branch0.df <- 
+        responses.df[
+          dat.startrow:length(responses.df[,1]),                                           # all rows after row where first cell begins with "{"
+          names(responses.df) %in% c("responseid",branch0.ans0.colnames.v,branch0.ans1.colnames.v)      
+        ]              
+    
+    #Make data fram of variables to be stacked
+      branch1.df <- 
+        responses.df[
+          dat.startrow:length(responses.df[,1]),                                                                                 # all rows after row where first cell begins with "{"
+          names(responses.df) %in% c("responseid",branch1.ans0.colnames.v,branch1.ans1.colnames.v) # ResponseId plus all columns whose names begin with "X"
+        ]
+    #Re-stack & collapse columns that are split up because of survey branching 
+      
+      #Base names of questions that have multiple branches
+        branch1.q.v <- 
+          strsplit(c(branch1.ans1.colnames.v,branch1.ans0.colnames.v), "_") %>% 
+          unlist %>% 
+          .[grep("q",.)] %>% 
+          unique 
+      
+      ###                                                    ###
+      # Start of loop 'a' by base question of branched columns #
+      ###                                                    ###
+      
+      #Loop output storage
+      q.ls <- list()
+      varname.match.ls <- list()
+      
+      #a <- 1 #for testing loop
+      for(a in 1:length(branch1.q.v)){     ### START OF LOOP BY QUESTION; only for questions with branched variables
+        
+        q.name.a <- branch1.q.v[a]                                 # base question name
+        varnames.a <-                                              # all columns in branch0.df that belong to base question number
+          names(branch1.df)[names(branch1.df) != "responseid"][
+            which(names(branch1.df)[names(branch1.df) != "responseid"] %>% strsplit(.,"_") %>% lapply(., `[[`, 2) %>% unlist == q.name.a)
+          ]
+          #grep(q.name.a, names(branch1.df))]  
+        
+        if(num.substring.matches("_",varnames.a) %>% unique() == 1){ # final column names once branching is collapsed
+          q.ans.options.a <- q.name.a
+        }else{}
+        
+        if(num.substring.matches("_",varnames.a) %>% unique() == 2){
+          q.ans.options.a <-
+            paste(q.name.a, 
+                  varnames.a %>% strsplit(.,"_") %>% lapply(., `[[`, 3) %>% unique %>% unlist,
+                  sep = "_")
+          }        
+        varname.match.ls[[a]] <- q.ans.options.a
+
+        unbranch.a.ls <- list()
+        
+        ###                                                    ###
+        # Start of loop 'b' by base question of branched columns #
+        ###                                                    ###
+        
+        #b = 12
+        for(b in 1:length(q.ans.options.a)){    ### START OF LOOP BY ANSWER OPTION
+          
+          check.varnames.a <- str_sub(names(branch1.df), start = -nchar(q.ans.options.a[b]))
+          
+          branch.df.b <- #data frame of only columns to be stacked (for this question, for this answer option)
+            branch1.df[,
+              c(
+                grep("responseid",names(branch1.df)),
+                grep(q.ans.options.a[b], check.varnames.a)
+              )
+            ]
+          
+          unbranch.df.b <- #reshaped data frame of stacked columns
+            reshape(
+              data = branch.df.b, 
+              idvar = "responseid",
+              timevar = NULL,
+              varying = names(branch.df.b)[names(branch.df.b) != "responseid"],
+              v.names = q.ans.options.a[b],
+              direction = "long"
+            ) %>% 
+            filter(.[,2] != "") #remove rows with blank answers
+            
+          unbranch.a.ls[[b]] <- unbranch.df.b
+          
+        } ### END OF LOOP BY ANSWER OPTION
+        
+        q.dat.df <- unbranch.a.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .)
+        q.ls[[a + 1]] <- q.dat.df
+        
+      } ### END OF LOOP BY QUESTION
+      
+      #Re-merge with non-branched variables
+      
+      q.ls[[1]] <- branch0.df
+      #q.ls[[2]] <- branch0.df[names(branch0.df) %in% c("ResponseId",ans.opt.varnames.v)]
+      unbranched.df <- q.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .) 
+    
+    responses.df <- 
+      full_join(
+        branch0.df, 
+        unbranched.df, 
+        by = "responseid"
+      )
+      
+}#END SECTION COLLAPSE BRACKET    
+    
+#OUTPUTS
+  #responses.df - now with all branch variables 'unbranched' (stacked), and having removed two extra header rows
+  #questions.df - now only with rows pertaining to this year and semester
+    
+########################################################################################################################################################      
+### FURTHER CLEANING & ADDING USEFUL VARIABLES ###
+    
     #Recode role variable
       responses.df$role[responses.df$role == "Teacher"] <- "Classroom Teacher"
       
@@ -276,7 +445,7 @@
       ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
       ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
       
-  }#END SECTION COLLAPSE BRACKET
+  
 }#END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
@@ -1171,71 +1340,11 @@ close(progress.bar.c)
     close(progress.bar.h)      
           
           
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
 } #END SECTION COLLAPSE BRACKET          
 
 end_time <- Sys.time()
 code_runtime <- end_time - start_time
 print(code_runtime)
-
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-         
-
-    
-########################################################################################################################################################      
-### WRITE POWERPOINTS TO FILE  ###
-    
-    dir.create(target.dir)  
-    lapply(ppt.ls.h, function(x){writeDoc(x, file = x["target.filename"])})
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-     
-        
-#create.slide.graph <- function(input){
-#  result <- input["graphdata"]
-#  return(result)
-#input["graphdata"] %>% as.data.frame()%>% print
-
-#}
-
-#input <- graphdata.ls.c[[6]][[1]]
-#lapply(input, create.slide.graph)
 
         
     
