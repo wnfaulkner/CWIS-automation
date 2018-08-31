@@ -167,8 +167,8 @@
           function(x) if( x[1]==-1 ){ 0 }else{ length(x) } )
         }
       
-      questions.sem.df$row.1[num.substring.matches("_",questions.sem.df$row.1) == 2] <- 
-        paste("x",questions.sem.df$row.1[num.substring.matches("_",questions.sem.df$row.1) == 2],sep="")
+      questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2] <- 
+        paste("x",questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2],sep="")
       
   #Stacking Columns Split by Survey Branching
     #"branch" refers to branching questions, so branch0 are columns without branches, and branch1 are columns that are part of branching questions
@@ -292,14 +292,26 @@
           )
           ,
         ] #!looks like still uneven numbers - some columns must be missing from questions table, but seems to be columns we don't care about.
-      
+      questions.unbranched.df$row.1[grep("q",questions.unbranched.df$row.1)] <- 
+        str_extract(
+          questions.unbranched.df$row.1[grep("q",questions.unbranched.df$row.1)], 
+          "q[0-9].+"
+        ) 
     
     #Write Unbranched Data to Excel File
+      #unbranched.file.name <- 
+      #  paste( 
+      #    "unbranched_data_",
+      #    gsub(":",".",Sys.time()),
+      #    ".xlsx", 
+      #    sep=""
+      #  ) 
+      
       #setwd(target.dir)
       
       #write.xlsx(
       #  unbranched.df,
-      #  file = "unbranched_data.xlsx",
+      #  file = unbranched.file.name,
       #  sheetName = "responses",
       #  row.names = FALSE,
       #  showNA = FALSE,
@@ -329,25 +341,25 @@
     
     #Variable renaming of important variables
 #FUN  #Function 'multiple gsub' to find/replace multiple patterns in a vector
-      mgsub <- function(pattern, replacement, x, ...) {
-        n = length(pattern)
-        print(cbind(pattern,replacement))
-        if (n != length(replacement)) {
-          stop("pattern and replacement do not have the same length.")
+        mgsub <- function(pattern, replacement, x, ...) {
+          n = length(pattern)
+          print(cbind(pattern,replacement))
+          if (n != length(replacement)) {
+            stop("pattern and replacement do not have the same length.")
+          }
+          result = x
+          for (i in 1:n) {
+            result[grep(pattern[i], x, ...)] = replacement[i]
+          }
+          return(result)
         }
-        result = x
-        for (i in 1:n) {
-          result[grep(pattern[i], x, ...)] = replacement[i]
-        }
-        return(result)
-      }
       
       names(responses2.df) <-
         mgsub(
           questions.sem.df$row.1[!is.na(questions.sem.df$q.changename)], 
           questions.sem.df$q.changename[!is.na(questions.sem.df$q.changename)], 
           names(responses2.df)
-          )
+        )
       
     #Recode role variable
       responses2.df$role <- mgsub("Teacher", "Classroom Teacher", responses2.df$role)
@@ -356,10 +368,6 @@
       school.name.patterns <- c("elem\\.","sch\\.","co\\.","jr\\.","sr\\.","meramec valley early childhood")
       school.name.replacements <- c("elementary","school","county","junior","senior","early childhood center")
       responses2.df$building <- mgsub(school.name.patterns,school.name.replacements,responses2.df$building)
-    
-    #Capitalize first letter of Building and District columns
-      responses2.df$building <- FirstLetterCap_MultElements(responses2.df$building)
-      responses2.df$district <- FirstLetterCap_MultElements(responses2.df$district)
     
     #Rearrange data columns
       responses2.df <- responses2.df[,   # CWIS response variables last, others first
@@ -378,8 +386,8 @@
   #Add useful variables for analysis 
     
     #Useful vectors for selecting cwis answer variables
-      cwis.vars.v <- which(names(responses2.df) %in% questions.sem.df$row.1[!is.na(questions.sem.df$q.module.code)])
-      cwis.varnames.v <- questions.sem.df$row.1[!is.na(questions.sem.df$q.module.code)] 
+      cwis.vars.v <- which(names(responses2.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$q.module.code)])
+      cwis.varnames.v <- names(responses2.df)[names(responses2.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$q.module.code)]]
       cwis.modules.v <- 
         questions.sem.df$q.module.code[!is.na(questions.sem.df$q.module.code)] %>% 
         unique %>% 
@@ -388,13 +396,33 @@
         unique
     
     #Create dummy variables for implementation (4 or above = 1)
-      impbinary.df <- responses2.df[,cwis.vars.v] %>% apply(., c(1:2), function(x){ifelse(x>=4,1,0)}) %>% as.data.frame
+      recode.ansopt.varnames.v <- 
+        which(responses2.df %>% 
+        apply(., 2, unique) %>%
+        sapply(., function(x) {x %in% c("always","most of the time")}) %>% #|about half the time|sometimes|never",x)}) %>%
+        sapply(., any)) %>%
+        names(responses2.df)[.]
+      
+      #!HAVE TO FINISH THESE COMMANDS TO RECODE ALL OF THE "ALWAYS/SOMETIMES" VARIABLES. THEN HAVE TO CREATE THE BINARIES FOR THESE AND THE SLIDERS
+      recode(
+        responses2.df[,names(responses2.df) %in% recode.ansopt.varnames.v][,1],
+        `always` = 5
+      )
+      
+          ifelse(x>=4,1,0)
+        }) %>% 
+        as.data.frame
+      
       names(impbinary.df) <- paste(cwis.varnames.v,"_impbinary",sep="") 
     
     #Create school.id variable which is concatenation of school and district
       responses2.df$building.id <- paste(responses2.df$district, responses2.df$building,sep = "_") %>% tolower
       responses2.df$building.id <- gsub("\\/"," ",responses2.df$building.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
-
+      
+      #Capitalize first letter of Building and District columns
+      #responses2.df$building <- FirstLetterCap_MultElements(responses2.df$building)
+      #responses2.df$district <- FirstLetterCap_MultElements(responses2.df$district)
+      
     #School Level Variable
       #school.level.df <- 
       #  read.xlsx(
@@ -420,14 +448,21 @@
       
     #Create final data frames: 1. Wide; 2. Long for original CWIS data; 3. Long for impbinary data (both long include all original id variables)
       dat.wide.df <- cbind(responses2.df, impbinary.df)
-      dat.idvars.df <- responses2.df[,!names(responses2.df) %in% cwis.varnames.v]
-      dat.answer.long.df <- gather(responses2.df, key = "question", value = "answer", cwis.varnames.v, factor_key = FALSE)
-      dat.impbinary.long.df <- gather(cbind(dat.idvars.df,impbinary.df), key = "question", value = "answer", names(impbinary.df), factor_key = FALSE) 
-      dat.long.df <- rbind(dat.answer.long.df, dat.impbinary.long.df)
-      
+      #dat.idvars.df <- responses2.df[,!names(responses2.df) %in% cwis.varnames.v]
+      dat.long.df <- 
+        melt(
+          data = dat.wide.df,
+          id.vars = "responseid",
+          variable.name = "question",
+          value.name = "answer",
+          stringsAsFactors = FALSE
+        )
+      #dat.long.df <- ColClassConvert(dat.long.df)
+      dat.long.df$question <- as.character(dat.long.df$question)
+
     #Creating additional useful variables for long data frames
       # Variable for module
-        dat.long.df$module <- strsplit(dat.long.df$question, "_" ) %>% sapply(., `[[`, 1) %>% toupper()
+        dat.long.df$module <- questions.unbranched.df$row.1#strsplit(dat.long.df$question, "_" ) %>% sapply(., `[[`, 1) %>% toupper() %>% unique
         dat.long.df$impbinary <- ifelse(grepl("impbinary",dat.long.df$question),1,0)
         
         #dat.answer.long.df$module <- strsplit(dat.answer.long.df$question, "_" ) %>% sapply(., `[[`, 1)
@@ -448,7 +483,7 @@
     #Variable names & questions, adjusting for collapsed columns
       vars.df <- names(dat.wide.df) %>% as.data.frame(., stringsAsFactors = FALSE)
       names(vars.df) <- "q.id"
-      vars.df <- left_join(vars.df, cwis.embed.helper.df, by = "q.id")
+      vars.df <- left_join(vars.df, questions.unbranched.df, by = "q.id")
       
     #Remove repeated parts of questions
       question.full.remove.strings <- c(
