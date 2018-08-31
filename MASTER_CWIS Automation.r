@@ -158,13 +158,6 @@
       names(responses.df) <- responses.df %>% names %>% tolower #Lower-case all variable names
       names(responses.df)[names(responses.df) == "id"] <- "responseid"
     
-    #Restrict questions.df to only rows for this year/semester
-      questions.sem.df <- 
-        questions.df[
-          questions.df$year == year & questions.df$semester == semester,
-          
-        ]
-      
     #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
       
 #FUN #Function to output number of times specified substring occurs within vector of character strings
@@ -280,117 +273,155 @@
       #Re-merge with non-branched variables
       
       q.ls[[1]] <- branch0.df
-      #q.ls[[2]] <- branch0.df[names(branch0.df) %in% c("ResponseId",ans.opt.varnames.v)]
+      #q.ls <- lapply(q.ls, tolower)
       unbranched.df <- q.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .) 
+      
+    #Restrict questions.df to only rows for this year/semester
+      questions.sem.df <- 
+        questions.df[
+          questions.df$year == year & questions.df$semester == semester,
+          ]
+      
+      questions.unbranched.df <- 
+        questions.sem.df[
+          questions.sem.df$row.1 %in% 
+          c(
+            branch0.ans0.colnames.v,
+            branch0.ans1.colnames.v,
+            varname.match.ls %>% unlist %>% paste("x1_",.,sep="")
+          )
+          ,
+        ] #!looks like still uneven numbers - some columns must be missing from questions table, but seems to be columns we don't care about.
+      
     
-    setwd(target.dir)
-    
-    #write.xlsx(
-    #  unbranched.df,
-    #  file = "unbranched_data.xlsx",
-    #  sheetName = "responses",
-    #  row.names = FALSE,
-    #  showNA = FALSE,
-    #  append = FALSE
-    #  )
-    
-    #write.xlsx(
-    #  questions.sem.df,
-    #  file = "unbranched_data.xlsx",
-    #  sheetName = "questions",
-    #  row.names = FALSE,
-    #  showNA = FALSE,
-    #  append = TRUE
-    #)
+    #Write Unbranched Data to Excel File
+      #setwd(target.dir)
+      
+      #write.xlsx(
+      #  unbranched.df,
+      #  file = "unbranched_data.xlsx",
+      #  sheetName = "responses",
+      #  row.names = FALSE,
+      #  showNA = FALSE,
+      #  append = FALSE
+      #  )
+      
+      #write.xlsx(
+      #  questions.sem.df,
+      #  file = "unbranched_data.xlsx",
+      #  sheetName = "questions",
+      #  row.names = FALSE,
+      #  showNA = FALSE,
+      #  append = TRUE
+      #)
       
 }#END SECTION COLLAPSE BRACKET    
     
 #OUTPUTS
-  #responses.df - now with all branch variables 'unbranched' (stacked), and having removed two extra header rows
+  #unbranched.df - now with all branch variables 'unbranched' (stacked), and having removed two extra header rows
   #questions.sem.df - now only with rows pertaining to this year and semester
     
 ########################################################################################################################################################      
 ### FURTHER CLEANING & ADDING USEFUL VARIABLES ###
     
-    #Recode role variable
-      responses.df$role[responses.df$role == "Teacher"] <- "Classroom Teacher"
+    #Lower-Case All Data
+      responses2.df <- apply(unbranched.df,c(1:2),tolower) %>% as.data.frame(., stringsAsFactors = FALSE)
+    
+    #Variable renaming of important variables
+#FUN  #Function 'multiple gsub' to find/replace multiple patterns in a vector
+      mgsub <- function(pattern, replacement, x, ...) {
+        n = length(pattern)
+        print(cbind(pattern,replacement))
+        if (n != length(replacement)) {
+          stop("pattern and replacement do not have the same length.")
+        }
+        result = x
+        for (i in 1:n) {
+          result[grep(pattern[i], x, ...)] = replacement[i]
+        }
+        return(result)
+      }
       
-    #Standardize school names
-      responses.df$school <- tolower(responses.df$school) %>% gsub("elem\\.","elementary",.)
-      responses.df$school <- gsub("sch\\.","school", responses.df$school)
-      responses.df$school <- gsub("co\\.","county", responses.df$school)
-      responses.df$school <- gsub("jr\\.","junior", responses.df$school)
-      responses.df$school <- gsub("sr\\.","senior", responses.df$school)
-      responses.df$school[grep("meramec valley early childhood", responses.df$school)] <- "early childhood center"
+      names(responses2.df) <-
+        mgsub(
+          questions.sem.df$row.1[!is.na(questions.sem.df$q.changename)], 
+          questions.sem.df$q.changename[!is.na(questions.sem.df$q.changename)], 
+          names(responses2.df)
+          )
+      
+    #Recode role variable
+      responses2.df$role <- mgsub("Teacher", "Classroom Teacher", responses2.df$role)
+      
+    #Recode school names
+      school.name.patterns <- c("elem\\.","sch\\.","co\\.","jr\\.","sr\\.","meramec valley early childhood")
+      school.name.replacements <- c("elementary","school","county","junior","senior","early childhood center")
+      responses2.df$building <- mgsub(school.name.patterns,school.name.replacements,responses2.df$building)
+    
+    #Capitalize first letter of Building and District columns
+      responses2.df$building <- FirstLetterCap_MultElements(responses2.df$building)
+      responses2.df$district <- FirstLetterCap_MultElements(responses2.df$district)
     
     #Rearrange data columns
-      responses.df <- responses.df[,   # CWIS response variables last, others first
-          c(which(!grepl("_", names(responses.df))),
-            grep("_", names(responses.df)))
+      responses2.df <- responses2.df[,   # CWIS response variables last, others first
+          c(which(!grepl("_", names(responses2.df))),
+            grep("_", names(responses2.df)))
         ]
       
-      responses.df <-  responses.df[, #Put "responseid" in first column
-                    c(grep("responseid", names(responses.df)),which(!grepl("responseid", names(responses.df))))
+      responses2.df <-  responses2.df[, #Put "responseid" in first column
+                    c(grep("responseid", names(responses2.df)),which(!grepl("responseid", names(responses2.df))))
                     ]
+      
     ##########################################################################################################################################
     #Column Class Conversions
-      #responses.df <- ColClassConvert(responses.df)
+      #responses2.df <- ColClassConvert(responses2.df)
     
   #Add useful variables for analysis 
     
     #Useful vectors for selecting cwis answer variables
-      cwis.vars.v <- grep("_", names(responses.df))
-      cwis.varnames.v <- names(responses.df)[grep("_", names(responses.df))]
-      cwis.modules.v <- cwis.varnames.v %>% strsplit(.,"_") %>% sapply(., `[[`, 1) %>% unique
+      cwis.vars.v <- which(names(responses2.df) %in% questions.sem.df$row.1[!is.na(questions.sem.df$q.module.code)])
+      cwis.varnames.v <- questions.sem.df$row.1[!is.na(questions.sem.df$q.module.code)] 
+      cwis.modules.v <- 
+        questions.sem.df$q.module.code[!is.na(questions.sem.df$q.module.code)] %>% 
+        unique %>% 
+        strsplit(.,"\\/") %>% 
+        unlist %>% 
+        unique
     
     #Create dummy variables for implementation (4 or above = 1)
-      impbinary.df <- responses.df[,cwis.vars.v] %>% apply(., c(1:2), function(x){ifelse(x>=4,1,0)}) %>% as.data.frame
+      impbinary.df <- responses2.df[,cwis.vars.v] %>% apply(., c(1:2), function(x){ifelse(x>=4,1,0)}) %>% as.data.frame
       names(impbinary.df) <- paste(cwis.varnames.v,"_impbinary",sep="") 
     
     #Create school.id variable which is concatenation of school and district
-      responses.df$school.id <- paste(responses.df$district, responses.df$school,sep = "_") %>% tolower
-      responses.df$school.id <- gsub("\\/"," ",responses.df$school.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
+      responses2.df$building.id <- paste(responses2.df$district, responses2.df$building,sep = "_") %>% tolower
+      responses2.df$building.id <- gsub("\\/"," ",responses2.df$building.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
 
     #School Level Variable
-      school.level.df <- 
-        read.xlsx(
-          "MMD List with Grade Spans.xlsx",
-          sheetName = "MMD Cohort 1&2",
-          header = TRUE,
-          as.data.frame = TRUE,
-          stringsAsFactors = FALSE) %>%
-        mutate(school.id = paste(tolower(district.name),tolower(trimws(school.name, which = "both")),sep = "_"))
+      #school.level.df <- 
+      #  read.xlsx(
+      #    "MMD List with Grade Spans.xlsx",
+      #    sheetName = "MMD Cohort 1&2",
+      #    header = TRUE,
+      #    as.data.frame = TRUE,
+      #    stringsAsFactors = FALSE) %>%
+      #  mutate(school.id = paste(tolower(district.name),tolower(trimws(school.name, which = "both")),sep = "_"))
       
-      #x<- unique(responses.df$school.id) %in% unique(school.level.df$school.id) %>% cbind(unique(responses.df$school.id),.) %>% as.data.frame(.,stringsAsFactors = FALSE) 
-      #x[order(x$V1),] %>% filter(. == FALSE)# %>% .[23:57,]
-      #x<- unique(responses.df$district) %in% unique(school.level.df$district.name) %>% cbind(unique(responses.df$district),.) %>% as.data.frame()
-      #x[order(x$V1),]
-        
-      #####!FAKE CREATE SCHOOL LEVEL VARIABLE (HIGH, MIDDLE, ELEMENTARY)
-      #school.level.df <- data.frame( 
-      #  school.id = responses.df$school.id %>% unique,
-      #  school.level = sample(c("high","middle","elem."),length(unique(responses.df$school.id)), replace = TRUE),
-      #  stringsAsFactors = FALSE
-      #)
-      
-      responses.df <- left_join(responses.df,school.level.df %>% select(school.id, school.level), by = "school.id")
-      responses.df$school.level[is.na(responses.df$school.level)] <- "Other"
-      responses.df$school.level[responses.df$school.id == "belton 124_bosco"] <- "Other"
-      responses.df$school.level[responses.df$school.id == "cameron r-i_cameron high school"] <- "High"
-      responses.df$school.level[responses.df$school.id == "poplar bluff r-i_poplar bluff early childhood center"] <- "Elem."
-      responses.df$school.level[responses.df$school.id == "poplar bluff r-i_poplar bluff technical career center"] <- "Other"
-      responses.df$school.level[responses.df$school.id == "sheldon r-viii_sheldon k-12"] <- "Other"
-      
-      responses.df$school.level <- FirstLetterCap_MultElements(responses.df$school.level)
+      #responses2.df <- left_join(responses2.df,school.level.df %>% select(school.id, school.level), by = "school.id")
+      #responses2.df$building.level[is.na(responses2.df$building.level)] <- "Other"
+      #responses2.df$building.level[responses2.df$building.id == "belton 124_bosco"] <- "Other"
+      #responses2.df$building.level[responses2.df$building.id == "cameron r-i_cameron high school"] <- "High"
+      #responses2.df$building.level[responses2.df$building.id == "poplar bluff r-i_poplar bluff early childhood center"] <- "Elem."
+      #responses2.df$building.level[responses2.df$building.id == "poplar bluff r-i_poplar bluff technical career center"] <- "Other"
+      #responses2.df$building.level[responses2.df$building.id == "sheldon r-viii_sheldon k-12"] <- "Other"
+      #responses2.df$building.level <- FirstLetterCap_MultElements(responses2.df$building.level)
       
     #Capitalize First Letter of character variables
-      responses.df[,names(responses.df) %in% c("year","role","district","school","school.level")] <- 
-        apply(responses.df[,names(responses.df) %in% c("year","role","district","school","school.level")], 2, FirstLetterCap_MultElements)
+      responses2.df[,names(responses2.df) %in% c("year","role","district","school","school.level")] <- 
+        apply(responses2.df[,names(responses2.df) %in% c("year","role","district","school","school.level")], 2, FirstLetterCap_MultElements)
       
     #Create final data frames: 1. Wide; 2. Long for original CWIS data; 3. Long for impbinary data (both long include all original id variables)
-      dat.wide.df <- cbind(responses.df, impbinary.df)
-      dat.idvars.df <- responses.df[,!names(responses.df) %in% cwis.varnames.v]
-      dat.answer.long.df <- gather(responses.df, key = "question", value = "answer", cwis.varnames.v, factor_key = FALSE)
+      dat.wide.df <- cbind(responses2.df, impbinary.df)
+      dat.idvars.df <- responses2.df[,!names(responses2.df) %in% cwis.varnames.v]
+      dat.answer.long.df <- gather(responses2.df, key = "question", value = "answer", cwis.varnames.v, factor_key = FALSE)
       dat.impbinary.long.df <- gather(cbind(dat.idvars.df,impbinary.df), key = "question", value = "answer", names(impbinary.df), factor_key = FALSE) 
       dat.long.df <- rbind(dat.answer.long.df, dat.impbinary.long.df)
       
