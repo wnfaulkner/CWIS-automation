@@ -142,7 +142,7 @@
 
 #OUTPUTS
   #questions.df
-  #resp1.df
+  #resp1.df (initial responses dataset which will need extensive cleaning and organization in next sections)
 
 ########################################################################################################################################################      
 ### INITIAL INFORMATICS & 'UNBRANCHING' (STACKING) OF BRANCHED VARIABLES ###
@@ -573,6 +573,7 @@
 }#END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
+  #resp.wide.df: wide data with all variables including numeric and binary
   #resp.long.df: long format data frame with cwis responses
   #ans.opt.always.df: data frame with columns corresponding to answer numbers and answer text,
     #including both frequency scale (e.g. 'always', 'most of the time') and agreement scale (e.g.
@@ -581,12 +582,12 @@
 ########################################################################################################################################################      
 ### PRODUCING GRAPH & SLIDE CONFIGURATION TABLES ###
 
-{ #SECTION COLLAPSE BRACKET
+#{ #SECTION COLLAPSE BRACKET
   
-  # District name selection
-    district.ids <- "all"
-    if(tolower(district.ids) %in% "all" %>% any){
-      district.ids <- dat.wide.df$district[order(dat.wide.df$district)] %>% unique
+  #Report Unit Selection
+    school.ids <- "all"
+    if(tolower(school.ids) %in% "all" %>% any){
+      school.ids <- dat.wide.df$district[order(dat.wide.df$district)] %>% unique
     }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
     dat.wide.df %>% 
       group_by(district,school.level) %>% 
@@ -615,19 +616,19 @@
     
     # Progress bar for loop
       progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
-      maxrow.b <- length(district.ids)
+      maxrow.b <- length(school.ids)
       
     #b <- 2 #LOOP TESTER (19 = "Raytown C-2")
     #for(b in c(1,2)){   #LOOP TESTER
-    for(b in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
+    for(b in 1:length(school.ids)){   #START OF LOOP BY DISTRICT
       
       loop.start.time.b <- Sys.time()
       if(b == 1){print("FORMING GRAPH & SLIDE CONFIG TABLES...")}
-      #print(c(b,100*b/length(district.ids)))
+      #print(c(b,100*b/length(school.ids)))
       
       # Create data frames for this loop - restrict to district id i
-        district.id.b <- district.ids[b]
-        resp.long.df.b <- resp.long.df[resp.long.df$district == district.id.b,]
+        school.id.b <- school.ids[b]
+        resp.long.df.b <- resp.long.df[resp.long.df$district == school.id.b,]
         #print(head(resp.long.df.b))
         
 #FUN  #Loop Expander Function (for creating full config tables)  
@@ -754,7 +755,7 @@
 } # END SECTION COLLAPSE BRACKET
     
 #OUTPUTS:
-  #district.ids: vector with all district names in resp.long.df (length = 19 for baseline data)
+  #school.ids: vector with all district names in resp.long.df (length = 19 for baseline data)
   #config.graphs.ls.b
     #[[district]]
       #data frame where each line represents a graph
@@ -781,11 +782,11 @@
   
   #c <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(c in c(1,2)){   #LOOP TESTER
-  for(c in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
+  for(c in 1:length(school.ids)){   #START OF LOOP BY DISTRICT
     if(c == 1){print("Forming input data tables for graphs...")}
                                     
-    resp.long.df.c <- resp.long.df[resp.long.df$district == district.ids[c],]
-    district.id.c <- district.ids[c]
+    resp.long.df.c <- resp.long.df[resp.long.df$district == school.ids[c],]
+    school.id.c <- school.ids[c]
     config.graphs.df.c <- config.graphs.ls.b[[c]]
     graphdata.ls.d <- list()
     
@@ -889,7 +890,7 @@
           if(config.graphs.df.d$data.level == "school"){
             y <- 
               x %>% 
-              filter(district == district.id.c) 
+              filter(district == school.id.c) 
           }
           
           if(!config.graphs.df.d$data.restriction=="module" | is.na(config.graphs.df.d$data.restriction)){ #!Should look into a better way to deal with this restriction
@@ -994,10 +995,10 @@ close(progress.bar.c)
   
   #f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  for(f in 1:length(district.ids)){
+  for(f in 1:length(school.ids)){
     
     if(f == 1){print("FORMING GRAPHS IN GGPLOT...")}
-    district.id.f <- district.ids[f]
+    school.id.f <- school.ids[f]
     config.graphs.df.f <- config.graphs.ls.b[[f]]
     
     ###                       ###    
@@ -1305,7 +1306,7 @@ close(progress.bar.c)
         target.path.h <- paste(target.dir,
                                   "/",
                                   "CWIS Report_",
-                                  district.ids[h],
+                                  school.ids[h],
                                   "_",
                                   gsub(":",".",Sys.time()),
                                   ".pptx", sep="") 
