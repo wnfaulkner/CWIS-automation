@@ -368,6 +368,38 @@
       school.name.patterns <- c("elem\\.","sch\\.","co\\.","jr\\.","sr\\.","meramec valley early childhood")
       school.name.replacements <- c("elementary","school","county","junior","senior","early childhood center")
       resp2.df$building <- mgsub(school.name.patterns,school.name.replacements,resp2.df$building)
+      
+    #Create school.id variable which is concatenation of school and district
+      resp2.df$building.id <- paste(resp2.df$district, resp2.df$building,sep = "_") %>% tolower
+      resp2.df$building.id <- gsub("\\/"," ",resp2.df$building.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
+      
+    #Capitalize first letter of Building and District columns
+      #resp2.df$building <- FirstLetterCap_MultElements(resp2.df$building)
+      #resp2.df$district <- FirstLetterCap_MultElements(resp2.df$district)
+      
+    #School Level Variable
+      #school.level.df <- 
+      #  read.xlsx(
+      #    "MMD List with Grade Spans.xlsx",
+      #    sheetName = "MMD Cohort 1&2",
+      #    header = TRUE,
+      #    as.data.frame = TRUE,
+      #    stringsAsFactors = FALSE) %>%
+      #  mutate(school.id = paste(tolower(district.name),tolower(trimws(school.name, which = "both")),sep = "_"))
+      
+      #resp2.df <- left_join(resp2.df,school.level.df %>% select(school.id, school.level), by = "school.id")
+      #resp2.df$building.level[is.na(resp2.df$building.level)] <- "Other"
+      #resp2.df$building.level[resp2.df$building.id == "belton 124_bosco"] <- "Other"
+      #resp2.df$building.level[resp2.df$building.id == "cameron r-i_cameron high school"] <- "High"
+      #resp2.df$building.level[resp2.df$building.id == "poplar bluff r-i_poplar bluff early childhood center"] <- "Elem."
+      #resp2.df$building.level[resp2.df$building.id == "poplar bluff r-i_poplar bluff technical career center"] <- "Other"
+      #resp2.df$building.level[resp2.df$building.id == "sheldon r-viii_sheldon k-12"] <- "Other"
+      #resp2.df$building.level <- FirstLetterCap_MultElements(resp2.df$building.level)
+      
+    #Capitalize First Letter of character variables
+      resp2.df[,names(resp2.df) %in% c("year","role","district","school","school.level")] <- 
+        apply(resp2.df[,names(resp2.df) %in% c("year","role","district","school","school.level")], 2, FirstLetterCap_MultElements)
+      
     
     #Rearrange data columns
       resp2.df <- resp2.df[,   # CWIS response variables last, others first
@@ -431,7 +463,7 @@
       names(num.ansopt.vars.df) <- paste(names(resp2.df[,names(resp2.df) %in% recode.ansopt.varnames.v]),"_num", sep = "")
     
     #Create 'implementation' binary variables
-      binary.ansopt.vars.df <- apply(num.ansoptvars.df,c(1:2),function(x){ifelse(x >= 3.5,1,0)}) %>% as.data.frame
+      binary.ansopt.vars.df <- apply(num.ansopt.vars.df,c(1:2),function(x){ifelse(x >= 3.5,1,0)}) %>% as.data.frame
       names(binary.ansopt.vars.df) <- paste(names(resp2.df[,names(resp2.df) %in% recode.ansopt.varnames.v]),"_binary",sep = "")
       
 
@@ -490,121 +522,12 @@
         binary.slider.vars.df <- do.call(cbind, slider.vars.ls) %>% as.data.frame
         names(binary.slider.vars.df) <- 
           paste(names(slider.vars.df),"_binary",sep="")
-         
-      #Putting results back together in one large data frame
-        resp3.df <- cbind(resp2.df, num.ansopt.vars.df, binary.ansopt.vars.df, binary.slider.vars.df)
-      
-      
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-#FUN  #Function which returns TRUE/FALSE if numeric vector max and min within max/min set by user
-      max.min.restriction.fun <-
-        function(vector, min.value, max.value){
-          if(!class(vector) %in% c("numeric","integer")){
-            stop(
-              paste("Input vector must be a numeric or integer class. Input is of class: ", class(vector), sep = "")
-            )
-          }
-          min.above.min.value <- (vector %>% min(., na.rm = TRUE)) >= min.value
-          max.below.max.value <- (vector %>% max(., na.rm = TRUE)) <= max.value
-          return(all(c(min.above.min.value, max.below.max.value)))
-        }
-      
-      
-          questions.unbranched.df
-      resp3.df <- 
-        apply(
-          resp2.df[, names(resp2.df) %in% numeric.varnames.v(resp2.df)],
-          2,
-          function(x){range(as.numeric(x), na.rm = TRUE)}
-        ) %>%
-      
-      
-
-      
-
-            impbinary.df <- 
-        apply(recoded.num.vars.mtx, 
-              c(1,2),
-              function(x){if(x )}
-        ) 
-      colnames(recoded.num.vars.mtx) <- paste(colnames(recoded.num.vars.mtx),"_num")
-      
-      
-      
-      resp3.df <- cbind(resp2.df, recoded.num.vars.mtx)
-          
-      
-      
-      
-      
-      
-      #Answer Options
-        ans.opt.always.df <-  cbind(
-          c(5:1),
-          c("Always","Most of the time","About half the time","Sometimes","Never"),
-          c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
-        ) %>% as.data.frame
-        names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
-        ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
-        ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
-        ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
-
-
-
-      names(impbinary.df) <- paste(cwis.varnames.v,"_impbinary",sep="") 
-    
-    #Create school.id variable which is concatenation of school and district
-      resp2.df$building.id <- paste(resp2.df$district, resp2.df$building,sep = "_") %>% tolower
-      resp2.df$building.id <- gsub("\\/"," ",resp2.df$building.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
-      
-      #Capitalize first letter of Building and District columns
-      #resp2.df$building <- FirstLetterCap_MultElements(resp2.df$building)
-      #resp2.df$district <- FirstLetterCap_MultElements(resp2.df$district)
-      
-    #School Level Variable
-      #school.level.df <- 
-      #  read.xlsx(
-      #    "MMD List with Grade Spans.xlsx",
-      #    sheetName = "MMD Cohort 1&2",
-      #    header = TRUE,
-      #    as.data.frame = TRUE,
-      #    stringsAsFactors = FALSE) %>%
-      #  mutate(school.id = paste(tolower(district.name),tolower(trimws(school.name, which = "both")),sep = "_"))
-      
-      #resp2.df <- left_join(resp2.df,school.level.df %>% select(school.id, school.level), by = "school.id")
-      #resp2.df$building.level[is.na(resp2.df$building.level)] <- "Other"
-      #resp2.df$building.level[resp2.df$building.id == "belton 124_bosco"] <- "Other"
-      #resp2.df$building.level[resp2.df$building.id == "cameron r-i_cameron high school"] <- "High"
-      #resp2.df$building.level[resp2.df$building.id == "poplar bluff r-i_poplar bluff early childhood center"] <- "Elem."
-      #resp2.df$building.level[resp2.df$building.id == "poplar bluff r-i_poplar bluff technical career center"] <- "Other"
-      #resp2.df$building.level[resp2.df$building.id == "sheldon r-viii_sheldon k-12"] <- "Other"
-      #resp2.df$building.level <- FirstLetterCap_MultElements(resp2.df$building.level)
-      
-    #Capitalize First Letter of character variables
-      resp2.df[,names(resp2.df) %in% c("year","role","district","school","school.level")] <- 
-        apply(resp2.df[,names(resp2.df) %in% c("year","role","district","school","school.level")], 2, FirstLetterCap_MultElements)
       
     #Create final data frames: 1. Wide; 2. Long for original CWIS data; 3. Long for impbinary data (both long include all original id variables)
-      dat.wide.df <- cbind(resp2.df, impbinary.df)
-      #dat.idvars.df <- resp2.df[,!names(resp2.df) %in% cwis.varnames.v]
+      resp.wide.df <- cbind(resp2.df, num.ansopt.vars.df, binary.ansopt.vars.df, binary.slider.vars.df)
       dat.long.df <- 
         melt(
-          data = dat.wide.df,
+          data = resp.wide.df,
           id.vars = "responseid",
           variable.name = "question",
           value.name = "answer",
