@@ -128,7 +128,7 @@
       questions.df <- do.call(cbind, questions.ls) %>% as.data.frame(., stringsAsFactors = FALSE)
     
     #Responses table (main data, imported as data frame)
-      responses.df <- read.csv(
+      resp1.df <- read.csv(
         file =  
           most.recently.modified.file(
             title.string.match = "CWIS",
@@ -142,7 +142,7 @@
 
 #OUTPUTS
   #questions.df
-  #responses.df
+  #resp1.df
 
 ########################################################################################################################################################      
 ### INITIAL INFORMATICS & 'UNBRANCHING' (STACKING) OF BRANCHED VARIABLES ###
@@ -152,11 +152,11 @@
   #Initial informatics
     #Remove extra header rows
       #dat.startrow <- 
-      responses.df <- responses.df[(which(substr(responses.df[,1],1,1) == "{") + 1):length(responses.df[,1]),]
+      resp1.df <- resp1.df[(which(substr(resp1.df[,1],1,1) == "{") + 1):length(resp1.df[,1]),]
       
     #Edit variable names
-      names(responses.df) <- responses.df %>% names %>% tolower #Lower-case all variable names
-      names(responses.df)[names(responses.df) == "id"] <- "responseid"
+      names(resp1.df) <- resp1.df %>% names %>% tolower #Lower-case all variable names
+      names(resp1.df)[names(resp1.df) == "id"] <- "responseid"
     
     #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
       
@@ -174,23 +174,23 @@
     #"branch" refers to branching questions, so branch0 are columns without branches, and branch1 are columns that are part of branching questions
     #"ans" refers to having answer options, so ans0 are columns without answer options, and ans1 are columns that are part of questions with multiple answer options
       
-    branch0.ans0.colnames.v <- names(responses.df)[num.substring.matches("_",names(responses.df))==0]
-    branch0.ans1.colnames.v <- names(responses.df)[num.substring.matches("_",names(responses.df))==1 & substr(names(responses.df),1,1) == "q"]
-    branch1.ans0.colnames.v <- names(responses.df)[num.substring.matches("_",names(responses.df))==1 & substr(names(responses.df),1,1) == "x"]
-    branch1.ans1.colnames.v <- names(responses.df)[num.substring.matches("_",names(responses.df))==2]
+    branch0.ans0.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==0]
+    branch0.ans1.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==1 & substr(names(resp1.df),1,1) == "q"]
+    branch1.ans0.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==1 & substr(names(resp1.df),1,1) == "x"]
+    branch1.ans1.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==2]
     
-    #branch.q.colnums.v <- which(responses.df %>% names %>% substr(.,1,1) == "x")
+    #branch.q.colnums.v <- which(resp1.df %>% names %>% substr(.,1,1) == "x")
     
     #Make data frame of base variables (that require no stacking)  
       branch0.df <- 
-        responses.df[ ,                                           
-          names(responses.df) %in% c("responseid",branch0.ans0.colnames.v,branch0.ans1.colnames.v)      
+        resp1.df[ ,                                           
+          names(resp1.df) %in% c("responseid",branch0.ans0.colnames.v,branch0.ans1.colnames.v)      
         ]              
     
     #Make data fram of variables to be stacked
       branch1.df <- 
-        responses.df[ ,
-          names(responses.df) %in% c("responseid",branch1.ans0.colnames.v,branch1.ans1.colnames.v) # ResponseId plus all columns whose names begin with "X"
+        resp1.df[ ,
+          names(resp1.df) %in% c("responseid",branch1.ans0.colnames.v,branch1.ans1.colnames.v) # ResponseId plus all columns whose names begin with "X"
         ]
     
     #Re-stack & collapse columns that are split up because of survey branching 
@@ -337,7 +337,7 @@
 ### FURTHER CLEANING & ADDING USEFUL VARIABLES ###
     
     #Lower-Case All Data
-      responses2.df <- apply(unbranched.df,c(1:2),tolower) %>% as.data.frame(., stringsAsFactors = FALSE)
+      resp2.df <- apply(unbranched.df,c(1:2),tolower) %>% as.data.frame(., stringsAsFactors = FALSE)
     
     #Variable renaming of important variables
 #FUN  #Function 'multiple gsub' to find/replace multiple patterns in a vector
@@ -354,40 +354,40 @@
           return(result)
         }
       
-      names(responses2.df) <-
+      names(resp2.df) <-
         mgsub(
           questions.sem.df$row.1[!is.na(questions.sem.df$q.changename)], 
           questions.sem.df$q.changename[!is.na(questions.sem.df$q.changename)], 
-          names(responses2.df)
+          names(resp2.df)
         )
       
     #Recode role variable
-      responses2.df$role <- mgsub("Teacher", "Classroom Teacher", responses2.df$role)
+      resp2.df$role <- mgsub("Teacher", "Classroom Teacher", resp2.df$role)
       
     #Recode school names
       school.name.patterns <- c("elem\\.","sch\\.","co\\.","jr\\.","sr\\.","meramec valley early childhood")
       school.name.replacements <- c("elementary","school","county","junior","senior","early childhood center")
-      responses2.df$building <- mgsub(school.name.patterns,school.name.replacements,responses2.df$building)
+      resp2.df$building <- mgsub(school.name.patterns,school.name.replacements,resp2.df$building)
     
     #Rearrange data columns
-      responses2.df <- responses2.df[,   # CWIS response variables last, others first
-          c(which(!grepl("_", names(responses2.df))),
-            grep("_", names(responses2.df)))
+      resp2.df <- resp2.df[,   # CWIS response variables last, others first
+          c(which(!grepl("_", names(resp2.df))),
+            grep("_", names(resp2.df)))
         ]
       
-      responses2.df <-  responses2.df[, #Put "responseid" in first column
-                    c(grep("responseid", names(responses2.df)),which(!grepl("responseid", names(responses2.df))))
+      resp2.df <-  resp2.df[, #Put "responseid" in first column
+                    c(grep("responseid", names(resp2.df)),which(!grepl("responseid", names(resp2.df))))
                     ]
       
     ##########################################################################################################################################
     #Column Class Conversions
-      #responses2.df <- ColClassConvert(responses2.df)
+      #resp2.df <- ColClassConvert(resp2.df)
     
   #Add useful variables for analysis 
     
     #Useful vectors for selecting cwis answer variables
-      cwis.vars.v <- which(names(responses2.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$q.module.code)])
-      cwis.varnames.v <- names(responses2.df)[names(responses2.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$q.module.code)]]
+      cwis.vars.v <- which(names(resp2.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$q.module.code)])
+      cwis.varnames.v <- names(resp2.df)[names(resp2.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$q.module.code)]]
       cwis.modules.v <- 
         questions.sem.df$q.module.code[!is.na(questions.sem.df$q.module.code)] %>% 
         unique %>% 
@@ -395,33 +395,186 @@
         unlist %>% 
         unique
     
-    #Create dummy variables for implementation (4 or above = 1)
+    #Recode answer option variables as numeric
+      numeric.recode.fun <- 
+        function(x){
+          recode(
+            x,
+            `always` = 5,
+            `most of the time` = 4,
+            `about half the time` = 3,
+            `sometimes` = 2,
+            `never` = 1,
+            `strongly agree` = 5,
+            `agree` = 4,
+            `neutral` = 3,
+            `neither agree nor disagree` = 3,
+            `neither agree or disagree` = 3,
+            `disagree` = 2,
+            `strongly disagree` = 1
+          )
+        }
+        
       recode.ansopt.varnames.v <- 
-        which(responses2.df %>% 
+        which(resp2.df %>% 
         apply(., 2, unique) %>%
-        sapply(., function(x) {x %in% c("always","most of the time")}) %>% #|about half the time|sometimes|never",x)}) %>%
+        sapply(., function(x) {x %in% c("always","most of the time","about half the time","sometimes","never","strongly agree","agree","neutral","disagree","strongly disagree")}) %>%
         sapply(., any)) %>%
-        names(responses2.df)[.]
+        names(resp2.df)[.]
+
+      num.ansopt.vars.df <- 
+        apply(resp2.df[,names(resp2.df) %in% recode.ansopt.varnames.v], 
+          2,
+          numeric.recode.fun
+        ) %>% as.data.frame
       
-      #!HAVE TO FINISH THESE COMMANDS TO RECODE ALL OF THE "ALWAYS/SOMETIMES" VARIABLES. THEN HAVE TO CREATE THE BINARIES FOR THESE AND THE SLIDERS
-      recode(
-        responses2.df[,names(responses2.df) %in% recode.ansopt.varnames.v][,1],
-        `always` = 5
-      )
+      names(num.ansopt.vars.df) <- paste(names(resp2.df[,names(resp2.df) %in% recode.ansopt.varnames.v]),"_num", sep = "")
+    
+    #Create 'implementation' binary variables
+      binary.ansopt.vars.df <- apply(num.ansoptvars.df,c(1:2),function(x){ifelse(x >= 3.5,1,0)}) %>% as.data.frame
+      names(binary.ansopt.vars.df) <- paste(names(resp2.df[,names(resp2.df) %in% recode.ansopt.varnames.v]),"_binary",sep = "")
       
-          ifelse(x>=4,1,0)
-        }) %>% 
-        as.data.frame
+
+#FUN  #Function to apply to columns to be converted into binary implementation
+      #binary.recode.fun <- function(vector, binary.cutoff){
+      #  result <- ifelse(vector >= binary.cutoff, 1, 0)
+      #  return(result)
+      #}
+
+#FUN  #Function to output variable names in data frame which can be converted to numeric       
+      numeric.varnames.v <-
+        function(data.frame){
+          result <- 
+            data.frame %>%
+            apply(., 2, unique) %>%
+            sapply(., 
+              function(x){
+                (as.numeric(x) %>% is.na(.) %>% sum) <= 1
+              }
+            ) %>%
+            names(data.frame)[.]
+          return(result)
+        }
       
+      #Convert numeric variables in original data to numeric
+        resp2.df[,names(resp2.df) %in% numeric.varnames.v(resp2.df)] <-
+          apply(
+            resp2.df[,names(resp2.df) %in% numeric.varnames.v(resp2.df)],
+            c(1:2),
+            as.numeric
+          )
+      
+      #Converting Slider variables to binary (according to different max/min/thresholds)
+        
+        slider.vars.df <- 
+          resp2.df[,
+            names(resp2.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$var.min)]
+          ]
+        
+        slider.vars.ls <- list()
+        
+        for(c in 1:ncol(slider.vars.df)){
+          
+          colname.c <- names(slider.vars.df)[c]
+          var.min.c <- questions.unbranched.df$var.min[questions.unbranched.df$row.1 == colname.c][!is.na(questions.unbranched.df$var.min[questions.unbranched.df$row.1 == colname.c])] %>% 
+            as.character %>% as.numeric
+          var.max.c <- questions.unbranched.df$var.max[questions.unbranched.df$row.1 == colname.c][!is.na(questions.unbranched.df$var.max[questions.unbranched.df$row.1 == colname.c])] %>% 
+            as.character %>% as.numeric
+          
+          if(var.min.c == 1 & var.max.c == 5){slider.threshold.c <- 3.5}
+          if(var.min.c == 1 & var.max.c == 10){slider.threshold.c <- 7}
+          if(length(var.min.c == 1 & var.max.c == 5) > 1){print(c)}
+          slider.vars.ls[[c]] <- ifelse(slider.vars.df[,c] >= slider.threshold.c, 1, 0)
+        }
+        
+        binary.slider.vars.df <- do.call(cbind, slider.vars.ls) %>% as.data.frame
+        names(binary.slider.vars.df) <- 
+          paste(names(slider.vars.df),"_binary",sep="")
+         
+      #Putting results back together in one large data frame
+        resp3.df <- cbind(resp2.df, num.ansopt.vars.df, binary.ansopt.vars.df, binary.slider.vars.df)
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+#FUN  #Function which returns TRUE/FALSE if numeric vector max and min within max/min set by user
+      max.min.restriction.fun <-
+        function(vector, min.value, max.value){
+          if(!class(vector) %in% c("numeric","integer")){
+            stop(
+              paste("Input vector must be a numeric or integer class. Input is of class: ", class(vector), sep = "")
+            )
+          }
+          min.above.min.value <- (vector %>% min(., na.rm = TRUE)) >= min.value
+          max.below.max.value <- (vector %>% max(., na.rm = TRUE)) <= max.value
+          return(all(c(min.above.min.value, max.below.max.value)))
+        }
+      
+      
+          questions.unbranched.df
+      resp3.df <- 
+        apply(
+          resp2.df[, names(resp2.df) %in% numeric.varnames.v(resp2.df)],
+          2,
+          function(x){range(as.numeric(x), na.rm = TRUE)}
+        ) %>%
+      
+      
+
+      
+
+            impbinary.df <- 
+        apply(recoded.num.vars.mtx, 
+              c(1,2),
+              function(x){if(x )}
+        ) 
+      colnames(recoded.num.vars.mtx) <- paste(colnames(recoded.num.vars.mtx),"_num")
+      
+      
+      
+      resp3.df <- cbind(resp2.df, recoded.num.vars.mtx)
+          
+      
+      
+      
+      
+      
+      #Answer Options
+        ans.opt.always.df <-  cbind(
+          c(5:1),
+          c("Always","Most of the time","About half the time","Sometimes","Never"),
+          c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
+        ) %>% as.data.frame
+        names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
+        ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
+        ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
+        ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
+
+
+
       names(impbinary.df) <- paste(cwis.varnames.v,"_impbinary",sep="") 
     
     #Create school.id variable which is concatenation of school and district
-      responses2.df$building.id <- paste(responses2.df$district, responses2.df$building,sep = "_") %>% tolower
-      responses2.df$building.id <- gsub("\\/"," ",responses2.df$building.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
+      resp2.df$building.id <- paste(resp2.df$district, resp2.df$building,sep = "_") %>% tolower
+      resp2.df$building.id <- gsub("\\/"," ",resp2.df$building.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
       
       #Capitalize first letter of Building and District columns
-      #responses2.df$building <- FirstLetterCap_MultElements(responses2.df$building)
-      #responses2.df$district <- FirstLetterCap_MultElements(responses2.df$district)
+      #resp2.df$building <- FirstLetterCap_MultElements(resp2.df$building)
+      #resp2.df$district <- FirstLetterCap_MultElements(resp2.df$district)
       
     #School Level Variable
       #school.level.df <- 
@@ -433,22 +586,22 @@
       #    stringsAsFactors = FALSE) %>%
       #  mutate(school.id = paste(tolower(district.name),tolower(trimws(school.name, which = "both")),sep = "_"))
       
-      #responses2.df <- left_join(responses2.df,school.level.df %>% select(school.id, school.level), by = "school.id")
-      #responses2.df$building.level[is.na(responses2.df$building.level)] <- "Other"
-      #responses2.df$building.level[responses2.df$building.id == "belton 124_bosco"] <- "Other"
-      #responses2.df$building.level[responses2.df$building.id == "cameron r-i_cameron high school"] <- "High"
-      #responses2.df$building.level[responses2.df$building.id == "poplar bluff r-i_poplar bluff early childhood center"] <- "Elem."
-      #responses2.df$building.level[responses2.df$building.id == "poplar bluff r-i_poplar bluff technical career center"] <- "Other"
-      #responses2.df$building.level[responses2.df$building.id == "sheldon r-viii_sheldon k-12"] <- "Other"
-      #responses2.df$building.level <- FirstLetterCap_MultElements(responses2.df$building.level)
+      #resp2.df <- left_join(resp2.df,school.level.df %>% select(school.id, school.level), by = "school.id")
+      #resp2.df$building.level[is.na(resp2.df$building.level)] <- "Other"
+      #resp2.df$building.level[resp2.df$building.id == "belton 124_bosco"] <- "Other"
+      #resp2.df$building.level[resp2.df$building.id == "cameron r-i_cameron high school"] <- "High"
+      #resp2.df$building.level[resp2.df$building.id == "poplar bluff r-i_poplar bluff early childhood center"] <- "Elem."
+      #resp2.df$building.level[resp2.df$building.id == "poplar bluff r-i_poplar bluff technical career center"] <- "Other"
+      #resp2.df$building.level[resp2.df$building.id == "sheldon r-viii_sheldon k-12"] <- "Other"
+      #resp2.df$building.level <- FirstLetterCap_MultElements(resp2.df$building.level)
       
     #Capitalize First Letter of character variables
-      responses2.df[,names(responses2.df) %in% c("year","role","district","school","school.level")] <- 
-        apply(responses2.df[,names(responses2.df) %in% c("year","role","district","school","school.level")], 2, FirstLetterCap_MultElements)
+      resp2.df[,names(resp2.df) %in% c("year","role","district","school","school.level")] <- 
+        apply(resp2.df[,names(resp2.df) %in% c("year","role","district","school","school.level")], 2, FirstLetterCap_MultElements)
       
     #Create final data frames: 1. Wide; 2. Long for original CWIS data; 3. Long for impbinary data (both long include all original id variables)
-      dat.wide.df <- cbind(responses2.df, impbinary.df)
-      #dat.idvars.df <- responses2.df[,!names(responses2.df) %in% cwis.varnames.v]
+      dat.wide.df <- cbind(resp2.df, impbinary.df)
+      #dat.idvars.df <- resp2.df[,!names(resp2.df) %in% cwis.varnames.v]
       dat.long.df <- 
         melt(
           data = dat.wide.df,
@@ -498,17 +651,6 @@
       vars.df$question.full <- gsub(paste(question.full.remove.strings, collapse = "|"),
                                     "",
                                     vars.df$question.full)
-      
-    #Answer Options
-      ans.opt.always.df <-  cbind(
-        c(5:1),
-        c("Always","Most of the time","About half the time","Sometimes","Never"),
-        c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
-      ) %>% as.data.frame
-      names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
-      ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
-      ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
-      ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
       
   
 }#END SECTION COLLAPSE BRACKET
