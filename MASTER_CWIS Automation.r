@@ -335,7 +335,9 @@
     
 ########################################################################################################################################################      
 ### FURTHER CLEANING & ADDING USEFUL VARIABLES ###
-    
+
+{ #SECTION COLLAPSE BRACKET
+  
     #Lower-Case All Data
       resp2.df <- apply(unbranched.df,c(1:2),tolower) %>% as.data.frame(., stringsAsFactors = FALSE)
     
@@ -525,7 +527,7 @@
       
     #Create final data frames: 1. Wide; 2. Long for original CWIS data; 3. Long for impbinary data (both long include all original id variables)
       resp.wide.df <- cbind(resp2.df, num.ansopt.vars.df, binary.ansopt.vars.df, binary.slider.vars.df)
-      dat.long.df <- 
+      resp.long.df <- 
         melt(
           data = resp.wide.df,
           id.vars = "responseid",
@@ -533,53 +535,45 @@
           value.name = "answer",
           stringsAsFactors = FALSE
         )
-      #dat.long.df <- ColClassConvert(dat.long.df)
-      dat.long.df$question <- as.character(dat.long.df$question)
+      resp.long.df$question <- as.character(resp.long.df$question)
 
     #Creating additional useful variables for long data frames
-      # Variable for module
-        dat.long.df$module <- questions.unbranched.df$row.1#strsplit(dat.long.df$question, "_" ) %>% sapply(., `[[`, 1) %>% toupper() %>% unique
-        dat.long.df$impbinary <- ifelse(grepl("impbinary",dat.long.df$question),1,0)
-        
-        #dat.answer.long.df$module <- strsplit(dat.answer.long.df$question, "_" ) %>% sapply(., `[[`, 1)
-        
-    #Loop: state average implementation rates [a], results in imp.state.df
-      imp.state.df <- data.frame(cwis.module = cwis.modules.v)
-      #a <- 1 # LOOP TESTER
-      for(a in 1:length(cwis.modules.v)){
-        imp.state.df$imp.rate[imp.state.df[,1]==cwis.modules.v[a]] <- 
-          impbinary.df[,grep(cwis.modules.v[a], names(impbinary.df))] %>%
-          apply(., 2, function(x){mean(x, na.rm = TRUE)}) %>% 
-          mean() 
-      }
+      
+      #Variable for module
+        resp.long.df <- 
+          left_join(
+            resp.long.df, 
+            questions.unbranched.df[,names(questions.unbranched.df) %in% c("row.1","q.module.code")], 
+            by = c("question" = "row.1")
+          )  
+     
+        resp.long.df$impbinary <- ifelse(grepl("binary",resp.long.df$question),1,0)
 
-  ## BUILD VARIABLE/QUESTION LOOKUP TABLE
-  
-  { #BEGIN SECTION COLLAPSE BRACKET
-    #Variable names & questions, adjusting for collapsed columns
-      vars.df <- names(dat.wide.df) %>% as.data.frame(., stringsAsFactors = FALSE)
-      names(vars.df) <- "q.id"
-      vars.df <- left_join(vars.df, questions.unbranched.df, by = "q.id")
-      
-    #Remove repeated parts of questions
-      question.full.remove.strings <- c(
-        "Please ",
-        "Please use the agreement scale to respond to each prompt representing your",
-        "Please use the frequency scale to respond to each prompt representing your",
-        " - Classroom Teacher - ",
-        "\\[Field-2\\]",
-        "\\[Field-3\\]",
-        "\\\n"
-      )
-      vars.df$question.full <- gsub(paste(question.full.remove.strings, collapse = "|"),
-                                    "",
-                                    vars.df$question.full)
-      
+    #Loop: state average implementation rates [a], results in imp.state.df
+      #imp.state.df <- data.frame(cwis.module = cwis.modules.v)
+      #a <- 1 # LOOP TESTER
+      #for(a in 1:length(cwis.modules.v)){
+      #  imp.state.df$imp.rate[imp.state.df[,1]==cwis.modules.v[a]] <- 
+      #    impbinary.df[,grep(cwis.modules.v[a], names(impbinary.df))] %>%
+      #    apply(., 2, function(x){mean(x, na.rm = TRUE)}) %>% 
+      #    mean() 
+      #}
+        
+    #Global Answer Options
+      ans.opt.always.df <-  cbind(
+        c(5:1),
+        c("Always","Most of the time","About half the time","Sometimes","Never"),
+        c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
+      ) %>% as.data.frame
+      names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
+      ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
+      ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
+      ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
   
 }#END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
-  #dat.long.df: long format data frame with cwis responses
+  #resp.long.df: long format data frame with cwis responses
   #ans.opt.always.df: data frame with columns corresponding to answer numbers and answer text,
     #including both frequency scale (e.g. 'always', 'most of the time') and agreement scale (e.g.
     #'strongly agree', 'agree').
@@ -633,8 +627,8 @@
       
       # Create data frames for this loop - restrict to district id i
         district.id.b <- district.ids[b]
-        dat.long.df.b <- dat.long.df[dat.long.df$district == district.id.b,]
-        #print(head(dat.long.df.b))
+        resp.long.df.b <- resp.long.df[resp.long.df$district == district.id.b,]
+        #print(head(resp.long.df.b))
         
 #FUN  #Loop Expander Function (for creating full config tables)  
       loop.expander.fun <- function(configs, loop.varname, intersperse.varname, source.data){
@@ -739,7 +733,7 @@
         loop.expander.fun(
           configs = config.graphtypes.df, 
           loop.varname = "slide.loop.var", 
-          source.data = dat.long.df.b
+          source.data = resp.long.df.b
         )
       
       config.graphs.ls.b[[b]] <- config.graphs.df %>% remove.district.office.fun(.)
@@ -749,7 +743,7 @@
           configs <- config.slidetypes.df, 
           loop.varname <- "slide.loop.var",
           intersperse.varname = "slide.type.position",
-          source.data = dat.long.df.b)
+          source.data = resp.long.df.b)
       config.slides.ls.b[[b]] <- config.slides.df %>% remove.district.office.fun(.)
       
       setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
@@ -760,7 +754,7 @@
 } # END SECTION COLLAPSE BRACKET
     
 #OUTPUTS:
-  #district.ids: vector with all district names in dat.long.df (length = 19 for baseline data)
+  #district.ids: vector with all district names in resp.long.df (length = 19 for baseline data)
   #config.graphs.ls.b
     #[[district]]
       #data frame where each line represents a graph
@@ -790,7 +784,7 @@
   for(c in 1:length(district.ids)){   #START OF LOOP BY DISTRICT
     if(c == 1){print("Forming input data tables for graphs...")}
                                     
-    dat.long.df.c <- dat.long.df[dat.long.df$district == district.ids[c],]
+    resp.long.df.c <- resp.long.df[resp.long.df$district == district.ids[c],]
     district.id.c <- district.ids[c]
     config.graphs.df.c <- config.graphs.ls.b[[c]]
     graphdata.ls.d <- list()
@@ -811,9 +805,9 @@
       
       #Create data frame "all.cats.df.e" of all possible answers for x-axis (role, module, year, answer)
         
-        all.cats.d <- dat.long.df %>%
-          filter( dat.long.df$impbinary == 0 ) %>%
-          .[,names(dat.long.df) == config.graphs.df.d$graph.cat.varname] %>% 
+        all.cats.d <- resp.long.df %>%
+          filter( resp.long.df$impbinary == 0 ) %>%
+          .[,names(resp.long.df) == config.graphs.df.d$graph.cat.varname] %>% 
           as.data.frame(., stringsAsFactors = FALSE) %>% 
           apply(., 2, function(x){x[!is.na(x)] %>% unique}) %>%
           as.data.frame(., stringsAsFactors = FALSE) %>%
@@ -878,7 +872,7 @@
       
       #Form final data frame (no averages)
         graphdata.df.d <-  
-          dat.long.df.c %>%
+          resp.long.df.c %>%
           graph.data.restriction.fun %>%
           group_by(!!! syms(group_by.d)) %>%
           summarize.data.fun %>%
@@ -937,7 +931,7 @@
       
       #Add average variable to final data frame
         graph.avg.df.d <- 
-          dat.long.df %>%
+          resp.long.df %>%
           avg.data.restriction.fun(.) %>%
           group_by(!!! syms(group_by.d)) %>%
           summarize.avg.fun(.)
