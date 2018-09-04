@@ -150,13 +150,43 @@
 { #SECTION COLLAPSE BRACKET
   
   #Initial informatics
+    
+    #Restrict questions.df to only rows for this year/semester
+      questions.sem.df <- 
+        questions.df[
+          questions.df$year == year & questions.df$semester == semester,
+        ]
+  
     #Remove extra header rows
       #dat.startrow <- 
       resp1.df <- resp1.df[(which(substr(resp1.df[,1],1,1) == "{") + 1):length(resp1.df[,1]),]
       
     #Edit variable names
       names(resp1.df) <- resp1.df %>% names %>% tolower #Lower-case all variable names
-      names(resp1.df)[names(resp1.df) == "id"] <- "responseid"
+      #names(resp1.df)[names(resp1.df) == "id"] <- "responseid"
+      
+      #Variable renaming of important variables
+#FUN  #Function 'multiple gsub' to find/replace multiple patterns in a vector
+      mgsub <- function(pattern, replacement, x, ...) {
+        n = length(pattern)
+        print(cbind(pattern,replacement))
+        if (n != length(replacement)) {
+          stop("pattern and replacement do not have the same length.")
+        }
+        result = x
+        for (i in 1:n) {
+          result[grep(pattern[i], x, ...)] = replacement[i]
+        }
+        return(result)
+      }
+      
+      names(resp1.df) <-
+        mgsub(
+          questions.sem.df$row.1[!is.na(questions.sem.df$q.changename)], 
+          questions.sem.df$q.changename[!is.na(questions.sem.df$q.changename)], 
+          names(resp1.df)
+        )
+      
     
     #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
       
@@ -274,21 +304,17 @@
       
       q.ls[[1]] <- branch0.df
       #q.ls <- lapply(q.ls, tolower)
-      unbranched.df <- q.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .) 
+      resp2.df <- q.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .) 
       
-    #Restrict questions.df to only rows for this year/semester
-      questions.sem.df <- 
-        questions.df[
-          questions.df$year == year & questions.df$semester == semester,
-          ]
-      
+   
+    #Re-do question table so no extraneous rows for roles that are now unbranched  
       questions.unbranched.df <- 
         questions.sem.df[
           questions.sem.df$row.1 %in% 
           c(
             branch0.ans0.colnames.v,
             branch0.ans1.colnames.v,
-            varname.match.ls %>% unlist %>% paste("x1_",.,sep="")
+            varname.match.ls %>% unlist %>% paste("1_",.,sep="")
           )
           ,
         ] #!looks like still uneven numbers - some columns must be missing from questions table, but seems to be columns we don't care about.
@@ -310,7 +336,7 @@
       #setwd(target.dir)
       
       #write.xlsx(
-      #  unbranched.df,
+      #  resp2.df,
       #  file = unbranched.file.name,
       #  sheetName = "responses",
       #  row.names = FALSE,
@@ -330,7 +356,7 @@
 }#END SECTION COLLAPSE BRACKET    
     
 #OUTPUTS
-  #unbranched.df - now with all branch variables 'unbranched' (stacked), and having removed two extra header rows
+  #resp2.df - now with all branch variables 'unbranched' (stacked), and having removed two extra header rows
   #questions.sem.df - now only with rows pertaining to this year and semester
     
 ########################################################################################################################################################      
@@ -339,45 +365,23 @@
 { #SECTION COLLAPSE BRACKET
   
     #Lower-Case All Data
-      resp2.df <- apply(unbranched.df,c(1:2),tolower) %>% as.data.frame(., stringsAsFactors = FALSE)
+      resp3.df <- apply(resp2.df,c(1:2),tolower) %>% as.data.frame(., stringsAsFactors = FALSE)
     
-    #Variable renaming of important variables
-#FUN  #Function 'multiple gsub' to find/replace multiple patterns in a vector
-        mgsub <- function(pattern, replacement, x, ...) {
-          n = length(pattern)
-          print(cbind(pattern,replacement))
-          if (n != length(replacement)) {
-            stop("pattern and replacement do not have the same length.")
-          }
-          result = x
-          for (i in 1:n) {
-            result[grep(pattern[i], x, ...)] = replacement[i]
-          }
-          return(result)
-        }
-      
-      names(resp2.df) <-
-        mgsub(
-          questions.sem.df$row.1[!is.na(questions.sem.df$q.changename)], 
-          questions.sem.df$q.changename[!is.na(questions.sem.df$q.changename)], 
-          names(resp2.df)
-        )
-      
     #Recode role variable
-      resp2.df$role <- mgsub("Teacher", "Classroom Teacher", resp2.df$role)
+      resp3.df$role <- mgsub("Teacher", "Classroom Teacher", resp3.df$role)
       
     #Recode school names
       school.name.patterns <- c("elem\\.","sch\\.","co\\.","jr\\.","sr\\.","meramec valley early childhood")
       school.name.replacements <- c("elementary","school","county","junior","senior","early childhood center")
-      resp2.df$building <- mgsub(school.name.patterns,school.name.replacements,resp2.df$building)
+      resp3.df$building <- mgsub(school.name.patterns,school.name.replacements,resp3.df$building)
       
     #Create school.id variable which is concatenation of school and district
-      resp2.df$building.id <- paste(resp2.df$district, resp2.df$building,sep = "_") %>% tolower
-      resp2.df$building.id <- gsub("\\/"," ",resp2.df$building.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
+      resp3.df$building.id <- paste(resp3.df$district, resp3.df$building,sep = "_") %>% tolower
+      resp3.df$building.id <- gsub("\\/"," ",resp3.df$building.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
       
     #Capitalize first letter of Building and District columns
-      #resp2.df$building <- FirstLetterCap_MultElements(resp2.df$building)
-      #resp2.df$district <- FirstLetterCap_MultElements(resp2.df$district)
+      #resp3.df$building <- FirstLetterCap_MultElements(resp3.df$building)
+      #resp3.df$district <- FirstLetterCap_MultElements(resp3.df$district)
       
     #School Level Variable
       #school.level.df <- 
@@ -389,41 +393,44 @@
       #    stringsAsFactors = FALSE) %>%
       #  mutate(school.id = paste(tolower(district.name),tolower(trimws(school.name, which = "both")),sep = "_"))
       
-      #resp2.df <- left_join(resp2.df,school.level.df %>% select(school.id, school.level), by = "school.id")
-      #resp2.df$building.level[is.na(resp2.df$building.level)] <- "Other"
-      #resp2.df$building.level[resp2.df$building.id == "belton 124_bosco"] <- "Other"
-      #resp2.df$building.level[resp2.df$building.id == "cameron r-i_cameron high school"] <- "High"
-      #resp2.df$building.level[resp2.df$building.id == "poplar bluff r-i_poplar bluff early childhood center"] <- "Elem."
-      #resp2.df$building.level[resp2.df$building.id == "poplar bluff r-i_poplar bluff technical career center"] <- "Other"
-      #resp2.df$building.level[resp2.df$building.id == "sheldon r-viii_sheldon k-12"] <- "Other"
-      #resp2.df$building.level <- FirstLetterCap_MultElements(resp2.df$building.level)
+      #resp3.df <- left_join(resp3.df,school.level.df %>% select(school.id, school.level), by = "school.id")
+      #resp3.df$building.level[is.na(resp3.df$building.level)] <- "Other"
+      #resp3.df$building.level[resp3.df$building.id == "belton 124_bosco"] <- "Other"
+      #resp3.df$building.level[resp3.df$building.id == "cameron r-i_cameron high school"] <- "High"
+      #resp3.df$building.level[resp3.df$building.id == "poplar bluff r-i_poplar bluff early childhood center"] <- "Elem."
+      #resp3.df$building.level[resp3.df$building.id == "poplar bluff r-i_poplar bluff technical career center"] <- "Other"
+      #resp3.df$building.level[resp3.df$building.id == "sheldon r-viii_sheldon k-12"] <- "Other"
+      #resp3.df$building.level <- FirstLetterCap_MultElements(resp3.df$building.level)
       
     #Capitalize First Letter of character variables
-      resp2.df[,names(resp2.df) %in% c("year","role","district","school","school.level")] <- 
-        apply(resp2.df[,names(resp2.df) %in% c("year","role","district","school","school.level")], 2, FirstLetterCap_MultElements)
+      resp3.df[,names(resp3.df) %in% c("year","role","district","school","school.level")] <- 
+        apply(resp3.df[,names(resp3.df) %in% c("year","role","district","school","school.level")], 2, FirstLetterCap_MultElements)
       
     
     #Rearrange data columns
-      resp2.df <- resp2.df[,   # CWIS response variables last, others first
-          c(which(!grepl("_", names(resp2.df))),
-            grep("_", names(resp2.df)))
+      resp3.df <- resp3.df[,   # CWIS response variables last, others first
+          c(which(!grepl("_", names(resp3.df))),
+            grep("_", names(resp3.df)))
         ]
       
-      resp2.df <-  resp2.df[, #Put "responseid" in first column
-                    c(grep("responseid", names(resp2.df)),which(!grepl("responseid", names(resp2.df))))
+      resp3.df <-  resp3.df[, #Put "responseid" in first column
+                    c(grep("responseid", names(resp3.df)),which(!grepl("responseid", names(resp3.df))))
                     ]
+    
+    #Remove rows with no district or building name
+      resp3.df <- resp3.df %>% filter(building.id != "_")
       
     ##########################################################################################################################################
     #Column Class Conversions
-      #resp2.df <- ColClassConvert(resp2.df)
+      #resp3.df <- ColClassConvert(resp3.df)
     
   #Add useful variables for analysis 
     
     #Useful vectors for selecting cwis answer variables
-      cwis.vars.v <- which(names(resp2.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$q.module.code)])
-      cwis.varnames.v <- names(resp2.df)[names(resp2.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$q.module.code)]]
+      cwis.vars.v <- which(names(resp3.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$module)])
+      cwis.varnames.v <- names(resp3.df)[names(resp3.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$module)]]
       cwis.modules.v <- 
-        questions.sem.df$q.module.code[!is.na(questions.sem.df$q.module.code)] %>% 
+        questions.sem.df$module[!is.na(questions.sem.df$module)] %>% 
         unique %>% 
         strsplit(.,"\\/") %>% 
         unlist %>% 
@@ -450,23 +457,23 @@
         }
         
       recode.ansopt.varnames.v <- 
-        which(resp2.df %>% 
+        which(resp3.df %>% 
         apply(., 2, unique) %>%
         sapply(., function(x) {x %in% c("always","most of the time","about half the time","sometimes","never","strongly agree","agree","neutral","disagree","strongly disagree")}) %>%
         sapply(., any)) %>%
-        names(resp2.df)[.]
+        names(resp3.df)[.]
 
       num.ansopt.vars.df <- 
-        apply(resp2.df[,names(resp2.df) %in% recode.ansopt.varnames.v], 
+        apply(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v], 
           2,
           numeric.recode.fun
         ) %>% as.data.frame
       
-      names(num.ansopt.vars.df) <- paste(names(resp2.df[,names(resp2.df) %in% recode.ansopt.varnames.v]),"_num", sep = "")
+      names(num.ansopt.vars.df) <- paste(names(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v]),"_num", sep = "")
     
     #Create 'implementation' binary variables
       binary.ansopt.vars.df <- apply(num.ansopt.vars.df,c(1:2),function(x){ifelse(x >= 3.5,1,0)}) %>% as.data.frame
-      names(binary.ansopt.vars.df) <- paste(names(resp2.df[,names(resp2.df) %in% recode.ansopt.varnames.v]),"_binary",sep = "")
+      names(binary.ansopt.vars.df) <- paste(names(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v]),"_binary",sep = "")
       
 
 #FUN  #Function to apply to columns to be converted into binary implementation
@@ -491,9 +498,9 @@
         }
       
       #Convert numeric variables in original data to numeric
-        resp2.df[,names(resp2.df) %in% numeric.varnames.v(resp2.df)] <-
+        resp3.df[,names(resp3.df) %in% numeric.varnames.v(resp3.df)] <-
           apply(
-            resp2.df[,names(resp2.df) %in% numeric.varnames.v(resp2.df)],
+            resp3.df[,names(resp3.df) %in% numeric.varnames.v(resp3.df)],
             c(1:2),
             as.numeric
           )
@@ -501,8 +508,8 @@
       #Converting Slider variables to binary (according to different max/min/thresholds)
         
         slider.vars.df <- 
-          resp2.df[,
-            names(resp2.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$var.min)]
+          resp3.df[,
+            names(resp3.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$var.min)]
           ]
         
         slider.vars.ls <- list()
@@ -526,11 +533,11 @@
           paste(names(slider.vars.df),"_binary",sep="")
       
     #Create final data frames: 1. Wide; 2. Long for original CWIS data; 3. Long for impbinary data (both long include all original id variables)
-      resp.wide.df <- cbind(resp2.df, num.ansopt.vars.df, binary.ansopt.vars.df, binary.slider.vars.df)
+      resp.wide.df <- cbind(resp3.df, num.ansopt.vars.df, binary.ansopt.vars.df, binary.slider.vars.df)
       resp.long.df <- 
         melt(
           data = resp.wide.df,
-          id.vars = "responseid",
+          id.vars = names(resp.wide.df)[!grepl("q[0-9]",names(resp.wide.df))],
           variable.name = "question",
           value.name = "answer",
           stringsAsFactors = FALSE
@@ -540,10 +547,11 @@
     #Creating additional useful variables for long data frames
       
       #Variable for module
+        resp.long.df$q.original <- str_extract(resp.long.df$question, "q[0-9]*_[0-9]")
         resp.long.df <- 
           left_join(
             resp.long.df, 
-            questions.unbranched.df[,names(questions.unbranched.df) %in% c("row.1","q.module.code")], 
+            questions.unbranched.df[,names(questions.unbranched.df) %in% c("row.1","module")], 
             by = c("question" = "row.1")
           )  
      
@@ -585,57 +593,74 @@
 #{ #SECTION COLLAPSE BRACKET
   
   #Report Unit Selection
-    school.ids <- "all"
-    if(tolower(school.ids) %in% "all" %>% any){
-      school.ids <- dat.wide.df$district[order(dat.wide.df$district)] %>% unique
+    report.unit <- "building" #can be either "building" or "district"
+    report.ids <- "all"
+    
+    if(!report.unit %in% c("building","district")){
+      stop("Report unit must be either 'building' or 'district.'")
+    }
+    
+    if(report.unit == "building"){
+      report.id.colname <- "building.id"
+    }else{
+      report.id.colname <- "district"
+    }
+    
+    report.id.col <- resp.wide.df[,names(resp.wide.df) == report.id.colname]
+    
+    if(tolower(report.ids) %in% "all" %>% any){
+      report.ids <- report.id.col[order(report.id.col)] %>% unique
     }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
-    dat.wide.df %>% 
-      group_by(district,school.level) %>% 
-      dplyr::summarize(num.responding.schools = length(unique(school))) %>% as.data.frame()  #Check how many schools in each district
-      
-    # Load Graph & Slide Type Config Tables
-      setwd(rproj.dir)
-      
-      config.slidetypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE)
-      load.config.graphtypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE)
-      
-      config.graphtypes.df <- SplitColReshape.ToLong(config.slidetypes.df, id.var = "slide.type.id",split.varname = "slide.graph.type",split.char = ",") %>%
-        left_join(., load.config.graphtypes.df, by = c("slide.graph.type" = "graph.type.id")) %>% 
-        filter(!is.na(slide.graph.type))
-      config.graphtypes.df <- config.graphtypes.df[,grep("slide.type.id|loop|data|graph|height|width|offx|offy",names(config.graphtypes.df))]
     
-    # Expand Graph & Slide Config Tables for each district according to looping variables
-      
-      ###                       ###    
-#     ### LOOP "b" BY DISTRICT  ###
-      ###                       ###
-      
-    # Loop Outputs 
-      config.graphs.ls.b <- list()
-      config.slides.ls.b <- list()
+  #Load Graph & Slide Type Config Tables
+    setwd(source.dir)
     
-    # Progress bar for loop
-      progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
-      maxrow.b <- length(school.ids)
+    config.slidetypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE)
+    load.config.graphtypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE)
+    
+    config.graphtypes.df <- SplitColReshape.ToLong(config.slidetypes.df, id.var = "slide.type.id",split.varname = "slide.graph.type",split.char = ",") %>%
+      left_join(., load.config.graphtypes.df, by = c("slide.graph.type" = "graph.type.id")) %>% 
+      filter(!is.na(slide.graph.type))
+    
+    config.graphtypes.df <- config.graphtypes.df[,grep("slide.type.id|loop|data|graph|height|width|offx|offy",names(config.graphtypes.df))]
+  
+  #Expand Graph & Slide Config Tables for each district according to looping variables
+    
+    ###                       ###    
+#   ### LOOP "b" BY DISTRICT  ###
+    ###                       ###
+    
+  #Loop Outputs 
+    config.graphs.ls.b <- list()
+    config.slides.ls.b <- list()
+  
+  #Progress bar for loop
+    progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
+    maxrow.b <- length(report.ids)
+    
+  b <- 1 #LOOP TESTER (19 = "Raytown C-2")
+  #for(b in c(1,2)){   #LOOP TESTER
+  #for(b in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
+    
+    loop.start.time.b <- Sys.time()
+    if(b == 1){print("FORMING GRAPH & SLIDE CONFIG TABLES...")}
+    #print(c(b,100*b/length(report.ids)))
+    
+    # Create data frames for this loop - restrict to district id i
+      report.id.b <- report.ids[b]
+      resp.long.df.b <- resp.long.df %>% select(names(resp.long.df)[names(resp.long.df) == report.id.colname]) %>% equals(report.id.b) %>% resp.long.df[.,]
+      #print(head(resp.long.df.b))
       
-    #b <- 2 #LOOP TESTER (19 = "Raytown C-2")
-    #for(b in c(1,2)){   #LOOP TESTER
-    for(b in 1:length(school.ids)){   #START OF LOOP BY DISTRICT
+#FUN#Loop Expander Function (for creating full config tables) 
+      #Function input testers
+        configs = config.graphtypes.df
+        loop.varname = "slide.loop.var" 
+        source.data = resp.long.df.b  
       
-      loop.start.time.b <- Sys.time()
-      if(b == 1){print("FORMING GRAPH & SLIDE CONFIG TABLES...")}
-      #print(c(b,100*b/length(school.ids)))
-      
-      # Create data frames for this loop - restrict to district id i
-        school.id.b <- school.ids[b]
-        resp.long.df.b <- resp.long.df[resp.long.df$district == school.id.b,]
-        #print(head(resp.long.df.b))
-        
-#FUN  #Loop Expander Function (for creating full config tables)  
       loop.expander.fun <- function(configs, loop.varname, intersperse.varname, source.data){
         output.ls <- list()
         
-        #c = 1 #LOOP TESTER: NO LOOPS
+        #c = 2 #LOOP TESTER: NO LOOPS
         #c = 3 #LOOP TESTER: ONE LOOP VAR
         #c = 8 #LOOP TESTER: TWO LOOP VARS
         #for(c in 1:3){
@@ -643,7 +668,7 @@
         
           c.list.c <- list(c=c)
           
-          #Make data frame with configurations repeated out across all unique combinations of loop.varname in source.data      
+          #Make data frame with configurations repeated out across all unique combinations of loop.varname(s) in source.data      
             slide.loop.vars.c <- configs[c,names(configs)==loop.varname] %>% strsplit(., ",") %>% unlist %>% trimws(., which = "both")
             
             if(any(is.na(slide.loop.vars.c))){
@@ -651,9 +676,20 @@
             }
             
             if(any(!is.na(slide.loop.vars.c))){
-          
+      
+#FUN        #Function to remove "NA" from a vector
+              remove.na.from.vector <- function(x){
+                if(!is.null(dim(x))){stop("Input must be a vector.")}
+                  result <- x[!is.na(x)]
+                  return(result)
+              }
+              
               loop.unique.df <- 
                 source.data[names(source.data) %in% slide.loop.vars.c] %>% 
+                lapply(., unique) %>%
+                lapply(., remove.na.from.vector) %>%
+                lapply(., function(x) {strsplit(x, ",")}) %>%
+                lapply(., unlist) %>%
                 lapply(., unique) %>%
                 expand.grid(., stringsAsFactors = FALSE) %>%
                 as.data.frame #unique items for each loop that will specify graph (e.g. school name)
@@ -720,42 +756,43 @@
       }
 
 #FUN  #Replace NAs in a vector with a replacement value
-      na.sub <- function(vector,na.replacement){
-        vector[is.na(vector)] <- na.replacement
-        return(vector)
-      }       
+    na.sub <- function(vector,na.replacement){
+      vector[is.na(vector)] <- na.replacement
+      return(vector)
+    }       
 
 #FUN  #School-level slides should not include an iteration for the District Office 
-      remove.district.office.fun <- function(x){
-        x[!(grepl("school", x$slide.loop.var) & (x$school %>% na.sub(.,"")) == "District Office"),]
-      }
+    remove.district.office.fun <- function(x){
+      x[!(grepl("school", x$slide.loop.var) & (x$school %>% na.sub(.,"")) == "District Office"),]
+    }
 
-      config.graphs.df <- 
-        loop.expander.fun(
-          configs = config.graphtypes.df, 
-          loop.varname = "slide.loop.var", 
-          source.data = resp.long.df.b
-        )
-      
-      config.graphs.ls.b[[b]] <- config.graphs.df %>% remove.district.office.fun(.)
-      
-      config.slides.df <- 
-        loop.expander.fun(
-          configs <- config.slidetypes.df, 
-          loop.varname <- "slide.loop.var",
-          intersperse.varname = "slide.type.position",
-          source.data = resp.long.df.b)
-      config.slides.ls.b[[b]] <- config.slides.df %>% remove.district.office.fun(.)
-      
-      setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
-
-    } # END OF LOOP 'b' BY DISTRICT
-    close(progress.bar.b)
+    config.graphs.df <- 
+      loop.expander.fun(
+        configs = config.graphtypes.df, 
+        loop.varname = "slide.loop.var", 
+        source.data = resp.long.df.b
+      )
+    #!NEED TO DO THE SAME THING FOR TABLES
     
+    config.graphs.ls.b[[b]] <- config.graphs.df %>% remove.district.office.fun(.)
+    
+    config.slides.df <- 
+      loop.expander.fun(
+        configs <- config.slidetypes.df, 
+        loop.varname <- "slide.loop.var",
+        intersperse.varname = "slide.type.position",
+        source.data = resp.long.df.b)
+    config.slides.ls.b[[b]] <- config.slides.df %>% remove.district.office.fun(.)
+    
+    setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
+
+  } # END OF LOOP 'b' BY DISTRICT
+  close(progress.bar.b)
+  
 } # END SECTION COLLAPSE BRACKET
     
 #OUTPUTS:
-  #school.ids: vector with all district names in resp.long.df (length = 19 for baseline data)
+  #report.ids: vector with all district names in resp.long.df (length = 19 for baseline data)
   #config.graphs.ls.b
     #[[district]]
       #data frame where each line represents a graph
@@ -782,11 +819,11 @@
   
   #c <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(c in c(1,2)){   #LOOP TESTER
-  for(c in 1:length(school.ids)){   #START OF LOOP BY DISTRICT
+  for(c in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
     if(c == 1){print("Forming input data tables for graphs...")}
                                     
-    resp.long.df.c <- resp.long.df[resp.long.df$district == school.ids[c],]
-    school.id.c <- school.ids[c]
+    resp.long.df.c <- resp.long.df[resp.long.df$district == report.ids[c],]
+    school.id.c <- report.ids[c]
     config.graphs.df.c <- config.graphs.ls.b[[c]]
     graphdata.ls.d <- list()
     
@@ -995,10 +1032,10 @@ close(progress.bar.c)
   
   #f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  for(f in 1:length(school.ids)){
+  for(f in 1:length(report.ids)){
     
     if(f == 1){print("FORMING GRAPHS IN GGPLOT...")}
-    school.id.f <- school.ids[f]
+    school.id.f <- report.ids[f]
     config.graphs.df.f <- config.graphs.ls.b[[f]]
     
     ###                       ###    
@@ -1206,7 +1243,7 @@ close(progress.bar.c)
             ans.text.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
           )
         
-        #When graphs are car as opposed to columns, have to reverse order because the coord_flip() command does a mirror image
+        #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() command does a mirror image
         if(config.graphs.df.g$graph.type.orientation == "bar"){
           graph.order.g <- graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% rev)
         }else{
@@ -1306,7 +1343,7 @@ close(progress.bar.c)
         target.path.h <- paste(target.dir,
                                   "/",
                                   "CWIS Report_",
-                                  school.ids[h],
+                                  report.ids[h],
                                   "_",
                                   gsub(":",".",Sys.time()),
                                   ".pptx", sep="") 
