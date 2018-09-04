@@ -110,7 +110,7 @@
     }
     
 #FUN #Find most recently modified file in a directory    
-    most.recently.modified.file <- function(title.string.match, file.type, dir){
+    most.recently.modified.filename.fun <- function(title.string.match, file.type, dir){
       match.files.v <-
         list.files()[
           grepl(tolower(title.string.match), tolower(list.files())) &  #match title string
@@ -130,7 +130,7 @@
     #Responses table (main data, imported as data frame)
       resp1.df <- read.csv(
         file =  
-          most.recently.modified.file(
+          most.recently.modified.filename.fun(
             title.string.match = "CWIS",
             file.type = "csv",
             dir = source.dir
@@ -617,12 +617,17 @@
     
     config.slidetypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE)
     load.config.graphtypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE)
+    load.config.tabletypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE)
     
     config.graphtypes.df <- SplitColReshape.ToLong(config.slidetypes.df, id.var = "slide.type.id",split.varname = "slide.graph.type",split.char = ",") %>%
       left_join(., load.config.graphtypes.df, by = c("slide.graph.type" = "graph.type.id")) %>% 
       filter(!is.na(slide.graph.type))
     
-    config.graphtypes.df <- config.graphtypes.df[,grep("slide.type.id|loop|data|graph|height|width|offx|offy",names(config.graphtypes.df))]
+    config.tabletypes.df <- SplitColReshape.ToLong(config.slidetypes.df, id.var = "slide.type.id",split.varname = "slide.table.type",split.char = ",") %>%
+      left_join(., load.config.tabletypes.df, by = c("slide.table.type" = "table.type.id")) %>% 
+      filter(!is.na(slide.table.type))
+    
+    #config.graphtypes.df <- config.graphtypes.df[,grep("slide.type.id|loop|data|graph|height|width|offx|offy",names(config.graphtypes.df))]
   
   #Expand Graph & Slide Config Tables for each district according to looping variables
     
@@ -632,32 +637,52 @@
     
   #Loop Outputs 
     config.graphs.ls.b <- list()
+    config.tables.ls.b <- list()
     config.slides.ls.b <- list()
   
   #Progress bar for loop
     progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.b <- length(report.ids)
     
-  b <- 1 #LOOP TESTER (19 = "Raytown C-2")
+  #b <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
-  #for(b in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
-    
+  for(b in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
+    print(b)
     loop.start.time.b <- Sys.time()
     if(b == 1){print("FORMING GRAPH & SLIDE CONFIG TABLES...")}
     #print(c(b,100*b/length(report.ids)))
     
-    # Create data frames for this loop - restrict to district id i
+    #Create report.id.b (for this iteration) and skip if report for district office
       report.id.b <- report.ids[b]
-      resp.long.df.b <- resp.long.df %>% select(names(resp.long.df)[names(resp.long.df) == report.id.colname]) %>% equals(report.id.b) %>% resp.long.df[.,]
+      
+      if(report.unit != "district" & !grepl("district office", report.id.b)){
+        print(b)
+        print("Report unit is 'building' and the report.id for this loop does not contain 'district office.' Returning input with no changes.")
+      }
+      
+      if(report.unit != "district" & grepl("district office", report.id.b)){
+        print(b)
+        print("Report unit is 'building' and the report.id for this loop contains 'district office.' Skipping to next loop")
+        next()
+      }
+      
+      
+    #Create data frames for this loop - restrict to district id i  
+      resp.long.df.b <- 
+        resp.long.df %>% 
+        select(names(resp.long.df)[names(resp.long.df) == report.id.colname]) %>% 
+        equals(report.id.b) %>% 
+        resp.long.df[.,]
       #print(head(resp.long.df.b))
       
 #FUN#Loop Expander Function (for creating full config tables) 
       #Function input testers
-        configs = config.graphtypes.df
-        loop.varname = "slide.loop.var" 
+        configs = config.slidetypes.df
+        loop.varname = "slide.loop.var"
+        collate.varname = "slide.type.position"
         source.data = resp.long.df.b  
       
-      loop.expander.fun <- function(configs, loop.varname, intersperse.varname, source.data){
+      loop.expander.fun <- function(configs, loop.varname, collate.varname, source.data){
         output.ls <- list()
         
         #c = 2 #LOOP TESTER: NO LOOPS
@@ -712,48 +737,149 @@
         
         output.df <- rbind.fill(output.ls) %>% mutate(row.id = row.names(.))
         
-        #Intersperse section titles: 
-          if(!missing(intersperse.varname)){
-            
-            #for each unique slide.type.id meeting these conditions:
-              #select lines with only that unique slide.type.id
-              #slide.type.position == slide.type.position of previously selected lines + 1
-            #order by variable that has same name as slide.loop.var (e.g. 'school')
-            #re-attach to original data.frame
-          
-            #Name of loop variable (will be used to order data-frame in b-loop)
-              loop.var.b <- output.df[output.df$slide.layout == "section" & !is.na(output.df$slide.loop.var),] %>%
-                select(slide.loop.var) %>%
-                unlist %>%
-                unique 
-            
-            #Slide Type IDs that need to be interspersed
-              loop.index.b <- output.df[output.df$slide.layout == "section" & !is.na(output.df$slide.loop.var),] %>% 
-                select(slide.type.position) %>% 
-                unique
-            
-            #Separate out lines of output.df where: slide.layout == "section" && !is.na(slide.loop.var)
-              intersperse.df <- output.df[output.df$slide.type.position %in% c(loop.index.b,loop.index.b+1),]
-              non.intersperse.df <- output.df[!(output.df$row.id %in% intersperse.df$row.id),]
-            intersperse.ls <- list()
-    
-            #b=1 #LOOP TESTER
-            for(b in 1:length(loop.index.b)){
-              intersperse.df.b <-  output.df[output.df$slide.type.position %in% c(loop.index.b[b],loop.index.b[b]+1),]
-              intersperse.df.b <- intersperse.df.b[order(intersperse.df.b[,names(intersperse.df.b) == loop.var.b]),] %>%
-                mutate(row.id = paste(b,".",1:dim(.)[1],sep = ""))
-              intersperse.ls[[b]] <- intersperse.df.b
+        #Collate Report Sub-Sections 
+          if(!missing(collate.varname)){
+#FUN        #Function: check which elements in a vector are different from the one before and return position of spots where values change
+            vector.value.change.positions.fun <- function(x){
+              check.mtx <-
+                cbind(
+                  x[1:length(x)-1],
+                  x[2:length(x)]
+                )
+              check.mtxl <- matrix(nrow = nrow(check.mtx),ncol=ncol(check.mtx))
+              for(i in 1:dim(check.mtx)[1]){
+                
+                check.mtx.i <- check.mtx[i,]
+                
+                if(any(is.na(check.mtx.i))){
+                  check.mtxl[i,] <- is.na(check.mtx.i)
+                }else{
+                  check.mtxl[i,] <- check.mtx.i[1] == check.mtx.i[2]
+                }
+              }
+              value.change.positions <- c(1,which(apply(check.mtxl,1,function(x){unlist(x[1]!=x[2])})),length(x))
+              value.change.positions
+              value.change.positions + 1
+              
+              result.ls <- list()
+              for(j in 1:(length(value.change.positions)-1)){
+                result.ls[[j]] <- 
+                  data.frame(
+                    start.position = ifelse(j == 1, 1, value.change.positions[j]+1), 
+                    end.position = value.change.positions[j+1]
+                  )
+              }
+              
+              result <- 
+                cbind(
+                  section.id = c(1:length(result.ls)),
+                  do.call(rbind, result.ls)
+                )
+              
+              return(result)
             }
             
-              #! This function still not ready to handle more than one set of interspersed titles because would need to figure out how to order 
-              #! list elements and non-interspersed slides by slide.type.position. Right now will do fine as long as all interspersed lines are at
-              #! the end of the expanded config table (but not if there are non-interspersed variables that come below any interspersed vars in the
-              #! config table).
-              output.df <- rbind(non.intersperse.df,rbind.fill(intersperse.ls))
+          #Form inputs for collating loop: list with sections (collated and non-colated, in order) 
+            collate.section.configs.df <- vector.value.change.positions.fun(output.df$slide.loop.collate.section)
+            collate.ls <- list()
+            for(e in 1:nrow(collate.section.configs.df)){
+              collate.ls[[e]] <- output.df[collate.section.configs.df$start.position[e]:collate.section.configs.df$end.position[e],]
+            }
+            
+          ###                                          ###
+          # Start of loop 'd' by collated report section #
+          ###                                          ###
+            
+          #The following loop takes as input the list of report slides which have just been broken up into an ordered list of
+            #collated and non-collated sections. For sections requiring collation, it will replace the list element with the
+            #collated version of the slide configurations.
+            
+            #d = 2 #LOOP TESTER
+            for(d in 1:length(collate.ls)){  
+              #for each unique report section:
+                #if it doesn't require collation, do nothing
+                #select lines of output.df with only that unique slide.loop.collate.section
+                #order by looping variable that has same name as slide.loop.var (e.g. 'school') AND by slide.type.position
+                #store in list (to be re-attached) to non-collated sections and other collated sections
               
-          }
+              #Section id to collate for this iteration
+                collate.input.df.d <- collate.ls[[d]]
+                
+              #Skip iteration of no collation/re-ordering necessary
+                if(unique(is.na(collate.input.df.d$slide.loop.collate.section))){
+                  next()
+                }
+              
+              #Name of loop variable (will be used to order data-frame in b-loop)
+                #!REQUIRES: "slide.layout" VARIABLE MUST HAVE "divider" IN NAME SOMEWHERE - DESIGNATES SECTION HEADER 
+                loop.var.d <- collate.input.df.d %>%
+                  select(slide.loop.var) %>%
+                  unlist %>%
+                  unique 
+                
+              #Check that all necessary configs have been filled in 
+                #check.section.mtx <-
+                #  collate.input.df.d %>% 
+                #  select(slide.loop.var, slide.loop.collate.section, matches(loop.var.d)) %>%
+                #  apply(., c(2), function(x) {which(is.na(x))})
+                
+                #if(!all(check.section.mtx[,1] == check.section.mtx)){
+                #  print(d)
+                #  print(check.section.mtx)
+                #  print(check.section.mtx[,1] == check.section.mtx)
+                #  stop(
+                #    paste(
+                #      "Attempting to collate slides into sections due to non-missing 'collate.varname': ",
+                #      collate.varname,
+                #      "Configurations appear to be entered with some missing information. See above."
+                #    )
+                #  )
+                #}else{} 
+                  
+                
+              #Slide Type IDs that need to be collated
+                #loop.index.d <- output.df[grepl("divider", tolower(output.df$slide.layout)) & !is.na(output.df$slide.loop.var),] %>% 
+                #  select(slide.type.position) %>% 
+                #  unique
+              
+              #Separate out lines of output.df where: slide.layout == "section" && !is.na(slide.loop.var)
+                #collated.df.d <- 
+                #  collate.input.df.d[
+                #    collate.input.df.d$slide.loop.collate.section == collate.section.d & 
+                #    !is.na(output.df$slide.loop.var)
+                #  ,]
+                
+                collate.ls[[d]] <- 
+                  collate.input.df.d[
+                    order(
+                      collate.input.df.d %>% select(matches(loop.var.d)), 
+                      collate.input.df.d$slide.type.position
+                    )
+                  ,]
+         
+              #b=1 #LOOP TESTER
+              #for(b in 1:length(loop.index.d)){
+              #  collate.df.d <-  output.df[output.df$slide.type.position %in% c(loop.index.d[b],loop.index.d[b]+1),]
+              #  collate.df.d <- collate.df.d[order(collate.df.d[,names(collate.df.d) == loop.var.d]),] %>%
+              #    mutate(row.id = paste(b,".",1:dim(.)[1],sep = ""))
+              #  collate.ls[[b]] <- collate.df.d
+              #}
+              
+                #! This function still not ready to handle more than one set of collated titles because would need to figure out how to order 
+                #! list elements and non-collated slides by slide.type.position. Right now will do fine as long as all collated lines are at
+                #! the end of the expanded config table (but not if there are non-collated variables that come below any collated vars in the
+                #! config table).
+              #non.collate.before.df <- output.df[!(output.df$row.id %in% collate.df$row.id),]
+              #output.df <- rbind(non.collate.df,rbind.fill(collate.ls))
+            
+              } #END OF LOOP "d" BY COLLATED SECTION
+            output.df <- do.call(rbind, collate.ls)
+        
+            } #END OF 'IF' STATEMENT FOR WHEN SOME REPORT SECTIONS REQUIRE COLLATING
+        
         return(output.df)
-      }
+        
+      } #END OF LOOP EXPANDER FUNCTION
 
 #FUN  #Replace NAs in a vector with a replacement value
     na.sub <- function(vector,na.replacement){
@@ -763,26 +889,55 @@
 
 #FUN  #School-level slides should not include an iteration for the District Office 
     remove.district.office.fun <- function(x){
-      x[!(grepl("school", x$slide.loop.var) & (x$school %>% na.sub(.,"")) == "District Office"),]
+      if(report.unit != "district" & !grepl("district office", report.id.b)){
+        
+        print("Report unit is 'building' and the report.id for this loop does not contain 'district office.' Returning input with no changes.")
+        return(x)
+      }
+      
+      if(report.unit != "district" & grepl("district office", report.id.b)){
+        
+        print("Report unit is 'building' and the report.id for this loop contains 'district office.' Skipping to next loop")
+        return(x)
+      }
+      
+      if(report.unit == "district"){
+        x[!(grepl("school", x$slide.loop.var) & (x$school %>% na.sub(.,"")) == "District Office"),] %>% 
+          return(.)
+      }
     }
-
-    config.graphs.df <- 
-      loop.expander.fun(
-        configs = config.graphtypes.df, 
-        loop.varname = "slide.loop.var", 
-        source.data = resp.long.df.b
-      )
-    #!NEED TO DO THE SAME THING FOR TABLES
     
-    config.graphs.ls.b[[b]] <- config.graphs.df %>% remove.district.office.fun(.)
+    #Graphs config table for this report unit
+      config.graphs.df <- 
+        loop.expander.fun(
+          configs = config.graphtypes.df, 
+          loop.varname = "slide.loop.var", 
+          source.data = resp.long.df.b
+        )
     
-    config.slides.df <- 
-      loop.expander.fun(
-        configs <- config.slidetypes.df, 
-        loop.varname <- "slide.loop.var",
-        intersperse.varname = "slide.type.position",
-        source.data = resp.long.df.b)
-    config.slides.ls.b[[b]] <- config.slides.df %>% remove.district.office.fun(.)
+      config.graphs.ls.b[[length(config.graphs.ls.b)+1]] <- remove.district.office.fun(config.graphs.df)
+    
+    #Tables config table for this report unit
+      config.tables.df <-
+        loop.expander.fun(
+          configs = config.tabletypes.df, 
+          loop.varname = "slide.loop.var", 
+          source.data = resp.long.df.b
+        )
+      
+      config.tables.ls.b[[length(config.tables.ls.b)+1]] <- remove.district.office.fun(config.tables.df)
+    
+    #Slide config table for this report unit
+      config.slides.df <- 
+        loop.expander.fun(
+          configs = config.slidetypes.df, 
+          loop.varname = "slide.loop.var",
+          collate.varname = "slide.type.position",
+          source.data = resp.long.df.b
+        )
+      
+      config.slides.ls.b[[length(config.slides.ls.b)+1]] <- remove.district.office.fun(config.slides.df)
+      
     
     setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
 
