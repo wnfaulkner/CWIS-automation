@@ -655,14 +655,7 @@
     #Create report.id.b (for this iteration) and skip if report for district office
       report.id.b <- report.ids[b]
       
-      if(report.unit != "district" & !grepl("district office", report.id.b)){
-        #print(b)
-        #print("Report unit is 'building' and the report.id for this loop does not contain 'district office.' Returning input with no changes.")
-      }
-      
       if(report.unit != "district" & grepl("district office", report.id.b)){
-        #print(b)
-        #print("Report unit is 'building' and the report.id for this loop contains 'district office.' Skipping to next loop")
         next()
       }
       
@@ -909,7 +902,7 @@
 ########################################################################################################################################################      
 ### PRODUCING GRAPH DATA ###
 
-{# SECTION COLLAPSE BRACKET
+#{# SECTION COLLAPSE BRACKET
      
 ###                       ###    
 ### LOOP "c" BY DISTRICT  ###
@@ -923,23 +916,31 @@
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% .[1,] %>% sum
   
-  #c <- 1 #LOOP TESTER (19 = "Raytown C-2")
+  c <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(c in c(1,2)){   #LOOP TESTER
-  for(c in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
+  #for(c in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
+    
     if(c == 1){print("Forming input data tables for graphs...")}
-                                    
-    resp.long.df.c <- resp.long.df[resp.long.df$district == report.ids[c],]
-    school.id.c <- report.ids[c]
+    
+    report.id.c <- report.ids[c]                               
+    
+    resp.long.df.c <- 
+      resp.long.df %>% 
+      select(names(resp.long.df)[names(resp.long.df) == report.id.colname]) %>% 
+      equals(report.id.b) %>% 
+      resp.long.df[.,]
+    
     config.graphs.df.c <- config.graphs.ls.b[[c]]
+    
     graphdata.ls.d <- list()
     
     ###                    ###
 #   ### LOOP "d" BY GRAPH  ###
     ###                    ###
     
-    #d <- 13
+    d <- 1
     #for(d in 1:2){ #LOOP TESTER
-    for(d in 1:dim(config.graphs.df.c)[1]){
+    #for(d in 1:dim(config.graphs.df.c)[1]){
       
       config.graphs.df.d <- config.graphs.df.c[d,]
       
@@ -951,7 +952,7 @@
         
         all.cats.d <- resp.long.df %>%
           filter( resp.long.df$impbinary == 0 ) %>%
-          .[,names(resp.long.df) == config.graphs.df.d$graph.cat.varname] %>% 
+          .[,names(resp.long.df) == config.graphs.df.d$data.group.by.var] %>% 
           as.data.frame(., stringsAsFactors = FALSE) %>% 
           apply(., 2, function(x){x[!is.na(x)] %>% unique}) %>%
           as.data.frame(., stringsAsFactors = FALSE) %>%
@@ -1033,7 +1034,7 @@
           if(config.graphs.df.d$data.level == "school"){
             y <- 
               x %>% 
-              filter(district == school.id.c) 
+              filter(district == report.id.c) 
           }
           
           if(!config.graphs.df.d$data.restriction=="module" | is.na(config.graphs.df.d$data.restriction)){ #!Should look into a better way to deal with this restriction
