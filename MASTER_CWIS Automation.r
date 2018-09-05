@@ -104,7 +104,7 @@
 
   #Read data files
 
-#FUN #Select right 'n' characters of string
+#FUN #Function: Select right 'n' characters of string
     substrRight <- function(x, n){
       substr(x, nchar(x)-n+1, nchar(x))
     }
@@ -166,7 +166,7 @@
       #names(resp1.df)[names(resp1.df) == "id"] <- "responseid"
       
       #Variable renaming of important variables
-#FUN  #Function 'multiple gsub' to find/replace multiple patterns in a vector
+#FUN  #Function: 'multiple gsub' to find/replace multiple patterns in a vector
       mgsub <- function(pattern, replacement, x, ...) {
         n = length(pattern)
         print(cbind(pattern,replacement))
@@ -190,7 +190,7 @@
     
     #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
       
-#FUN #Function to output number of times specified substring occurs within vector of character strings
+#FUN #Function: output number of times specified substring occurs within vector of character strings
       num.substring.matches <- 
         function(pattern, vector){
           sapply( gregexpr( pattern, as.character(vector)),
@@ -476,13 +476,13 @@
       names(binary.ansopt.vars.df) <- paste(names(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v]),"_binary",sep = "")
       
 
-#FUN  #Function to apply to columns to be converted into binary implementation
+#FUN  #Function: apply to columns to be converted into binary implementation
       #binary.recode.fun <- function(vector, binary.cutoff){
       #  result <- ifelse(vector >= binary.cutoff, 1, 0)
       #  return(result)
       #}
 
-#FUN  #Function to output variable names in data frame which can be converted to numeric       
+#FUN  #Function: output variable names in data frame which can be converted to numeric       
       numeric.varnames.v <-
         function(data.frame){
           result <- 
@@ -551,7 +551,7 @@
         resp.long.df <- 
           left_join(
             resp.long.df, 
-            questions.unbranched.df[,names(questions.unbranched.df) %in% c("row.1","module")], 
+            questions.unbranched.df[,names(questions.unbranched.df) %in% c("row.1","module","practice")], 
             by = c("question" = "row.1")
           )  
      
@@ -667,12 +667,12 @@
         resp.long.df[.,]
       #print(head(resp.long.df.b))
       
-#FUN#Loop Expander Function (for creating full config tables) 
+#FUN#Function: Loop Expander for creating full config tables
       #Function input testers
-        configs = config.slidetypes.df
-        loop.varname = "slide.loop.var"
-        collate.varname = "slide.type.position"
-        source.data = resp.long.df.b  
+        #configs = config.slidetypes.df
+        #loop.varname = "slide.loop.var"
+        #collate.varname = "slide.type.position"
+        #source.data = resp.long.df.b  
       
       loop.expander.fun <- function(configs, loop.varname, collate.varname, source.data){
         output.ls <- list()
@@ -694,13 +694,6 @@
             
             if(any(!is.na(slide.loop.vars.c))){
       
-#FUN        #Function to remove "NA" from a vector
-              remove.na.from.vector <- function(x){
-                if(!is.null(dim(x))){stop("Input must be a vector.")}
-                  result <- x[!is.na(x)]
-                  return(result)
-              }
-              
               loop.unique.df <- 
                 source.data[names(source.data) %in% slide.loop.vars.c] %>% 
                 lapply(., unique) %>%
@@ -827,13 +820,13 @@
         
       } #END OF LOOP EXPANDER FUNCTION
 
-#FUN  #Replace NAs in a vector with a replacement value
+#FUN#Function: Replace NAs in a vector with a replacement value
     na.sub <- function(vector,na.replacement){
       vector[is.na(vector)] <- na.replacement
       return(vector)
     }       
 
-#FUN  #School-level slides should not include an iteration for the District Office 
+#FUN#Function: School-level slides should not include an iteration for the District Office 
     remove.district.office.fun <- function(x){
       if(report.unit != "district" & !grepl("district office", report.id.b)){
         #print("Report unit is 'building' and the report.id for this loop does not contain 'district office.' Returning input with no changes.")
@@ -904,9 +897,9 @@
 
 #{# SECTION COLLAPSE BRACKET
      
-###                       ###    
-### LOOP "c" BY DISTRICT  ###
-###                       ###
+###                          ###    
+### LOOP "c" BY REPORT UNIT  ###
+###                          ###
       
   # Loop outputs
     graphdata.ls.c <- list()
@@ -938,9 +931,9 @@
 #   ### LOOP "d" BY GRAPH  ###
     ###                    ###
     
-    d <- 1
+    #d <- 1
     #for(d in 1:2){ #LOOP TESTER
-    #for(d in 1:dim(config.graphs.df.c)[1]){
+    for(d in 1:dim(config.graphs.df.c)[1]){
       
       config.graphs.df.d <- config.graphs.df.c[d,]
       
@@ -950,23 +943,49 @@
       
       #Create data frame "all.cats.df.e" of all possible answers for x-axis (role, module, year, answer)
         
-        all.cats.d <- resp.long.df %>%
-          filter( resp.long.df$impbinary == 0 ) %>%
-          .[,names(resp.long.df) == config.graphs.df.d$data.group.by.var] %>% 
-          as.data.frame(., stringsAsFactors = FALSE) %>% 
-          apply(., 2, function(x){x[!is.na(x)] %>% unique}) %>%
-          as.data.frame(., stringsAsFactors = FALSE) %>%
-          .[,1]
+        #!
+        #1. EVENTUALLY WILL NEED TO GENERALIZE THIS FUNCTION SO CAN TAKE AN ARBITRARY NUMBER OF CATEGORIES AS INPUT
+        #   RIGHT NOW CAN ONLY TAKE TWO AND ONE OF THEM MUST BE 'YEAR,' AND THAT NOT EVEN IN CURRENT VERSION (SEE FINAL COMMAND COMMENTED OUT).
+        #2. ALSO, RIGHT NOW WHEN SELECTING 'practice' IT LOOKS FOR THE CHARACTER SUBSTRING OCCURENCE IN THE 'module' VARIABLE WITH GREPL
+        #   EVENTUALLY WILL WANT TO DO A STRINGSPLIT AND EXACT MATCH IN CASE THERE ARE MODULES THAT CONTAIN THE CHARACTERSTRINGS OF 
+        #   OTHER MODULES (E.G. IF THERE WAS A MODULE 'CFAM' AND 'CFA' THEN THE FUNCTION WOULD PICK UP BOTH WHEN LOOKING FOR JUST 'CFA').
         
-        if(config.graphs.df.d$graph.cat.varname != "year"){
-          all.cats.df.d <- expand.grid(unique(dat.answer.long.df$year), all.cats.d) %>% as.data.frame(., stringsAsFactors = FALSE)
+        #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
+        if(config.graphs.df.d$data.group.by.var == "practice"){
+          all.cats.input1.d <- 
+            resp.long.df %>% 
+            #filter(impbinary == 0) %>%
+            filter(grepl(config.graphs.df.d$module, module))    
         }else{
-          all.cats.df.d <- all.cats.d %>% as.data.frame(., stringsAsFactors = FALSE)
+          all.cats.input1.d <- 
+            resp.long.df #%>%
+            #filter(impbinary == 0) 
         }
         
-        names(all.cats.df.d) <- group_by.d
+        all.cats.input2.d <-
+          all.cats.input1.d %>%
+          filter(impbinary == 0) %>%
+          .[,names(resp.long.df) == config.graphs.df.d$data.group.by.var] %>% 
+          unique %>%
+          strsplit(., ",") %>% 
+          unlist %>%
+          unique %>%
+          remove.na.from.vector(.)
         
-#FUN  #Data restriction function: district vs. school
+        all.cats.df.d <- 
+          all.cats.input2.d[order(all.cats.input2.d)] %>%
+          as.data.frame(., stringsAsFactors = FALSE)
+        
+        #if(config.graphs.df.d$data.group.by.var != "year"){
+        #  all.cats.df.d <- expand.grid(unique(resp.long.df$year), all.cats.d) %>% as.data.frame(., stringsAsFactors = FALSE)
+        #}else{
+        #  all.cats.df.d <- all.cats.d %>% as.data.frame(., stringsAsFactors = FALSE)
+        #}
+        
+        names(all.cats.df.d) <- group_by.d
+        print(all.cats.df.d)
+           
+#FUN  #Function: Data restriction - district vs. school
         graph.data.restriction.fun <- function(x){
           
           if(config.graphs.df.d$data.level == "district"){
@@ -995,7 +1014,7 @@
           return(result)
         }
         
-#FUN  #Data Summarize Function: participation vs. implementation vs. performance 
+#FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
         summarize.data.fun <- function(x){
           if(config.graphs.df.d$data.measure == "participation"){
             result <- 
@@ -1024,7 +1043,7 @@
           left_join(all.cats.df.d, ., by = c(group_by.d))
         graphdata.df.d$measure.var[is.na(graphdata.df.d$measure.var)] <- 0
         
-  #FUN      #Average data restriction function
+#FUN  #Function: Restriction function for graph average data
         avg.data.restriction.fun <- function(x){
           
           if(config.graphs.df.d$data.level == "district"){
@@ -1054,7 +1073,7 @@
           return(result)
         }
       
-  #FUN      #Average Summary Function
+#FUN  #Function: Summary Function for Graph Averages
         summarize.avg.fun <- function(x){
           if(config.graphs.df.d$data.measure == "participation"){
             result <- x %>%
@@ -1080,7 +1099,8 @@
           avg.data.restriction.fun(.) %>%
           group_by(!!! syms(group_by.d)) %>%
           summarize.avg.fun(.)
-  #FUN
+        
+#FUN  #Function: Left Join ?with NA?
         left.join.NA <- function(.x, .y, .by, na.replacement) {
           result <- left_join(x = .x, y = .y, by = .by, stringsAsFactors = FALSE) %>% 
             mutate_all(funs(replace(., which(is.na(.)), na.replacement)))
@@ -1167,9 +1187,9 @@ close(progress.bar.c)
           config.graphs.df.g <- config.graphs.df.f[g,] %>% as.data.frame()
           names(config.graphs.df.g) <- gsub("configs.","",names(config.graphs.df.g))
           
-          graph.cat.varname <- config.graphs.df.g$graph.cat.varname  
+          graph.cat.varname <- config.graphs.df.g$data.group.by.var  
         
-          if(config.graphs.df.g$graph.cat.varname == "answer"){
+          if(config.graphs.df.g$data.group.by.var == "answer"){
             graphdata.df.g <- left_join(graphdata.df.g,ans.opt.always.df, by = c("answer" = "ans.num"))#graphdata.df.g[order(graphdata.df.g[,2]),]
             
             if(config.graphs.df.g$module %in% c("LEAD","PD")){
@@ -1220,7 +1240,7 @@ close(progress.bar.c)
           
         #GRAPH DATA LABELS 
         
-#FUN      #Graph Label Heights (defined based on ratio of tallest to shortest columns)
+#FUN      #Function: Graph Label Heights (defined based on ratio of tallest to shortest columns)
             create.graph.labels.fun <- function(df, measure.var, height.ratio.threshold){
               
               if(!is.data.frame(as.data.frame(df))){stop("Input cannot be coerced into data frame.")}

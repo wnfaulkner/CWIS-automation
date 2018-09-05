@@ -1,3 +1,10 @@
+#FUN#Function: Remove "NA" from a vector
+remove.na.from.vector <- function(x){
+  if(!is.null(dim(x))){stop("Input must be a vector.")}
+  result <- x[!is.na(x)]
+  return(result)
+}
+
 #RESHAPE DATA INTO LONG FORMAT BASED ON SPLITTING COLUMN ON A CHARACTER
 
   SplitColReshape.ToLong <- function(df, id.varname, split.varname, split.char){ #parameters/arguments to add: id.var (if none, default is row.names(x)), split.varname, split.char
