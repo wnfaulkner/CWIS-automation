@@ -362,7 +362,7 @@
 ########################################################################################################################################################      
 ### FURTHER CLEANING & ADDING USEFUL VARIABLES ###
 
-#{ #SECTION COLLAPSE BRACKET
+{ #SECTION COLLAPSE BRACKET
   
     #Lower-Case All Data
       resp3.df <- apply(resp2.df,c(1:2),tolower) %>% as.data.frame(., stringsAsFactors = FALSE)
@@ -573,8 +573,6 @@
             split.varname = "module",
             split.char = ","
           ) 
-        #%>%
-        #  rbind(resp.long.df[!grep(",",resp.long.df$module),],.)  
         
       #Variable for binary implementation questions
         resp.long.df$impbinary <- ifelse(grepl("binary",resp.long.df$question),1,0)
@@ -943,9 +941,9 @@
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% .[1,] %>% sum
   
-  c <- 1 #LOOP TESTER (19 = "Raytown C-2")
+  #c <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(c in c(1,2)){   #LOOP TESTER
-  #for(c in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
+  for(c in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
     
     if(c == 1){print("Forming input data tables for graphs...")}
     
@@ -965,9 +963,9 @@
 #   ### LOOP "d" BY GRAPH  ###
     ###                    ###
     
-    d <- 1
+    #d <- 2
     #for(d in 1:2){ #LOOP TESTER
-    #for(d in 1:dim(config.graphs.df.c)[1]){
+    for(d in 1:dim(config.graphs.df.c)[1]){
       
       config.graphs.df.d <- config.graphs.df.c[d,]
       
@@ -1019,7 +1017,7 @@
         #}
         
         names(all.cats.df.d) <- group_by.d
-        print(all.cats.df.d)
+        #print(all.cats.df.d)
            
 #FUN  #Function: Data restriction - district vs. building.id
         
@@ -1097,7 +1095,8 @@
           summarize.data.fun(config.input = config.graphs.df.d, data.input = .) %>%
           left_join(all.cats.df.d, ., by = c(group_by.d))
         graphdata.df.d$measure.var[is.na(graphdata.df.d$measure.var)] <- 0
-        print(graphdata.df.d)
+        
+        #print(graphdata.df.d)
         
 #FUN  #Function: Restriction function for graph average data
         
@@ -1116,15 +1115,18 @@
               filter(district == unique(resp.long.df$district[resp.long.df$building.id == report.id.c])) 
           }
           
-          if(!config.graphs.df.d$data.restriction=="module" | is.na(config.graphs.df.d$data.restriction)){ #!Should look into a better way to deal with this restriction
-            result <- y
+          z <- y %>% filter(!is.na(y[,names(y)==group_by.d])) #!Might want to make flexible - i.e. add a parameter which allows user to inlcude NA
+          
+          if(!config.graphs.df.d$data.restriction=="module" | is.na(config.graphs.df.d$data.restriction)){ 
+            #!Should look into a better way to deal with this restriction, think about input tables
+            result <- z
           }
           
           if(config.graphs.df.d$data.restriction=="module" & !is.na(config.graphs.df.d$data.restriction)){
             result <- 
-              y %>%
+              z %>%
               filter(
-                y[,names(y)==config.graphs.df.d$data.restriction] == 
+                z[,names(z)==config.graphs.df.d$data.restriction] == 
                   config.graphs.df.d[,names(config.graphs.df.d)==config.graphs.df.d$data.restriction]
               )
           }
@@ -1183,7 +1185,12 @@
             .y = graph.avg.df.d, 
             .by = c(group_by.d),
             na.replacement = 0
-          )
+          ) #%>%
+          #replace.names.fun(
+          #  df = .,
+          #  current.names = c("measure.var.x","measure.var.y"),
+          #  new.names = c("measure.var","measure.var.avg")
+          #)
        
       storage.ls.index <- length(graphdata.ls.d) + 1
       graphdata.ls.d[[storage.ls.index]] <- graphdata.df.d
@@ -1192,7 +1199,7 @@
       #print(c(d))
       #print(config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.restriction] %>% as.character)
       #print(config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.level] %>% as.character)
-      #print(graphdata.df.e)
+      #print(graphdata.df.d)
       #print(graphdata.ls.d[[graphdata.ls.index]])
     
     } ### END OF LOOP "d" BY GRAPH ###

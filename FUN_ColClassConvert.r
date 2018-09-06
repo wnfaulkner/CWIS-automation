@@ -8,7 +8,7 @@
 
 ################################
 #REPLACE NAMES IN A DATA FRAME
-  assign.names.fun <- function(df,current.names, new.names){
+  replace.names.fun <- function(df,current.names, new.names){
     
     #Data Checks
       if(!is.data.frame(df)){
@@ -103,10 +103,10 @@
     result <- 
       df %>%
       mutate(new.split.var = strsplit(as.character(split.var),split.char)) %>% 
-      unnest(new.split.var, .drop = NA) %>%
-      #assign.names.fun(df = ., new.names = c(names(df)[-length(names(df))],paste(split.varname,"",sep = ""))) %>%
+      unnest(new.split.var, .drop = NA) %>% 
+      .[,names(.)[names(.) != split.varname]] %>%
       df.order.by.var.fun(df = ., order.by.var = id.varname) %>%
-      assign.names.fun(
+      replace.names.fun(
         df = .,
         current.names = "new.split.var",
         new.names = split.varname
