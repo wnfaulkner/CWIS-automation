@@ -80,7 +80,7 @@
       
     #Data & Output Directories
       setwd(wd)
-      source.dir <- paste(wd,"/data_source/", sep = "")
+      source.dir <- paste(wd,"data_source/", sep = "")
       target.dir <- paste(wd,"r_script_outputs/",
                             "Output_",
                             gsub(":",".",Sys.time()), sep = "")
@@ -1588,28 +1588,28 @@ close(progress.bar.c)
 ########################################################################################################################################################      
 ### POWERPOINT SLIDE CREATION  ###        
 
-{ #SECTION COLLAPSE BRACKET   
+#{ #SECTION COLLAPSE BRACKET   
     
   config.pot.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE)
-    ###                       ###    
-#   ### LOOP "h" BY DISTRICT  ###
-    ###                       ###
+    ###                          ###    
+#   ### LOOP "h" BY REPORT UNIT  ###
+    ###                          ###
     
     #Progress Bar
       progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
       maxrow.h <- sapply(config.slides.ls.b, dim)[1,] %>% sum
     
-    #h <- 8 #LOOP TESTER
+    h <- 8 #LOOP TESTER
     #for(h in 1:2){ #LOOP TESTER
-    for(h in 1:length(config.slides.ls.b)){
+    #for(h in 1:length(config.slides.ls.b)){
       
       #Set up target file
-        template.file <- paste(wd,
-                             "Report Template/CWIS Template.pptx",
+        template.file <- paste(source.dir,
+                             "template_green reports.pptx",
                              sep = "")
         target.path.h <- paste(target.dir,
                                   "/",
-                                  "CWIS Report_",
+                                  #"Green Report_",
                                   report.ids[h],
                                   "_",
                                   gsub(":",".",Sys.time()),
@@ -1622,11 +1622,15 @@ close(progress.bar.c)
         options("ReporteRs-fontsize" = 20)
         options("ReporteRs-default-font" = "Calibri")
       
-      #Set up district-level inputs
+      #Set up report-level inputs
         config.graphs.df.h <- 
           config.graphs.ls.b[[h]] %>%
           mutate(row.i = config.graphs.ls.b[[h]] %>% .[,ncol(config.graphs.ls.b[[1]])] %>% seq_along(.))
         
+        #!Will need to generalize below for different report units (i.e. Repeated Measures vs. Green Reports)
+        report.id.h <- report.ids[h]
+        district.h <- strsplit(report.id.h, "_") %>% unlist %>% .[1] %>% toupper()
+        school.h <- strsplit(report.id.h, "_") %>% unlist %>% .[2] %>% toupper()
         config.slides.df.h <- config.slides.ls.b[[h]]
         
         graphs.ls.h <- graphs.ls.f[[h]]
@@ -1635,7 +1639,7 @@ close(progress.bar.c)
 #     ### LOOP "i" BY SLIDE   ###
       ###                     ###
 
-        #i <- 3 #LOOP TESTER
+        #i <- 1 #LOOP TESTER
         #for(i in 1:4){ #LOOP TESTER
         for(i in 1:dim(config.slides.ls.b[[h]])[1]){
           
@@ -1654,11 +1658,12 @@ close(progress.bar.c)
             config.graphs.df.i <- config.graphs.df.h %>% 
               filter(slide.type.id == slide.type.id.i)
             
-            if(is.na(config.slide.df.i$school)){
-              config.graphs.df.i <- config.graphs.df.i[is.na(config.graphs.df.i$school),]
-            }else{
-              config.graphs.df.i <- config.graphs.df.i[config.graphs.df.i$school == config.slide.df.i$school,]
-            }
+            #!Removed for expediencey but should be generalized.
+            #if(is.na(config.slide.df.i$school)){
+            #  config.graphs.df.i <- config.graphs.df.i[is.na(config.graphs.df.i$school),]
+            #}else{
+            #  config.graphs.df.i <- config.graphs.df.i[config.graphs.df.i$school == config.slide.df.i$school,]
+            #}
             
             if(is.na(config.slide.df.i$module)){
               config.graphs.df.i <- config.graphs.df.i[is.na(config.graphs.df.i$module),]
@@ -1704,7 +1709,7 @@ close(progress.bar.c)
           #for(j in 1:2){ #LOOP TESTER
           for(j in 1:dim(config.pot.i)[1]){
             if(dim(config.pot.i)[1] < 1){
-              print(paste("No text objects for slide.id: ",config.slide.df.i$slide.id,sep = ""))
+              #print(paste("No text objects for slide.id: ",config.slide.df.i$slide.id,sep = ""))
               next()
             }
             
@@ -1729,13 +1734,15 @@ close(progress.bar.c)
               pot(
                 pot.content.j,
                 textProperties(
-                  color = alpha(ifelse(
-                    !is.na(config.pot.i$color[j]),
-                    config.pot.i$color[j] %>% 
-                    strsplit(.,",") %>% unlist %>% as.numeric %>% 
-                    rgb(red = .[1],green = .[2],blue = .[3] ,maxColorValue = 255) %>% .[1],
-                    "black"
-                  ),1),
+                  color = 
+                    alpha(
+                      ifelse(!is.na(config.pot.i$color[j]),
+                        config.pot.i$color[j] %>% 
+                        strsplit(.,",") %>% unlist %>% as.numeric %>% 
+                        rgb(red = .[1],green = .[2],blue = .[3] ,maxColorValue = 255) %>% .[1],
+                        "black"
+                      )
+                    ,1),
                   font.size = config.pot.i$font.size[j], 
                   font.weight = ifelse(is.na(config.pot.i$font.weight[j]),'normal',config.pot.i$font.weight[j])
                   #alpha = 1
