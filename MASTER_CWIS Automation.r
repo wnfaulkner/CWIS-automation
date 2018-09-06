@@ -1229,7 +1229,7 @@ close(progress.bar.c)
 ########################################################################################################################################################      
 ### PRODUCING GRAPHS THEMSELVES  ###
 
-#{#SECTION COLLAPSE BRACKET
+{#SECTION COLLAPSE BRACKET
   
   ###                       ###    
 # ### LOOP "f" BY DISTRICT  ###
@@ -1358,15 +1358,6 @@ close(progress.bar.c)
             }
             #windows()
             #graph.g
-          
-          #graph.g <- 
-          #  graph.g + scale_fill_manual(
-          #    values = 
-              #eval(parse(syms(grep("\\\\",config.graphs.df.g$graph.fill) %>% gsub("\\","\\\",.))))
-              #rep("#91AC3E",5)#c(cfa = "#91AC3E", etlp = "#5F3356",dbdm = "#5F3356",lead = "#5F3356",pd = "#5F3356")      #nrow(graphdata.df.g)-1))
-          #  ) 
-          #windows()
-          #graph.g
                    
         #GRAPH DATA LABELS 
         
@@ -1434,32 +1425,32 @@ close(progress.bar.c)
             }
           
           #Grach label data frame
-          graph.labels.df <- create.graph.labels.fun(df = graphdata.df.g, measure.var = "measure.var", height.ratio.threshold = 8.2)
+            graph.labels.df <- create.graph.labels.fun(df = graphdata.df.g, measure.var = "measure.var", height.ratio.threshold = 8.2)
           
           #Add Data labels to graph
-          graph.g <- 
-            graph.g +
-            geom_text( 
-              aes(                                                          
-                y = graph.labels.df$graph.labels.heights, 
-                x = graphdata.df.g[[graph.cat.varname]],
-                label = graph.labels.df$graph.labels.text,
-                alpha = graph.labels.df$graph.labels.show,
-                group = graphdata.df.g[,1]
+            graph.g <- 
+              graph.g +
+              geom_text( 
+                aes(                                                          
+                  y = graph.labels.df$graph.labels.heights, 
+                  x = graphdata.df.g[[graph.cat.varname]],
+                  label = graph.labels.df$graph.labels.text,
+                  alpha = graph.labels.df$graph.labels.show,
+                  group = graphdata.df.g[,1]
+                  
+                ),
                 
-              ),
-              
-              #lineheight = 10.0,
-              
-              color = "#FFFFFF", #graph.labels.df$graph.labels.color,
-              size = 4,
-              fontface = "bold",
-              position = position_dodge(width = 1),
-              show.legend = FALSE
-              
-            )
-          #windows()
-          #graph.g
+                #lineheight = 10.0,
+                
+                color = "#FFFFFF", #graph.labels.df$graph.labels.color,
+                size = 4,
+                fontface = "bold",
+                position = position_dodge(width = 1),
+                show.legend = FALSE
+                
+              )
+            #windows()
+            #graph.g
           
         #GRAPH AVERAGES
           #! Need to make so can group on arbitrary variable with arbitrary number of groups and sub-groups. Right now can only two groups of 2 (e.g. year in Repeated Measures)
@@ -1545,10 +1536,7 @@ close(progress.bar.c)
                 axis.text.y = element_text(size = 15, color = "#5a6b63")
               )
           }
-        
-        #Sys.sleep(0.1)
-        #print(graph.g)
-        
+
         graphs.ls.g[[g]] <<- graph.g
         setTxtProgressBar(progress.bar.f, 100*(g + graphdata.ls.c[1:(f-1)] %>% lengths %>% sum)/maxrow.f)
         
