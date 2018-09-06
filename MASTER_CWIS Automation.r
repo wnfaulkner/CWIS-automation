@@ -362,7 +362,7 @@
 ########################################################################################################################################################      
 ### FURTHER CLEANING & ADDING USEFUL VARIABLES ###
 
-{ #SECTION COLLAPSE BRACKET
+#{ #SECTION COLLAPSE BRACKET
   
     #Lower-Case All Data
       resp3.df <- apply(resp2.df,c(1:2),tolower) %>% as.data.frame(., stringsAsFactors = FALSE)
@@ -484,16 +484,16 @@
 
 #FUN  #Function: output variable names in data frame which can be converted to numeric       
       numeric.varnames.v <-
-        function(data.frame){
+        function(df){
           result <- 
-            data.frame %>%
+            df %>%
             apply(., 2, unique) %>%
             sapply(., 
               function(x){
                 (as.numeric(x) %>% is.na(.) %>% sum) <= 1
               }
             ) %>%
-            names(data.frame)[.]
+            names(df)[.]
           return(result)
         }
       
@@ -565,17 +565,16 @@
             by = c("q.original" = "row.1")
           )  
         
-        #Later will matter that we have "cfa,etlp" value in module variable for forming graph data. Note extra steps because could not perform
-        #SplitColReshape.ToLong on whole dataset because ran out of memory.
-        #!WORKING ON SPLITCOLRESHAPETOLONG FUNCTION IN OTHER FILE. OUTPUTTING WRONG NUMBER OF ROWS (6X NOT 2X ORIGINAL) BECAUSE OF THE LEFT_JOIN COMMAND.
-        reshape.df <-
+        #Later will matter that we have "cfa,etlp" value in module variable for forming graph data.
+        resp.long.df <-
           SplitColReshape.ToLong(
-            df = resp.long.df[grep(",",resp.long.df$module),],
+            df = resp.long.df,#[grep(",",resp.long.df$module),],
             id.varname = "responseid",
             split.varname = "module",
             split.char = ","
-          ) %>%
-          rbind(resp.long.df[!grep(",",resp.long.df$module),],.)  
+          ) 
+        #%>%
+        #  rbind(resp.long.df[!grep(",",resp.long.df$module),],.)  
         
       #Variable for binary implementation questions
         resp.long.df$impbinary <- ifelse(grepl("binary",resp.long.df$question),1,0)

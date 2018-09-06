@@ -1,24 +1,87 @@
+################################
 #FUN#Function: Remove "NA" from a vector
-remove.na.from.vector <- function(x){
-  if(!is.null(dim(x))){stop("Input must be a vector.")}
-  result <- x[!is.na(x)]
-  return(result)
-}
+  remove.na.from.vector <- function(x){
+    if(!is.null(dim(x))){stop("Input must be a vector.")}
+    result <- x[!is.na(x)]
+    return(result)
+  }
 
-#ASSIGN NAMES TO A DATA FRAME
-assign.names.fun <- function(df,new.names){
-  names(df) <- new.names
-  return(df)
-}
+################################
+#REPLACE NAMES IN A DATA FRAME
+  assign.names.fun <- function(df,current.names, new.names){
+    
+    #Data Checks
+      if(!is.data.frame(df)){
+        stop("Input not a data frame. Input must be of class 'data.frame'.")
+      }
+    
+    #New Names Checks
+      if(!exists("new.names")){
+        new.names <- readline(prompt = "No new names defined. Enter a vector of new names to replace current names: ")
+      }
+      
+      if(!is.character(new.names)){
+        new.names <- as.character(new.names)
+        warning("'new.names' input not of class 'character.' Coercing to character vector.")
+      }
+    
+    #Current Names Checks
+      if(!exists("current.names")){
+        
+        if(length(names(df)) == length(new.names)){
+          print("No current names to replace specified. All current names will be replaced.")
+          current.names <- names(df)
+        }
+        
+        if(length(names(df)) != length(new.names)){
+          stop(
+            paste(
+              "No current names to replace specified. Current df has ",
+              length(names(df)),
+              " columns. New names is of length ",
+              length(new.names),
+              ".",
+              sep = ""
+            )
+          )
+        }
+      
+      } #End of if statement for when current.names not defined by user
+    
+      if(any(!current.names %in% names(df))){
+        warning(
+          paste(
+            "One or more current.names were not found in input data frame: '",
+            current.names[!current.names %in% names(df)],
+            "'. ",
+            sep = ""
+          )
+        )
+      }
+    
+    #Actual Function: name replacement
+      names(df)[names(df) %in% current.names] <- new.names
+      return(df)
+  }
 
+################################
 #FILTER A VECTOR BASED ON A CONDITION
-vector.filter.fun <- function(condition,vector.input){
-  vector.input[condition]
-}
+  vector.filter.fun <- function(condition,vector.input){
+    vector.input[condition]
+  }
 
+################################
+#ORDER A DATA FRAME BY A SPECIFIC COLUMN
+  df.order.by.var.fun <- function(df, order.by.var){
+    result <- df[order(df[,names(df) == order.by.var]),]
+    return(result)
+  }
+
+  
+################################  
 #RESHAPE DATA INTO LONG FORMAT BASED ON SPLITTING COLUMN ON A CHARACTER
 
-  SplitColReshape.ToLong <- function(df, id.varname, split.varname, split.char){ #parameters/arguments to add: id.var (if none, default is row.names(x)), split.varname, split.char
+  SplitColReshape.ToLong <- function(df, id.varname, split.varname, split.char){ 
     
     if(!is.data.frame(df)){stop("Input not a data frame.")}
   
@@ -26,7 +89,7 @@ vector.filter.fun <- function(condition,vector.input){
       split.varname <- readline(prompt = "Enter the variable name that will be split and used to reshape data: ")
     }
     
-    if(!exists("split.char")){
+    if(!exists("split.varname")){
       split.varname <- readline(prompt = "Enter the variable name that will be split and used to reshape data: ")
     }
     
@@ -37,23 +100,23 @@ vector.filter.fun <- function(condition,vector.input){
     id.var <- df[,names(df)==id.varname]
     split.var <- df[,names(df)==split.varname]
     
-    reshape.df <- 
-      data.frame(id.var = id.var, split.var = split.var) %>% 
+    result <- 
+      df %>%
       mutate(new.split.var = strsplit(as.character(split.var),split.char)) %>% 
       unnest(new.split.var, .drop = NA) %>%
-      .[,c(1,3)] %>%
-      assign.names.fun(df = ., new.names = c("id.var",split.varname)) %>%
-      left_join(., df, by = c("id.var" = id.varname)) %>%
-      select(names(.)[!names(.) %in% paste(split.varname,"y",sep=".")]) %>%
-      assign.names.fun(df = ., new.names = gsub("\\.x","",names(.)))
-
-    result <- reshape.df[order(reshape.df$id.var),]#!names(reshape.df) == split.varname]
-    
-    names(result)[names(result)=="id.var"] <- id.varname
-    names(result)[names(result)=="split.var"] <- split.varname
+      #assign.names.fun(df = ., new.names = c(names(df)[-length(names(df))],paste(split.varname,"",sep = ""))) %>%
+      df.order.by.var.fun(df = ., order.by.var = id.varname) %>%
+      assign.names.fun(
+        df = .,
+        current.names = "new.split.var",
+        new.names = split.varname
+      )
+    #names(result)[names(result)=="id.var"] <- id.varname
+    #names(result)[names(result)=="split.var"] <- split.varname
     return(result)
   }
 
+################################
 #CONVERT DATA FRAME COLUMNS ACCORDING TO USER INPUT
   
   #2. Prompt for classes of each column; have option to just say 'as-is' (already in correct format)
@@ -73,19 +136,22 @@ vector.filter.fun <- function(condition,vector.input){
   #x1 <- data.frame(numeric.name = c(1.1,2.2,3.3))
   
   #x <- x2
-  
+
+  ##########  
   ConvertToFactor <- function(x){
     if(!is.null(dim(x))){stop("Input is not an atomic vector.")}
     result <- as.factor(x)
     return(result)
   }
   
+  ##########
   ConvertToCharacter <- function(x){
     if(!is.null(dim(x))){stop("Input is not an atomic vector.")}
     result <- as.character(x)
     return(result)
   }
   
+  ##########
   ConvertToLogical <- function(x){
     if(!is.null(dim(x))){stop("Input is not an atomic vector.")}
     
@@ -124,6 +190,7 @@ vector.filter.fun <- function(condition,vector.input){
     return(result)
   }
   
+  ##########
   ConvertToNumeric <- function(x){
     if(!is.null(dim(x))){stop("Input is not an atomic vector.")}
     
@@ -153,6 +220,7 @@ vector.filter.fun <- function(condition,vector.input){
     return(result)
   }
   
+  ##########
   ConvertToInteger <- function(x){
     if(!is.null(dim(x))){stop("Input is not an atomic vector.")}
     
@@ -181,6 +249,7 @@ vector.filter.fun <- function(condition,vector.input){
   return(result)
   }
   
+  ##########
   ConvertToDate <- function(x){
     if(!is.null(dim(x))){stop("Input is not an atomic vector.")}
     y <- as.character(x)
@@ -193,6 +262,7 @@ vector.filter.fun <- function(condition,vector.input){
   return(result)
   }
   
+  ##########
   DisplayUniqueColVals <- function(x){
     if(paste(unique(x), collapse = ", ") %>% nchar <= 25){
       result <- paste(unique(x)[order(unique(x))], collapse = ", ")   
@@ -203,6 +273,7 @@ vector.filter.fun <- function(condition,vector.input){
   return(result)
   }
   
+  ##########
   #! 1. MAKE SO CAN DESIGNATE ALL COLUMNS THE SAME; 2. MAKE SO CAN DESIGNATE ONLY CERTAIN COLUMNS WANT TO CHANGE (E.G. "end")
   ColClassConvert <- function(x){
     
