@@ -5,6 +5,17 @@ remove.na.from.vector <- function(x){
   return(result)
 }
 
+#ASSIGN NAMES TO A DATA FRAME
+assign.names.fun <- function(df,new.names){
+  names(df) <- new.names
+  return(df)
+}
+
+#FILTER A VECTOR BASED ON A CONDITION
+vector.filter.fun <- function(condition,vector.input){
+  vector.input[condition]
+}
+
 #RESHAPE DATA INTO LONG FORMAT BASED ON SPLITTING COLUMN ON A CHARACTER
 
   SplitColReshape.ToLong <- function(df, id.varname, split.varname, split.char){ #parameters/arguments to add: id.var (if none, default is row.names(x)), split.varname, split.char
@@ -27,18 +38,21 @@ remove.na.from.vector <- function(x){
     split.var <- df[,names(df)==split.varname]
     
     reshape.df <- 
-      data.frame(id.var = id.var, split.var = df[,names(df) == split.varname]) %>% 
-      mutate(split.var = strsplit(as.character(split.var),",")) %>% 
-      unnest(split.var, .drop = NA) %>%
-      full_join(., df, by = c("id.var" = id.varname))
+      data.frame(id.var = id.var, split.var = split.var) %>% 
+      mutate(new.split.var = strsplit(as.character(split.var),split.char)) %>% 
+      unnest(new.split.var, .drop = NA) %>%
+      .[,c(1,3)] %>%
+      assign.names.fun(df = ., new.names = c("id.var",split.varname)) %>%
+      left_join(., df, by = c("id.var" = id.varname)) %>%
+      select(names(.)[!names(.) %in% paste(split.varname,"y",sep=".")]) %>%
+      assign.names.fun(df = ., new.names = gsub("\\.x","",names(.)))
 
-    result <- reshape.df[order(reshape.df$id.var),!names(reshape.df) == split.varname]
+    result <- reshape.df[order(reshape.df$id.var),]#!names(reshape.df) == split.varname]
     
     names(result)[names(result)=="id.var"] <- id.varname
     names(result)[names(result)=="split.var"] <- split.varname
     return(result)
   }
-
 
 #CONVERT DATA FRAME COLUMNS ACCORDING TO USER INPUT
   

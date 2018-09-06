@@ -543,20 +543,43 @@
           stringsAsFactors = FALSE
         )
       resp.long.df$question <- as.character(resp.long.df$question)
+      
+      filter.varnames.v <- resp.long.df$question %>% unique %>% vector.filter.fun(grepl("num|binary",.),.) %>% str_extract(., "q[0-9]*_[0-9]*") %>% unique
+        #c(branch1.ans0.colnames.v,branch1.ans1.colnames.v) %>% gsub("x[0-9]*\\_","",.) %>% unique      
+      resp.long.df <- 
+        resp.long.df[!resp.long.df$question %in% filter.varnames.v,]
 
     #Creating additional useful variables for long data frames
       
       #Variable for module
-        resp.long.df$q.original <- str_extract(resp.long.df$question, "q[0-9]*_[0-9]")
+        resp.long.df$q.original <- 
+          paste(
+            str_extract(resp.long.df$question, "q[0-9]*"),
+            ifelse(is.na(str_extract(resp.long.df$question,"_[0-9]")),"",str_extract(resp.long.df$question, "_[0-9]*")),
+            sep = ""
+          )
         resp.long.df <- 
           left_join(
             resp.long.df, 
             questions.unbranched.df[,names(questions.unbranched.df) %in% c("row.1","module","practice")], 
-            by = c("question" = "row.1")
+            by = c("q.original" = "row.1")
           )  
-     
+        
+        #Later will matter that we have "cfa,etlp" value in module variable for forming graph data. Note extra steps because could not perform
+        #SplitColReshape.ToLong on whole dataset because ran out of memory.
+        #!WORKING ON SPLITCOLRESHAPETOLONG FUNCTION IN OTHER FILE. OUTPUTTING WRONG NUMBER OF ROWS (6X NOT 2X ORIGINAL) BECAUSE OF THE LEFT_JOIN COMMAND.
+        reshape.df <-
+          SplitColReshape.ToLong(
+            df = resp.long.df[grep(",",resp.long.df$module),],
+            id.varname = "responseid",
+            split.varname = "module",
+            split.char = ","
+          ) %>%
+          rbind(resp.long.df[!grep(",",resp.long.df$module),],.)  
+        
+      #Variable for binary implementation questions
         resp.long.df$impbinary <- ifelse(grepl("binary",resp.long.df$question),1,0)
-
+      
     #Loop: state average implementation rates [a], results in imp.state.df
       #imp.state.df <- data.frame(cwis.module = cwis.modules.v)
       #a <- 1 # LOOP TESTER
@@ -619,11 +642,23 @@
     load.config.graphtypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE)
     load.config.tabletypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE)
     
-    config.graphtypes.df <- SplitColReshape.ToLong(config.slidetypes.df, id.var = "slide.type.id",split.varname = "slide.graph.type",split.char = ",") %>%
+    config.graphtypes.df <- 
+      SplitColReshape.ToLong(
+        config.slidetypes.df, 
+        id.var = "slide.type.id",
+        split.varname = "slide.graph.type",
+        split.char = ","
+      ) %>%
       left_join(., load.config.graphtypes.df, by = c("slide.graph.type" = "graph.type.id")) %>% 
       filter(!is.na(slide.graph.type))
     
-    config.tabletypes.df <- SplitColReshape.ToLong(config.slidetypes.df, id.var = "slide.type.id",split.varname = "slide.table.type",split.char = ",") %>%
+    config.tabletypes.df <- 
+      SplitColReshape.ToLong(
+        df = config.slidetypes.df, 
+        id.var = "slide.type.id",
+        split.varname = "slide.table.type",
+        split.char = ","
+      ) %>%
       left_join(., load.config.tabletypes.df, by = c("slide.table.type" = "table.type.id")) %>% 
       filter(!is.na(slide.table.type))
     
@@ -893,7 +928,7 @@
       #data frame where each line represents a slide
 
 ########################################################################################################################################################      
-### PRODUCING GRAPH DATA ###
+### PRODUCING GRAPH & TABLE DATA ###
 
 #{# SECTION COLLAPSE BRACKET
      
@@ -920,7 +955,7 @@
     resp.long.df.c <- 
       resp.long.df %>% 
       select(names(resp.long.df)[names(resp.long.df) == report.id.colname]) %>% 
-      equals(report.id.b) %>% 
+      equals(report.id.c) %>% 
       resp.long.df[.,]
     
     config.graphs.df.c <- config.graphs.ls.b[[c]]
@@ -931,9 +966,9 @@
 #   ### LOOP "d" BY GRAPH  ###
     ###                    ###
     
-    #d <- 1
+    d <- 1
     #for(d in 1:2){ #LOOP TESTER
-    for(d in 1:dim(config.graphs.df.c)[1]){
+    #for(d in 1:dim(config.graphs.df.c)[1]){
       
       config.graphs.df.d <- config.graphs.df.c[d,]
       
@@ -950,16 +985,18 @@
         #   EVENTUALLY WILL WANT TO DO A STRINGSPLIT AND EXACT MATCH IN CASE THERE ARE MODULES THAT CONTAIN THE CHARACTERSTRINGS OF 
         #   OTHER MODULES (E.G. IF THERE WAS A MODULE 'CFAM' AND 'CFA' THEN THE FUNCTION WOULD PICK UP BOTH WHEN LOOKING FOR JUST 'CFA').
         
+        
+        
+        #! WILL NEED TO DO SAME THING FOR TABLES
+        
         #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
         if(config.graphs.df.d$data.group.by.var == "practice"){
           all.cats.input1.d <- 
             resp.long.df %>% 
-            #filter(impbinary == 0) %>%
-            filter(grepl(config.graphs.df.d$module, module))    
+            filter(grepl(config.graphs.df.d$module,module))
         }else{
           all.cats.input1.d <- 
             resp.long.df #%>%
-            #filter(impbinary == 0) 
         }
         
         all.cats.input2.d <-
@@ -985,17 +1022,21 @@
         names(all.cats.df.d) <- group_by.d
         print(all.cats.df.d)
            
-#FUN  #Function: Data restriction - district vs. school
+#FUN  #Function: Data restriction - district vs. building.id
+        
+        #!NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND GRAPH DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
+        #BUILDING.ID AND DATA.LEVEL IS DISTRICT.
+        
         graph.data.restriction.fun <- function(x){
           
           if(config.graphs.df.d$data.level == "district"){
             y <- x
           }
           
-          if(config.graphs.df.d$data.level == "school"){
+          if(config.graphs.df.d$data.level == "building.id"){
             y <- 
               x %>% 
-              filter(school == config.graphs.df.d[,names(config.graphs.df.d) == config.graphs.df.d$data.level]) 
+              filter(building.id == report.id.c) 
           }
           
           if(is.na(config.graphs.df.d$data.restriction)){
@@ -1015,22 +1056,37 @@
         }
         
 #FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
-        summarize.data.fun <- function(x){
-          if(config.graphs.df.d$data.measure == "participation"){
+        #Test inputs
+          #config.input <- config.graphs.df.d
+          #data.input <-  resp.long.df.c %>% graph.data.restriction.fun %>% group_by(!!! syms(group_by.d))
+        
+        summarize.data.fun <- function(config.input, data.input){
+          if(config.input$data.measure == "participation"){
             result <- 
-              dplyr::summarize(x, measure.var =  length(unique(responseid)))
+              dplyr::summarize(data.input, measure.var =  length(unique(responseid)))
           }
-          if(config.graphs.df.d$data.measure == "implementation"){
-            result <- x %>% 
+          
+          if(config.input$data.measure == "implementation"){
+            result <- 
+              data.input %>% 
               filter(impbinary == 1) %>%
-              dplyr::summarize(measure.var = mean(answer, na.rm = TRUE)) %>%
+              dplyr::summarize(measure.var = mean(as.numeric(answer), na.rm = TRUE)) %>%
               as.data.frame(., stringsAsFactors = FALSE)
           }
-          if(config.graphs.df.d$data.measure == "performance"){
-            result <- x %>%
+          
+          if(config.input$data.measure == "performance"){
+            result <- data.input %>%
               filter(impbinary == 0, !is.na(answer)) %>%
               dplyr::summarize(measure.var = as.character(length(unique(responseid))))
           }
+          
+          if(config.input$data.measure == "average performance"){
+            result <- 
+              data.input %>%
+              filter(grepl("_num",question)) %>%
+              dplyr::summarize(., measure.var =  mean(as.numeric(answer), na.rm = TRUE))
+          }
+          
           return(result)
         }
       
@@ -1039,21 +1095,26 @@
           resp.long.df.c %>%
           graph.data.restriction.fun %>%
           group_by(!!! syms(group_by.d)) %>%
-          summarize.data.fun %>%
+          summarize.data.fun(config.input = config.graphs.df.d, data.input = .) %>%
           left_join(all.cats.df.d, ., by = c(group_by.d))
         graphdata.df.d$measure.var[is.na(graphdata.df.d$measure.var)] <- 0
+        print(graphdata.df.d)
         
 #FUN  #Function: Restriction function for graph average data
+        
+        #! THESE TWO FUNCTIONS ARE VERY SIMILAR TO THE ONES ABOVE WHICH HAVE BEEN CHANGED SO NOW NEED TO SPECIFY "config.input" BUT
+        #   HAVE NOT MADE THOSE CHANGES HERE YET. PROBABLY COULD ROLL UP INTO ONE OR TWO FUNCTIONS.
+        
         avg.data.restriction.fun <- function(x){
           
           if(config.graphs.df.d$data.level == "district"){
             y <- x
           }
           
-          if(config.graphs.df.d$data.level == "school"){
+          if(config.graphs.df.d$data.level == "building.id"){
             y <- 
               x %>% 
-              filter(district == report.id.c) 
+              filter(district == unique(resp.long.df$district[resp.long.df$building.id == report.id.c])) 
           }
           
           if(!config.graphs.df.d$data.restriction=="module" | is.na(config.graphs.df.d$data.restriction)){ #!Should look into a better way to deal with this restriction
@@ -1069,27 +1130,37 @@
               )
           }
           
-          
           return(result)
         }
       
 #FUN  #Function: Summary Function for Graph Averages
         summarize.avg.fun <- function(x){
+          
           if(config.graphs.df.d$data.measure == "participation"){
             result <- x %>%
               dplyr::summarize(avg = length(unique(responseid))/length(unique(school.id)))#participation
           }
+          
           if(config.graphs.df.d$data.measure == "implementation"){
             result <- x %>% 
               filter(.,impbinary == 1) %>%
-              dplyr::summarize(., avg = mean(answer, na.rm = TRUE))#implementation
+              dplyr::summarize(., avg = mean(as.numeric(answer), na.rm = TRUE))#implementation
             
           }
+          
           if(config.graphs.df.d$data.measure == "performance"){
             result <- x %>%
               filter(impbinary == 0, !is.na(answer)) %>%
               dplyr::summarize(avg = length(unique(responseid))/length(unique(school.id)))
           }
+          
+          if(config.graphs.df.d$data.measure == "average performance"){
+            result <- 
+              x %>%
+              filter(grepl("_num",question)) %>%
+              dplyr::summarize(., measure.var =  mean(as.numeric(answer), na.rm = TRUE))
+          }
+          
           return(result)
         }
       
