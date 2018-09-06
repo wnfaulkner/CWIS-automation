@@ -629,7 +629,13 @@
     report.id.col <- resp.wide.df[,names(resp.wide.df) == report.id.colname]
     
     if(tolower(report.ids) %in% "all" %>% any){
-      report.ids <- report.id.col[order(report.id.col)] %>% unique
+      report.ids <- 
+        report.id.col[order(report.id.col)] %>%
+        unique %>% 
+        vector.filter.fun(
+          condition = !grepl("district office",.),
+          vector.input = .
+        )
     }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
     
   #Load Graph & Slide Type Config Tables
@@ -927,7 +933,7 @@
 ########################################################################################################################################################      
 ### PRODUCING GRAPH & TABLE DATA ###
 
-#{# SECTION COLLAPSE BRACKET
+{# SECTION COLLAPSE BRACKET
      
 ###                          ###    
 ### LOOP "c" BY REPORT UNIT  ###
@@ -1185,12 +1191,12 @@
             .y = graph.avg.df.d, 
             .by = c(group_by.d),
             na.replacement = 0
-          ) #%>%
-          #replace.names.fun(
-          #  df = .,
-          #  current.names = c("measure.var.x","measure.var.y"),
-          #  new.names = c("measure.var","measure.var.avg")
-          #)
+          ) %>%
+          replace.names.fun(
+            df = .,
+            current.names = c(names(.)),
+            new.names = c(config.graphs.df.d$data.group.by.var,"measure.var","measure.var.avg")
+          )
        
       storage.ls.index <- length(graphdata.ls.d) + 1
       graphdata.ls.d[[storage.ls.index]] <- graphdata.df.d
@@ -1223,7 +1229,7 @@ close(progress.bar.c)
 ########################################################################################################################################################      
 ### PRODUCING GRAPHS THEMSELVES  ###
 
-{#SECTION COLLAPSE BRACKET
+#{#SECTION COLLAPSE BRACKET
   
   ###                       ###    
 # ### LOOP "f" BY DISTRICT  ###
@@ -1249,7 +1255,7 @@ close(progress.bar.c)
     #Loop output object(s)
       graphs.ls.g <- list()
     
-    #g <- 1 #LOOP TESTER
+    #g <- 2 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -1278,43 +1284,90 @@ close(progress.bar.c)
             }
           }else{}
           
+          if(is.na(config.graphs.df.g$graph.group.by.var)){
+            graph.group.by.varname <- NULL
+            graph.group.by.var <- NULL
+          }else{
+            graph.group.by.varname <- config.graphs.df.g$graph.group.by.var
+            graph.group.by.var <- graphdata.df.g[,names(graphdata.df.g) == graph.group.by.varname] 
+          }
+          
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
         
           graph.g <- 
-            ggplot(data = graphdata.df.g 
-                   
+            ggplot(
+              data = graphdata.df.g 
             ) + 
             
-            geom_bar(
-              aes(x = graphdata.df.g[[graph.cat.varname]], 
-                  y = measure.var %>% as.numeric,
-                  group = year, 
-                  fill = factor(year)
-                  #alpha = I(0.1)
-              ),
-              alpha = 1,
-              position = "dodge", 
-              stat = "identity"
-            ) +
-            
-            theme(panel.background = element_blank(),
-                  panel.grid.major.y = element_blank(),
-                  panel.grid.major.x = element_blank(),
-                  axis.text.x = element_text(size = 12, color = "#5a6b63"),
-                  axis.text.y = element_blank(),
-                  axis.ticks = element_blank(),
-                  axis.title = element_blank(),
-                  legend.position = "top",
-                  legend.title = element_blank(),
-                  legend.text = element_text(size = 12)
-            ) +     
-            
-            #guides(fill = FALSE) +
-            
-            scale_fill_manual(
-              values = c("#914E83","#c7c7c7")
-            ) 
+            theme(
+              panel.background = element_blank(),
+              panel.grid.major.y = element_blank(),
+              panel.grid.major.x = element_blank(),
+              axis.text.x = element_text(size = 12, color = "#5a6b63"),
+              axis.text.y = element_blank(),
+              axis.ticks = element_blank(),
+              axis.title = element_blank(),
+              legend.position = "top",
+              legend.title = element_blank(),
+              legend.text = element_text(size = 12)
+            )
+            #windows()
+            #graph.g
           
+          #Adding Columns (Clustered or Non-Clustered)
+            #Fill values
+            #!Currently set manually - need to make it so fill happens within aes when have groups, within geom_bar() when setting manually
+            #!Would be nice to be able to set fill manually from config file as well.
+            
+              if(config.graphs.df.g$slide.graph.type == "a"){
+                graph.fill.g <- c("#91AC3E",rep("#5F3356",nrow(graphdata.df.g)-1))
+              }else{
+                graph.fill.g <- rep("#91AC3E",nrow(graphdata.df.g))
+              }
+                
+            if(is.null(graph.group.by.varname)){
+              graph.g <-
+                graph.g +
+                
+                geom_bar(
+                  aes(x = graphdata.df.g[[graph.cat.varname]], 
+                      y = measure.var %>% as.numeric
+                      #fill = factor(graphdata.df.g[,1])
+                  ),
+                  fill = graph.fill.g,
+                  alpha = 1,
+                  position = "dodge", 
+                  stat = "identity",
+                  show.legend = FALSE
+                )
+            }else{
+              graph.g <-
+                graph.g +
+                
+                geom_bar(
+                  aes(x = graphdata.df.g[[graph.cat.varname]], 
+                      y = measure.var %>% as.numeric,
+                      group = graph.group.by.var, 
+                      fill = factor(graph.group.by.var)
+                      #alpha = I(0.1)
+                  ),
+                  alpha = 1,
+                  position = "dodge", 
+                  stat = "identity"
+                )
+            }
+            #windows()
+            #graph.g
+          
+          #graph.g <- 
+          #  graph.g + scale_fill_manual(
+          #    values = 
+              #eval(parse(syms(grep("\\\\",config.graphs.df.g$graph.fill) %>% gsub("\\","\\\",.))))
+              #rep("#91AC3E",5)#c(cfa = "#91AC3E", etlp = "#5F3356",dbdm = "#5F3356",lead = "#5F3356",pd = "#5F3356")      #nrow(graphdata.df.g)-1))
+          #  ) 
+          #windows()
+          #graph.g
+                   
         #GRAPH DATA LABELS 
         
 #FUN      #Function: Graph Label Heights (defined based on ratio of tallest to shortest columns)
@@ -1358,7 +1411,7 @@ close(progress.bar.c)
               #Label visibility
                 graph.labels.show.v <- ifelse(var != 0, 1, 0)  
               
-              #Label color
+              #Label color for graph.type.e
                 if(config.graphs.df.g$slide.graph.type == "e"){
                   graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(df[,1])/2) %>% rev
                 }else{
@@ -1392,37 +1445,42 @@ close(progress.bar.c)
                 x = graphdata.df.g[[graph.cat.varname]],
                 label = graph.labels.df$graph.labels.text,
                 alpha = graph.labels.df$graph.labels.show,
-                group = year
+                group = graphdata.df.g[,1]
                 
               ),
               
               #lineheight = 10.0,
               
-              color = "#000000", #graph.labels.df$graph.labels.color,
+              color = "#FFFFFF", #graph.labels.df$graph.labels.color,
               size = 4,
               fontface = "bold",
               position = position_dodge(width = 1),
               show.legend = FALSE
               
             )
+          #windows()
+          #graph.g
           
         #GRAPH AVERAGES
-        graphdata.df.g$avg.alpha <- 
-          ifelse(
-            graphdata.df.g$year != "Baseline" & graphdata.df.g$avg != 0,
-            0.8,
-            0.0
-          )
+          #! Need to make so can group on arbitrary variable with arbitrary number of groups and sub-groups. Right now can only two groups of 2 (e.g. year in Repeated Measures)
+          graphdata.df.g$avg.alpha <- 
+            ifelse(
+              is.na(config.graphs.df.g$graph.group.by.vars),# != "Baseline" & graphdata.df.g$measure.var.avg != 0,
+              0.9,
+              rep(c(0.8,0.0),nrow(graphdata.df.g))
+            )
         
         if(config.graphs.df.g$graph.average == "yes"){
           graph.g <- 
+            
             graph.g +
-            geom_errorbar(
+            
+            geom_errorbar( #error bar shadow
               aes(
                 x = graphdata.df.g[[graph.cat.varname]],
-                group = year,
-                ymin =graphdata.df.g$avg, 
-                ymax = graphdata.df.g$avg,
+                #group = graphdata.df.g[[graph.cat.varname]], #!removed group for Green Reports because didn't need it, but will have ot add back in and generalize
+                ymin = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/800, 
+                ymax = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/800,
                 alpha = graphdata.df.g$avg.alpha
               ), 
               position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
@@ -1430,46 +1488,63 @@ close(progress.bar.c)
               width = 1,
               size = 1,
               show.legend = FALSE
+            ) +
+            
+            geom_errorbar(
+              aes(
+                x = graphdata.df.g[[graph.cat.varname]],
+                #group = graphdata.df.g[[graph.cat.varname]],
+                ymin = graphdata.df.g$measure.var.avg, 
+                ymax = graphdata.df.g$measure.var.avg,
+                alpha = graphdata.df.g$avg.alpha
+              ), 
+              position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+              color = "yellow", 
+              width = 1,
+              size = 1,
+              show.legend = FALSE
             )
+          
         }else{}
         
         #GRAPH CATEGORY NAMES, CORRECTING CATEGORY AXIS ORDERING
         #!potential function 
+        #! if can make first character of all categories into numeric vector, then just order by that
         
-        #year, school.level, module, answer
-        graph.cat.order.ls <-
-          list(
-            year = c("Baseline","2017-18"),
-            school.level = c("Elem.","Middle","High","Mult.","Other"),
-            role = c("Special Educator","Classroom Teacher","Instructional Coach","School Counselor","School Social Worker","Building Administrator","Other"),
-            module = c("CFA", "ETLP","DBDM","LEAD","PD"),
-            ans.text.freq = c("Always","Most of the time","About half the time","Sometimes","Never"),
-            ans.text.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
-          )
-        
-        #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() command does a mirror image
-        if(config.graphs.df.g$graph.type.orientation == "bar"){
-          graph.order.g <- graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% rev)
-        }else{
-          graph.order.g <- graph.cat.order.ls[graph.cat.varname]  %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist)        
-        }
-        
-        #Graph category axis ordering
-        graph.g <- 
-          graph.g + 
-          scale_x_discrete(limits=levels(graph.order.g))
-        
+          #year, school.level, module, answer
+            #graph.cat.order.ls <-
+            #  list(
+            #    year = c("Baseline","2017-18"),
+            #    school.level = c("Elem.","Middle","High","Mult.","Other"),
+            #    role = c("Special Educator","Classroom Teacher","Instructional Coach","School Counselor","School Social Worker","Building Administrator","Other"),
+            #    module = c("CFA", "ETLP","DBDM","LEAD","PD"),
+            #    ans.text.freq = c("Always","Most of the time","About half the time","Sometimes","Never"),
+            #    ans.text.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
+            #  )
+          
+          #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() command does a mirror image
+            #if(config.graphs.df.g$graph.type.orientation == "bar"){
+            #  graph.order.g <- graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% rev)
+            #}else{
+            #  graph.order.g <- graph.cat.order.ls[graph.cat.varname]  %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist)        
+            #}
+          
+          #Graph category axis ordering
+            #graph.g <- 
+            #  graph.g + 
+            #  scale_x_discrete(limits=levels(graph.order.g))
+          
         #GRAPH ORIENTATION
-        if(config.graphs.df.g$graph.type.orientation == "bar"){
-          graph.g <- 
-            graph.g +
-            coord_flip() +
-            #scale_y_discrete(limits = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., )) +
-            theme(
-              axis.text.x = element_blank(),
-              axis.text.y = element_text(size = 15, color = "#5a6b63")
-            )
-        }
+          if(config.graphs.df.g$graph.type.orientation == "bar"){
+            graph.g <- 
+              graph.g +
+              coord_flip() +
+              #scale_y_discrete(limits = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., )) +
+              theme(
+                axis.text.x = element_blank(),
+                axis.text.y = element_text(size = 15, color = "#5a6b63")
+              )
+          }
         
         #Sys.sleep(0.1)
         #print(graph.g)
