@@ -544,10 +544,10 @@
         )
       resp.long.df$question <- as.character(resp.long.df$question)
       
-      filter.varnames.v <- resp.long.df$question %>% unique %>% vector.filter.fun(grepl("num|binary",.),.) %>% str_extract(., "q[0-9]*_[0-9]*") %>% unique
+      #filter.varnames.v <- resp.long.df$question %>% unique %>% vector.filter.fun(grepl("num|binary",.),.) %>% str_extract(., "q[0-9]*_[0-9]*") %>% unique
         #c(branch1.ans0.colnames.v,branch1.ans1.colnames.v) %>% gsub("x[0-9]*\\_","",.) %>% unique      
-      resp.long.df <- 
-        resp.long.df[!resp.long.df$question %in% filter.varnames.v,]
+      #resp.long.df <- 
+      #  resp.long.df[!resp.long.df$question %in% filter.varnames.v,]
 
     #Creating additional useful variables for long data frames
       
@@ -608,7 +608,7 @@
     #'strongly agree', 'agree').
 
 ########################################################################################################################################################      
-### PRODUCING GRAPH & SLIDE CONFIGURATION TABLES ###
+### PRODUCING SLIDE, GRAPH, AND TABLE CONFIGURATION TABLES ###
 
 { #SECTION COLLAPSE BRACKET
   
@@ -687,7 +687,7 @@
   for(b in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
     #print(b)
     loop.start.time.b <- Sys.time()
-    if(b == 1){print("FORMING GRAPH & SLIDE CONFIG TABLES...")}
+    if(b == 1){print("FORMING SLIDE, GRAPH, AND TABLE CONFIG TABLES...")}
     #print(c(b,100*b/length(report.ids)))
     
     #Create report.id.b (for this iteration) and skip if report for district office
@@ -922,53 +922,59 @@
 } # END SECTION COLLAPSE BRACKET
     
 #OUTPUTS:
-  #report.ids: vector with all district names in resp.long.df (length = 19 for baseline data)
-  #config.graphs.ls.b
-    #[[district]]
-      #data frame where each line represents a graph
+  #report.ids: vector with all report unit names in resp.long.df (length = 19 for baseline data)
   #config.slides.ls.b
-    #[[district]]
+    #[[report.unit]]
       #data frame where each line represents a slide
+  #config.tables.ls.b
+    #[[report.unit]]
+      #data frame where each line represents a table
+  #config.graphs.ls.b
+    #[[report.unit]]
+      #data frame where each line represents a graph
+  
 
 ########################################################################################################################################################      
 ### PRODUCING GRAPH & TABLE DATA ###
 
-{# SECTION COLLAPSE BRACKET
+#{# SECTION COLLAPSE BRACKET
      
 ###                          ###    
 ### LOOP "c" BY REPORT UNIT  ###
 ###                          ###
       
-  # Loop outputs
+  #Loop outputs
     graphdata.ls.c <- list()
+    tabledata.ls.c <- list()
     #graphs.ls.c <- list()
   
-  # Progress bar for loop
+  #Progress bar for loop
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% .[1,] %>% sum
   
-  #c <- 1 #LOOP TESTER (19 = "Raytown C-2")
+  c <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(c in c(1,2)){   #LOOP TESTER
-  for(c in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
+  #for(c in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
     
     if(c == 1){print("Forming input data tables for graphs...")}
     
-    report.id.c <- report.ids[c]                               
-    
-    resp.long.df.c <- 
-      resp.long.df %>% 
-      select(names(resp.long.df)[names(resp.long.df) == report.id.colname]) %>% 
-      equals(report.id.c) %>% 
-      resp.long.df[.,]
-    
-    config.graphs.df.c <- config.graphs.ls.b[[c]]
-    
-    graphdata.ls.d <- list()
-    
+    #Loop Inputs (both graphs and tables)
+      report.id.c <- report.ids[c]                               
+      
+      resp.long.df.c <- 
+        resp.long.df %>% 
+        select(names(resp.long.df)[names(resp.long.df) == report.id.colname]) %>% 
+        equals(report.id.c) %>% 
+        resp.long.df[.,]
+
     ###                    ###
 #   ### LOOP "d" BY GRAPH  ###
     ###                    ###
-    
+  
+    #Loop Inputs
+      config.graphs.df.c <- config.graphs.ls.b[[c]]
+      graphdata.ls.d <- list()
+        
     #d <- 2
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:dim(config.graphs.df.c)[1]){
@@ -1209,7 +1215,305 @@
       #print(graphdata.ls.d[[graphdata.ls.index]])
     
     } ### END OF LOOP "d" BY GRAPH ###
-
+   
+    
+    ###                    ###
+#   ### LOOP "d" BY TABLE  ###
+    ###                    ###
+    
+    #Loop Inputs
+      config.tables.df.c <- config.tables.ls.b[[c]]
+      tabledata.ls.d <- list()
+      
+    d <- 2
+    #for(d in 1:2){ #LOOP TESTER
+    #for(d in 1:dim(config.tables.df.c)[1]){
+      
+      config.tables.df.d <- config.tables.df.c[d,]
+      
+      #Defin all possible category values from table
+        #If table category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
+        
+        all.cats.varnames.v.d <- c(config.tables.df.d$x.var, config.tables.df.d$y.var)
+        
+        #!Generalize to graph code as well? So treat like a pivot table with arbitrary number of x.vars and y.vars, a summary var and a summary function.
+          # Maybe would make it so could use a single config table?
+        
+        #Test Inputs
+          varnames <- c(config.tables.df.d$x.var, config.tables.df.d$y.var)
+          tb <- resp.long.df
+          
+        unique.variable.values.fun <- function(varnames, tb){
+          #!Should generalize so that can handle arbitrary number of nested variables on both axes like pivot 
+          
+          varnames <- as.character(varnames)
+          tb <- as_tibble(tb)
+          all.cats.ls <- list()
+          
+          #LOOP 'i' BY VARNAME
+            for(i in 1:length(varnames)){
+              
+              varname.i <- varnames[i]
+              
+              if(varname.i == "answer"){
+                all.cats.input1.i <- 
+                  tb %>% 
+                  filter(
+                    !grepl("\\_num|\\_binary",tb$question) & 
+                    grepl(config.tables.df.d$module, module)
+                  )
+              }else{
+                all.cats.input1.d <- 
+                  tb #%>%
+              }
+              
+              all.cats.input3.i <-
+                all.cats.input1.i %>%
+                filter(impbinary == 0) %>%
+                .[,names(.) == varname.i] %>% 
+                unique %>%
+                unlist 
+              
+              all.cats.ls[[i]] <-
+                all.cats.input3.i[
+                  all.cats.input3.i %>%
+                  as.numeric() %>% 
+                  is.na()
+                ] %>% 
+                remove.na.from.vector() %>% 
+                FirstLetterCap_MultElements() %>%
+                .[order(.)]
+              
+              #all.cats.ls[[i]] <- all.cats.df.i %>% as_tibble() 
+            } # END OF LOOP 'i' BY VARNAME
+          names(all.cats.ls) <- c("x","y")
+          return(all.cats.ls)
+        }
+        
+        all.cats.ls.d <- 
+          unique.variable.values.fun(
+            varnames = c(config.tables.df.d$x.var, config.tables.df.d$y.var),
+            tb = resp.long.df %>% as_tibble()
+          )
+      
+      #if(config.tables.df.d$x.varname != "year"){
+      #  all.cats.df.d <- expand.grid(unique(resp.long.df$year), all.cats.d) %>% as.data.frame(., stringsAsFactors = FALSE)
+      #}else{
+      #  all.cats.df.d <- all.cats.d %>% as.data.frame(., stringsAsFactors = FALSE)
+      #}
+      
+      #names(all.cats.df.d) <- config.tables.df.d$x.varname
+      #print(all.cats.df.d)
+      
+#FUN  #Function: Filter Data - district vs. building.id
+      
+      #!NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND table DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
+      #BUILDING.ID AND DATA.LEVEL IS DISTRICT.
+      
+      
+      table.data.filter.fun <- function(x){
+        
+        if(is.na(config.tables.df.d$filter)){ #
+          result <- x
+        }else{
+          if(config.tables.df.d %in% c("building.id","district")){
+            
+          }
+        }
+        
+        
+      
+      
+      table.data.restriction.fun <- function(x){
+        if(is.na(config.tables.df.d$filter)){
+          y <-x
+        }
+        
+        if(config.tables.df.d$filter == "district"){
+          y <- x
+        }
+        
+        if(config.tables.df.d$filter == "building.id"){
+          y <- 
+            x %>% 
+            filter(building.id == report.id.c) 
+        }
+        
+        if(is.na(config.tables.df.d$data.restriction)){
+          result <- y
+        }
+        
+        if(!is.na(config.tables.df.d$data.restriction)){
+          result <- 
+            y %>% 
+            filter(
+              y[,names(y) == config.tables.df.d$data.restriction] == 
+                config.tables.df.d[,names(config.tables.df.d) == config.tables.df.d$data.restriction]
+            )
+        }
+        
+        return(result)
+      }
+      
+      #FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
+        #Test inputs
+          #config.input <- config.tables.df.d
+          #data.input <-  resp.long.df.c %>% table.data.restriction.fun %>% group_by(!!! syms(group_by.d))
+      
+      #!NEED TO FIX THIS FUNCTION SO THAT CREATES CORRECT 2-DIMENSIONAL TABLE. VERY CLOSE. JUST NEED TO FIND A WAY TO GENERALIZE VARIABLES, MAYBE USE ANOTHER PACKAGE.
+      summarize.data.fun <- function(config.input, data.input){
+        if(config.input$summary.function == "count"){
+          result <- 
+            x<- melt(data.input, id.vars = names(data.input)) 
+            reshape2::dcast(
+              data = x, 
+              formula = practice ~ answer,#syms(paste(config.input$x.var,"~",config.input$y.var,sep="")), 
+              fun.aggregate = length
+            )
+          #dplyr::summarize(data.input, measure.var = length(unique(responseid)))
+        }
+        
+        if(config.input$summary.function == "implementation"){
+          result <- 
+            data.input %>% 
+            filter(impbinary == 1) %>%
+            dplyr::summarize(measure.var = mean(as.numeric(answer), na.rm = TRUE)) %>%
+            as.data.frame(., stringsAsFactors = FALSE)
+        }
+        
+        if(config.input$summary.function == "performance"){
+          result <- data.input %>%
+            filter(impbinary == 0, !is.na(answer)) %>%
+            dplyr::summarize(measure.var = as.character(length(unique(responseid))))
+        }
+        
+        if(config.input$summary.function == "average performance"){
+          result <- 
+            data.input %>%
+            filter(grepl("_num",question)) %>%
+            dplyr::summarize(., measure.var =  mean(as.numeric(answer), na.rm = TRUE))
+        }
+        
+        return(result)
+      }
+      
+      #Form final data frame (no averages)
+        tabledata.df.d <-  
+          resp.long.df.c %>%
+          table.data.restriction.fun %>%
+          group_by(!!! syms(group_by.d)) %>%
+          summarize.data.fun(config.input = config.tables.df.d, data.input = .) %>%
+          left_join(all.cats.df.d, ., by = c(group_by.d))
+        tabledata.df.d$measure.var[is.na(tabledata.df.d$measure.var)] <- 0
+      
+        #print(tabledata.df.d)
+      
+#FUN  #Function: Restriction function for table average data
+      
+        #! THESE TWO FUNCTIONS ARE VERY SIMILAR TO THE ONES ABOVE WHICH HAVE BEEN CHANGED SO NOW NEED TO SPECIFY "config.input" BUT
+        #   HAVE NOT MADE THOSE CHANGES HERE YET. PROBABLY COULD ROLL UP INTO ONE OR TWO FUNCTIONS.
+        
+        avg.data.restriction.fun <- function(x){
+          
+          if(config.tables.df.d$filter == "district"){
+            y <- x
+          }
+          
+          if(config.tables.df.d$filter == "building.id"){
+            y <- 
+              x %>% 
+              filter(district == unique(resp.long.df$district[resp.long.df$building.id == report.id.c])) 
+          }
+          
+          z <- y %>% filter(!is.na(y[,names(y)==group_by.d])) #!Might want to make flexible - i.e. add a parameter which allows user to inlcude NA
+          
+          if(!config.tables.df.d$data.restriction=="module" | is.na(config.tables.df.d$data.restriction)){ 
+            #!Should look into a better way to deal with this restriction, think about input tables
+            result <- z
+          }
+          
+          if(config.tables.df.d$data.restriction=="module" & !is.na(config.tables.df.d$data.restriction)){
+            result <- 
+              z %>%
+              filter(
+                z[,names(z)==config.tables.df.d$data.restriction] == 
+                  config.tables.df.d[,names(config.tables.df.d)==config.tables.df.d$data.restriction]
+              )
+          }
+          
+          return(result)
+        }
+        
+      #FUN  #Function: Summary Function for table Averages
+        summarize.avg.fun <- function(x){
+          
+          if(config.tables.df.d$data.measure == "participation"){
+            result <- x %>%
+              dplyr::summarize(avg = length(unique(responseid))/length(unique(school.id)))#participation
+          }
+          
+          if(config.tables.df.d$data.measure == "implementation"){
+            result <- x %>% 
+              filter(.,impbinary == 1) %>%
+              dplyr::summarize(., avg = mean(as.numeric(answer), na.rm = TRUE))#implementation
+            
+          }
+          
+          if(config.tables.df.d$data.measure == "performance"){
+            result <- x %>%
+              filter(impbinary == 0, !is.na(answer)) %>%
+              dplyr::summarize(avg = length(unique(responseid))/length(unique(school.id)))
+          }
+          
+          if(config.tables.df.d$data.measure == "average performance"){
+            result <- 
+              x %>%
+              filter(grepl("_num",question)) %>%
+              dplyr::summarize(., measure.var =  mean(as.numeric(answer), na.rm = TRUE))
+          }
+          
+          return(result)
+        }
+      
+      #Add average variable to final data frame
+        table.avg.df.d <- 
+          resp.long.df %>%
+          avg.data.restriction.fun(.) %>%
+          group_by(!!! syms(group_by.d)) %>%
+          summarize.avg.fun(.)
+      
+#FUN  #Function: Left Join ?with NA?
+        left.join.NA <- function(.x, .y, .by, na.replacement) {
+          result <- left_join(x = .x, y = .y, by = .by, stringsAsFactors = FALSE) %>% 
+            mutate_all(funs(replace(., which(is.na(.)), na.replacement)))
+          return(result)
+        }
+      
+      tabledata.df.d <- 
+        left.join.NA(
+          .x = tabledata.df.d, 
+          .y = table.avg.df.d, 
+          .by = c(group_by.d),
+          na.replacement = 0
+        ) %>%
+        replace.names.fun(
+          df = .,
+          current.names = c(names(.)),
+          new.names = c(config.tables.df.d$x.varname,"measure.var","measure.var.avg")
+        )
+      
+      storage.ls.index <- length(tabledata.ls.d) + 1
+      tabledata.ls.d[[storage.ls.index]] <- tabledata.df.d
+      setTxtProgressBar(progress.bar.c, 100*(d + config.tables.ls.b[1:(c-1)] %>% sapply(., dim) %>% .[1,] %>% sum)/maxrow.c)
+      
+      #print(c(d))
+      #print(config.tables.df.e[,names(config.tables.df.e) == config.tables.df.e$data.restriction] %>% as.character)
+      #print(config.tables.df.e[,names(config.tables.df.e) == config.tables.df.e$data.level] %>% as.character)
+      #print(tabledata.df.d)
+      #print(tabledata.ls.d[[tabledata.ls.index]])
+      
+    } ### END OF LOOP "d" BY TABLE ###
+    
   graphdata.ls.c[[c]] <- graphdata.ls.d
   #graphdata.ls.c[[b]]['loop.duration'] <- Sys.time()-loop.start.time.b  #100*b/maxrow.b
   #est.time.remaining <- (lapply(graphdata.ls.c, function(x){x['loop.duration']}) %>% unlist %>% mean())*(maxrow.b-b)
@@ -1222,12 +1526,32 @@ close(progress.bar.c)
 } #END OF SECTION COLLAPSE BRACKET
 
 #OUTPUTS:
-    #graphdata.ls.c
-      #[[district]]
-        #data frame where each line represents a graph
+  #tabledata.ls.c
+    #[[report.unit]]
+      ##data frame where each line represents a table
+  #graphdata.ls.c
+    #[[report unit]]
+      #data frame where each line represents a graph
     
 ########################################################################################################################################################      
 ### PRODUCING GRAPHS THEMSELVES  ###
+
+s2.ft <- FlexTable(
+  data = s2.outputs.df,
+  header.columns = TRUE,
+  add.rownames = FALSE,
+  
+  header.cell.props = cellProperties(background.color = purpleheader, border.style = "none"),
+  header.text.props = textProperties(color = "white", font.size = 22, font.weight = "bold"),
+  header.par.props = parProperties(text.align = "center"),
+  body.cell.props = cellProperties(background.color = "white", border.style = "none")
+)
+
+s2.ft[dim(s2.outputs.df)[1],] <- chprop(textProperties(font.weight = "bold")) #Bold text on last line (totals)
+s2.ft[,2] <- chprop(parProperties(text.align = "center")) #Center align numbers in second column
+s2.ft <- setFlexTableWidths(s2.ft, widths = c(4, 2.5))      
+s2.ft <- setZebraStyle(s2.ft, odd = purpleshade, even = "white" ) 
+
 
 {#SECTION COLLAPSE BRACKET
   
@@ -1599,8 +1923,8 @@ close(progress.bar.c)
       progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
       maxrow.h <- sapply(config.slides.ls.b, dim)[1,] %>% sum
     
-    h <- 8 #LOOP TESTER
-    #for(h in 1:2){ #LOOP TESTER
+    #h <- 8 #LOOP TESTER
+    for(h in 1:2){ #LOOP TESTER
     #for(h in 1:length(config.slides.ls.b)){
       
       #Set up target file
