@@ -72,8 +72,8 @@
 
 ################################
 #ORDER A DATA FRAME BY A SPECIFIC COLUMN
-  df.order.by.var.fun <- function(df, order.by.var){
-    result <- df[order(df[,names(df) == order.by.var]),]
+  df.order.by.var.fun <- function(df, order.by.varname){
+    result <- df[order(df[,names(df) == order.by.varname]),]
     return(result)
   }
 
@@ -105,7 +105,10 @@
       mutate(new.split.var = strsplit(as.character(split.var),split.char)) %>% 
       unnest(new.split.var, .drop = NA) %>% 
       .[,names(.)[names(.) != split.varname]] %>%
-      df.order.by.var.fun(df = ., order.by.var = id.varname) %>%
+      df.order.by.var.fun(
+        df = ., 
+        order.by.varname = id.varname
+      ) %>%
       replace.names.fun(
         df = .,
         current.names = "new.split.var",

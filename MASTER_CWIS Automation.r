@@ -308,7 +308,7 @@
       
    
     #Re-do question table so no extraneous rows for roles that are now unbranched  
-      questions.unbranched.df <- 
+      q.unbranched.df <- 
         questions.sem.df[
           questions.sem.df$row.1 %in% 
           c(
@@ -318,11 +318,18 @@
           )
           ,
         ] #!looks like still uneven numbers - some columns must be missing from questions table, but seems to be columns we don't care about.
-      questions.unbranched.df$row.1[grep("q",questions.unbranched.df$row.1)] <- 
+      q.unbranched.df$row.1[grep("q",q.unbranched.df$row.1)] <- 
         str_extract(
-          questions.unbranched.df$row.1[grep("q",questions.unbranched.df$row.1)], 
+          q.unbranched.df$row.1[grep("q",q.unbranched.df$row.1)], 
           "q[0-9].+"
-        ) 
+        )
+      q.unbranched.df <-
+        SplitColReshape.ToLong(
+          df = q.unbranched.df,
+          id.varname = "row.1",
+          split.varname = "module",
+          split.char = ","
+        )
     
     #Write Unbranched Data to Excel File
       #unbranched.file.name <- 
@@ -427,8 +434,8 @@
   #Add useful variables for analysis 
     
     #Useful vectors for selecting cwis answer variables
-      cwis.vars.v <- which(names(resp3.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$module)])
-      cwis.varnames.v <- names(resp3.df)[names(resp3.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$module)]]
+      cwis.vars.v <- which(names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$module)])
+      cwis.varnames.v <- names(resp3.df)[names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$module)]]
       cwis.modules.v <- 
         questions.sem.df$module[!is.na(questions.sem.df$module)] %>% 
         unique %>% 
@@ -459,7 +466,9 @@
       recode.ansopt.varnames.v <- 
         which(resp3.df %>% 
         apply(., 2, unique) %>%
-        sapply(., function(x) {x %in% c("always","most of the time","about half the time","sometimes","never","strongly agree","agree","neutral","disagree","strongly disagree")}) %>%
+        sapply(., function(x) {
+          x %in% c("always","most of the time","about half the time","sometimes","never","strongly agree","agree","neutral","disagree","strongly disagree")
+        }) %>%
         sapply(., any)) %>%
         names(resp3.df)[.]
 
@@ -467,10 +476,38 @@
         apply(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v], 
           2,
           numeric.recode.fun
-        ) %>% as.data.frame
+        ) %>% 
+        as.data.frame
       
       names(num.ansopt.vars.df) <- paste(names(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v]),"_num", sep = "")
     
+    #Recode Original Answers to add numbers (e.g. "Always" becomes "1. Always")
+      addnums.recode.fun <- 
+        function(x){
+          recode(
+            x,
+            `always` = '5. always',
+            `most of the time` = '4. most of the time',
+            `about half the time` = '3. about half the time',
+            `sometimes` = "2. sometimes",
+            `never` = "1. never",
+            `strongly agree` = "5. strongly agree",
+            `agree` = "4. agree",
+            `neutral` = "3. neutral",
+            `neither agree nor disagree` = "3. neither agree nor disagree",
+            `neither agree or disagree` = "3. neither agree nor disagree",
+            `disagree` = "2. disagree",
+            `strongly disagree` = "1. strongly disagree"
+          )
+        }
+      
+      recode.addnums.df <- 
+        apply(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v], 
+              2,
+              addnums.recode.fun
+        ) %>% 
+        as.data.frame
+      
     #Create 'implementation' binary variables
       binary.ansopt.vars.df <- apply(num.ansopt.vars.df,c(1:2),function(x){ifelse(x >= 3.5,1,0)}) %>% as.data.frame
       names(binary.ansopt.vars.df) <- paste(names(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v]),"_binary",sep = "")
@@ -509,7 +546,7 @@
         
         slider.vars.df <- 
           resp3.df[,
-            names(resp3.df) %in% questions.unbranched.df$row.1[!is.na(questions.unbranched.df$var.min)]
+            names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$var.min)]
           ]
         
         slider.vars.ls <- list()
@@ -517,9 +554,9 @@
         for(c in 1:ncol(slider.vars.df)){
           
           colname.c <- names(slider.vars.df)[c]
-          var.min.c <- questions.unbranched.df$var.min[questions.unbranched.df$row.1 == colname.c][!is.na(questions.unbranched.df$var.min[questions.unbranched.df$row.1 == colname.c])] %>% 
+          var.min.c <- q.unbranched.df$var.min[q.unbranched.df$row.1 == colname.c][!is.na(q.unbranched.df$var.min[q.unbranched.df$row.1 == colname.c])] %>% 
             as.character %>% as.numeric
-          var.max.c <- questions.unbranched.df$var.max[questions.unbranched.df$row.1 == colname.c][!is.na(questions.unbranched.df$var.max[questions.unbranched.df$row.1 == colname.c])] %>% 
+          var.max.c <- q.unbranched.df$var.max[q.unbranched.df$row.1 == colname.c][!is.na(q.unbranched.df$var.max[q.unbranched.df$row.1 == colname.c])] %>% 
             as.character %>% as.numeric
           
           if(var.min.c == 1 & var.max.c == 5){slider.threshold.c <- 3.5}
@@ -533,7 +570,14 @@
           paste(names(slider.vars.df),"_binary",sep="")
       
     #Create final data frames: 1. Wide; 2. Long for original CWIS data; 3. Long for impbinary data (both long include all original id variables)
-      resp.wide.df <- cbind(resp3.df, num.ansopt.vars.df, binary.ansopt.vars.df, binary.slider.vars.df)
+      resp.wide.df <- 
+        cbind(
+          resp3.df[,setdiff(names(resp3.df),names(recode.addnums.df))], 
+          recode.addnums.df, 
+          num.ansopt.vars.df, 
+          binary.ansopt.vars.df, 
+          binary.slider.vars.df
+        )
       resp.long.df <- 
         melt(
           data = resp.wide.df,
@@ -561,7 +605,7 @@
         resp.long.df <- 
           left_join(
             resp.long.df, 
-            questions.unbranched.df[,names(questions.unbranched.df) %in% c("row.1","module","practice")], 
+            q.unbranched.df[,names(q.unbranched.df) %in% c("row.1","module","practice")], 
             by = c("q.original" = "row.1")
           )  
         
@@ -959,7 +1003,8 @@
     if(c == 1){print("Forming input data tables for graphs...")}
     
     #Loop Inputs (both graphs and tables)
-      report.id.c <- report.ids[c]                               
+      report.id.c <- report.ids[c]
+      district.c <- resp.long.df %>% filter(building.id == report.id.c) %>% select(district) %>% unique %>% unlist %>% remove.na.from.vector()
       
       resp.long.df.c <- 
         resp.long.df %>% 
@@ -1220,7 +1265,7 @@
     ###                    ###
 #   ### LOOP "d" BY TABLE  ###
     ###                    ###
-    
+      
     #Loop Inputs
       config.tables.df.c <- config.tables.ls.b[[c]]
       tabledata.ls.d <- list()
@@ -1238,51 +1283,70 @@
         
         #!Generalize to graph code as well? So treat like a pivot table with arbitrary number of x.vars and y.vars, a summary var and a summary function.
           # Maybe would make it so could use a single config table?
+          #!Should generalize so that can handle arbitrary number of nested variables on both axes like pivot
         
         #Test Inputs
           varnames <- c(config.tables.df.d$x.var, config.tables.df.d$y.var)
           tb <- resp.long.df
           
         unique.variable.values.fun <- function(varnames, tb){
-          #!Should generalize so that can handle arbitrary number of nested variables on both axes like pivot 
           
           varnames <- as.character(varnames)
           tb <- as_tibble(tb)
           all.cats.ls <- list()
           
           #LOOP 'i' BY VARNAME
+            #i<-1 #LOOP TESTER
             for(i in 1:length(varnames)){
               
               varname.i <- varnames[i]
               
               if(varname.i == "answer"){
-                all.cats.input1.i <- 
-                  tb %>% 
-                  filter(
-                    !grepl("\\_num|\\_binary",tb$question) & 
-                    grepl(config.tables.df.d$module, module)
-                  )
-              }else{
-                all.cats.input1.d <- 
-                  tb #%>%
+                module.varnames <- 
+                  q.unbranched.df %>% 
+                  filter(module == config.tables.df.d$module) %>% 
+                  select(row.1) %>% 
+                  unlist %>% 
+                  setdiff(., names(slider.vars.df))
+                
+                result <- 
+                  tb$question %in% module.varnames %>% 
+                  tb$answer[.] %>% 
+                  unique %>% 
+                  remove.na.from.vector() #%>%
+                  #FirstLetterCap_MultElements()
               }
               
-              all.cats.input3.i <-
-                all.cats.input1.i %>%
-                filter(impbinary == 0) %>%
-                .[,names(.) == varname.i] %>% 
-                unique %>%
-                unlist 
+              if(varname.i == "practice"){
+                  result <- 
+                    q.unbranched.df %>% 
+                    filter(module == config.tables.df.d$module) %>% 
+                    select(varname.i) %>% 
+                    unique %>% 
+                    unlist %>%
+                    remove.na.from.vector() #%>%
+                    #FirstLetterCap_MultElements()
+              }
               
-              all.cats.ls[[i]] <-
-                all.cats.input3.i[
-                  all.cats.input3.i %>%
-                  as.numeric() %>% 
-                  is.na()
-                ] %>% 
-                remove.na.from.vector() %>% 
-                FirstLetterCap_MultElements() %>%
-                .[order(.)]
+              if(varname.i == "role"){
+                result <- 
+                  tb %>%
+                  select(varname.i) %>%
+                  unique %>% 
+                  unlist %>%
+                  remove.na.from.vector() #%>%
+                  #FirstLetterCap_MultElements()
+              }
+              
+              all.cats.ls[[i]] <- result %>% as.data.frame %>% replace.names.fun(df = ., current.names = ".", new.names = "all.cats")
+                #all.cats.input3.i[
+                #  all.cats.input3.i %>%
+                #  as.numeric() %>% 
+                #  is.na()
+                #] %>% 
+                #remove.na.from.vector() %>% 
+                #FirstLetterCap_MultElements() %>%
+                #.[order(.)]
               
               #all.cats.ls[[i]] <- all.cats.df.i %>% as_tibble() 
             } # END OF LOOP 'i' BY VARNAME
@@ -1313,94 +1377,148 @@
       
       table.data.filter.fun <- function(x){
         
-        if(is.na(config.tables.df.d$filter)){ #
-          result <- x
-        }else{
-          if(config.tables.df.d %in% c("building.id","district")){
-            
-          }
-        }
-        
-        
-      
-      
-      table.data.restriction.fun <- function(x){
-        if(is.na(config.tables.df.d$filter)){
-          y <-x
-        }
-        
-        if(config.tables.df.d$filter == "district"){
+        if(is.na(config.tables.df.d$module)){
           y <- x
+        }else{
+          y <- x %>% filter(module == config.tables.df.d$module) %>% filter()
         }
         
-        if(config.tables.df.d$filter == "building.id"){
-          y <- 
-            x %>% 
-            filter(building.id == report.id.c) 
-        }
-        
-        if(is.na(config.tables.df.d$data.restriction)){
+        if(is.na(config.tables.df.d$filter)){ #
           result <- y
+        }else{
+          
+          if(!config.tables.df.d$filter %in% c("building.id","district")){
+            stop("Configuration 'filter' is neither 'building.id' nor 'district.' Check input.")
+          }
+          
+          if(config.tables.df.d$filter == "building.id"){
+            result <- y %>% filter(building.id == report.id.c)
+          }
+          
+          if(config.tables.df.d$filter == "district"){
+            result <- y %>% filter(district == district.c)
+          }
+          
         }
-        
-        if(!is.na(config.tables.df.d$data.restriction)){
-          result <- 
-            y %>% 
-            filter(
-              y[,names(y) == config.tables.df.d$data.restriction] == 
-                config.tables.df.d[,names(config.tables.df.d) == config.tables.df.d$data.restriction]
-            )
-        }
-        
         return(result)
       }
+        
+      #table.data.restriction.fun <- function(x){
+        #if(is.na(config.tables.df.d$filter)){
+        #  y <-x
+        #}
+        
+        #if(config.tables.df.d$filter == "district"){
+        #  y <- x
+        #}
+        
+        #if(config.tables.df.d$filter == "building.id"){
+        #  y <- 
+        #    x %>% 
+        #    filter(building.id == report.id.c) 
+        #}
+        
+        #if(is.na(config.tables.df.d$data.restriction)){
+        #  result <- y
+        #}
+        
+        #if(!is.na(config.tables.df.d$data.restriction)){
+        #  result <- 
+        #    y %>% 
+        #    filter(
+        #     y[,names(y) == config.tables.df.d$data.restriction] == 
+        #        config.tables.df.d[,names(config.tables.df.d) == config.tables.df.d$data.restriction]
+        #    )
+        #}
+        
+        #return(result)
+      #}
       
       #FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
         #Test inputs
-          #config.input <- config.tables.df.d
-          #data.input <-  resp.long.df.c %>% table.data.restriction.fun %>% group_by(!!! syms(group_by.d))
+          config.input <- config.tables.df.d
+          data.input <-  resp.long.df %>% table.data.filter.fun %>% group_by(!!! syms(group_by.d))
       
-      #!NEED TO FIX THIS FUNCTION SO THAT CREATES CORRECT 2-DIMENSIONAL TABLE. VERY CLOSE. JUST NEED TO FIND A WAY TO GENERALIZE VARIABLES, MAYBE USE ANOTHER PACKAGE.
-      summarize.data.fun <- function(config.input, data.input){
+      #summarize.data.fun <- function(config.input, data.input){
         if(config.input$summary.function == "count"){
-          result <- 
-            x<- melt(data.input, id.vars = names(data.input)) 
-            reshape2::dcast(
-              data = x, 
-              formula = practice ~ answer,#syms(paste(config.input$x.var,"~",config.input$y.var,sep="")), 
-              fun.aggregate = length
-            )
-          #dplyr::summarize(data.input, measure.var = length(unique(responseid)))
+          #result <- 
+            result.1 <- melt(data.input, id.vars = names(data.input)) 
+            
+            #Draft table (have to merge with all.cats to make sure have every column and row represented)
+              result.2 <- 
+                reshape2::dcast(
+                  data = result.1, 
+                  formula = 
+                    unlist(data.input[names(data.input) == config.tables.df.d$y.varname]) ~ 
+                    unlist(data.input[names(data.input) == config.tables.df.d$x.varname]),#syms(paste(config.input$x.var,"~",config.input$y.var,sep="")), 
+                  value.var ="responseid",
+                  fun.aggregate = length
+                ) %>% 
+                replace.names.fun(
+                  df = .,
+                  current.names = "unlist(data.input[names(data.input) == config.tables.df.d$y.varname])",
+                  new.names = "all.cats"
+                ) 
+            
+            #Add all.cats to rows (y axis) 
+              result.3 <- 
+                right_join(
+                  result.2, 
+                  all.cats.ls.d$y, 
+                  by = "all.cats"
+                )
+            
+            ##Add all.cats to columns (x axis)
+              missing.cats <- unlist(all.cats.ls.d$x)[!unlist(all.cats.ls.d$x) %in% names(result.3)] %>% as.character
+              
+              result.4 <- 
+                matrix(
+                  ncol = length(missing.cats),
+                  nrow = dim(result.3)[1]
+                ) %>%
+                as_tibble() %>%
+                replace.names.fun(
+                  df = .,
+                  current.names = names(.),
+                  new.names = missing.cats
+                ) %>%
+                cbind(result.3, .) %>%
+                df.order.by.var.fun(
+                  df = .,
+                  order.by.varname = "all.cats",
+                  rev = TRUE
+                )
         }
-        
-        if(config.input$summary.function == "implementation"){
-          result <- 
-            data.input %>% 
-            filter(impbinary == 1) %>%
-            dplyr::summarize(measure.var = mean(as.numeric(answer), na.rm = TRUE)) %>%
-            as.data.frame(., stringsAsFactors = FALSE)
-        }
-        
-        if(config.input$summary.function == "performance"){
-          result <- data.input %>%
-            filter(impbinary == 0, !is.na(answer)) %>%
-            dplyr::summarize(measure.var = as.character(length(unique(responseid))))
-        }
-        
-        if(config.input$summary.function == "average performance"){
-          result <- 
-            data.input %>%
-            filter(grepl("_num",question)) %>%
-            dplyr::summarize(., measure.var =  mean(as.numeric(answer), na.rm = TRUE))
-        }
-        
-        return(result)
       }
+        
+        #if(config.input$summary.function == "implementation"){
+        #  result <- 
+        #    data.input %>% 
+        #    filter(impbinary == 1) %>%
+        #    dplyr::summarize(measure.var = mean(as.numeric(answer), na.rm = TRUE)) %>%
+        #    as.data.frame(., stringsAsFactors = FALSE)
+        #}
+        
+        #if(config.input$summary.function == "performance"){
+        #  result <- data.input %>%
+        #    filter(impbinary == 0, !is.na(answer)) %>%
+        #    dplyr::summarize(measure.var = as.character(length(unique(responseid))))
+        #}
+        
+        #if(config.input$summary.function == "average performance"){
+        #  result <- 
+        #    data.input %>%
+        #    filter(grepl("_num",question)) %>%
+        #   dplyr::summarize(., measure.var =  mean(as.numeric(answer), na.rm = TRUE))
+        #}
+        
+        #return(result)
+      #}
       
       #Form final data frame (no averages)
         tabledata.df.d <-  
           resp.long.df.c %>%
-          table.data.restriction.fun %>%
+          table.data.filter.fun(.) %>%
           group_by(!!! syms(group_by.d)) %>%
           summarize.data.fun(config.input = config.tables.df.d, data.input = .) %>%
           left_join(all.cats.df.d, ., by = c(group_by.d))
