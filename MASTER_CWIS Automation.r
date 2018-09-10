@@ -1357,17 +1357,6 @@
             tb = resp.long.df %>% as_tibble()
           )
       
-      #if(config.tables.df.d$x.varname != "year"){
-      #  all.cats.df.d <- expand.grid(unique(resp.long.df$year), all.cats.d) %>% as.data.frame(., stringsAsFactors = FALSE)
-      #}else{
-      #  all.cats.df.d <- all.cats.d %>% as.data.frame(., stringsAsFactors = FALSE)
-      #}
-      
-      #names(all.cats.df.d) <- config.tables.df.d$x.varname
-      #print(all.cats.df.d)
-      
-#FUN  #Function: Filter Data - district vs. building.id
-      
       #!NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND table DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
       #BUILDING.ID AND DATA.LEVEL IS DISTRICT.
       
@@ -1399,39 +1388,8 @@
         }
         return(result)
       }
-        
-      #table.data.restriction.fun <- function(x){
-        #if(is.na(config.tables.df.d$filter)){
-        #  y <-x
-        #}
-        
-        #if(config.tables.df.d$filter == "district"){
-        #  y <- x
-        #}
-        
-        #if(config.tables.df.d$filter == "building.id"){
-        #  y <- 
-        #    x %>% 
-        #    filter(building.id == report.id.c) 
-        #}
-        
-        #if(is.na(config.tables.df.d$data.restriction)){
-        #  result <- y
-        #}
-        
-        #if(!is.na(config.tables.df.d$data.restriction)){
-        #  result <- 
-        #    y %>% 
-        #    filter(
-        #     y[,names(y) == config.tables.df.d$data.restriction] == 
-        #        config.tables.df.d[,names(config.tables.df.d) == config.tables.df.d$data.restriction]
-        #    )
-        #}
-        
-        #return(result)
-      #}
       
-      #FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
+  #FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
         #Test inputs
           config.input <- config.tables.df.d
           data.input <-  resp.long.df %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
@@ -1486,30 +1444,6 @@
         return(result.4)
       }
         
-        #if(config.input$summary.function == "implementation"){
-        #  result <- 
-        #    data.input %>% 
-        #    filter(impbinary == 1) %>%
-        #    dplyr::summarize(measure.var = mean(as.numeric(answer), na.rm = TRUE)) %>%
-        #    as.data.frame(., stringsAsFactors = FALSE)
-        #}
-        
-        #if(config.input$summary.function == "performance"){
-        #  result <- data.input %>%
-        #    filter(impbinary == 0, !is.na(answer)) %>%
-        #    dplyr::summarize(measure.var = as.character(length(unique(responseid))))
-        #}
-        
-        #if(config.input$summary.function == "average performance"){
-        #  result <- 
-        #    data.input %>%
-        #    filter(grepl("_num",question)) %>%
-        #   dplyr::summarize(., measure.var =  mean(as.numeric(answer), na.rm = TRUE))
-        #}
-        
-        #return(result)
-      #}
-      
       #Form final data frame (no averages)
         tabledata.df.d <-  
           resp.long.df.c %>%
@@ -1519,120 +1453,14 @@
           left_join(all.cats.df.d, ., by = c(group_by.d))
         tabledata.df.d$measure.var[is.na(tabledata.df.d$measure.var)] <- 0
       
-        #print(tabledata.df.d)
-      
-#FUN  #Function: Restriction function for table average data
-      
-        #! THESE TWO FUNCTIONS ARE VERY SIMILAR TO THE ONES ABOVE WHICH HAVE BEEN CHANGED SO NOW NEED TO SPECIFY "config.input" BUT
-        #   HAVE NOT MADE THOSE CHANGES HERE YET. PROBABLY COULD ROLL UP INTO ONE OR TWO FUNCTIONS.
-        
-        avg.data.restriction.fun <- function(x){
-          
-          if(config.tables.df.d$filter == "district"){
-            y <- x
-          }
-          
-          if(config.tables.df.d$filter == "building.id"){
-            y <- 
-              x %>% 
-              filter(district == unique(resp.long.df$district[resp.long.df$building.id == report.id.c])) 
-          }
-          
-          z <- y %>% filter(!is.na(y[,names(y)==group_by.d])) #!Might want to make flexible - i.e. add a parameter which allows user to inlcude NA
-          
-          if(!config.tables.df.d$data.restriction=="module" | is.na(config.tables.df.d$data.restriction)){ 
-            #!Should look into a better way to deal with this restriction, think about input tables
-            result <- z
-          }
-          
-          if(config.tables.df.d$data.restriction=="module" & !is.na(config.tables.df.d$data.restriction)){
-            result <- 
-              z %>%
-              filter(
-                z[,names(z)==config.tables.df.d$data.restriction] == 
-                  config.tables.df.d[,names(config.tables.df.d)==config.tables.df.d$data.restriction]
-              )
-          }
-          
-          return(result)
-        }
-        
-      #FUN  #Function: Summary Function for table Averages
-        summarize.avg.fun <- function(x){
-          
-          if(config.tables.df.d$data.measure == "participation"){
-            result <- x %>%
-              dplyr::summarize(avg = length(unique(responseid))/length(unique(school.id)))#participation
-          }
-          
-          if(config.tables.df.d$data.measure == "implementation"){
-            result <- x %>% 
-              filter(.,impbinary == 1) %>%
-              dplyr::summarize(., avg = mean(as.numeric(answer), na.rm = TRUE))#implementation
-            
-          }
-          
-          if(config.tables.df.d$data.measure == "performance"){
-            result <- x %>%
-              filter(impbinary == 0, !is.na(answer)) %>%
-              dplyr::summarize(avg = length(unique(responseid))/length(unique(school.id)))
-          }
-          
-          if(config.tables.df.d$data.measure == "average performance"){
-            result <- 
-              x %>%
-              filter(grepl("_num",question)) %>%
-              dplyr::summarize(., measure.var =  mean(as.numeric(answer), na.rm = TRUE))
-          }
-          
-          return(result)
-        }
-      
-      #Add average variable to final data frame
-        table.avg.df.d <- 
-          resp.long.df %>%
-          avg.data.restriction.fun(.) %>%
-          group_by(!!! syms(group_by.d)) %>%
-          summarize.avg.fun(.)
-      
-#FUN  #Function: Left Join ?with NA?
-        left.join.NA <- function(.x, .y, .by, na.replacement) {
-          result <- left_join(x = .x, y = .y, by = .by, stringsAsFactors = FALSE) %>% 
-            mutate_all(funs(replace(., which(is.na(.)), na.replacement)))
-          return(result)
-        }
-      
-      tabledata.df.d <- 
-        left.join.NA(
-          .x = tabledata.df.d, 
-          .y = table.avg.df.d, 
-          .by = c(group_by.d),
-          na.replacement = 0
-        ) %>%
-        replace.names.fun(
-          df = .,
-          current.names = c(names(.)),
-          new.names = c(config.tables.df.d$x.varname,"measure.var","measure.var.avg")
-        )
-      
       storage.ls.index <- length(tabledata.ls.d) + 1
       tabledata.ls.d[[storage.ls.index]] <- tabledata.df.d
       setTxtProgressBar(progress.bar.c, 100*(d + config.tables.ls.b[1:(c-1)] %>% sapply(., dim) %>% .[1,] %>% sum)/maxrow.c)
       
-      #print(c(d))
-      #print(config.tables.df.e[,names(config.tables.df.e) == config.tables.df.e$data.restriction] %>% as.character)
-      #print(config.tables.df.e[,names(config.tables.df.e) == config.tables.df.e$data.level] %>% as.character)
-      #print(tabledata.df.d)
-      #print(tabledata.ls.d[[tabledata.ls.index]])
-      
     } ### END OF LOOP "d" BY TABLE ###
     
   graphdata.ls.c[[c]] <- graphdata.ls.d
-  #graphdata.ls.c[[b]]['loop.duration'] <- Sys.time()-loop.start.time.b  #100*b/maxrow.b
-  #est.time.remaining <- (lapply(graphdata.ls.c, function(x){x['loop.duration']}) %>% unlist %>% mean())*(maxrow.b-b)
-  #print(paste("Estimated time remaining: ",est.time.remaining," sec",sep = ""))
-  #setTxtProgressBar(progress.bar.c, 100*c/maxrow.c)
-  
+
 } ### END OF LOOP "c" BY DISTRICT     
 close(progress.bar.c)  
 
