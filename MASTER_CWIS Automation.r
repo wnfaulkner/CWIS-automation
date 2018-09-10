@@ -81,7 +81,7 @@
     #Data & Output Directories
       setwd(wd)
       source.dir <- paste(wd,"data_source/", sep = "")
-      target.dir <- paste(wd,"r_script_outputs/",
+      target.dir <- paste(wd,"r_output/",
                             "Output_",
                             gsub(":",".",Sys.time()), sep = "")
       dir.create(
@@ -1473,12 +1473,7 @@
               df = .,
               current.names = "all.cats",
               new.names = FirstLetterCap_OneElement(config.tables.df.d$y.varname)
-            ) #%>%
-            #replace.names.fun(
-            #  df = .,
-            #  current.names = names(.),
-            #  new.names = FirstLetterCap_MultElements(names(.))
-            #)
+            )
             
           return(result.4)
         }
@@ -1883,6 +1878,7 @@ close(progress.bar.c)
       
     } ### END OF LOOP "g" BY TABLE ###
     
+    names(tables.ls.g) <- c("role","cfa","dbdm","etlp","lead","pd")
     tables.ls.f[[f]] <- tables.ls.g
     
   } ### END OF LOOP "f" BY REPORT.UNIT
@@ -1932,7 +1928,7 @@ close(progress.bar.c)
 ########################################################################################################################################################      
 ### POWERPOINT SLIDE CREATION  ###        
 
-#{ #SECTION COLLAPSE BRACKET   
+{ #SECTION COLLAPSE BRACKET   
     
   config.pot.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE)
     ###                          ###    
@@ -1944,8 +1940,8 @@ close(progress.bar.c)
       maxrow.h <- sapply(config.slides.ls.b, dim)[1,] %>% sum
     
     #h <- 8 #LOOP TESTER
-    for(h in 1:2){ #LOOP TESTER
-    #for(h in 1:length(config.slides.ls.b)){
+    #for(h in 1:2){ #LOOP TESTER
+    for(h in 1:length(config.slides.ls.b)){
       
       #Set up target file
         template.file <- paste(source.dir,
@@ -1953,15 +1949,15 @@ close(progress.bar.c)
                              sep = "")
         target.path.h <- paste(target.dir,
                                   "/",
-                                  #"Green Report_",
+                                  #"Green_",
                                   report.ids[h],
                                   "_",
-                                  gsub(":",".",Sys.time()),
+                                  gsub(":",".",Sys.time()[1]),
                                   ".pptx", sep="") 
       
         file.copy(template.file, target.path.h)
       
-      #Set up powerpoing object 
+      #Set up powerpoint object 
         ppt.h <- pptx( template = target.path.h )
         options("ReporteRs-fontsize" = 20)
         options("ReporteRs-default-font" = "Calibri")
@@ -1971,6 +1967,8 @@ close(progress.bar.c)
           config.graphs.ls.b[[h]] %>%
           mutate(row.i = config.graphs.ls.b[[h]] %>% .[,ncol(config.graphs.ls.b[[1]])] %>% seq_along(.))
         
+        config.tables.df.h <- config.tables.ls.b[[h]]
+        
         #!Will need to generalize below for different report units (i.e. Repeated Measures vs. Green Reports)
         report.id.h <- report.ids[h]
         district.h <- strsplit(report.id.h, "_") %>% unlist %>% .[1] %>% toupper()
@@ -1978,12 +1976,13 @@ close(progress.bar.c)
         config.slides.df.h <- config.slides.ls.b[[h]]
         
         graphs.ls.h <- graphs.ls.f[[h]]
+        tables.ls.h <- tables.ls.f[[h]]
      
       ###                     ###    
 #     ### LOOP "i" BY SLIDE   ###
       ###                     ###
 
-        #i <- 1 #LOOP TESTER
+        #i <- 2 #LOOP TESTER
         #for(i in 1:4){ #LOOP TESTER
         for(i in 1:dim(config.slides.ls.b[[h]])[1]){
           
@@ -2002,6 +2001,7 @@ close(progress.bar.c)
             config.graphs.df.i <- config.graphs.df.h %>% 
               filter(slide.type.id == slide.type.id.i)
             
+          if(dim(config.graphs.df.i)[1] !=0 && !is.na(config.graphs.df.i$slide.graph.type)){
             #!Removed for expediencey but should be generalized.
             #if(is.na(config.slide.df.i$school)){
             #  config.graphs.df.i <- config.graphs.df.i[is.na(config.graphs.df.i$school),]
@@ -2016,32 +2016,64 @@ close(progress.bar.c)
             }
          
             
-          ###                   ###    
-#         ### LOOP "k" BY GRAPH ###
-          ###                   ###
-          
-          #k <- 1 #LOOP TESTER
-          #for(k in 1:2){ #LOOP TESTER
-          for(k in 1:dim(config.graphs.df.i)[1]){
-            if(dim(config.graphs.df.i)[1] < 1){
-              #print(paste("No graph objects for slide.id: ",config.slide.df.i$slide.type.id,sep = ""))
-              next()
+            ###                   ###    
+#           ### LOOP "k" BY GRAPH ###
+            ###                   ###
+            
+            #k <- 1 #LOOP TESTER
+            #for(k in 1:2){ #LOOP TESTER
+            for(k in 1:dim(config.graphs.df.i)[1]){
+              if(dim(config.graphs.df.i)[1] < 1){
+                #print(paste("No graph objects for slide.id: ",config.slide.df.i$slide.type.id,sep = ""))
+                next()
+              }
+              
+              graph.k <- graphs.ls.h[config.graphs.df.i$row.i[k]]
+              ppt.h <- 
+                addPlot(
+                  ppt.h,
+                  fun = print,
+                  x = graph.k,
+                  height = config.graphs.df.i$height[k],
+                  width = config.graphs.df.i$width[k],
+                  offx = config.graphs.df.i$offx[k],
+                  offy = config.graphs.df.i$offy[k]
+                )
+            
+            } # END OF LOOP "k" BY GRAPH
+          }
+            
+          #ADD TABLES
+            
+            #! Will want to generalize so can add more than one table to each slide if necessary
+            config.tables.df.i <- config.tables.df.h %>% 
+              filter(slide.type.id == slide.type.id.i)
+            
+            if(dim(config.tables.df.i)[1] != 0 && !is.na(config.tables.df.i$slide.table.type)){
+              
+              if(is.na(config.slide.df.i$module)){
+                config.tables.df.i <- config.tables.df.i[is.na(config.tables.df.i$module),]
+              }else{
+                config.tables.df.i <- config.tables.df.i[config.tables.df.i$module == config.slide.df.i$module,]
+              }
+              
+              if(i == 2){
+                ft.i <- tables.ls.f[[h]][[1]]
+              }else{
+                ft.i <- tables.ls.f[[h]][[which(names(tables.ls.f[[h]])==config.tables.df.i$module)]]
+              }
+
+              ppt.h <- addFlexTable(ppt.h, 
+                                    ft.i, 
+                                    height = config.tables.df.i$height,
+                                    width = config.tables.df.i$width,
+                                    offx = config.tables.df.i$offx,
+                                    offy = config.tables.df.i$offy
+                                     #par.properties=parProperties(text.align="center", padding=0)
+              )
             }
             
-            graph.k <- graphs.ls.h[config.graphs.df.i$row.i %>% .[k]]
-            ppt.h <- 
-              addPlot(
-                ppt.h,
-                fun = print,
-                x = graph.k,
-                height = config.graphs.df.i$height[k],
-                width = config.graphs.df.i$width[k],
-                offx = config.graphs.df.i$offx[k],
-                offy = config.graphs.df.i$offy[k]
-              )
-          
-          } # END OF LOOP "k" BY GRAPH
-          
+          #ADD POT OBJECTS
   
           ###                         ###    
 #         ### LOOP "j" BY POT OBJECT  ###
@@ -2116,7 +2148,7 @@ close(progress.bar.c)
           
         } #END OF LOOP "i" BY SLIDE
           
-    } # END OF LOOP "h" BY DISTRICT      
+    } # END OF LOOP "h" BY REPORT.UNIT      
     close(progress.bar.h)      
           
           
