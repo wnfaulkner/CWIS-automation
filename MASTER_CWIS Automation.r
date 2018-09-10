@@ -1270,9 +1270,9 @@
       config.tables.df.c <- config.tables.ls.b[[c]]
       tabledata.ls.d <- list()
       
-    d <- 1
+    #d <- 2
     #for(d in 1:2){ #LOOP TESTER
-    #for(d in 1:dim(config.tables.df.c)[1]){
+    for(d in 1:dim(config.tables.df.c)[1]){
       
       config.tables.df.d <- config.tables.df.c[d,]
       
@@ -1394,8 +1394,31 @@
           config.input <- config.tables.df.d
           data.input <-  resp.long.df %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
       
-      #summarize.data.fun <- function(config.input, data.input){
+      summarize.data.fun <- function(config.input, data.input){
+        
         result.1 <- melt(data.input, id.vars = names(data.input)) 
+        
+        if(d == 1){
+          result <-
+            reshape2::dcast(
+              data = result.1,
+              formula = role ~ building.id,
+              value.var = "responseid",
+              fun.aggregate = function(x){length(unique(x))}
+            ) %>%
+            replace.names.fun(
+              df = .,
+              current.names = report.id.c,
+              new.names = "num. responses"
+            ) %>%
+            replace.names.fun(
+              df = .,
+              current.names = names(.),
+              new.names = FirstLetterCap_MultElements(names(.))
+            ) 
+            
+          return(result)
+        }else{
         
         #Draft table (have to merge with all.cats to make sure have every column and row represented)
           result.2 <- 
@@ -1440,8 +1463,20 @@
               df = .,
               order.by.varname = "all.cats",
               rev = TRUE
-            )
-        return(result.4)
+            ) %>%
+            replace.names.fun(
+              df = .,
+              current.names = "all.cats",
+              new.names = FirstLetterCap_OneElement(config.tables.df.d$y.varname)
+            ) #%>%
+            #replace.names.fun(
+            #  df = .,
+            #  current.names = names(.),
+            #  new.names = FirstLetterCap_MultElements(names(.))
+            #)
+            
+          return(result.4)
+        }
       }
         
       #Form final data frame (no averages)
@@ -1450,15 +1485,17 @@
           table.data.filter.fun(.) %>%
           group_by(!!! syms(config.tables.df.d$summary.var)) %>%
           summarize.data.fun(config.input = config.tables.df.d, data.input = .) %>%
-          left_join(all.cats.df.d, ., by = c(group_by.d))
-        tabledata.df.d$measure.var[is.na(tabledata.df.d$measure.var)] <- 0
-      
+          mutate_all(funs(replace(., is.na(.), 0)))
+        tabledata.df.d[,1] <- FirstLetterCap_MultElements(tabledata.df.d[,1])
+
       storage.ls.index <- length(tabledata.ls.d) + 1
       tabledata.ls.d[[storage.ls.index]] <- tabledata.df.d
+      
       setTxtProgressBar(progress.bar.c, 100*(d + config.tables.ls.b[1:(c-1)] %>% sapply(., dim) %>% .[1,] %>% sum)/maxrow.c)
       
     } ### END OF LOOP "d" BY TABLE ###
     
+      names(tabledata.ls.d) <- config.tables.df.c$module %>% remove.na.from.vector() %>% as.character %>% c("role",.)
   graphdata.ls.c[[c]] <- graphdata.ls.d
 
 } ### END OF LOOP "c" BY DISTRICT     
