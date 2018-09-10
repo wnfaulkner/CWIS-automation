@@ -126,7 +126,8 @@
       questions.ss <- gs_key("1WCS1IZkMpZDztHeEyTyzD_cMMs-aIfknxYtDKg0T-Rg",verbose = TRUE) 
       questions.ls <- 	gs_read(questions.ss, ws = 1, range = NULL, literal = TRUE) %>% as.list() %>% lapply(., tolower)
       questions.df <- do.call(cbind, questions.ls) %>% as.data.frame(., stringsAsFactors = FALSE)
-    
+      #! Update to read all configs from same google sheet?
+      
     #Responses table (main data, imported as data frame)
       resp1.df <- read.csv(
         file =  
@@ -151,6 +152,17 @@
   
   #Initial informatics
     
+    #Global Answer Options
+      ans.opt.always.df <-  cbind(
+        c(5:1),
+        c("Always","Most of the time","About half the time","Sometimes","Never"),
+        c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
+      ) %>% as.data.frame
+      names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
+      ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
+      ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
+      ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
+    
     #Restrict questions.df to only rows for this year/semester
       questions.sem.df <- 
         questions.df[
@@ -173,10 +185,12 @@
         if (n != length(replacement)) {
           stop("pattern and replacement do not have the same length.")
         }
+        
         result = x
         for (i in 1:n) {
           result[grep(pattern[i], x, ...)] = replacement[i]
         }
+        
         return(result)
       }
       
@@ -186,8 +200,7 @@
           questions.sem.df$q.changename[!is.na(questions.sem.df$q.changename)], 
           names(resp1.df)
         )
-      
-    
+
     #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
       
 #FUN #Function: output number of times specified substring occurs within vector of character strings
@@ -542,41 +555,118 @@
             as.numeric
           )
       
-      #Converting Slider variables to binary (according to different max/min/thresholds)
+      #Converting Slider variables to numeric and binary (according to different max/min/thresholds)
         
         slider.vars.df <- 
           resp3.df[,
             names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$var.min)]
           ]
         
-        slider.vars.ls <- list()
+        slider.binary.vars.ls <- list()
+        slider.num.vars.ls <- list()
         
+        #!Should straighten out letters for loops
         for(c in 1:ncol(slider.vars.df)){
           
           colname.c <- names(slider.vars.df)[c]
-          var.min.c <- q.unbranched.df$var.min[q.unbranched.df$row.1 == colname.c][!is.na(q.unbranched.df$var.min[q.unbranched.df$row.1 == colname.c])] %>% 
-            as.character %>% as.numeric
-          var.max.c <- q.unbranched.df$var.max[q.unbranched.df$row.1 == colname.c][!is.na(q.unbranched.df$var.max[q.unbranched.df$row.1 == colname.c])] %>% 
-            as.character %>% as.numeric
+          var.min.c <- 
+            q.unbranched.df$var.min[q.unbranched.df$row.1 == colname.c][!is.na(q.unbranched.df$var.min[q.unbranched.df$row.1 == colname.c])] %>% 
+            .[1] %>%                 #Once did SplitColReshape on the questions table, have two rows for some questions so have to select first one only.
+            as.character %>% 
+            as.numeric
+          var.max.c <- 
+            q.unbranched.df$var.max[q.unbranched.df$row.1 == colname.c][!is.na(q.unbranched.df$var.max[q.unbranched.df$row.1 == colname.c])] %>% 
+            .[1] %>%
+            as.character %>% 
+            as.numeric
           
-          if(var.min.c == 1 & var.max.c == 5){slider.threshold.c <- 3.5}
-          if(var.min.c == 1 & var.max.c == 10){slider.threshold.c <- 7}
-          if(length(var.min.c == 1 & var.max.c == 5) > 1){print(c)}
-          slider.vars.ls[[c]] <- ifelse(slider.vars.df[,c] >= slider.threshold.c, 1, 0)
+          if(var.min.c == 1 & var.max.c == 5){
+            cuts <- c(1.5,2.5,3.5,4.5)
+            slider.binary.threshold.c <- 3.5
+          }
+          
+          if(var.min.c == 1 & var.max.c == 10){
+            cuts <- seq(
+              from = var.min.c,
+              to = var.max.c, 
+              #by = ((to - from)/(length.out - 1)), 
+              length.out = 5)[1:4]
+            slider.binary.threshold.c <- 7
+          }
+          
+          if(length(var.min.c == 1 & var.max.c == 5) > 1){
+            print(c)
+          }
+          slider.num.vars.ls[[c]] <- findInterval(slider.vars.df[,c], cuts)+1
+          slider.binary.vars.ls[[c]] <- ifelse(slider.vars.df[,c] >= slider.binary.threshold.c, 1, 0)
         }
         
-        binary.slider.vars.df <- do.call(cbind, slider.vars.ls) %>% as.data.frame
-        names(binary.slider.vars.df) <- 
-          paste(names(slider.vars.df),"_binary",sep="")
-      
+        slider.num.vars.df <- 
+          do.call(cbind, slider.num.vars.ls) %>% 
+          as.data.frame %>%
+          replace.names.fun(
+            df = .,
+            current.names = names(.),
+            new.names = names(slider.vars.df)
+          ) 
+        
+        slider.agreement.varnames.v <- 
+          q.unbranched.df$row.1[q.unbranched.df$var.type == "continuous" & q.unbranched.df$scale.type == "agreement"] %>%
+          remove.na.from.vector()
+        
+        slider.freq.varnames.v <-
+          q.unbranched.df$row.1[q.unbranched.df$var.type == "continuous" & q.unbranched.df$scale.type == "frequency"] %>%
+          remove.na.from.vector()
+        
+        slider.agreement.df <-
+          slider.num.vars.df[,names(slider.num.vars.df) %in% slider.agreement.varnames.v] %>%
+          apply(., 2, function(x){
+            mgsub(
+              pattern = c(5:1),
+              replacement = paste(ans.opt.always.df$ans.num,". ",ans.opt.always.df$ans.text.agreement, sep = "") %>% tolower,
+              x = x
+            )
+          }) %>%
+          as.data.frame()
+        
+        slider.freq.df <-
+          slider.num.vars.df[,names(slider.num.vars.df) %in% slider.freq.varnames.v] %>%
+          apply(., 2, function(x){
+            mgsub(
+              pattern = c(5:1),
+              replacement = paste(ans.opt.always.df$ans.num,". ",ans.opt.always.df$ans.text.freq, sep = "") %>% tolower,
+              x = x
+            )
+          }) %>%
+          as.data.frame()
+        
+        slider.text.df <- 
+          cbind(slider.agreement.df, slider.freq.df) %>%
+          replace.names.fun(
+            df = .,
+            current.names = names(.),
+            new.names = paste(names(.),"_text",sep="")
+          )
+        
+        slider.binary.vars.df <- 
+          do.call(cbind, slider.binary.vars.ls) %>% 
+          as.data.frame %>%
+          replace.names.fun(
+            df = .,
+            current.names = names(.),
+            new.names = paste(names(slider.vars.df),"_binary",sep="")
+          )
+        
     #Create final data frames: 1. Wide; 2. Long for original CWIS data; 3. Long for impbinary data (both long include all original id variables)
       resp.wide.df <- 
         cbind(
           resp3.df[,setdiff(names(resp3.df),names(recode.addnums.df))], 
           recode.addnums.df, 
           num.ansopt.vars.df, 
-          binary.ansopt.vars.df, 
-          binary.slider.vars.df
+          binary.ansopt.vars.df,
+          slider.num.vars.df %>% replace.names.fun(df = ., current.names = names(.), new.names = paste(names(.),"_num",sep = "")),
+          slider.binary.vars.df,
+          slider.text.df
         )
       resp.long.df <- 
         melt(
@@ -618,8 +708,26 @@
             split.char = ","
           ) 
         
-      #Variable for binary implementation questions
+      #Variable designating questions to be used in implementation calculations (binary)
         resp.long.df$impbinary <- ifelse(grepl("binary",resp.long.df$question),1,0)
+      
+      #Variable designating questions to be used in average performance calculations
+        #avg.perf.q.varnames.v <-
+        #  c(grepl("_num",  )
+        #    q.unbranched.df$row.1[!is.na(q.unbranched.df$var.type) & q.unbranched.df$var.type == "integer"],
+        #    paste(names(slider.num.vars.df),"_num",sep="")
+        #  )
+          
+        resp.long.df$avg.perf.q <- ifelse(grepl("_num", resp.long.df$question), 1, 0)
+        
+      #Variable designating questions to be used in tables (bucketing)
+        table.q.varnames.v <- 
+          c(
+            q.unbranched.df$row.1[!is.na(q.unbranched.df$var.type) & q.unbranched.df$var.type == "integer"],
+            names(slider.text.df)
+          )
+            
+        resp.long.df$table.q <- ifelse(resp.long.df$question %in% table.q.varnames.v, 1, 0)
       
     #Loop: state average implementation rates [a], results in imp.state.df
       #imp.state.df <- data.frame(cwis.module = cwis.modules.v)
@@ -631,17 +739,6 @@
       #    mean() 
       #}
         
-    #Global Answer Options
-      ans.opt.always.df <-  cbind(
-        c(5:1),
-        c("Always","Most of the time","About half the time","Sometimes","Never"),
-        c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
-      ) %>% as.data.frame
-      names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
-      ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
-      ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
-      ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
-  
 }#END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
@@ -1067,12 +1164,6 @@
           all.cats.input2.d[order(all.cats.input2.d)] %>%
           as.data.frame(., stringsAsFactors = FALSE)
         
-        #if(config.graphs.df.d$data.group.by.var != "year"){
-        #  all.cats.df.d <- expand.grid(unique(resp.long.df$year), all.cats.d) %>% as.data.frame(., stringsAsFactors = FALSE)
-        #}else{
-        #  all.cats.df.d <- all.cats.d %>% as.data.frame(., stringsAsFactors = FALSE)
-        #}
-        
         names(all.cats.df.d) <- group_by.d
         #print(all.cats.df.d)
            
@@ -1271,7 +1362,7 @@
       config.tables.df.c <- config.tables.ls.b[[c]]
       tabledata.ls.d <- list()
       
-    #d <- 1
+    #d <- 2
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:dim(config.tables.df.c)[1]){
       
@@ -1370,6 +1461,8 @@
           y <- x %>% filter(module == config.tables.df.d$module) %>% filter()
         }
         
+        y <- y %>% filter(table.q == 1) 
+        
         if(is.na(config.tables.df.d$filter)){ #
           result <- y
         }else{
@@ -1392,14 +1485,14 @@
       
   #FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
         #Test inputs
-          config.input <- config.tables.df.d
-          data.input <-  resp.long.df %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
+          #config.input <- config.tables.df.d
+          #data.input <-  resp.long.df %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
       
       summarize.data.fun <- function(config.input, data.input){
         
         result.1 <- melt(data.input, id.vars = names(data.input)) 
         
-        if(d == 1){
+        if(d == 1){ #!Needs to be generalized - right now just uses number of loop but should be based on configs
           result <-
             reshape2::dcast(
               data = result.1,
