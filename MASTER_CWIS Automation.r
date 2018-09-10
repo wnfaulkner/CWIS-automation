@@ -1634,7 +1634,7 @@ close(progress.bar.c)
     #Loop output object(s)
       graphs.ls.g <- list()
     
-    #g <- 2 #LOOP TESTER
+    #g <- 1 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -1699,7 +1699,7 @@ close(progress.bar.c)
             #!Would be nice to be able to set fill manually from config file as well.
             
               if(config.graphs.df.g$slide.graph.type == "a"){
-                graph.fill.g <- c("#91AC3E",rep("#5F3356",nrow(graphdata.df.g)-1))
+                graph.fill.g <- c(rep("#5F3356",4),"#91AC3E")
               }else{
                 graph.fill.g <- rep("#91AC3E",nrow(graphdata.df.g))
               }
@@ -1882,27 +1882,28 @@ close(progress.bar.c)
         #! if can make first character of all categories into numeric vector, then just order by that
         
           #year, school.level, module, answer
-            #graph.cat.order.ls <-
-            #  list(
-            #    year = c("Baseline","2017-18"),
-            #    school.level = c("Elem.","Middle","High","Mult.","Other"),
-            #    role = c("Special Educator","Classroom Teacher","Instructional Coach","School Counselor","School Social Worker","Building Administrator","Other"),
-            #    module = c("CFA", "ETLP","DBDM","LEAD","PD"),
-            #    ans.text.freq = c("Always","Most of the time","About half the time","Sometimes","Never"),
-            #    ans.text.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
-            #  )
+            graph.cat.order.ls <-
+              list(
+                year = c("Baseline","2017-18"),
+                school.level = c("Elem.","Middle","High","Mult.","Other"),
+                role = c("Special Educator","Classroom Teacher","Instructional Coach","School Counselor","School Social Worker","Building Administrator","Other"),
+                module = c("etlp", "cfa","dbdm","lead","pd"),
+                ans.text.freq = c("Always","Most of the time","About half the time","Sometimes","Never"),
+                ans.text.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree"),
+                practice = if("practice" %in% names(graphdata.df.g)){graphdata.df.g$practice}else{""}
+              )
           
           #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() command does a mirror image
-            #if(config.graphs.df.g$graph.type.orientation == "bar"){
-            #  graph.order.g <- graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% rev)
-            #}else{
-            #  graph.order.g <- graph.cat.order.ls[graph.cat.varname]  %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist)        
-            #}
+            if(config.graphs.df.g$graph.type.orientation == "bar"){
+              graph.order.g <- graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% rev)
+            }else{
+              graph.order.g <- graph.cat.order.ls[graph.cat.varname]  %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist)        
+            }
           
           #Graph category axis ordering
-            #graph.g <- 
-            #  graph.g + 
-            #  scale_x_discrete(limits=levels(graph.order.g))
+            graph.g <- 
+              graph.g + 
+              scale_x_discrete(limits=levels(graph.order.g))
           
         #GRAPH ORIENTATION
           if(config.graphs.df.g$graph.type.orientation == "bar"){
@@ -1931,7 +1932,7 @@ close(progress.bar.c)
     #Loop output object(s)
     tables.ls.g <- list()
     
-    #g <- 2 #LOOP TESTER
+    #g <- 1 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(tabledata.ls.c[[f]])){
       
@@ -1943,28 +1944,37 @@ close(progress.bar.c)
         header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #!Should put into configs instead of specifying in code
         header.text.props = textProperties(
           color = "white", 
-          font.size = 22,
+          font.size = 15,
           font.family = "Century Gothic",
           font.weight = "bold"),
         header.par.props = parProperties(text.align = "center"),
         body.cell.props = cellProperties(background.color = "white", border.style = "none"),
         body.text.props = textProperties(
-          color = "black",
-          font.size = 18,
+          color = "#515151",
+          font.size = 15,
           font.family = "Century Gothic"
         )
       )
       
       if(g == 1){
-        ft.g[dim(tabledata.ls.c[[f]][[g]])[1],] <- chprop(textProperties(font.weight = "bold")) #Bold text on last line (totals)
+        ft.g[dim(tabledata.ls.c[[f]][[g]])[1],] <- 
+          chprop(
+            textProperties(
+              font.weight = "bold",
+              font.size = 18,
+              font.family = "Century Gothic"
+            )
+          ) #Bold text on last line (totals)
+        ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(4,dim(tabledata.ls.c[[f]][[g]])[2]-1)))      
+        
       }
       
       if(g != 1){
         ft.g[,1] <- chprop(parProperties(text.align = "right"))
+        #ft.g <- setFlexTableWidths(ft.g, widths = c(3, rep(1.85,dim(tabledata.ls.c[[f]][[g]])[2]-1)))      
       }
       
       ft.g[,2:(dim(tabledata.ls.c[[f]][[g]])[2]-1)] <- chprop(parProperties(text.align = "center")) #Center align numbers in all but first column
-      ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(2.5,dim(tabledata.ls.c[[f]][[g]])[2]-1)))      
       ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
       
       tables.ls.g[[g]] <- ft.g
@@ -1983,9 +1993,9 @@ close(progress.bar.c)
   #graphs.ls.f
     #[[report.unit]]
       #ggplot object
-  #graphs.ls.f
+  #tables.ls.f
     #[[report.unit]]
-      #ggplot object
+      #FlexTable object
 
 
 ########################################################################################################################################################      
@@ -2075,7 +2085,7 @@ close(progress.bar.c)
 #     ### LOOP "i" BY SLIDE   ###
       ###                     ###
 
-        #i <- 2 #LOOP TESTER
+        #i <- 4 #LOOP TESTER
         #for(i in 1:4){ #LOOP TESTER
         for(i in 1:dim(config.slides.ls.b[[h]])[1]){
           
@@ -2213,9 +2223,8 @@ close(progress.bar.c)
                       )
                     ,1),
                   font.size = config.pot.i$font.size[j], 
-                  font.weight = ifelse(is.na(config.pot.i$font.weight[j]),'normal',config.pot.i$font.weight[j])
-                  #alpha = 1
-                  #shading.color = 'black'
+                  font.weight = ifelse(is.na(config.pot.i$font.weight[j]),'normal',config.pot.i$font.weight[j]),
+                  font.family = config.pot.i$font[j]
                 )
               )
               
