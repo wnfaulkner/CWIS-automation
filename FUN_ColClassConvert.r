@@ -114,7 +114,8 @@
       .[,names(.)[names(.) != split.varname]] %>%
       df.order.by.var.fun(
         df = ., 
-        order.by.varname = id.varname
+        order.by.varname = id.varname,
+        rev = FALSE
       ) %>%
       replace.names.fun(
         df = .,
