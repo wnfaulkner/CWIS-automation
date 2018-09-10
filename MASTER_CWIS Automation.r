@@ -981,7 +981,7 @@
 ########################################################################################################################################################      
 ### PRODUCING GRAPH & TABLE DATA ###
 
-#{# SECTION COLLAPSE BRACKET
+{# SECTION COLLAPSE BRACKET
      
 ###                          ###    
 ### LOOP "c" BY REPORT UNIT  ###
@@ -996,9 +996,9 @@
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% .[1,] %>% sum
   
-  c <- 1 #LOOP TESTER (19 = "Raytown C-2")
+  #c <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(c in c(1,2)){   #LOOP TESTER
-  #for(c in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
+  for(c in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
     
     if(c == 1){print("Forming input data tables for graphs...")}
     
@@ -1260,7 +1260,8 @@
       #print(graphdata.ls.d[[graphdata.ls.index]])
     
     } ### END OF LOOP "d" BY GRAPH ###
-   
+    
+  graphdata.ls.c[[c]] <- graphdata.ls.d
     
     ###                    ###
 #   ### LOOP "d" BY TABLE  ###
@@ -1495,8 +1496,8 @@
       
     } ### END OF LOOP "d" BY TABLE ###
     
-      names(tabledata.ls.d) <- config.tables.df.c$module %>% remove.na.from.vector() %>% as.character %>% c("role",.)
-  graphdata.ls.c[[c]] <- graphdata.ls.d
+  names(tabledata.ls.d) <- config.tables.df.c$module %>% remove.na.from.vector() %>% as.character %>% c("role",.)
+  tabledata.ls.c[[c]] <- tabledata.ls.d   
 
 } ### END OF LOOP "c" BY DISTRICT     
 close(progress.bar.c)  
