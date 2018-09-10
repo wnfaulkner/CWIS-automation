@@ -72,8 +72,15 @@
 
 ################################
 #ORDER A DATA FRAME BY A SPECIFIC COLUMN
-  df.order.by.var.fun <- function(df, order.by.varname){
-    result <- df[order(df[,names(df) == order.by.varname]),]
+  df.order.by.var.fun <- function(df, order.by.varname, rev){
+    if(!exists("rev")){rev <- FALSE}
+    
+    if(rev == FALSE){
+      result <- df[order(df[,names(df) == order.by.varname]),]
+    }else{
+      result <- df[rev(order(df[,names(df) == order.by.varname])),]
+    }
+      
     return(result)
   }
 

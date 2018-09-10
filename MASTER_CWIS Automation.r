@@ -1270,23 +1270,23 @@
       config.tables.df.c <- config.tables.ls.b[[c]]
       tabledata.ls.d <- list()
       
-    d <- 2
+    d <- 1
     #for(d in 1:2){ #LOOP TESTER
     #for(d in 1:dim(config.tables.df.c)[1]){
       
       config.tables.df.d <- config.tables.df.c[d,]
       
-      #Defin all possible category values from table
-        #If table category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
+      #Define all possible category values from table
+        #!If table category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
         
         all.cats.varnames.v.d <- c(config.tables.df.d$x.var, config.tables.df.d$y.var)
         
         #!Generalize to graph code as well? So treat like a pivot table with arbitrary number of x.vars and y.vars, a summary var and a summary function.
-          # Maybe would make it so could use a single config table?
+          #! Maybe would make it so could use a single config table?
           #!Should generalize so that can handle arbitrary number of nested variables on both axes like pivot
         
         #Test Inputs
-          varnames <- c(config.tables.df.d$x.var, config.tables.df.d$y.var)
+          varnames <- c(config.tables.df.d$x.var, config.tables.df.d$y.var) %>% remove.na.from.vector()
           tb <- resp.long.df
           
         unique.variable.values.fun <- function(varnames, tb){
@@ -1296,10 +1296,15 @@
           all.cats.ls <- list()
           
           #LOOP 'i' BY VARNAME
-            #i<-1 #LOOP TESTER
+            #i<-2 #LOOP TESTER
             for(i in 1:length(varnames)){
               
               varname.i <- varnames[i]
+              
+              if(is.na(varname.i)){
+                all.cats.ls[[i]] <- ""
+                next()
+              }
               
               if(varname.i == "answer"){
                 module.varnames <- 
@@ -1312,9 +1317,10 @@
                 result <- 
                   tb$question %in% module.varnames %>% 
                   tb$answer[.] %>% 
-                  unique %>% 
-                  remove.na.from.vector() #%>%
-                  #FirstLetterCap_MultElements()
+                  unique %>%
+                  .[.!=""] %>%
+                  remove.na.from.vector() %>%
+                  .[.!=""]
               }
               
               if(varname.i == "practice"){
@@ -1324,8 +1330,8 @@
                     select(varname.i) %>% 
                     unique %>% 
                     unlist %>%
-                    remove.na.from.vector() #%>%
-                    #FirstLetterCap_MultElements()
+                    remove.na.from.vector() %>%
+                    .[.!=""]
               }
               
               if(varname.i == "role"){
@@ -1334,21 +1340,12 @@
                   select(varname.i) %>%
                   unique %>% 
                   unlist %>%
-                  remove.na.from.vector() #%>%
-                  #FirstLetterCap_MultElements()
+                  remove.na.from.vector() %>%
+                  .[.!=""]
               }
               
               all.cats.ls[[i]] <- result %>% as.data.frame %>% replace.names.fun(df = ., current.names = ".", new.names = "all.cats")
-                #all.cats.input3.i[
-                #  all.cats.input3.i %>%
-                #  as.numeric() %>% 
-                #  is.na()
-                #] %>% 
-                #remove.na.from.vector() %>% 
-                #FirstLetterCap_MultElements() %>%
-                #.[order(.)]
-              
-              #all.cats.ls[[i]] <- all.cats.df.i %>% as_tibble() 
+                
             } # END OF LOOP 'i' BY VARNAME
           names(all.cats.ls) <- c("x","y")
           return(all.cats.ls)
@@ -1356,7 +1353,7 @@
         
         all.cats.ls.d <- 
           unique.variable.values.fun(
-            varnames = c(config.tables.df.d$x.var, config.tables.df.d$y.var),
+            varnames = c(config.tables.df.d$x.var, config.tables.df.d$y.var), 
             tb = resp.long.df %>% as_tibble()
           )
       
@@ -1437,58 +1434,56 @@
       #FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
         #Test inputs
           config.input <- config.tables.df.d
-          data.input <-  resp.long.df %>% table.data.filter.fun %>% group_by(!!! syms(group_by.d))
+          data.input <-  resp.long.df %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
       
       #summarize.data.fun <- function(config.input, data.input){
-        if(config.input$summary.function == "count"){
-          #result <- 
-            result.1 <- melt(data.input, id.vars = names(data.input)) 
-            
-            #Draft table (have to merge with all.cats to make sure have every column and row represented)
-              result.2 <- 
-                reshape2::dcast(
-                  data = result.1, 
-                  formula = 
-                    unlist(data.input[names(data.input) == config.tables.df.d$y.varname]) ~ 
-                    unlist(data.input[names(data.input) == config.tables.df.d$x.varname]),#syms(paste(config.input$x.var,"~",config.input$y.var,sep="")), 
-                  value.var ="responseid",
-                  fun.aggregate = length
-                ) %>% 
-                replace.names.fun(
-                  df = .,
-                  current.names = "unlist(data.input[names(data.input) == config.tables.df.d$y.varname])",
-                  new.names = "all.cats"
-                ) 
-            
-            #Add all.cats to rows (y axis) 
-              result.3 <- 
-                right_join(
-                  result.2, 
-                  all.cats.ls.d$y, 
-                  by = "all.cats"
-                )
-            
-            ##Add all.cats to columns (x axis)
-              missing.cats <- unlist(all.cats.ls.d$x)[!unlist(all.cats.ls.d$x) %in% names(result.3)] %>% as.character
-              
-              result.4 <- 
-                matrix(
-                  ncol = length(missing.cats),
-                  nrow = dim(result.3)[1]
-                ) %>%
-                as_tibble() %>%
-                replace.names.fun(
-                  df = .,
-                  current.names = names(.),
-                  new.names = missing.cats
-                ) %>%
-                cbind(result.3, .) %>%
-                df.order.by.var.fun(
-                  df = .,
-                  order.by.varname = "all.cats",
-                  rev = TRUE
-                )
-        }
+        result.1 <- melt(data.input, id.vars = names(data.input)) 
+        
+        #Draft table (have to merge with all.cats to make sure have every column and row represented)
+          result.2 <- 
+            reshape2::dcast(
+              data = result.1, 
+              formula = 
+                unlist(data.input[names(data.input) == config.tables.df.d$y.varname]) ~ 
+                unlist(data.input[names(data.input) == config.tables.df.d$x.varname]),#syms(paste(config.input$x.var,"~",config.input$y.var,sep="")), 
+              value.var ="responseid",
+              fun.aggregate = length
+            ) %>% 
+            replace.names.fun(
+              df = .,
+              current.names = "unlist(data.input[names(data.input) == config.tables.df.d$y.varname])",
+              new.names = "all.cats"
+            ) 
+        
+        #Add all.cats to rows (y axis) 
+          result.3 <- 
+            right_join(
+              result.2, 
+              all.cats.ls.d$y, 
+              by = "all.cats"
+            )
+        
+        ##Add all.cats to columns (x axis)
+          missing.cats <- unlist(all.cats.ls.d$x)[!unlist(all.cats.ls.d$x) %in% names(result.3)] %>% as.character
+          
+          result.4 <- 
+            matrix(
+              ncol = length(missing.cats),
+              nrow = dim(result.3)[1]
+            ) %>%
+            as_tibble() %>%
+            replace.names.fun(
+              df = .,
+              current.names = names(.),
+              new.names = missing.cats
+            ) %>%
+            cbind(result.3, .) %>%
+            df.order.by.var.fun(
+              df = .,
+              order.by.varname = "all.cats",
+              rev = TRUE
+            )
+        return(result.4)
       }
         
         #if(config.input$summary.function == "implementation"){
@@ -1519,7 +1514,7 @@
         tabledata.df.d <-  
           resp.long.df.c %>%
           table.data.filter.fun(.) %>%
-          group_by(!!! syms(group_by.d)) %>%
+          group_by(!!! syms(config.tables.df.d$summary.var)) %>%
           summarize.data.fun(config.input = config.tables.df.d, data.input = .) %>%
           left_join(all.cats.df.d, ., by = c(group_by.d))
         tabledata.df.d$measure.var[is.na(tabledata.df.d$measure.var)] <- 0
