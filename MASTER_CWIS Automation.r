@@ -1093,9 +1093,9 @@
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% .[1,] %>% sum
   
-  #c <- 1 #LOOP TESTER (19 = "Raytown C-2")
+  c <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(c in c(1,2)){   #LOOP TESTER
-  for(c in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
+  #for(c in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
     
     if(c == 1){print("Forming input data tables for graphs...")}
     
@@ -1362,7 +1362,7 @@
       config.tables.df.c <- config.tables.ls.b[[c]]
       tabledata.ls.d <- list()
       
-    #d <- 2
+    #d <- 1
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:dim(config.tables.df.c)[1]){
       
@@ -1379,7 +1379,7 @@
         
         #Test Inputs
           varnames <- c(config.tables.df.d$x.var, config.tables.df.d$y.var) %>% remove.na.from.vector()
-          tb <- resp.long.df
+          tb <- resp.long.df %>% as_tibble()
           
         unique.variable.values.fun <- function(varnames, tb){
           
@@ -1486,10 +1486,11 @@
   #FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
         #Test inputs
           #config.input <- config.tables.df.d
-          #data.input <-  resp.long.df %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
+          #data.input <-  resp.long.df.c %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
       
       summarize.data.fun <- function(config.input, data.input){
-        
+        #na.replace <- function(x, na.replacement){x[is.na(x)] <- na.replacement} #!This didn't work, but may not need after generalizing.
+          
         result.1 <- melt(data.input, id.vars = names(data.input)) 
         
         if(d == 1){ #!Needs to be generalized - right now just uses number of loop but should be based on configs
@@ -1500,6 +1501,13 @@
               value.var = "responseid",
               fun.aggregate = function(x){length(unique(x))}
             ) %>%
+            right_join(
+              ., 
+              all.cats.ls.d$y, 
+              by = c("role" = "all.cats")
+            ) %>%
+            filter(role != "District Administrator") %>%
+            .[c(1,2,3,4,6,7,8,5),] %>%
             replace.names.fun(
               df = .,
               current.names = report.id.c,
@@ -1512,8 +1520,9 @@
             ) %>%
             rbind(
               .,
-              c("Total",sum(select(., "Num. Responses")))
+              c("Total",sum(select(., "Num. Responses"), na.rm = TRUE))
             )
+          result[is.na(result)] <- 0
             
           return(result)
         }else{
@@ -1890,7 +1899,7 @@ close(progress.bar.c)
                 module = c("etlp", "cfa","dbdm","lead","pd"),
                 ans.text.freq = c("Always","Most of the time","About half the time","Sometimes","Never"),
                 ans.text.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree"),
-                practice = if("practice" %in% names(graphdata.df.g)){graphdata.df.g$practice}else{""}
+                practice = if("practice" %in% names(graphdata.df.g)){graphdata.df.g$practice}else{""} #!When moving this out of loop, will need to generalize for all module practices
               )
           
           #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() command does a mirror image
