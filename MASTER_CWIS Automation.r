@@ -1271,7 +1271,7 @@
       config.tables.df.c <- config.tables.ls.b[[c]]
       tabledata.ls.d <- list()
       
-    #d <- 2
+    #d <- 1
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:dim(config.tables.df.c)[1]){
       
@@ -1416,7 +1416,11 @@
               df = .,
               current.names = names(.),
               new.names = FirstLetterCap_MultElements(names(.))
-            ) 
+            ) %>%
+            rbind(
+              .,
+              c("Total",sum(select(., "Num. Responses")))
+            )
             
           return(result)
         }else{
@@ -1513,24 +1517,7 @@ close(progress.bar.c)
       #data frame where each line represents a graph
     
 ########################################################################################################################################################      
-### PRODUCING GRAPHS THEMSELVES  ###
-
-s2.ft <- FlexTable(
-  data = s2.outputs.df,
-  header.columns = TRUE,
-  add.rownames = FALSE,
-  
-  header.cell.props = cellProperties(background.color = purpleheader, border.style = "none"),
-  header.text.props = textProperties(color = "white", font.size = 22, font.weight = "bold"),
-  header.par.props = parProperties(text.align = "center"),
-  body.cell.props = cellProperties(background.color = "white", border.style = "none")
-)
-
-s2.ft[dim(s2.outputs.df)[1],] <- chprop(textProperties(font.weight = "bold")) #Bold text on last line (totals)
-s2.ft[,2] <- chprop(parProperties(text.align = "center")) #Center align numbers in second column
-s2.ft <- setFlexTableWidths(s2.ft, widths = c(4, 2.5))      
-s2.ft <- setZebraStyle(s2.ft, odd = purpleshade, even = "white" ) 
-
+### PRODUCING GRAPHS & TABLES THEMSELVES  ###
 
 {#SECTION COLLAPSE BRACKET
   
@@ -1539,6 +1526,7 @@ s2.ft <- setZebraStyle(s2.ft, odd = purpleshade, even = "white" )
   ###                       ###
   
   graphs.ls.f <- list()
+  tables.ls.f <- list()
   progress.bar.f <- txtProgressBar(min = 0, max = 100, style = 3)
   maxrow.f <- graphdata.ls.c %>% lengths %>% sum
   
@@ -1547,7 +1535,7 @@ s2.ft <- setZebraStyle(s2.ft, odd = purpleshade, even = "white" )
   #for(f in 1:2){ #LOOP TESTER
   for(f in 1:length(report.ids)){
     
-    if(f == 1){print("FORMING GRAPHS IN GGPLOT...")}
+    if(f == 1){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
     school.id.f <- report.ids[f]
     config.graphs.df.f <- config.graphs.ls.b[[f]]
     
@@ -1848,15 +1836,68 @@ s2.ft <- setZebraStyle(s2.ft, odd = purpleshade, even = "white" )
     
     graphs.ls.f[[f]] <- graphs.ls.g
     
-  } ### END OF LOOP "f" BY DISTRICT
+    ###                       ###    
+#   ### LOOP "g" BY TABLE     ###
+    ###                       ###
+    
+    #Loop output object(s)
+    tables.ls.g <- list()
+    
+    #g <- 2 #LOOP TESTER
+    #for(g in 1:2) #LOOP TESTER
+    for(g in 1:length(tabledata.ls.c[[f]])){
+      
+      ft.g <- FlexTable(
+        data = tabledata.ls.c[[f]][[g]],
+        header.columns = TRUE,
+        add.rownames = FALSE,
+        
+        header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #!Should put into configs instead of specifying in code
+        header.text.props = textProperties(
+          color = "white", 
+          font.size = 22,
+          font.family = "Century Gothic",
+          font.weight = "bold"),
+        header.par.props = parProperties(text.align = "center"),
+        body.cell.props = cellProperties(background.color = "white", border.style = "none"),
+        body.text.props = textProperties(
+          color = "black",
+          font.size = 18,
+          font.family = "Century Gothic"
+        )
+      )
+      
+      if(g == 1){
+        ft.g[dim(tabledata.ls.c[[f]][[g]])[1],] <- chprop(textProperties(font.weight = "bold")) #Bold text on last line (totals)
+      }
+      
+      if(g != 1){
+        ft.g[,1] <- chprop(parProperties(text.align = "right"))
+      }
+      
+      ft.g[,2:(dim(tabledata.ls.c[[f]][[g]])[2]-1)] <- chprop(parProperties(text.align = "center")) #Center align numbers in all but first column
+      ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(2.5,dim(tabledata.ls.c[[f]][[g]])[2]-1)))      
+      ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
+      
+      tables.ls.g[[g]] <- ft.g
+      
+    } ### END OF LOOP "g" BY TABLE ###
+    
+    tables.ls.f[[f]] <- tables.ls.g
+    
+  } ### END OF LOOP "f" BY REPORT.UNIT
   close(progress.bar.f)
   
 }#END SECTION COLLAPSE BRACKET
   
 #OUTPUT:
   #graphs.ls.f
-    #[[district]]
+    #[[report.unit]]
       #ggplot object
+  #graphs.ls.f
+    #[[report.unit]]
+      #ggplot object
+
 
 ########################################################################################################################################################      
 ### POWERPOINT GLOBAL CONFIGURATIONS ###
