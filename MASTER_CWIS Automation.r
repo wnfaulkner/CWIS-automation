@@ -9,7 +9,7 @@
 { #SECTION COLLAPSE BRACKET
   
   rm(list=ls()) #Remove lists
-  options(java.parameters = "- Xmx1024m") #helps r not to fail when importing large xlsx files with xlsx package
+  options(java.parameters = "- Xmx14000m") #helps r not to fail when importing large xlsx files with xlsx package
   
   #Record code start time for processing time calculations
     start_time <- Sys.time()
@@ -81,7 +81,7 @@
     #Data & Output Directories
       setwd(wd)
       source.dir <- paste(wd,"data_source/", sep = "")
-      target.dir <- paste(wd,"r_output/",
+      target.dir <- paste("C:/Users/WNF/Desktop/","r_output/",    #! File paths for some reports too long. Can reorganize folder in G-Drive?
                             "Output_",
                             gsub(":",".",Sys.time()), sep = "")
       dir.create(
@@ -345,24 +345,24 @@
         )
     
     #Write Unbranched Data to Excel File
-      #unbranched.file.name <- 
-      #  paste( 
-      #    "unbranched_data_",
-      #    gsub(":",".",Sys.time()),
-      #    ".xlsx", 
-      #    sep=""
-      #  ) 
+      unbranched.file.name <- 
+        paste( 
+          "data_",
+          gsub(":",".",Sys.time()),
+          ".csv", 
+          sep=""
+        ) 
       
-      #setwd(target.dir)
+      setwd(target.dir)
       
-      #write.xlsx(
-      #  resp2.df,
-      #  file = unbranched.file.name,
-      #  sheetName = "responses",
-      #  row.names = FALSE,
-      #  showNA = FALSE,
-      #  append = FALSE
-      #  )
+      write.csv(
+        resp2.df,
+        file = unbranched.file.name,
+        #sheetName = "responses",
+        row.names = FALSE
+        #showNA = FALSE,
+        #append = FALSE
+        )
       
       #write.xlsx(
       #  questions.sem.df,
@@ -1093,9 +1093,9 @@
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% .[1,] %>% sum
   
-  c <- 1 #LOOP TESTER (19 = "Raytown C-2")
+  #c <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(c in c(1,2)){   #LOOP TESTER
-  #for(c in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
+  for(c in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
     
     if(c == 1){print("Forming input data tables for graphs...")}
     
@@ -1750,6 +1750,11 @@ close(progress.bar.c)
         #GRAPH DATA LABELS 
         
 #FUN      #Function: Graph Label Heights (defined based on ratio of tallest to shortest columns)
+            #Test Inputs
+              #df = graphdata.df.g
+              #measure.var = "measure.var"
+              #height.ratio.threshold = 8.2
+              
             create.graph.labels.fun <- function(df, measure.var, height.ratio.threshold){
               
               if(!is.data.frame(as.data.frame(df))){stop("Input cannot be coerced into data frame.")}
@@ -1784,7 +1789,7 @@ close(progress.bar.c)
                 if(config.graphs.df.g$data.measure == "implementation"){
                   graph.labels.text.v <- as.character(100*var %>% round(., 2)) %>% paste(.,"%",sep="")
                 }else{
-                  graph.labels.text.v <- var %>% as.numeric %>% round(.,2) %>% trimws(., which = "both") 
+                  graph.labels.text.v <- var %>% as.numeric %>% formatC( round( ., 1), format='f', digits=1 ) %>% trimws(., which = "both") 
                 }
               
               #Label visibility
@@ -1813,7 +1818,12 @@ close(progress.bar.c)
             }
           
           #Grach label data frame
-            graph.labels.df <- create.graph.labels.fun(df = graphdata.df.g, measure.var = "measure.var", height.ratio.threshold = 8.2)
+            graph.labels.df <- 
+              create.graph.labels.fun(
+                df = graphdata.df.g, 
+                measure.var = "measure.var", 
+                height.ratio.threshold = 8.2
+              )
           
           #Add Data labels to graph
             graph.g <- 
@@ -1845,7 +1855,7 @@ close(progress.bar.c)
           graphdata.df.g$avg.alpha <- 
             ifelse(
               is.na(config.graphs.df.g$graph.group.by.vars),# != "Baseline" & graphdata.df.g$measure.var.avg != 0,
-              0.9,
+              1,
               rep(c(0.8,0.0),nrow(graphdata.df.g))
             )
         
@@ -1858,14 +1868,14 @@ close(progress.bar.c)
               aes(
                 x = graphdata.df.g[[graph.cat.varname]],
                 #group = graphdata.df.g[[graph.cat.varname]], #!removed group for Green Reports because didn't need it, but will have ot add back in and generalize
-                ymin = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/800, 
-                ymax = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/800,
+                ymin = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/450, 
+                ymax = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/450,
                 alpha = graphdata.df.g$avg.alpha
               ), 
               position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
               color = "black", 
               width = 1,
-              size = 1,
+              size = 2,
               show.legend = FALSE
             ) +
             
@@ -1880,7 +1890,8 @@ close(progress.bar.c)
               position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
               color = "yellow", 
               width = 1,
-              size = 1,
+              size = 2,
+              alpha = 1,
               show.legend = FALSE
             )
           
@@ -1974,16 +1985,18 @@ close(progress.bar.c)
               font.family = "Century Gothic"
             )
           ) #Bold text on last line (totals)
-        ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(4,dim(tabledata.ls.c[[f]][[g]])[2]-1)))      
+        ft.g[,1] <- chprop(parProperties(text.align = "center"))
+        #ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(6,dim(tabledata.ls.c[[f]][[g]])[2]-1)))      
         
       }
       
       if(g != 1){
         ft.g[,1] <- chprop(parProperties(text.align = "right"))
-        #ft.g <- setFlexTableWidths(ft.g, widths = c(3, rep(1.85,dim(tabledata.ls.c[[f]][[g]])[2]-1)))      
       }
       
-      ft.g[,2:(dim(tabledata.ls.c[[f]][[g]])[2]-1)] <- chprop(parProperties(text.align = "center")) #Center align numbers in all but first column
+      #ft.g[1,1] <-  chprop(parProperties(text.align = "left")) 
+      ft.g[1:dim(tabledata.ls.c[[f]][[g]])[1],2:dim(tabledata.ls.c[[f]][[g]])[2]] <- #Center align numbers in all but first column
+        chprop(parProperties(text.align = "center")) 
       ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
       
       tables.ls.g[[g]] <- ft.g
@@ -2041,7 +2054,7 @@ close(progress.bar.c)
 ### POWERPOINT SLIDE CREATION  ###        
 
 { #SECTION COLLAPSE BRACKET   
-    
+  setwd(source.dir)  
   config.pot.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE)
     ###                          ###    
 #   ### LOOP "h" BY REPORT UNIT  ###
@@ -2055,16 +2068,34 @@ close(progress.bar.c)
     #for(h in 1:2){ #LOOP TESTER
     for(h in 1:length(config.slides.ls.b)){
       
+      #Reading 'Cadre' so it can be added to file name
+        buildings.tb <- 	
+          gs_read(questions.ss, ws = 2, range = NULL, literal = TRUE) %>% 
+          as.list() %>% 
+          lapply(., tolower) %>%
+          do.call(cbind, .) %>%
+          as_tibble()
+        
+        cadre.h <- 
+          buildings.tb %>% 
+          filter(building.id == report.ids[h]) %>% 
+          select(cadre) %>% 
+          unlist %>% 
+          FirstLetterCap_OneElement()
+        
       #Set up target file
         template.file <- paste(source.dir,
                              "template_green reports.pptx",
                              sep = "")
         target.path.h <- paste(target.dir,
                                   "/",
-                                  #"Green_",
+                                  cadre.h,
+                                  "_",
                                   report.ids[h],
                                   "_",
-                                  gsub(":",".",Sys.time()[1]),
+                                  gsub(":",".",Sys.time()) %>% substr(., 1,10),
+                                  "_",
+                                  gsub(":",".",Sys.time()) %>% substr(., 15,19),
                                   ".pptx", sep="") 
       
         file.copy(template.file, target.path.h)
@@ -2094,17 +2125,17 @@ close(progress.bar.c)
 #     ### LOOP "i" BY SLIDE   ###
       ###                     ###
 
-        #i <- 4 #LOOP TESTER
+        #i <- 1 #LOOP TESTER
         #for(i in 1:4){ #LOOP TESTER
         for(i in 1:dim(config.slides.ls.b[[h]])[1]){
-          
+         
           config.slide.df.i <- config.slides.ls.b[[h]] %>% .[i,]
           slide.type.id.i <- config.slide.df.i$slide.type.id
           layout.i <- config.slide.df.i$slide.layout
         
         #SLIDE FORMATION
           
-          ppt.h <- addSlide( ppt.h, slide.layout = layout.i)
+          ppt.h <- addSlide(ppt.h, slide.layout = layout.i)
           ppt.h <- addPageNumber( ppt.h )
           
         #ADD GRAPHS
@@ -2192,7 +2223,11 @@ close(progress.bar.c)
           ###                         ###
             
           config.pot.i <- config.pot.df[config.pot.df$slide.type.id == slide.type.id.i,]
-            
+          
+          if(any(!is.na(config.pot.i$module))){
+            config.pot.i <- filter(config.pot.i, grepl(as.character(config.slide.df.i$module), config.pot.i$module))
+          }  
+          
           #j <- 5 #LOOP TESTER
           #for(j in 1:2){ #LOOP TESTER
           for(j in 1:dim(config.pot.i)[1]){
@@ -2269,7 +2304,7 @@ end_time <- Sys.time()
 code_runtime <- end_time - start_time
 print(code_runtime)
 
-        
+windows()        
     
  
       
