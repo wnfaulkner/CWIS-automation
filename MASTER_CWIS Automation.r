@@ -43,7 +43,7 @@
   
 } #END SECTION COLLAPSE BRACKET   
 
-report.startnum <- 60
+report.startnum <- 139
 
 ########################################################################################################################################################      
 ### USER INPUTS ###
@@ -1035,7 +1035,7 @@ report.startnum <- 60
           source.data = resp.long.df.b
         )
     
-      config.graphs.ls.b[[length(config.graphs.ls.b)+1]] <- remove.district.office.fun(config.graphs.df)
+      config.graphs.ls.b[[b]] <- remove.district.office.fun(config.graphs.df)
     
     #Tables config table for this report unit
       config.tables.df <-
@@ -1045,7 +1045,7 @@ report.startnum <- 60
           source.data = resp.long.df.b
         )
       
-      config.tables.ls.b[[length(config.tables.ls.b)+1]] <- remove.district.office.fun(config.tables.df)
+      config.tables.ls.b[[b]] <- remove.district.office.fun(config.tables.df)
     
     #Slide config table for this report unit
       config.slides.df <- 
@@ -1056,12 +1056,12 @@ report.startnum <- 60
           source.data = resp.long.df.b
         )
       
-      config.slides.ls.b[[length(config.slides.ls.b)+1]] <- remove.district.office.fun(config.slides.df)
+      config.slides.ls.b[[b]] <- remove.district.office.fun(config.slides.df)
       
     
     setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
 
-  } # END OF LOOP 'b' BY DISTRICT
+  } # END OF LOOP 'b' BY REPORT.UNIT
   close(progress.bar.b)
   
 } # END SECTION COLLAPSE BRACKET
@@ -1095,7 +1095,7 @@ report.startnum <- 60
   
   #Progress bar for loop
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
-    maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% .[1,] %>% sum
+    maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
   
   #c <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(c in c(1,2)){   #LOOP TESTER
@@ -1344,9 +1344,12 @@ report.startnum <- 60
             new.names = c(config.graphs.df.d$data.group.by.var,"measure.var","measure.var.avg")
           )
        
-      storage.ls.index <- length(graphdata.ls.d) + 1
-      graphdata.ls.d[[storage.ls.index]] <- graphdata.df.d
-      setTxtProgressBar(progress.bar.c, 100*(d + config.graphs.ls.b[1:(c-1)] %>% sapply(., dim) %>% .[1,] %>% sum)/maxrow.c)
+      #storage.ls.index <- length(graphdata.ls.d) + 1
+      graphdata.ls.d[[d]] <- graphdata.df.d
+      setTxtProgressBar(
+        progress.bar.c, 
+        100*(d + config.graphs.ls.b[1:(c-1)] %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum)/maxrow.c
+      )
       
       #print(c(d))
       #print(config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.restriction] %>% as.character)
@@ -1594,10 +1597,10 @@ report.startnum <- 60
           mutate_all(funs(replace(., is.na(.), 0)))
         tabledata.df.d[,1] <- FirstLetterCap_MultElements(tabledata.df.d[,1])
 
-      storage.ls.index <- length(tabledata.ls.d) + 1
-      tabledata.ls.d[[storage.ls.index]] <- tabledata.df.d
+      #storage.ls.index <- length(tabledata.ls.d) + 1
+      tabledata.ls.d[[d]] <- tabledata.df.d
       
-      setTxtProgressBar(progress.bar.c, 100*(d + config.tables.ls.b[1:(c-1)] %>% sapply(., dim) %>% .[1,] %>% sum)/maxrow.c)
+      #setTxtProgressBar(progress.bar.c, 100*(d + config.tables.ls.b[1:(c-1)] %>% sapply(., dim) %>% .[1,] %>% sum)/maxrow.c)
       
     } ### END OF LOOP "d" BY TABLE ###
     
@@ -2073,7 +2076,7 @@ close(progress.bar.c)
     
     #Progress Bar
       progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
-      maxrow.h <- sapply(config.slides.ls.b, dim)[1,] %>% sum
+      maxrow.h <- sapply(config.slides.ls.b, dim) %>% sapply(`[[`,1) %>% unlist %>% sum
       printed.reports.ls <- list()
     
     #h <- 69 #LOOP TESTER
@@ -2122,7 +2125,7 @@ close(progress.bar.c)
       #Set up report-level inputs
         config.graphs.df.h <- 
           config.graphs.ls.b[[h]] %>%
-          mutate(row.i = config.graphs.ls.b[[h]] %>% .[,ncol(config.graphs.ls.b[[1]])] %>% seq_along(.))
+          mutate(row.i = config.graphs.ls.b[[h]] %>% .[,ncol(config.graphs.ls.b[[h]])] %>% seq_along(.))
         
         config.tables.df.h <- config.tables.ls.b[[h]]
         
@@ -2304,7 +2307,7 @@ close(progress.bar.c)
           
           writeDoc(ppt.h, file = target.path.h) #test Slide 1 build
           #rm(ppt.h)
-        setTxtProgressBar(progress.bar.h, 100*(i + config.slides.ls.b[1:(h-1)] %>% sapply(., dim) %>% .[1,] %>% sum)/maxrow.h)
+        setTxtProgressBar(progress.bar.h, 100*h/length(report.ids))
           
         } #END OF LOOP "i" BY SLIDE
       print(h)
