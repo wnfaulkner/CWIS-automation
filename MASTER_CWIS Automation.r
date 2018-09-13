@@ -9,7 +9,7 @@
 { #SECTION COLLAPSE BRACKET
   
   rm(list=ls()) #Remove lists
-  options(java.parameters = "- Xmx14000m") #helps r not to fail when importing large xlsx files with xlsx package
+  options(java.parameters = "- Xmx30g") #helps r not to fail when importing large xlsx files with xlsx package
   
   #Record code start time for processing time calculations
     start_time <- Sys.time()
@@ -42,6 +42,8 @@
     library(rlang)
   
 } #END SECTION COLLAPSE BRACKET   
+
+report.startnum <- 60
 
 ########################################################################################################################################################      
 ### USER INPUTS ###
@@ -344,35 +346,6 @@
           split.char = ","
         )
     
-    #Write Unbranched Data to Excel File
-      unbranched.file.name <- 
-        paste( 
-          "data_",
-          gsub(":",".",Sys.time()),
-          ".csv", 
-          sep=""
-        ) 
-      
-      setwd(target.dir)
-      
-      write.csv(
-        resp2.df,
-        file = unbranched.file.name,
-        #sheetName = "responses",
-        row.names = FALSE
-        #showNA = FALSE,
-        #append = FALSE
-        )
-      
-      #write.xlsx(
-      #  questions.sem.df,
-      #  file = "unbranched_data.xlsx",
-      #  sheetName = "questions",
-      #  row.names = FALSE,
-      #  showNA = FALSE,
-      #  append = TRUE
-      #)
-      
 }#END SECTION COLLAPSE BRACKET    
     
 #OUTPUTS
@@ -391,9 +364,11 @@
       resp3.df$role <- mgsub("Teacher", "Classroom Teacher", resp3.df$role)
       
     #Recode school names
-      school.name.patterns <- c("elem\\.","sch\\.","co\\.","jr\\.","sr\\.","meramec valley early childhood")
-      school.name.replacements <- c("elementary","school","county","junior","senior","early childhood center")
-      resp3.df$building <- mgsub(school.name.patterns,school.name.replacements,resp3.df$building)
+      #school.name.patterns <- c("elem\\.","sch\\.","co\\.","jr\\.","sr\\.","meramec valley early childhood")
+      #school.name.replacements <- c("elementary","school","county","junior","senior","early childhood center")
+      #school.name.patterns <- c("\\.")
+      #school.name.replacements <- c("")
+      #resp3.df$building <- mgsub(school.name.patterns,school.name.replacements,resp3.df$building)
       
     #Create school.id variable which is concatenation of school and district
       resp3.df$building.id <- paste(resp3.df$district, resp3.df$building,sep = "_") %>% tolower
@@ -739,6 +714,35 @@
       #    mean() 
       #}
         
+    #Write Unbranched Data to Excel File
+      unbranched.file.name <- 
+        paste( 
+          "widedata_",
+          gsub(":",".",Sys.time()),
+          ".csv", 
+          sep=""
+        ) 
+      
+      setwd(target.dir)
+      
+      write.csv(
+        resp.wide.df,
+        file = unbranched.file.name,
+        #sheetName = "responses",
+        row.names = FALSE
+        #showNA = FALSE,
+        #append = FALSE
+      )
+      
+      #write.xlsx(
+      #  questions.sem.df,
+      #  file = "unbranched_data.xlsx",
+      #  sheetName = "questions",
+      #  row.names = FALSE,
+      #  showNA = FALSE,
+      #  append = TRUE
+      #)
+        
 }#END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
@@ -810,9 +814,9 @@
   
   #Expand Graph & Slide Config Tables for each district according to looping variables
     
-    ###                       ###    
-#   ### LOOP "b" BY DISTRICT  ###
-    ###                       ###
+    ###                          ###    
+#   ### LOOP "b" BY REPORT.UNIT  ###
+    ###                          ###
     
   #Loop Outputs 
     config.graphs.ls.b <- list()
@@ -825,7 +829,7 @@
     
   #b <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
-  for(b in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
+  for(b in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
     #print(b)
     loop.start.time.b <- Sys.time()
     if(b == 1){print("FORMING SLIDE, GRAPH, AND TABLE CONFIG TABLES...")}
@@ -1095,7 +1099,7 @@
   
   #c <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(c in c(1,2)){   #LOOP TESTER
-  for(c in 1:length(report.ids)){   #START OF LOOP BY DISTRICT
+  for(c in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
     
     if(c == 1){print("Forming input data tables for graphs...")}
     
@@ -1452,7 +1456,6 @@
       #!NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND table DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
       #BUILDING.ID AND DATA.LEVEL IS DISTRICT.
       
-      
       table.data.filter.fun <- function(x){
         
         if(is.na(config.tables.df.d$module)){
@@ -1485,8 +1488,8 @@
       
   #FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
         #Test inputs
-          #config.input <- config.tables.df.d
-          #data.input <-  resp.long.df.c %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
+          config.input <- config.tables.df.d
+          data.input <-  resp.long.df.c %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
       
       summarize.data.fun <- function(config.input, data.input){
         #na.replace <- function(x, na.replacement){x[is.na(x)] <- na.replacement} #!This didn't work, but may not need after generalizing.
@@ -1507,7 +1510,8 @@
               by = c("role" = "all.cats")
             ) %>%
             filter(role != "District Administrator") %>%
-            .[c(1,2,3,4,6,7,8,5),] %>%
+            .[c(2,3,5,6,7,4,8,1),] %>%
+            #.[c(1,2,3,4,6,7,8,5),] %>%
             replace.names.fun(
               df = .,
               current.names = report.id.c,
@@ -1630,7 +1634,7 @@ close(progress.bar.c)
   
   #f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  for(f in 1:length(report.ids)){
+  for(f in report.startnum:length(report.ids)){
     
     if(f == 1){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
     school.id.f <- report.ids[f]
@@ -2054,8 +2058,15 @@ close(progress.bar.c)
 ### POWERPOINT SLIDE CREATION  ###        
 
 { #SECTION COLLAPSE BRACKET   
+  rm(resp.long.df, resp.wide.df)
+  jgc <- function(){
+    gc()
+    .jcall("java/lang/System", method = "gc")
+  }    
+  
   setwd(source.dir)  
   config.pot.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE)
+  
     ###                          ###    
 #   ### LOOP "h" BY REPORT UNIT  ###
     ###                          ###
@@ -2063,11 +2074,14 @@ close(progress.bar.c)
     #Progress Bar
       progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
       maxrow.h <- sapply(config.slides.ls.b, dim)[1,] %>% sum
+      printed.reports.ls <- list()
     
-    #h <- 8 #LOOP TESTER
-    #for(h in 1:2){ #LOOP TESTER
-    for(h in 1:length(config.slides.ls.b)){
+    #h <- 69 #LOOP TESTER
+    for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
+    #for(h in 1:length(config.slides.ls.b)){
       
+      jgc()
+       
       #Reading 'Cadre' so it can be added to file name
         buildings.tb <- 	
           gs_read(questions.ss, ws = 2, range = NULL, literal = TRUE) %>% 
@@ -2101,9 +2115,9 @@ close(progress.bar.c)
         file.copy(template.file, target.path.h)
       
       #Set up powerpoint object 
-        ppt.h <- pptx( template = target.path.h )
+        ppt.h <- pptx(template = target.path.h )
         options("ReporteRs-fontsize" = 20)
-        options("ReporteRs-default-font" = "Calibri")
+        options("ReporteRs-default-font" = "Century Gothic")
       
       #Set up report-level inputs
         config.graphs.df.h <- 
@@ -2289,11 +2303,12 @@ close(progress.bar.c)
           } #END OF LOOP "j" BY POT OBJECT (ROW OF POT CONFIG TABLE)
           
           writeDoc(ppt.h, file = target.path.h) #test Slide 1 build
-        
+          #rm(ppt.h)
         setTxtProgressBar(progress.bar.h, 100*(i + config.slides.ls.b[1:(h-1)] %>% sapply(., dim) %>% .[1,] %>% sum)/maxrow.h)
           
         } #END OF LOOP "i" BY SLIDE
-          
+      print(h)
+      printed.reports.ls[[h]] <- report.ids[h]
     } # END OF LOOP "h" BY REPORT.UNIT      
     close(progress.bar.h)      
           
