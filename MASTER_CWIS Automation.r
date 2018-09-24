@@ -67,12 +67,13 @@ report.startnum <- 1
   #Directories
     
     #M900
-      rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
-      wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-08 Green Reports/"
+      #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
+      #wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-09 Green Reports Phase 2"
     
     #Thinkpad T470
-      #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"  
-      #wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-05 Repeated Measures/"
+      rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"  
+      wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-09 Green Reports Phase 2/" #%>%
+        #gsub("\\\\","\\/",.)
 
     
     #Function Directories
@@ -180,28 +181,12 @@ report.startnum <- 1
       #names(resp1.df)[names(resp1.df) == "id"] <- "responseid"
       
       #Variable renaming of important variables
-#FUN  #Function: 'multiple gsub' to find/replace multiple patterns in a vector
-      mgsub <- function(pattern, replacement, x, ...) {
-        n = length(pattern)
-        print(cbind(pattern,replacement))
-        if (n != length(replacement)) {
-          stop("pattern and replacement do not have the same length.")
-        }
-        
-        result = x
-        for (i in 1:n) {
-          result[grep(pattern[i], x, ...)] = replacement[i]
-        }
-        
-        return(result)
-      }
-      
-      names(resp1.df) <-
-        mgsub(
-          questions.sem.df$row.1[!is.na(questions.sem.df$q.changename)], 
-          questions.sem.df$q.changename[!is.na(questions.sem.df$q.changename)], 
-          names(resp1.df)
-        )
+        names(resp1.df) <-
+          mgsub(
+            questions.sem.df$row.1[!is.na(questions.sem.df$q.changename)], 
+            questions.sem.df$q.changename[!is.na(questions.sem.df$q.changename)], 
+            names(resp1.df)
+          )
 
     #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
       
@@ -363,12 +348,14 @@ report.startnum <- 1
     #Recode role variable
       resp3.df$role <- mgsub("Teacher", "Classroom Teacher", resp3.df$role)
       
-    #Recode school names
+    #Recode school & district names
       #school.name.patterns <- c("elem\\.","sch\\.","co\\.","jr\\.","sr\\.","meramec valley early childhood")
       #school.name.replacements <- c("elementary","school","county","junior","senior","early childhood center")
       #school.name.patterns <- c("\\.")
       #school.name.replacements <- c("")
       #resp3.df$building <- mgsub(school.name.patterns,school.name.replacements,resp3.df$building)
+      resp3.df$building <- mgsub("bucahanan","buchanan",resp3.df$building)
+      resp3.df$district <- mgsub("bucahanan","buchanan",resp3.df$district)
       
     #Create school.id variable which is concatenation of school and district
       resp3.df$building.id <- paste(resp3.df$district, resp3.df$building,sep = "_") %>% tolower

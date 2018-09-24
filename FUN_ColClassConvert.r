@@ -6,6 +6,24 @@
     return(result)
   }
 
+#FUN  #Function: 'multiple gsub' to find/replace multiple patterns in a vector
+  mgsub <- function(pattern, replacement, x, ...) {
+    n = length(pattern)
+    if (n != length(replacement)) {
+      stop("pattern and replacement do not have the same length.")
+    }
+    
+    result = x
+    num.replacements <- vector()
+    
+    for (i in 1:n) {
+      result[grep(pattern[i], x, ...)] = replacement[i]
+      num.replacements[i] <- length(grep(pattern[i], x))
+    }
+    print(cbind(pattern,replacement,num.replacements))
+    return(result)
+  }
+
 ################################
 #REPLACE NAMES IN A DATA FRAME
   replace.names.fun <- function(df,current.names, new.names){
