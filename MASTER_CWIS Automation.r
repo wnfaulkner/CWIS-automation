@@ -126,8 +126,8 @@ report.startnum <- 1
     }
     
     #Questions Table (imported as list)
-      questions.ss <- gs_key("1WCS1IZkMpZDztHeEyTyzD_cMMs-aIfknxYtDKg0T-Rg",verbose = TRUE) 
-      questions.ls <- 	gs_read(questions.ss, ws = 1, range = NULL, literal = TRUE) %>% as.list() %>% lapply(., tolower)
+      configs.ss <- gs_key("1clXjraTC8w3_RnFkNetxUCSDWEtkWebZHCKOp_SLML8",verbose = TRUE) 
+      questions.ls <- 	gs_read(configs.ss, ws = "questions", range = NULL, literal = TRUE) %>% as.list() %>% lapply(., tolower)
       questions.df <- do.call(cbind, questions.ls) %>% as.data.frame(., stringsAsFactors = FALSE)
       #! Update to read all configs from same google sheet?
       
@@ -469,8 +469,8 @@ report.startnum <- 1
             `strongly agree` = "5. strongly agree",
             `agree` = "4. agree",
             `neutral` = "3. neutral",
-            `neither agree nor disagree` = "3. neither agree nor disagree",
-            `neither agree or disagree` = "3. neither agree nor disagree",
+            `neither agree nor disagree` = "3. neutral",
+            `neither agree or disagree` = "3. neutral",
             `disagree` = "2. disagree",
             `strongly disagree` = "1. strongly disagree"
           )
@@ -771,16 +771,14 @@ report.startnum <- 1
     }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
     
   #Load Graph & Slide Type Config Tables
-    setwd(source.dir)
-    
-    config.slidetypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE)
-    load.config.graphtypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE)
-    load.config.tabletypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE)
+    config.slidetypes.df <-  gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE)
+    load.config.graphtypes.df <- gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE)
+    load.config.tabletypes.df <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE)
     
     config.graphtypes.df <- 
       SplitColReshape.ToLong(
         config.slidetypes.df, 
-        id.var = "slide.type.id",
+        id.varname = "slide.type.id",
         split.varname = "slide.graph.type",
         split.char = ","
       ) %>%
@@ -817,8 +815,10 @@ report.startnum <- 1
   #b <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
   for(b in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
-    #print(b)
+    
+    print(b)
     loop.start.time.b <- Sys.time()
+    
     if(b == 1){print("FORMING SLIDE, GRAPH, AND TABLE CONFIG TABLES...")}
     #print(c(b,100*b/length(report.ids)))
     
@@ -856,7 +856,16 @@ report.startnum <- 1
           c.list.c <- list(c=c)
           
           #Make data frame with configurations repeated out across all unique combinations of loop.varname(s) in source.data      
-            slide.loop.vars.c <- configs[c,names(configs)==loop.varname] %>% strsplit(., ",") %>% unlist %>% trimws(., which = "both")
+            slide.loop.vars.c <- 
+              ifelse(
+                is.na(configs[c,names(configs)==loop.varname]),
+                NA,
+                configs[c,names(configs)==loop.varname] %>% 
+                  as.character %>% 
+                  strsplit(., ",") %>% 
+                  unlist %>% 
+                  trimws(., which = "both")
+              )
             
             if(any(is.na(slide.loop.vars.c))){
               configs.c <- configs[c,]
@@ -1084,8 +1093,10 @@ report.startnum <- 1
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
   
-  #c <- 1 #LOOP TESTER (19 = "Raytown C-2")
-  #for(c in c(1,2)){   #LOOP TESTER
+    slider.report.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
+                                         report.ids)
+  #c <- 26 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
+  #for(c in slider.report.ids){   #LOOP TESTER
   for(c in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
     
     if(c == 1){print("Forming input data tables for graphs...")}
@@ -1108,7 +1119,7 @@ report.startnum <- 1
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
         
-    #d <- 2
+    #d <- 5
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:dim(config.graphs.df.c)[1]){
       
@@ -1356,7 +1367,7 @@ report.startnum <- 1
       config.tables.df.c <- config.tables.ls.b[[c]]
       tabledata.ls.d <- list()
       
-    #d <- 1
+    #d <- 5
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:dim(config.tables.df.c)[1]){
       
@@ -2048,7 +2059,7 @@ close(progress.bar.c)
 ### POWERPOINT SLIDE CREATION  ###        
 
 { #SECTION COLLAPSE BRACKET   
-  rm(resp.long.df, resp.wide.df)
+  #rm(resp.long.df, resp.wide.df)
   jgc <- function(){
     gc()
     .jcall("java/lang/System", method = "gc")
@@ -2070,11 +2081,11 @@ close(progress.bar.c)
     for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
     #for(h in 1:length(config.slides.ls.b)){
       
-      jgc()
+      #jgc()
        
       #Reading 'Cadre' so it can be added to file name
         buildings.tb <- 	
-          gs_read(questions.ss, ws = 2, range = NULL, literal = TRUE) %>% 
+          gs_read(configs.ss, ws = "buildings", range = NULL, literal = TRUE) %>% 
           as.list() %>% 
           lapply(., tolower) %>%
           do.call(cbind, .) %>%

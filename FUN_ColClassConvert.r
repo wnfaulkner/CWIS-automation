@@ -93,6 +93,8 @@
   df.order.by.var.fun <- function(df, order.by.varname, rev){
     if(!exists("rev")){rev <- FALSE}
     
+    df <- as.data.frame(df)
+    
     if(rev == FALSE){
       result <- df[order(df[,names(df) == order.by.varname]),]
     }else{
@@ -105,6 +107,12 @@
   
 ################################  
 #RESHAPE DATA INTO LONG FORMAT BASED ON SPLITTING COLUMN ON A CHARACTER
+  
+  #Test inputs
+    #df <- config.slidetypes.df
+    #id.varname = "slide.type.id"
+    #split.varname = "slide.graph.type"
+    #split.char = ","
 
   SplitColReshape.ToLong <- function(df, id.varname, split.varname, split.char){ 
     
