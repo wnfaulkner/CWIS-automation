@@ -11,6 +11,7 @@
   rm(list=ls()) #Remove lists
   options(java.parameters = "- Xmx30g") #helps r not to fail when importing large xlsx files with xlsx package
   
+  
   #Record code start time for processing time calculations
     start_time <- Sys.time()
   
@@ -28,6 +29,8 @@
       #install.packages("jsonline")
     
     #library(devtools)
+    library(extrafont)
+    extrafont::loadfonts(device="win")
     library(magrittr)
     library(googlesheets)
     library(plyr) 
@@ -67,15 +70,13 @@ report.startnum <- 1
   #Directories
     
     #M900
-      #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
-      #wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-09 Green Reports Phase 2"
+      rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
+      wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-09 Green Reports Phase 2/"
     
     #Thinkpad T470
-      rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"  
-      wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-09 Green Reports Phase 2/" #%>%
-        #gsub("\\\\","\\/",.)
+      #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"  
+      #wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-09 Green Reports Phase 2/" #%>%
 
-    
     #Function Directories
       setwd(rproj.dir)
       source("FUN_FirstletterCap.r")
@@ -97,6 +98,7 @@ report.startnum <- 1
 #OUTPUTS
   #rproj.dir: directory for R project; also contains source data, additional function scripts, and config tables.
   #wd: working directory - Google Drive folder "2018-08 Green Reports"
+  #source.dir
     
 ########################################################################################################################################################      
 ### LOAD DATA ###
@@ -771,9 +773,10 @@ report.startnum <- 1
     }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
     
   #Load Graph & Slide Type Config Tables
-    config.slidetypes.df <-  gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE)
-    load.config.graphtypes.df <- gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE)
-    load.config.tabletypes.df <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE)
+    setwd(source.dir)
+    config.slidetypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #
+    load.config.graphtypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #
+    load.config.tabletypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #
     
     config.graphtypes.df <- 
       SplitColReshape.ToLong(
@@ -816,7 +819,7 @@ report.startnum <- 1
   #for(b in c(1,2)){   #LOOP TESTER
   for(b in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
     
-    print(b)
+    #print(b)
     loop.start.time.b <- Sys.time()
     
     if(b == 1){print("FORMING SLIDE, GRAPH, AND TABLE CONFIG TABLES...")}
@@ -1143,7 +1146,7 @@ report.startnum <- 1
         #! WILL NEED TO DO SAME THING FOR TABLES
         
         #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
-        if(config.graphs.df.d$data.group.by.var == "practice"){
+        if(!is.na(config.graphs.df.d$data.group.by.var) && config.graphs.df.d$data.group.by.var == "practice"){
           all.cats.input1.d <- 
             resp.long.df %>% 
             filter(grepl(config.graphs.df.d$module,module))
@@ -1648,7 +1651,7 @@ close(progress.bar.c)
     #Loop output object(s)
       graphs.ls.g <- list()
     
-    #g <- 1 #LOOP TESTER
+    #g <- 2 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -1659,6 +1662,12 @@ close(progress.bar.c)
         #GRAPH DATA & CONFIGS DATA FRAMES
           graphdata.df.g <- graphdata.ls.c[[f]][[g]] %>% as.data.frame()
           names(graphdata.df.g) <- gsub("graphdata.","",names(graphdata.df.g))
+          
+          if(names(graphdata.df.g)[!grepl("measure",names(graphdata.df.g))] %>% grepl("module",.)){
+            graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] <- graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] %>% toupper()
+          }else{
+            graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] <- graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] %>% FirstLetterCap_MultElements()
+          }
           
           config.graphs.df.g <- config.graphs.df.f[g,] %>% as.data.frame()
           names(config.graphs.df.g) <- gsub("configs.","",names(config.graphs.df.g))
@@ -1696,7 +1705,7 @@ close(progress.bar.c)
               panel.background = element_blank(),
               panel.grid.major.y = element_blank(),
               panel.grid.major.x = element_blank(),
-              axis.text.x = element_text(size = 12, color = "#5a6b63"),
+              axis.text.x = element_text(size = 20, color = "#5a6b63"),
               axis.text.y = element_blank(),
               axis.ticks = element_blank(),
               axis.title = element_blank(),
@@ -1838,7 +1847,7 @@ close(progress.bar.c)
                   y = graph.labels.df$graph.labels.heights, 
                   x = graphdata.df.g[[graph.cat.varname]],
                   label = graph.labels.df$graph.labels.text,
-                  alpha = graph.labels.df$graph.labels.show,
+                  alpha = 1,#graph.labels.df$graph.labels.show,
                   group = graphdata.df.g[,1]
                   
                 ),
@@ -1882,23 +1891,23 @@ close(progress.bar.c)
               width = 1,
               size = 2,
               show.legend = FALSE
-            ) +
+            ) #+
             
-            geom_errorbar(
-              aes(
-                x = graphdata.df.g[[graph.cat.varname]],
-                #group = graphdata.df.g[[graph.cat.varname]],
-                ymin = graphdata.df.g$measure.var.avg, 
-                ymax = graphdata.df.g$measure.var.avg,
-                alpha = graphdata.df.g$avg.alpha
-              ), 
-              position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-              color = "yellow", 
-              width = 1,
-              size = 2,
-              alpha = 1,
-              show.legend = FALSE
-            )
+            #geom_errorbar(
+            #  aes(
+            #    x = graphdata.df.g[[graph.cat.varname]],
+            #    #group = graphdata.df.g[[graph.cat.varname]],
+            #    ymin = graphdata.df.g$measure.var.avg, 
+            #    ymax = graphdata.df.g$measure.var.avg,
+            #    alpha = graphdata.df.g$avg.alpha
+            #  ), 
+            #  position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+            #  color = "yellow", 
+            #  width = 1,
+            #  size = 2,
+            #  alpha = 1,
+            #  show.legend = FALSE
+            #)
           
         }else{}
         
@@ -1912,7 +1921,7 @@ close(progress.bar.c)
                 year = c("Baseline","2017-18"),
                 school.level = c("Elem.","Middle","High","Mult.","Other"),
                 role = c("Special Educator","Classroom Teacher","Instructional Coach","School Counselor","School Social Worker","Building Administrator","Other"),
-                module = c("etlp", "cfa","dbdm","lead","pd"),
+                module = c("ETLP", "CFA","DBDM","LEAD","PD"),
                 ans.text.freq = c("Always","Most of the time","About half the time","Sometimes","Never"),
                 ans.text.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree"),
                 practice = if("practice" %in% names(graphdata.df.g)){graphdata.df.g$practice}else{""} #!When moving this out of loop, will need to generalize for all module practices
@@ -1935,10 +1944,13 @@ close(progress.bar.c)
             graph.g <- 
               graph.g +
               coord_flip() +
-              #scale_y_discrete(limits = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., )) +
               theme(
                 axis.text.x = element_blank(),
-                axis.text.y = element_text(size = 15, color = "#5a6b63")
+                axis.text.y = element_text(
+                  size = 20, 
+                  family = "Century Gothic",
+                  color = "#5a6b63",
+                  hjust = 1)
               )
           }
 
@@ -2046,11 +2058,11 @@ close(progress.bar.c)
     #notesgray <- rgb(131,130,105, maxColorValue=255)
     
     #Text formatting
-    title.format <- textProperties(color = titlegreen, font.size = 48, font.weight = "bold")
-    title.format.small <- textProperties(color = titlegreen, font.size = 40, font.weight = "bold")
-    subtitle.format <- textProperties(color = notesgrey, font.size = 28, font.weight = "bold")
-    section.title.format <- textProperties(color = "white", font.size = 48, font.weight = "bold")
-    notes.format <- textProperties(color = notesgrey, font.size = 14)
+    title.format <- textProperties(color = titlegreen, font.size = 48, font.weight = "bold", font.family = "Century Gothic")
+    title.format.small <- textProperties(color = titlegreen, font.size = 40, font.weight = "bold", font.family = "Century Gothic")
+    subtitle.format <- textProperties(color = notesgrey, font.size = 28, font.weight = "bold", font.family = "Century Gothic")
+    section.title.format <- textProperties(color = "white", font.size = 48, font.weight = "bold", font.family = "Century Gothic")
+    notes.format <- textProperties(color = notesgrey, font.size = 14, font.family = "Century Gothic")
     
     
 } # END OF SECTION COLLAPSE BRACKET
@@ -2078,10 +2090,11 @@ close(progress.bar.c)
       printed.reports.ls <- list()
     
     #h <- 69 #LOOP TESTER
-    for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
+    for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
+    #for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
     #for(h in 1:length(config.slides.ls.b)){
       
-      #jgc()
+      jgc()
        
       #Reading 'Cadre' so it can be added to file name
         buildings.tb <- 	
@@ -2140,9 +2153,9 @@ close(progress.bar.c)
 #     ### LOOP "i" BY SLIDE   ###
       ###                     ###
 
-        #i <- 1 #LOOP TESTER
+        i <- 6 #LOOP TESTER
         #for(i in 1:4){ #LOOP TESTER
-        for(i in 1:dim(config.slides.ls.b[[h]])[1]){
+        #for(i in 1:dim(config.slides.ls.b[[h]])[1]){
          
           config.slide.df.i <- config.slides.ls.b[[h]] %>% .[i,]
           slide.type.id.i <- config.slide.df.i$slide.type.id
@@ -2243,9 +2256,9 @@ close(progress.bar.c)
             config.pot.i <- filter(config.pot.i, grepl(as.character(config.slide.df.i$module), config.pot.i$module))
           }  
           
-          #j <- 5 #LOOP TESTER
+          j <- 1 #LOOP TESTER
           #for(j in 1:2){ #LOOP TESTER
-          for(j in 1:dim(config.pot.i)[1]){
+          #for(j in 1:dim(config.pot.i)[1]){
             if(dim(config.pot.i)[1] < 1){
               #print(paste("No text objects for slide.id: ",config.slide.df.i$slide.id,sep = ""))
               next()
