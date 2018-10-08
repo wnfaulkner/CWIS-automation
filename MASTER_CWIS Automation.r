@@ -46,7 +46,8 @@
   
 } #END SECTION COLLAPSE BRACKET   
 
-report.startnum <- 1
+
+report.startnum <- 321
 
 ########################################################################################################################################################      
 ### USER INPUTS ###
@@ -338,7 +339,8 @@ report.startnum <- 1
 #OUTPUTS
   #resp2.df - now with all branch variables 'unbranched' (stacked), and having removed two extra header rows
   #questions.sem.df - now only with rows pertaining to this year and semester
-    
+  #ans.opt.always.df - global answer options table with numerical scale, agreement scale, and frequency scale lined up
+
 ########################################################################################################################################################      
 ### FURTHER CLEANING & ADDING USEFUL VARIABLES ###
 
@@ -704,34 +706,35 @@ report.startnum <- 1
       #}
         
     #Write Unbranched Data to Excel File
-      unbranched.file.name <- 
-        paste( 
-          "widedata_",
-          gsub(":",".",Sys.time()),
-          ".csv", 
-          sep=""
-        ) 
-      
-      setwd(target.dir)
-      
-      write.csv(
-        resp.wide.df,
-        file = unbranched.file.name,
-        #sheetName = "responses",
-        row.names = FALSE
-        #showNA = FALSE,
-        #append = FALSE
-      )
-      
-      #write.xlsx(
-      #  questions.sem.df,
-      #  file = "unbranched_data.xlsx",
-      #  sheetName = "questions",
-      #  row.names = FALSE,
-      #  showNA = FALSE,
-      #  append = TRUE
-      #)
+      if(report.startnum == 1){
+        unbranched.file.name <- 
+          paste( 
+            "widedata_",
+            gsub(":",".",Sys.time()),
+            ".csv", 
+            sep=""
+          ) 
         
+        setwd(target.dir)
+        
+        write.csv(
+          resp.wide.df,
+          file = unbranched.file.name,
+          #sheetName = "responses",
+          row.names = FALSE
+          #showNA = FALSE,
+          #append = FALSE
+        )
+      
+        #write.xlsx(
+        #  questions.sem.df,
+        #  file = "unbranched_data.xlsx",
+        #  sheetName = "questions",
+        #  row.names = FALSE,
+        #  showNA = FALSE,
+        #  append = TRUE
+        #)
+      }
 }#END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
@@ -822,7 +825,7 @@ report.startnum <- 1
     #print(b)
     loop.start.time.b <- Sys.time()
     
-    if(b == 1){print("FORMING SLIDE, GRAPH, AND TABLE CONFIG TABLES...")}
+    if(b == report.startnum){print("FORMING SLIDE, GRAPH, AND TABLE CONFIG TABLES...")}
     #print(c(b,100*b/length(report.ids)))
     
     #Create report.id.b (for this iteration) and skip if report for district office
@@ -1102,7 +1105,7 @@ report.startnum <- 1
   #for(c in slider.report.ids){   #LOOP TESTER
   for(c in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
     
-    if(c == 1){print("Forming input data tables for graphs...")}
+    if(c == report.startnum){print("Forming input data tables for graphs...")}
     
     #Loop Inputs (both graphs and tables)
       report.id.c <- report.ids[c]
@@ -1640,7 +1643,7 @@ close(progress.bar.c)
   #for(f in 1:2){ #LOOP TESTER
   for(f in report.startnum:length(report.ids)){
     
-    if(f == 1){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
+    if(f == report.startnum){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
     school.id.f <- report.ids[f]
     config.graphs.df.f <- config.graphs.ls.b[[f]]
     
@@ -2077,6 +2080,15 @@ close(progress.bar.c)
     .jcall("java/lang/System", method = "gc")
   }    
   
+  buildings.tb <- 	
+    gs_read(configs.ss, ws = "buildings", range = NULL, literal = TRUE) %>% 
+    as.list() %>% 
+    lapply(., tolower) %>%
+    do.call(cbind, .) %>%
+    as_tibble()
+  
+  buildings.tb$building.id <- mgsub("bucahanan","buchanan",buildings.tb$building.id)
+  
   setwd(source.dir)  
   config.pot.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE)
   
@@ -2090,20 +2102,13 @@ close(progress.bar.c)
       printed.reports.ls <- list()
     
     #h <- 69 #LOOP TESTER
-    for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
-    #for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
+    #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
+    for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
     #for(h in 1:length(config.slides.ls.b)){
       
       jgc()
        
       #Reading 'Cadre' so it can be added to file name
-        buildings.tb <- 	
-          gs_read(configs.ss, ws = "buildings", range = NULL, literal = TRUE) %>% 
-          as.list() %>% 
-          lapply(., tolower) %>%
-          do.call(cbind, .) %>%
-          as_tibble()
-        
         cadre.h <- 
           buildings.tb %>% 
           filter(building.id == report.ids[h]) %>% 
@@ -2121,8 +2126,8 @@ close(progress.bar.c)
                                   "_",
                                   report.ids[h],
                                   "_",
-                                  gsub(":",".",Sys.time()) %>% substr(., 1,10),
-                                  "_",
+                                  #gsub(":",".",Sys.time()) %>% substr(., 1,10),
+                                  #"_",
                                   gsub(":",".",Sys.time()) %>% substr(., 15,19),
                                   ".pptx", sep="") 
       
@@ -2153,9 +2158,9 @@ close(progress.bar.c)
 #     ### LOOP "i" BY SLIDE   ###
       ###                     ###
 
-        i <- 6 #LOOP TESTER
+        #i <- 6 #LOOP TESTER
         #for(i in 1:4){ #LOOP TESTER
-        #for(i in 1:dim(config.slides.ls.b[[h]])[1]){
+        for(i in 1:dim(config.slides.ls.b[[h]])[1]){
          
           config.slide.df.i <- config.slides.ls.b[[h]] %>% .[i,]
           slide.type.id.i <- config.slide.df.i$slide.type.id
@@ -2256,9 +2261,9 @@ close(progress.bar.c)
             config.pot.i <- filter(config.pot.i, grepl(as.character(config.slide.df.i$module), config.pot.i$module))
           }  
           
-          j <- 1 #LOOP TESTER
+          #j <- 1 #LOOP TESTER
           #for(j in 1:2){ #LOOP TESTER
-          #for(j in 1:dim(config.pot.i)[1]){
+          for(j in 1:dim(config.pot.i)[1]){
             if(dim(config.pot.i)[1] < 1){
               #print(paste("No text objects for slide.id: ",config.slide.df.i$slide.id,sep = ""))
               next()
