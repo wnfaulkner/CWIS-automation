@@ -66,7 +66,7 @@
       source("FUN_ColClassConvert.r")
       
     #Data & Output Directories
-      source.dir <- paste(rproj.dir,"/data_source/", sep = "")
+      source.dir <- paste(wd,"data_source/", sep = "")
       target.dir <- paste(wd,"r_script_outputs/",
                             "Output_",
                             gsub(":",".",Sys.time()), sep = "")
@@ -185,7 +185,7 @@
       
     #Creating additional useful variables for long data frames
       # Variable for module
-        dat.long.df$module <- strsplit(dat.long.df$question, "_" ) %>% sapply(., `[[`, 1) %>% toupper()
+        dat.long.df$module <- strsplit(dat.long.df$question, "_" ) %>% sapply(., `[[`, 1) %>% toupper() %>% str_sub(., start = 2)
         dat.long.df$impbinary <- ifelse(grepl("impbinary",dat.long.df$question),1,0)
         
         #dat.answer.long.df$module <- strsplit(dat.answer.long.df$question, "_" ) %>% sapply(., `[[`, 1)
@@ -257,10 +257,10 @@
       dplyr::summarize(num.responding.schools = length(unique(school))) %>% as.data.frame()  #Check how many schools in each district
       
     # Load Graph & Slide Type Config Tables
-      setwd(rproj.dir)
+      setwd(source.dir)
       
-      config.slidetypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE)
-      load.config.graphtypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE)
+      config.slidetypes.df <- read.xlsx("graph configs_repeated measures.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE)
+      load.config.graphtypes.df <- read.xlsx("graph configs_repeated measures.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE)
       
       config.graphtypes.df <- SplitColReshape.ToLong(config.slidetypes.df, id.var = "slide.type.id",split.varname = "slide.graph.type",split.char = ",") %>%
         left_join(., load.config.graphtypes.df, by = c("slide.graph.type" = "graph.type.id")) %>% 
@@ -671,7 +671,7 @@ close(progress.bar.c)
     #Loop output object(s)
       graphs.ls.g <- list()
     
-    #g <- 1 #LOOP TESTER
+    #g <- 2 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -949,7 +949,7 @@ close(progress.bar.c)
 
 { #SECTION COLLAPSE BRACKET   
     
-  config.pot.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE)
+  config.pot.df <- read.xlsx("graph configs_repeated measures.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE)
     ###                       ###    
 #   ### LOOP "h" BY DISTRICT  ###
     ###                       ###
@@ -1146,56 +1146,6 @@ end_time <- Sys.time()
 code_runtime <- end_time - start_time
 print(code_runtime)
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-         
-
-    
-########################################################################################################################################################      
-### WRITE POWERPOINTS TO FILE  ###
-    
-    dir.create(target.dir)  
-    lapply(ppt.ls.h, function(x){writeDoc(x, file = x["target.filename"])})
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-     
-        
-#create.slide.graph <- function(input){
-#  result <- input["graphdata"]
-#  return(result)
-#input["graphdata"] %>% as.data.frame()%>% print
-
-#}
-
-#input <- graphdata.ls.c[[6]][[1]]
-#lapply(input, create.slide.graph)
-
-        
-    
  
       
       
