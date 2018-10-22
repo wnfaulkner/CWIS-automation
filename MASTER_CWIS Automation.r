@@ -46,13 +46,12 @@
   
 } #END SECTION COLLAPSE BRACKET   
 
-
-report.startnum <- 321
-
 ########################################################################################################################################################      
 ### USER INPUTS ###
 
 { #SECTION COLLAPSE BRACKET
+  
+  report.startnum <- 1
   
   year <- "2018"
   #year <- readline("What year is this data from? (enter number in formay YYYY): ") %>% as.character
@@ -360,10 +359,11 @@ report.startnum <- 321
       #resp3.df$building <- mgsub(school.name.patterns,school.name.replacements,resp3.df$building)
       resp3.df$building <- mgsub("bucahanan","buchanan",resp3.df$building)
       resp3.df$district <- mgsub("bucahanan","buchanan",resp3.df$district)
-      
+    
     #Create school.id variable which is concatenation of school and district
       resp3.df$building.id <- paste(resp3.df$district, resp3.df$building,sep = "_") %>% tolower
       resp3.df$building.id <- gsub("\\/"," ",resp3.df$building.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
+      
       
     #Capitalize first letter of Building and District columns
       #resp3.df$building <- FirstLetterCap_MultElements(resp3.df$building)
@@ -522,7 +522,6 @@ report.startnum <- 321
           )
       
       #Converting Slider variables to numeric and binary (according to different max/min/thresholds)
-        
         slider.vars.df <- 
           resp3.df[,
             names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$var.min)]
@@ -820,7 +819,7 @@ report.startnum <- 321
     
   #b <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
-  for(b in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
+  for(b in report.startnum:length(report.ids)){   #START OF LOOP BY REPORT UNIT
     
     #print(b)
     loop.start.time.b <- Sys.time()
@@ -2090,7 +2089,7 @@ close(progress.bar.c)
   buildings.tb$building.id <- mgsub("bucahanan","buchanan",buildings.tb$building.id)
   
   setwd(source.dir)  
-  config.pot.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE)
+  config.pot.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE) 
   
     ###                          ###    
 #   ### LOOP "h" BY REPORT UNIT  ###
@@ -2321,13 +2320,16 @@ close(progress.bar.c)
             
           } #END OF LOOP "j" BY POT OBJECT (ROW OF POT CONFIG TABLE)
           
-          writeDoc(ppt.h, file = target.path.h) #test Slide 1 build
+          #writeDoc(ppt.h, file = target.path.h) #test Slide 1 build
           #rm(ppt.h)
         setTxtProgressBar(progress.bar.h, 100*h/length(report.ids))
           
         } #END OF LOOP "i" BY SLIDE
-      print(h)
-      printed.reports.ls[[h]] <- report.ids[h]
+      
+      writeDoc(ppt.h, file = target.path.h) #Write complete pptx object to file
+      
+      #print(h)
+      #printed.reports.ls[[h]] <- report.ids[h]
     } # END OF LOOP "h" BY REPORT.UNIT      
     close(progress.bar.h)      
           
