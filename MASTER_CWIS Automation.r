@@ -49,15 +49,19 @@
 ########################################################################################################################################################      
 ### USER INPUTS ###
 
+report.startnum <- 1
+
 { #SECTION COLLAPSE BRACKET
-  
-  report.startnum <- 1
   
   year <- "2018"
   #year <- readline("What year is this data from? (enter number in formay YYYY): ") %>% as.character
   
   semester <- "fall"
   #semester <- readline("What semester is this data from? (enter 'Fall' or 'Spring'): ") %>% tolower
+  
+  #Report Unit Selection
+    report.unit <- "building" #can be either "building" or "district"
+    report.ids <- "all"
   
 } #END SECTION COLLAPSE BRACKET
     
@@ -70,42 +74,59 @@
   #Directories
     
     #M900
-      rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
-      wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-09 Green Reports Phase 2/"
+      wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-10 Green Reports Phase 3/"
     
     #Thinkpad T470
-      #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"  
-      #wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-09 Green Reports Phase 2/" #%>%
+      #wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-10 Green Reports Phase 3/" #%>%
 
-    #Function Directories
-      setwd(rproj.dir)
-      source("FUN_FirstletterCap.r")
-      source("FUN_ColClassConvert.r")
+    #Source Code Directory
+      source.code.dir <- paste(wd,"2_source_code/",sep="")
+
+    #Source Resources Director (raw data)
+      source.resources.dir <- paste(wd,"3_source_resources/", sep = "")
       
-    #Data & Output Directories
-      setwd(wd)
-      source.dir <- paste(wd,"data_source/", sep = "")
-      target.dir <- paste("C:/Users/WNF/Desktop/","r_output/",    #! File paths for some reports too long. Can reorganize folder in G-Drive?
-                            "Output_",
-                            gsub(":",".",Sys.time()), sep = "")
+    #Source Inputs (configs)
+      source.inputs.dir <- paste(wd,"4_source_inputs/",sep="")
+    
+    #Outputs Directory
+      outputs.dir <- 
+        paste(
+          wd,
+          #"C:/Users/WNF/Desktop/",
+          "5_outputs/",
+          #"Output_",
+          gsub(":",".",Sys.time()), sep = ""
+        )
+      
       dir.create(
-        target.dir,
+        outputs.dir,
         recursive = TRUE
       )
    
 } #END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
-  #rproj.dir: directory for R project; also contains source data, additional function scripts, and config tables.
   #wd: working directory - Google Drive folder "2018-08 Green Reports"
-  #source.dir
+  #source.code.dir: directory for R project; also contains source data, additional function scripts, and config tables.
+  #source.resources.dir: directory with raw data
+  #source.inputs.dir: directory with config tables and powerpoint template
+  #outputs.dir: where outputs will be stored
+
+########################################################################################################################################################      
+### LOAD SOURCE CODE ###
+
+{ #SECTION COLLAPSE BRACKET
+  setwd(source.code.dir)
+  source("FUN_FirstletterCap.r")
+  source("FUN_ColClassConvert.r")
+} #END SECTION COLLAPSE BRACKET
     
 ########################################################################################################################################################      
-### LOAD DATA ###
+### LOAD SOURCES, RESOURCES, INPUTS ###
 
 { #SECTION COLLAPSE BRACKET
 
-  setwd(source.dir)
+  setwd(source.resources.dir)
 
   #Read data files
 
@@ -139,7 +160,7 @@
           most.recently.modified.filename.fun(
             title.string.match = "CWIS",
             file.type = "csv",
-            dir = source.dir
+            dir = source.resources.dir
           ),
         stringsAsFactors = FALSE,
         header = TRUE
@@ -714,7 +735,7 @@
             sep=""
           ) 
         
-        setwd(target.dir)
+        setwd(outputs.dir)
         
         write.csv(
           resp.wide.df,
@@ -747,10 +768,6 @@
 ### PRODUCING SLIDE, GRAPH, AND TABLE CONFIGURATION TABLES ###
 
 { #SECTION COLLAPSE BRACKET
-  
-  #Report Unit Selection
-    report.unit <- "building" #can be either "building" or "district"
-    report.ids <- "all"
     
     if(!report.unit %in% c("building","district")){
       stop("Report unit must be either 'building' or 'district.'")
@@ -775,7 +792,7 @@
     }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
     
   #Load Graph & Slide Type Config Tables
-    setwd(source.dir)
+    setwd(source.inputs.dir)
     config.slidetypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #
     load.config.graphtypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #
     load.config.tabletypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #
@@ -802,7 +819,7 @@
     
     #config.graphtypes.df <- config.graphtypes.df[,grep("slide.type.id|loop|data|graph|height|width|offx|offy",names(config.graphtypes.df))]
   
-  #Expand Graph & Slide Config Tables for each district according to looping variables
+  #Expand Config Tables for each district according to looping variables
     
     ###                          ###    
 #   ### LOOP "b" BY REPORT.UNIT  ###
@@ -971,7 +988,7 @@
               #order by looping variable that has same name as slide.loop.var (e.g. 'school') AND by slide.type.position
               #store in list (to be re-attached) to non-collated sections and other collated sections
             
-            #Section id to collate for this iteration
+            #Section to collate for this iteration
               collate.input.df.d <- collate.ls[[d]]
               
             #Skip iteration of no collation/re-ordering necessary
@@ -2088,7 +2105,7 @@ close(progress.bar.c)
   
   buildings.tb$building.id <- mgsub("bucahanan","buchanan",buildings.tb$building.id)
   
-  setwd(source.dir)  
+  setwd(source.inputs.dir)  
   config.pot.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE) 
   
     ###                          ###    
@@ -2116,10 +2133,10 @@ close(progress.bar.c)
           FirstLetterCap_OneElement()
         
       #Set up target file
-        template.file <- paste(source.dir,
+        template.file <- paste(source.inputs.dir,
                              "template_green reports.pptx",
                              sep = "")
-        target.path.h <- paste(target.dir,
+        target.path.h <- paste(outputs.dir,
                                   "/",
                                   cadre.h,
                                   "_",
@@ -2328,8 +2345,8 @@ close(progress.bar.c)
       
       writeDoc(ppt.h, file = target.path.h) #Write complete pptx object to file
       
-      #print(h)
-      #printed.reports.ls[[h]] <- report.ids[h]
+      print(h)
+      printed.reports.ls[[h]] <- report.ids[h]
     } # END OF LOOP "h" BY REPORT.UNIT      
     close(progress.bar.h)      
           
