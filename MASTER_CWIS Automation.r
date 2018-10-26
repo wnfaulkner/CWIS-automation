@@ -853,12 +853,14 @@ report.startnum <- 1
       
 #FUN#Function: Loop Expander for creating full config tables
       #Function input testers
-        configs = config.slidetypes.tb
-        loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3")
-        collate.varname = "slide.section.1"
-        source.data = resp.long.df.b  
+        #configs = config.slidetypes.tb
+        #loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3")
+        #collate.varnames = c("slide.section.1","slide.section.2","slide.section.3")
+        #source.data = resp.long.df.b  
       
-      #loop.expander.fun <- function(configs, loop.varnames, collate.varname, source.data){
+      loop.expander.fun <- function(configs, loop.varnames, collate.varname, source.data){
+        slide.type.base.df <- configs[,grep("slide.type|layout",names(configs))]
+
         output.ls <- list()
         
         #c = 1 #LOOP TESTER: NO LOOPS
@@ -872,7 +874,7 @@ report.startnum <- 1
             loop.varnames.c <- configs[c,names(configs) %in% loop.varnames] %>% 
               as.matrix %>% 
               as.vector %>% 
-              remove.na.from.vector() 
+              remove.na.from.vector()
             
             if(length(loop.varnames.c) > 0){
                 
@@ -906,7 +908,6 @@ report.startnum <- 1
               output.ls[[c]] <- 
                 unique.combn.from.colnames(resp.long.df.b,loop.varnames.c) %>%
                 cbind(configs[c,],.)
-            
             }
             
             if(length(loop.varnames.c) == 0){  
@@ -916,34 +917,64 @@ report.startnum <- 1
         } ### END OF LOOP "C" BY ROW OF CONFIG INPUT ###
         
         output.df <- rbind.fill(output.ls)
-        
+      
+#FUN    #FUNCTION: Remove empty list elements
+          #TEST INPUTS
+            #ls <- list(
+            #  a = c("a","b","c"),
+            #  b = c(1,2,3),
+            #  c = c(TRUE,FALSE),
+            #  d = data.frame(NULL),
+            #  e = data.frame(x="e",y="deee"),
+            #  f = NULL
+            #)
+        remove.empty.list.elements <- function(ls){
+          empty.v <- vector()
+          for(i in 1:length(ls)){
+            
+            class.i <- class(ls[[i]])
+            
+            if(class.i == "NULL"){
+              empty.v[i] <- TRUE
+            }
+            
+            if(class.i %in% c("character","logical","numeric","factor")){
+              empty.v[i] <- ifelse(length(ls[[i]]) == 0,TRUE, FALSE)
+            }
+            
+            if(class.i %in% c("data.frame","tibble","matrix")){
+              empty.v[i] <- ifelse(dim(ls[[i]])[1] == 0, TRUE, FALSE)
+            }
+          }
+          return(ls[!empty.v])
+        }
+          
+          
       #Collate Report Sub-Sections
+#FUN    #Function: Collate report subsections according to configs
+          #TEST INPUTS
+            df <- output.df
+            manual.order.varnames <- c("slide.order.1","slide.order.2","slide.order.3")
+         
+        #collate.reports.sections <- function(df, manual.order.varnames){
         
-        manual.order.1 <- 
-          output.df$slide.order.1 %>% 
-          unique %>% 
-          remove.na.from.vector() %>% 
-          strsplit(.,",") %>% 
-          unlist %>%
-          as.data.frame(.) %>%
-          replace.names.fun(., current.names = names(.), new.names = )
-        
-
+          manual.order <- 
+            df[,names(df) %in% manual.order.varnames] %>% 
+            lapply(., unique) %>% 
+            lapply(., remove.na.from.vector) %>% 
+            lapply(., as.character) %>%
+            lapply(., function(x) {strsplit(x,",")}) %>% 
+            lapply(., unlist) %>%
+            lapply(., as.data.frame) %>%
+            #lapply(., replace.names.fun(., current.names = names(.),new.names = "module"))
+            remove.empty.list.elements(.)
+            
+            
         #full_join(manual.order.1, output.df)
-        output.df <- full_join(manual.order.1, output.df)
+        output.df <- full_join(manual.order[[1]], df, by = c("X[[i]]" = "module")) #! need to generalize so column names match and can do nested subsections
         output.df <- output.df[order(output.df$slide.section.1),]
         
-         x<-output.df[
-           order(
-            output.df$slide.section.1,        # output.df$module),] %>% full_join(manual.order.1, ., by = "module")#.[match(manual.order.1,output.df$module),]
-            output.df$module, 
-            output.df$slide.section.2,
-            output.df$slide.section.3
-          )
-        ,]
-         
-        
-        if(!missing(collate.varname)){
+        #if(!missing(collate.varname)){
 #FUN    #Function: check which elements in a vector are different from the one before and return position of spots where values change
           vector.value.change.positions.fun <- function(x){
             check.mtx <-
@@ -985,11 +1016,11 @@ report.startnum <- 1
           }
           
         #Form inputs for collating loop: list with sections (collated and non-colated, in order) 
-          collate.section.configs.df <- vector.value.change.positions.fun(output.df[,collate.varname])
-          collate.ls <- list()
-          for(e in 1:nrow(collate.section.configs.df)){
-            collate.ls[[e]] <- output.df[collate.section.configs.df$start.position[e]:collate.section.configs.df$end.position[e],]
-          }
+          #collate.section.configs.df <- vector.value.change.positions.fun(output.df[,collate.varname])
+          #collate.ls <- list()
+          #for(e in 1:nrow(collate.section.configs.df)){
+          #  collate.ls[[e]] <- output.df[collate.section.configs.df$start.position[e]:collate.section.configs.df$end.position[e],]
+          #}
           
         ###                                          ###
         # Start of loop 'd' by collated report section #
@@ -1000,7 +1031,7 @@ report.startnum <- 1
           #collated version of the slide configurations.
           
           #d = 2 #LOOP TESTER
-          for(d in 1:length(collate.ls)){  
+          #for(d in 1:length(collate.ls)){  
             #for each unique report section:
               #if it doesn't require collation, do nothing
               #select lines of output.df with only that unique slide.loop.collate.section
@@ -1008,33 +1039,33 @@ report.startnum <- 1
               #store in list (to be re-attached) to non-collated sections and other collated sections
             
             #Section to collate for this iteration
-              collate.input.df.d <- collate.ls[[d]]
+              #collate.input.df.d <- collate.ls[[d]]
               
             #Skip iteration of no collation/re-ordering necessary
-              if(unique(is.na(collate.input.df.d$slide.loop.collate.section))){
-                next()
-              }
+              #if(unique(is.na(collate.input.df.d$slide.loop.collate.section))){
+              #  next()
+              #}
             
             #Name of loop variable (will be used to order data-frame in b-loop)
-              loop.var.d <- collate.input.df.d %>%
-                select(slide.loop.var) %>%
-                unlist %>%
-                unique 
+              #loop.var.d <- collate.input.df.d %>%
+              #  select(slide.loop.var) %>%
+              #  unlist %>%
+              #  unique 
               
             #Create collated data frame to replace un-collated one in slide list
-              collate.ls[[d]] <- 
-                collate.input.df.d[
-                  order(
-                    collate.input.df.d %>% select(matches(loop.var.d)), 
-                    collate.input.df.d$slide.type.position
-                  )
-                ,]
+              #collate.ls[[d]] <- 
+              #  collate.input.df.d[
+              #    order(
+              #      collate.input.df.d %>% select(matches(loop.var.d)), 
+              #      collate.input.df.d$slide.type.position
+              #    )
+              #  ,]
        
-            } #END OF LOOP "d" BY COLLATED SECTION
+            #} #END OF LOOP "d" BY COLLATED SECTION
           
-          output.df <- do.call(rbind, collate.ls)
+          #output.df <- do.call(rbind, collate.ls)
       
-          } #END OF 'IF' STATEMENT FOR WHEN SOME REPORT SECTIONS REQUIRE COLLATING
+          #} #END OF 'IF' STATEMENT FOR WHEN SOME REPORT SECTIONS REQUIRE COLLATING
         
         return(output.df)
         
@@ -1064,11 +1095,19 @@ report.startnum <- 1
       }
     }
     
+    #Expand slide.types table
+      config.slides.tb <-
+        loop.expander.fun(
+          configs = config.slidetypes.tb,
+          loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"),
+          source.data = resp.long.df.b
+        )
+    
     #Graphs config table for this report unit
-      config.graphs.df <- 
+      config.graphs.df <- #!Still not working, seems to be producing two graphs per module, when should be one
         loop.expander.fun(
           configs = config.graphtypes.df, 
-          loop.varname = "slide.loop.var", 
+          loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"),
           source.data = resp.long.df.b
         )
     
@@ -1078,7 +1117,7 @@ report.startnum <- 1
       config.tables.df <-
         loop.expander.fun(
           configs = config.tabletypes.df, 
-          loop.varname = "slide.loop.var", 
+          loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"),
           source.data = resp.long.df.b
         )
       
