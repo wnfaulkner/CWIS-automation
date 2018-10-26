@@ -854,11 +854,11 @@ report.startnum <- 1
 #FUN#Function: Loop Expander for creating full config tables
       #Function input testers
         configs = config.slidetypes.tb
-        loop.varname = "slide.loop.var.1"
+        loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3")
         collate.varname = "slide.section.1"
         source.data = resp.long.df.b  
       
-      #loop.expander.fun <- function(configs, loop.varname, collate.varname, source.data){
+      #loop.expander.fun <- function(configs, loop.varnames, collate.varname, source.data){
         output.ls <- list()
         
         #c = 1 #LOOP TESTER: NO LOOPS
@@ -866,67 +866,82 @@ report.startnum <- 1
         #c = 4 #LOOP TESTER: TWO LOOP VARS
         #for(c in 2:3){
         for(c in 1:dim(configs)[1]){
-        
-          c.list.c <- list(c=c)
           
           #Make data frame with configurations repeated out across all unique combinations of loop.varname(s) in source.data      
-            slide.loop.vars.c <- 
-              ifelse(
-                is.na(configs[c,names(configs)==loop.varname]),
-                NA,
-                configs[c,names(configs)==loop.varname] %>% 
-                  as.character %>% 
-                  strsplit(., ",") %>% 
-                  unlist %>% 
-                  trimws(., which = "both")
-              )
             
-            if(any(is.na(slide.loop.vars.c))){
-              configs.c <- configs[c,]
-            }
+            loop.varnames.c <- configs[c,names(configs) %in% loop.varnames] %>% 
+              as.matrix %>% 
+              as.vector %>% 
+              remove.na.from.vector() 
             
-            if(any(!is.na(slide.loop.vars.c))){
-      
-              loop.unique.df <- 
-                source.data[names(source.data) %in% slide.loop.vars.c] %>% 
-                lapply(., unique) %>%
-                lapply(., remove.na.from.vector) %>%
-                lapply(., function(x) {strsplit(x, ",")}) %>%
-                lapply(., unlist) %>%
-                lapply(., unique) %>%
-                expand.grid(., stringsAsFactors = FALSE) %>%
-                as.data.frame #unique items for each loop that will specify graph (e.g. school name)
-              loop.unique.df <- loop.unique.df[order(loop.unique.df[,names(loop.unique.df)==slide.loop.vars.c[1]]),] %>% as.data.frame
-              names(loop.unique.df) <- slide.loop.vars.c
+            if(length(loop.varnames.c) > 0){
+                
+  #FUN        #FUNCTION: Unique values from multiple columns of a data frame (returns list)
+                #TEST INPUTS
+                #df <- resp.long.df.b
+                #varnames <- loop.varnames.c
+                
+                unique.vals.from.colnames <- function(df, varnames){  
+                  result <- 
+                    df[,names(df) %in% varnames] %>%
+                    as.data.frame %>%
+                    lapply(., unique) %>%
+                    lapply(., remove.na.from.vector) %>%
+                    lapply(., as.character) %>%
+                    lapply(., function(x) {strsplit(x, ",")}) %>%
+                    lapply(., unlist) %>%
+                    lapply(., unique)
+                  return(result)
+                }
+                                
+#FUN          #Function: All combinations of unique values of variables in a data frame
+                unique.combn.from.colnames <- function(df, varnames){
+                  result <- 
+                    unique.vals.from.colnames(df, varnames) %>%
+                    expand.grid(., stringsAsFactors = FALSE) %>%
+                    replace.names.fun(., current.names = names(.), new.names = rev(varnames))
+                  return(result)
+                }
               
-              configs.c <- 
-                configs[  
-                  rep(
-                    c.list.c[["c"]],
-                    dim(loop.unique.df)[1]
-                  )
-                ,] %>%
-                cbind(.,loop.unique.df)
+              output.ls[[c]] <- 
+                unique.combn.from.colnames(resp.long.df.b,loop.varnames.c) %>%
+                cbind(configs[c,],.)
+            
             }
-            output.ls[[c]] <- configs.c
-            #print(configs.c)
+            
+            if(length(loop.varnames.c) == 0){  
+              output.ls[[c]] <- configs[c,]
+            }
             
         } ### END OF LOOP "C" BY ROW OF CONFIG INPUT ###
         
-        output.df <- rbind.fill(output.ls) %>% tibble(.)
+        output.df <- rbind.fill(output.ls)
         
       #Collate Report Sub-Sections
         
         manual.order.1 <- 
-          tibble(manual.order = output.df$slide.order.1 %>% unique %>% remove.na.from.vector() %>% strsplit(.,",") %>% unlist)# %>% tibble(.) #factor(., levels = .)
+          output.df$slide.order.1 %>% 
+          unique %>% 
+          remove.na.from.vector() %>% 
+          strsplit(.,",") %>% 
+          unlist %>%
+          as.data.frame(.) %>%
+          replace.names.fun(., current.names = names(.), new.names = )
         
-        output.df[order(output.df$slide.section.1),] %>% left_join(., manual.order.1, by = c("module"="manual.order"))#.[match(manual.order.1,output.df$module),]
+
+        #full_join(manual.order.1, output.df)
+        output.df <- full_join(manual.order.1, output.df)
+        output.df <- output.df[order(output.df$slide.section.1),]
         
+         x<-output.df[
+           order(
+            output.df$slide.section.1,        # output.df$module),] %>% full_join(manual.order.1, ., by = "module")#.[match(manual.order.1,output.df$module),]
             output.df$module, 
             output.df$slide.section.2,
             output.df$slide.section.3
           )
         ,]
+         
         
         if(!missing(collate.varname)){
 #FUN    #Function: check which elements in a vector are different from the one before and return position of spots where values change
