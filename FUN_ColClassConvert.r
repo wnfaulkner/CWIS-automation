@@ -109,9 +109,9 @@
 #RESHAPE DATA INTO LONG FORMAT BASED ON SPLITTING COLUMN ON A CHARACTER
   
   #Test inputs
-    #df <- config.slidetypes.df
-    #id.varname = "slide.type.id"
-    #split.varname = "slide.graph.type"
+    df <- config.slidetypes.tb %>% as.data.frame
+    id.varname = "slide.type.id"
+    split.varname = "slide.order.1"
     #split.char = ","
 
   SplitColReshape.ToLong <- function(df, id.varname, split.varname, split.char){ 
@@ -134,9 +134,14 @@
     split.var <- df[,names(df)==split.varname]
     
     result <- 
-      df %>%
-      mutate(new.split.var = strsplit(as.character(split.var),split.char)) %>% 
-      unnest(new.split.var, .drop = NA) %>% 
+      df %>% 
+      mutate(new.split.var =
+        #df[,names(df)==split.varname] = strsplit(df[,names(df)==split.varname],",")
+          sapply(
+            split.var, function(x){strsplit(x,split.char)}
+          )
+      ) %>% 
+      unnest(new.split.var, .drop = FALSE) %>% 
       .[,names(.)[names(.) != split.varname]] %>%
       df.order.by.var.fun(
         df = ., 

@@ -149,7 +149,7 @@ report.startnum <- 1
     }
     
     #Questions Table (imported as list)
-      configs.ss <- gs_key("1clXjraTC8w3_RnFkNetxUCSDWEtkWebZHCKOp_SLML8",verbose = TRUE) 
+      configs.ss <- gs_key("1Ujw68I3kZVUpU_1DEURFVNHPK0DfdpNBc4Rq3T1cIpo",verbose = TRUE) 
       questions.ls <- 	gs_read(configs.ss, ws = "questions", range = NULL, literal = TRUE) %>% as.list() %>% lapply(., tolower)
       questions.df <- do.call(cbind, questions.ls) %>% as.data.frame(., stringsAsFactors = FALSE)
       #! Update to read all configs from same google sheet?
@@ -767,7 +767,7 @@ report.startnum <- 1
 ########################################################################################################################################################      
 ### PRODUCING SLIDE, GRAPH, AND TABLE CONFIGURATION TABLES ###
 
-{ #SECTION COLLAPSE BRACKET
+#{ #SECTION COLLAPSE BRACKET
     
     if(!report.unit %in% c("building","district")){
       stop("Report unit must be either 'building' or 'district.'")
@@ -792,33 +792,25 @@ report.startnum <- 1
     }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
     
   #Load Graph & Slide Type Config Tables
-    setwd(source.inputs.dir)
-    config.slidetypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #
-    load.config.graphtypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #
-    load.config.tabletypes.df <- read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #
+     
+    #setwd(source.inputs.dir)
+    config.slidetypes.tb <- gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #
+    load.config.graphtypes.tb <- gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #
+    load.config.tabletypes.tb <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #
     
     config.graphtypes.df <- 
-      SplitColReshape.ToLong(
-        config.slidetypes.df, 
-        id.varname = "slide.type.id",
-        split.varname = "slide.graph.type",
-        split.char = ","
-      ) %>%
-      left_join(., load.config.graphtypes.df, by = c("slide.graph.type" = "graph.type.id")) %>% 
-      filter(!is.na(slide.graph.type))
+      inner_join(config.slidetypes.tb, load.config.graphtypes.tb, by = "slide.type.id", all.x = FALSE) 
     
     config.tabletypes.df <- 
-      SplitColReshape.ToLong(
-        df = config.slidetypes.df, 
-        id.var = "slide.type.id",
-        split.varname = "slide.table.type",
-        split.char = ","
-      ) %>%
-      left_join(., load.config.tabletypes.df, by = c("slide.table.type" = "table.type.id")) %>% 
-      filter(!is.na(slide.table.type))
+      #SplitColReshape.ToLong(
+      #  df = config.slidetypes.tb, 
+      #  id.var = "slide.type.id",
+      #  split.varname = "slide.table.type",
+      #  split.char = ","
+      #) %>%
+      inner_join(config.slidetypes.tb, load.config.tabletypes.tb, by = c("slide.type.id")) 
+      #filter(!is.na(slide.table.type))
     
-    #config.graphtypes.df <- config.graphtypes.df[,grep("slide.type.id|loop|data|graph|height|width|offx|offy",names(config.graphtypes.df))]
-  
   #Expand Config Tables for each district according to looping variables
     
     ###                          ###    
@@ -834,9 +826,9 @@ report.startnum <- 1
     progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.b <- length(report.ids)
     
-  #b <- 1 #LOOP TESTER (19 = "Raytown C-2")
+  b <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
-  for(b in report.startnum:length(report.ids)){   #START OF LOOP BY REPORT UNIT
+  #for(b in report.startnum:length(report.ids)){   #START OF LOOP BY REPORT UNIT
     
     #print(b)
     loop.start.time.b <- Sys.time()
@@ -861,18 +853,18 @@ report.startnum <- 1
       
 #FUN#Function: Loop Expander for creating full config tables
       #Function input testers
-        #configs = config.slidetypes.df
-        #loop.varname = "slide.loop.var"
-        #collate.varname = "slide.type.position"
-        #source.data = resp.long.df.b  
+        configs = config.slidetypes.tb
+        loop.varname = "slide.loop.var.1"
+        collate.varname = "slide.section.1"
+        source.data = resp.long.df.b  
       
-      loop.expander.fun <- function(configs, loop.varname, collate.varname, source.data){
+      #loop.expander.fun <- function(configs, loop.varname, collate.varname, source.data){
         output.ls <- list()
         
-        #c = 2 #LOOP TESTER: NO LOOPS
+        #c = 1 #LOOP TESTER: NO LOOPS
         #c = 3 #LOOP TESTER: ONE LOOP VAR
-        #c = 8 #LOOP TESTER: TWO LOOP VARS
-        #for(c in 1:3){
+        #c = 4 #LOOP TESTER: TWO LOOP VARS
+        #for(c in 2:3){
         for(c in 1:dim(configs)[1]){
         
           c.list.c <- list(c=c)
@@ -921,9 +913,21 @@ report.startnum <- 1
             
         } ### END OF LOOP "C" BY ROW OF CONFIG INPUT ###
         
-        output.df <- rbind.fill(output.ls) %>% mutate(row.id = row.names(.))
+        output.df <- rbind.fill(output.ls) %>% tibble(.)
         
-      #Collate Report Sub-Sections 
+      #Collate Report Sub-Sections
+        
+        manual.order.1 <- 
+          tibble(manual.order = output.df$slide.order.1 %>% unique %>% remove.na.from.vector() %>% strsplit(.,",") %>% unlist)# %>% tibble(.) #factor(., levels = .)
+        
+        output.df[order(output.df$slide.section.1),] %>% left_join(., manual.order.1, by = c("module"="manual.order"))#.[match(manual.order.1,output.df$module),]
+        
+            output.df$module, 
+            output.df$slide.section.2,
+            output.df$slide.section.3
+          )
+        ,]
+        
         if(!missing(collate.varname)){
 #FUN    #Function: check which elements in a vector are different from the one before and return position of spots where values change
           vector.value.change.positions.fun <- function(x){
@@ -966,7 +970,7 @@ report.startnum <- 1
           }
           
         #Form inputs for collating loop: list with sections (collated and non-colated, in order) 
-          collate.section.configs.df <- vector.value.change.positions.fun(output.df$slide.loop.collate.section)
+          collate.section.configs.df <- vector.value.change.positions.fun(output.df[,collate.varname])
           collate.ls <- list()
           for(e in 1:nrow(collate.section.configs.df)){
             collate.ls[[e]] <- output.df[collate.section.configs.df$start.position[e]:collate.section.configs.df$end.position[e],]
@@ -1068,7 +1072,7 @@ report.startnum <- 1
     #Slide config table for this report unit
       config.slides.df <- 
         loop.expander.fun(
-          configs = config.slidetypes.df, 
+          configs = config.slidetypes.tb, 
           loop.varname = "slide.loop.var",
           collate.varname = "slide.type.position",
           source.data = resp.long.df.b
@@ -1656,8 +1660,8 @@ close(progress.bar.c)
   
   
   #f <- 1 #LOOP TESTER
-  #for(f in 1:2){ #LOOP TESTER
-  for(f in report.startnum:length(report.ids)){
+  for(f in 1:2){ #LOOP TESTER
+  #for(f in report.startnum:length(report.ids)){
     
     if(f == report.startnum){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
     school.id.f <- report.ids[f]
@@ -1670,7 +1674,7 @@ close(progress.bar.c)
     #Loop output object(s)
       graphs.ls.g <- list()
     
-    #g <- 2 #LOOP TESTER
+    #g <- 1 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -1717,7 +1721,8 @@ close(progress.bar.c)
         
           graph.g <- 
             ggplot(
-              data = graphdata.df.g 
+              data = graphdata.df.g,
+              alpha = alpha
             ) + 
             
             theme(
@@ -1812,7 +1817,7 @@ close(progress.bar.c)
                 if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
                   graph.labels.heights.v <- vector(length = length(var))
                   above.label.vectorposition <- max/var > height.ratio.threshold
-                  graph.labels.heights.v[above.label.vectorposition] <-   #labels for columns above threshold, position is height of bar plus 1/10 of max bar height 
+                  graph.labels.heights.v[above.label.vectorposition] <-   #labels for columns below threshold, position is height of bar plus 1/10 of max bar height 
                     var[above.label.vectorposition] + max/10
                   graph.labels.heights.v[graph.labels.heights.v == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
                     min(var[!above.label.vectorposition])/2
@@ -1822,26 +1827,26 @@ close(progress.bar.c)
                 if(config.graphs.df.g$data.measure == "implementation"){
                   graph.labels.text.v <- as.character(100*var %>% round(., 2)) %>% paste(.,"%",sep="")
                 }else{
-                  graph.labels.text.v <- var %>% as.numeric %>% formatC( round( ., 1), format='f', digits=1 ) %>% trimws(., which = "both") 
+                  graph.labels.text.v <- var %>% as.numeric %>% round( ., 1) %>% trimws(., which = "both") 
                 }
               
               #Label visibility
-                graph.labels.show.v <- ifelse(var != 0, 1, 0)  
+                graph.labels.alpha.v <- ifelse(var != 0, 1, 0)  
               
               #Label color for graph.type.e
                 if(config.graphs.df.g$slide.graph.type == "e"){
                   graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(df[,1])/2) %>% rev
                 }else{
-                  graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(df[,1])/2)
+                  graph.labels.color.v <- rep(c("#000000","#FFFFFF"),100)[1:length(df[,1])]
                 }
                 graph.labels.color.v[var==0] <- "#000000"
                 graph.labels.color.v[above.label.vectorposition] <- "#000000"
               
-              #result <- cbind(graph.labels.heights.v,graph.labels.text.v,graph.labels.color.v,graph.labels.show.v) %>% as.data.frame(., stringsAsFactors = FALSE)
+              #result <- cbind(graph.labels.heights.v,graph.labels.text.v,graph.labels.color.v,graph.labels.alpha.v) %>% as.data.frame(., stringsAsFactors = FALSE)
                 result <- data.frame(
                   graph.labels.text = graph.labels.text.v,
                   graph.labels.heights = graph.labels.heights.v,
-                  graph.labels.show.v = graph.labels.show.v,
+                  graph.labels.alpha.v = graph.labels.alpha.v,
                   graph.labels.color = graph.labels.color.v,
                   stringsAsFactors = FALSE
                 )
@@ -1850,7 +1855,7 @@ close(progress.bar.c)
               return(result)
             }
           
-          #Grach label data frame
+          #Graph label data frame
             graph.labels.df <- 
               create.graph.labels.fun(
                 df = graphdata.df.g, 
@@ -1866,11 +1871,11 @@ close(progress.bar.c)
                   y = graph.labels.df$graph.labels.heights, 
                   x = graphdata.df.g[[graph.cat.varname]],
                   label = graph.labels.df$graph.labels.text,
-                  alpha = 1,#graph.labels.df$graph.labels.show,
+                  #alpha = graph.labels.df$graph.labels.alpha.v,
                   group = graphdata.df.g[,1]
                   
                 ),
-                
+                alpha = graph.labels.df$graph.labels.alpha.v,
                 #lineheight = 10.0,
                 
                 color = "#FFFFFF", #graph.labels.df$graph.labels.color,
@@ -2106,7 +2111,7 @@ close(progress.bar.c)
   buildings.tb$building.id <- mgsub("bucahanan","buchanan",buildings.tb$building.id)
   
   setwd(source.inputs.dir)  
-  config.pot.df <- read.xlsx("graph_configs.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE) 
+  config.pot.tb <- gs_read(configs.ss, ws = "pot.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs_Jason Altman.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE) 
   
     ###                          ###    
 #   ### LOOP "h" BY REPORT UNIT  ###
@@ -2271,7 +2276,7 @@ close(progress.bar.c)
 #         ### LOOP "j" BY POT OBJECT  ###
           ###                         ###
             
-          config.pot.i <- config.pot.df[config.pot.df$slide.type.id == slide.type.id.i,]
+          config.pot.i <- config.pot.tb[config.pot.tb$slide.type.id == slide.type.id.i,]
           
           if(any(!is.na(config.pot.i$module))){
             config.pot.i <- filter(config.pot.i, grepl(as.character(config.slide.df.i$module), config.pot.i$module))
