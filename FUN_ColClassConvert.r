@@ -109,9 +109,9 @@
 #RESHAPE DATA INTO LONG FORMAT BASED ON SPLITTING COLUMN ON A CHARACTER
   
   #Test inputs
-    df <- config.slidetypes.tb %>% as.data.frame
-    id.varname = "slide.type.id"
-    split.varname = "slide.order.1"
+    #library(magrittr)
+    #id.varname = "slide.type.id"
+    #split.varname = "slide.order.1"
     #split.char = ","
 
   SplitColReshape.ToLong <- function(df, id.varname, split.varname, split.char){ 
@@ -318,7 +318,7 @@
   ##########
   #! 1. MAKE SO CAN DESIGNATE ALL COLUMNS THE SAME; 2. MAKE SO CAN DESIGNATE ONLY CERTAIN COLUMNS WANT TO CHANGE (E.G. "end")
   ColClassConvert <- function(x){
-    
+    library(magrittr)
     if(!is.data.frame(x)){stop("Input not a data frame.")}
     
     #Display names of data.frame with class they are currently
@@ -360,7 +360,7 @@
       }
     
     
-      #Conversion loop by column of data frame
+    #Conversion loop by column of data frame
       progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
       progress.bar.b.max <- ncol(x)					
     
