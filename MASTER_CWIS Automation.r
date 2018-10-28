@@ -767,7 +767,7 @@ report.startnum <- 1
 ########################################################################################################################################################      
 ### PRODUCING SLIDE, GRAPH, AND TABLE CONFIGURATION TABLES ###
 
-#{ #SECTION COLLAPSE BRACKET
+{ #SECTION COLLAPSE BRACKET
     
     if(!report.unit %in% c("building","district")){
       stop("Report unit must be either 'building' or 'district.'")
@@ -798,19 +798,12 @@ report.startnum <- 1
     load.config.graphtypes.tb <- gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #
     load.config.tabletypes.tb <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #
     
-    config.graphtypes.df <- 
+    config.graphtypes.tb <- 
       inner_join(config.slidetypes.tb, load.config.graphtypes.tb, by = "slide.type.id", all.x = FALSE) 
     
     config.tabletypes.tb <- 
-      #SplitColReshape.ToLong(
-      #  df = config.slidetypes.tb, 
-      #  id.var = "slide.type.id",
-      #  split.varname = "slide.table.type",
-      #  split.char = ","
-      #) %>%
       inner_join(config.slidetypes.tb, load.config.tabletypes.tb, by = c("slide.type.id")) 
-      #filter(!is.na(slide.table.type))
-    
+      
   #Expand Config Tables for each district according to looping variables
     
     ###                          ###    
@@ -826,9 +819,9 @@ report.startnum <- 1
     progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.b <- length(report.ids)
     
-  b <- 1 #LOOP TESTER (19 = "Raytown C-2")
+  #b <- 2 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
-  #for(b in report.startnum:length(report.ids)){   #START OF LOOP BY REPORT UNIT
+  for(b in report.startnum:length(report.ids)){   #START OF LOOP BY REPORT UNIT
     
     #print(b)
     loop.start.time.b <- Sys.time()
@@ -853,13 +846,13 @@ report.startnum <- 1
       
 #FUN#Function: Loop Expander for creating full config tables
       #Function input testers
-        #configs = config.slidetypes.tb
+        #configs = config.graphtypes.tb
         #loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3")
         #collate.varnames = c("slide.section.1","slide.section.2","slide.section.3")
         #source.data = resp.long.df.b  
       
-      loop.expander.fun <- function(configs, loop.varnames, collate.varname, source.data){
-        slide.type.base.df <- configs[,grep("slide.type|layout",names(configs))]
+      loop.expander.fun <- function(configs, loop.varnames, collate.varnames, source.data){
+        #slide.type.base.df <- configs[,grep("slide.type|layout",names(configs))]
 
         output.ls <- list()
         
@@ -878,7 +871,7 @@ report.startnum <- 1
             
             if(length(loop.varnames.c) > 0){
                 
-  #FUN        #FUNCTION: Unique values from multiple columns of a data frame (returns list)
+#FUN          #FUNCTION: Unique values from multiple columns of a data frame (returns list)
                 #TEST INPUTS
                 #df <- resp.long.df.b
                 #varnames <- loop.varnames.c
@@ -908,7 +901,7 @@ report.startnum <- 1
               output.ls[[c]] <- 
                 unique.combn.from.colnames(resp.long.df.b,loop.varnames.c) %>%
                 cbind(configs[c,],.)
-            }
+              }
             
             if(length(loop.varnames.c) == 0){  
               output.ls[[c]] <- configs[c,]
@@ -969,12 +962,21 @@ report.startnum <- 1
             #lapply(., replace.names.fun(., current.names = names(.),new.names = "module"))
             remove.empty.list.elements(.)
             
+          manual.order[[1]] <-
+            replace.names.fun(
+              df = manual.order[[1]], 
+              current.names = names(manual.order[[1]]), 
+              new.names = "module"
+            )
             
-          result.df <- full_join(manual.order[[1]], df, by = c("X[[i]]" = "module")) #! need to generalize so column names match and can do nested subsections
-          result.df <- output.df[order(output.df$slide.section.1),]
+          result.collate.reports.sections <- full_join(manual.order[[1]], df, by = "module") #! need to generalize so column names match and can do nested subsections
+          result.collate.reports.sections <- result.collate.reports.sections[order(result.collate.reports.sections$slide.section.1),]
           
-        return(result.df)
+          return(result.collate.reports.sections)
+        } #END OF COLLATE REPORT SECTIONS FUNCTION
         
+        result.loop.expander.fun <- collate.reports.sections(output.df, c("slide.order.1","slide.order.2","slide.order.3"))
+        return(result.loop.expander.fun)
       } #END OF LOOP EXPANDER FUNCTION
         
 #FUN#Function: check which elements in a vector are different from the one before and return position of spots where values change
@@ -1019,29 +1021,11 @@ report.startnum <- 1
 
 #FUN#Function: Replace NAs in a vector with a replacement value
       na.sub <- function(vector,na.replacement){
-      vector[is.na(vector)] <- na.replacement
-      return(vector)
-    }       
-
-#FUN#Function: School-level slides should not include an iteration for the District Office 
-    
-    
-    #Expand slide.types table
-      config.slides.tb <-
-        loop.expander.fun(
-          configs = config.slidetypes.tb,
-          loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"),
-          source.data = resp.long.df.b
-        )
-    
-    #Graphs config table for this report unit
-      config.graphs.df <- #!Still not working, seems to be producing two graphs per module, when should be one
-        loop.expander.fun(
-          configs = config.graphtypes.df, 
-          loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"),
-          source.data = resp.long.df.b
-        )
+        vector[is.na(vector)] <- na.replacement
+        return(vector)
+      }
       
+#FUN#Function: School-level slides should not include an iteration for the District Office 
       remove.district.office.fun <- function(x){
         if(report.unit != "district" & !grepl("district office", report.id.b)){
           #print("Report unit is 'building' and the report.id for this loop does not contain 'district office.' Returning input with no changes.")
@@ -1058,6 +1042,24 @@ report.startnum <- 1
             return(.)
         }
       }
+
+    #Expand slide.types table
+      config.slides.df <-
+        loop.expander.fun(
+          configs = config.slidetypes.tb,
+          loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"),
+          source.data = resp.long.df.b
+        )
+    
+      config.slides.ls.b[[b]] <- remove.district.office.fun(config.slides.df)
+      
+    #Graphs config table for this report unit
+      config.graphs.df <- #!Still not working, seems to be producing two graphs per module, when should be one
+        loop.expander.fun(
+          configs = config.graphtypes.tb, 
+          loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"),
+          source.data = resp.long.df.b
+        )
       
       config.graphs.ls.b[[b]] <- remove.district.office.fun(config.graphs.df)
     
@@ -1070,18 +1072,6 @@ report.startnum <- 1
         )
       
       config.tables.ls.b[[b]] <- remove.district.office.fun(config.tables.df)
-    
-    #Slide config table for this report unit
-      config.slides.df <- 
-        loop.expander.fun(
-          configs = config.slidetypes.tb, 
-          loop.varname = "slide.loop.var",
-          collate.varname = "slide.type.position",
-          source.data = resp.long.df.b
-        )
-      
-      config.slides.ls.b[[b]] <- remove.district.office.fun(config.slides.df)
-      
     
     setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
 
@@ -1106,7 +1096,7 @@ report.startnum <- 1
 ########################################################################################################################################################      
 ### PRODUCING GRAPH & TABLE DATA ###
 
-{# SECTION COLLAPSE BRACKET
+#{# SECTION COLLAPSE BRACKET
      
 ###                          ###    
 ### LOOP "c" BY REPORT UNIT  ###
@@ -1123,9 +1113,9 @@ report.startnum <- 1
   
     slider.report.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
                                          report.ids)
-  #c <- 26 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
+  c <- 26 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
   #for(c in slider.report.ids){   #LOOP TESTER
-  for(c in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
+  #for(c in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
     
     if(c == report.startnum){print("Forming input data tables for graphs...")}
     
@@ -1147,9 +1137,9 @@ report.startnum <- 1
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
         
-    #d <- 5
+    d <- 5
     #for(d in 1:2){ #LOOP TESTER
-    for(d in 1:dim(config.graphs.df.c)[1]){
+    #for(d in 1:dim(config.graphs.df.c)[1]){
       
       config.graphs.df.d <- config.graphs.df.c[d,]
       
