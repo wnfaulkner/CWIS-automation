@@ -77,10 +77,10 @@ report.startnum <- 1
       #wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-10 Green Reports Phase 3/"
     
     #Thinkpad T470
-      wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-10 Green Reports Phase 3/" #%>%
+      wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-10 Green Reports Phase 3/"
 
     #Source Code Directory
-      source.code.dir <- paste(wd,"2_source_code/",sep="")
+      source.code.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation" #! Will need to change back when working from M900
 
     #Source Resources Director (raw data)
       source.resources.dir <- paste(wd,"3_source_resources/", sep = "")
@@ -1096,7 +1096,7 @@ report.startnum <- 1
 ########################################################################################################################################################      
 ### PRODUCING GRAPH & TABLE DATA ###
 
-#{# SECTION COLLAPSE BRACKET
+{# SECTION COLLAPSE BRACKET
      
 ###                          ###    
 ### LOOP "c" BY REPORT UNIT  ###
@@ -1113,9 +1113,9 @@ report.startnum <- 1
   
     slider.report.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
                                          report.ids)
-  c <- 26 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
+  #c <- 26 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
   #for(c in slider.report.ids){   #LOOP TESTER
-  #for(c in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
+  for(c in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
     
     if(c == report.startnum){print("Forming input data tables for graphs...")}
     
@@ -1137,9 +1137,9 @@ report.startnum <- 1
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
         
-    d <- 5
+    #d <- 5
     #for(d in 1:2){ #LOOP TESTER
-    #for(d in 1:dim(config.graphs.df.c)[1]){
+    for(d in 1:dim(config.graphs.df.c)[1]){
       
       config.graphs.df.d <- config.graphs.df.c[d,]
       
@@ -1631,7 +1631,7 @@ close(progress.bar.c)
 #OUTPUTS:
   #tabledata.ls.c
     #[[report.unit]]
-      ##data frame where each line represents a table
+      #data frame where each line represents a table
   #graphdata.ls.c
     #[[report unit]]
       #data frame where each line represents a graph
