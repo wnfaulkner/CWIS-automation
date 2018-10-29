@@ -1651,9 +1651,9 @@ close(progress.bar.c)
   maxrow.f <- graphdata.ls.c %>% lengths %>% sum
   
   
-  f <- 1 #LOOP TESTER
+  #f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  #for(f in report.startnum:length(report.ids)){
+  for(f in report.startnum:length(report.ids)){
     
     if(f == report.startnum){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
     school.id.f <- report.ids[f]
@@ -1781,11 +1781,11 @@ close(progress.bar.c)
         
 #FUN      #Function: Graph Label Heights (defined based on ratio of tallest to shortest columns)
             #Test Inputs
-              df = graphdata.df.g
-              measure.var = "measure.var"
-              height.ratio.threshold = 8.2
+              #df = graphdata.df.g
+              #measure.var = "measure.var"
+              #height.ratio.threshold = 8.2
               
-            #create.graph.labels.fun <- function(df, measure.var, height.ratio.threshold){
+            create.graph.labels.fun <- function(df, measure.var, height.ratio.threshold){
               
               if(!is.data.frame(as.data.frame(df))){stop("Input cannot be coerced into data frame.")}
               
@@ -2198,7 +2198,7 @@ close(progress.bar.c)
             config.graphs.df.i <- config.graphs.df.h %>% 
               filter(slide.type.id == slide.type.id.i)
             
-          if(dim(config.graphs.df.i)[1] !=0 && !is.na(config.graphs.df.g$graph.type.id)){
+          if(dim(config.graphs.df.i)[1] !=0 && !is.na(config.graphs.df.i$graph.type.id)){
             #!Removed for expediencey but should be generalized.
             #if(is.na(config.slide.df.i$school)){
             #  config.graphs.df.i <- config.graphs.df.i[is.na(config.graphs.df.i$school),]
