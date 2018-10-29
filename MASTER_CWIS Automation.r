@@ -1652,8 +1652,8 @@ close(progress.bar.c)
   
   
   #f <- 1 #LOOP TESTER
-  for(f in 1:2){ #LOOP TESTER
-  #for(f in report.startnum:length(report.ids)){
+  #for(f in 1:2){ #LOOP TESTER
+  for(f in report.startnum:length(report.ids)){
     
     if(f == report.startnum){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
     school.id.f <- report.ids[f]
@@ -1737,7 +1737,7 @@ close(progress.bar.c)
             #!Currently set manually - need to make it so fill happens within aes when have groups, within geom_bar() when setting manually
             #!Would be nice to be able to set fill manually from config file as well.
             
-              if(config.graphs.df.g$slide.graph.type == "a"){
+              if(config.graphs.df.g$graph.type.id == "a"){
                 graph.fill.g <- c(rep("#5F3356",4),"#91AC3E")
               }else{
                 graph.fill.g <- rep("#91AC3E",nrow(graphdata.df.g))
@@ -1826,7 +1826,7 @@ close(progress.bar.c)
                 graph.labels.alpha.v <- ifelse(var != 0, 1, 0)  
               
               #Label color for graph.type.e
-                if(config.graphs.df.g$slide.graph.type == "e"){
+                if(config.graphs.df.g$graph.type.id == "e"){
                   graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(df[,1])/2) %>% rev
                 }else{
                   graph.labels.color.v <- rep(c("#000000","#FFFFFF"),100)[1:length(df[,1])]
@@ -2088,6 +2088,8 @@ close(progress.bar.c)
 
 { #SECTION COLLAPSE BRACKET   
   #rm(resp.long.df, resp.wide.df)
+
+#FUN#Function: Java Garbage Clean
   jgc <- function(){
     gc()
     .jcall("java/lang/System", method = "gc")
@@ -2104,6 +2106,7 @@ close(progress.bar.c)
   
   setwd(source.inputs.dir)  
   config.pot.tb <- gs_read(configs.ss, ws = "pot.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs_Jason Altman.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE) 
+  config.pot.tb$color <- substr(config.pot.tb$color,2,nchar(config.pot.tb$color))
   
     ###                          ###    
 #   ### LOOP "h" BY REPORT UNIT  ###
@@ -2115,11 +2118,11 @@ close(progress.bar.c)
       printed.reports.ls <- list()
     
     #h <- 69 #LOOP TESTER
-    #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
-    for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
-    #for(h in 1:length(config.slides.ls.b)){
+    #for(h in ceiling(runif(7,1,length(config.slides.ls.b)))){ #LOOP TESTER, RANDOM REPORT NUMBERS
+    #for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
+    for(h in 1:length(config.slides.ls.b)){
       
-      jgc()
+      #jgc()
        
       #Reading 'Cadre' so it can be added to file name
         cadre.h <- 
@@ -2190,7 +2193,7 @@ close(progress.bar.c)
             config.graphs.df.i <- config.graphs.df.h %>% 
               filter(slide.type.id == slide.type.id.i)
             
-          if(dim(config.graphs.df.i)[1] !=0 && !is.na(config.graphs.df.i$slide.graph.type)){
+          if(dim(config.graphs.df.i)[1] !=0 && !is.na(config.graphs.df.g$graph.type.id)){
             #!Removed for expediencey but should be generalized.
             #if(is.na(config.slide.df.i$school)){
             #  config.graphs.df.i <- config.graphs.df.i[is.na(config.graphs.df.i$school),]
@@ -2238,7 +2241,7 @@ close(progress.bar.c)
             config.tables.df.i <- config.tables.df.h %>% 
               filter(slide.type.id == slide.type.id.i)
             
-            if(dim(config.tables.df.i)[1] != 0 && !is.na(config.tables.df.i$slide.table.type)){
+            if(dim(config.tables.df.i)[1] != 0 && !is.na(config.tables.df.i$table.type.id)){
               
               if(is.na(config.slide.df.i$module)){
                 config.tables.df.i <- config.tables.df.i[is.na(config.tables.df.i$module),]
@@ -2277,6 +2280,7 @@ close(progress.bar.c)
           #j <- 1 #LOOP TESTER
           #for(j in 1:2){ #LOOP TESTER
           for(j in 1:dim(config.pot.i)[1]){
+            
             if(dim(config.pot.i)[1] < 1){
               #print(paste("No text objects for slide.id: ",config.slide.df.i$slide.id,sep = ""))
               next()
