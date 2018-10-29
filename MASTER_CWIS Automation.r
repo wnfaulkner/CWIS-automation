@@ -1651,9 +1651,9 @@ close(progress.bar.c)
   maxrow.f <- graphdata.ls.c %>% lengths %>% sum
   
   
-  #f <- 1 #LOOP TESTER
+  f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  for(f in report.startnum:length(report.ids)){
+  #for(f in report.startnum:length(report.ids)){
     
     if(f == report.startnum){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
     school.id.f <- report.ids[f]
@@ -1781,17 +1781,18 @@ close(progress.bar.c)
         
 #FUN      #Function: Graph Label Heights (defined based on ratio of tallest to shortest columns)
             #Test Inputs
-              #df = graphdata.df.g
-              #measure.var = "measure.var"
-              #height.ratio.threshold = 8.2
+              df = graphdata.df.g
+              measure.var = "measure.var"
+              height.ratio.threshold = 8.2
               
-            create.graph.labels.fun <- function(df, measure.var, height.ratio.threshold){
+            #create.graph.labels.fun <- function(df, measure.var, height.ratio.threshold){
               
               if(!is.data.frame(as.data.frame(df))){stop("Input cannot be coerced into data frame.")}
               
               df <- as.data.frame(df)
               
               var <- df[,names(df) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric")
+              #var[is.na(var)] <- 999
               
               #Label Heights
                 min <- min(var, na.rm = TRUE)
@@ -1809,17 +1810,20 @@ close(progress.bar.c)
                 if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
                   graph.labels.heights.v <- vector(length = length(var))
                   above.label.vectorposition <- max/var > height.ratio.threshold
-                  graph.labels.heights.v[above.label.vectorposition] <-   #labels for columns below threshold, position is height of bar plus 1/10 of max bar height 
+                  above.label.vectorposition[is.na(above.label.vectorposition)] <- TRUE
+                  graph.labels.heights.v[above.label.vectorposition == TRUE] <-   #labels for columns below threshold, position is height of bar plus 1/10 of max bar height 
                     var[above.label.vectorposition] + max/10
-                  graph.labels.heights.v[graph.labels.heights.v == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
+                  graph.labels.heights.v[graph.labels.heights.v == 0 | is.na(graph.labels.heights.v)] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
                     min(var[!above.label.vectorposition])/2
                 }
               
               #Label Text
                 if(config.graphs.df.g$data.measure == "implementation"){
                   graph.labels.text.v <- as.character(100*var %>% round(., 2)) %>% paste(.,"%",sep="")
+                  graph.labels.text.v[graph.labels.text.v == "NA%"] <- "No Responses"
                 }else{
                   graph.labels.text.v <- var %>% as.numeric %>% round( ., 1) %>% trimws(., which = "both") 
+                  graph.labels.text.v[is.na(graph.labels.text.v)] <- "No Responses"
                 }
               
               #Label visibility
@@ -1894,36 +1898,36 @@ close(progress.bar.c)
             
             graph.g +
             
-            geom_errorbar( #error bar shadow
-              aes(
-                x = graphdata.df.g[[graph.cat.varname]],
-                #group = graphdata.df.g[[graph.cat.varname]], #!removed group for Green Reports because didn't need it, but will have ot add back in and generalize
-                ymin = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/450, 
-                ymax = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/450,
-                alpha = graphdata.df.g$avg.alpha
-              ), 
-              position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-              color = "black", 
-              width = 1,
-              size = 2,
-              show.legend = FALSE
-            ) #+
-            
-            #geom_errorbar(
+            #geom_errorbar( #error bar shadow
             #  aes(
             #    x = graphdata.df.g[[graph.cat.varname]],
-            #    #group = graphdata.df.g[[graph.cat.varname]],
-            #    ymin = graphdata.df.g$measure.var.avg, 
-            #    ymax = graphdata.df.g$measure.var.avg,
+            #    #group = graphdata.df.g[[graph.cat.varname]], #!removed group for Green Reports because didn't need it, but will have ot add back in and generalize
+            #    ymin = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/450, 
+            #    ymax = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/450,
             #    alpha = graphdata.df.g$avg.alpha
             #  ), 
             #  position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-            #  color = "yellow", 
+            #  color = "black", 
             #  width = 1,
             #  size = 2,
-            #  alpha = 1,
             #  show.legend = FALSE
-            #)
+            #) #+
+            
+            geom_errorbar(
+              aes(
+                x = graphdata.df.g[[graph.cat.varname]],
+                #group = graphdata.df.g[[graph.cat.varname]],
+                ymin = graphdata.df.g$measure.var.avg, 
+                ymax = graphdata.df.g$measure.var.avg,
+                alpha = graphdata.df.g$avg.alpha
+              ), 
+              position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+              color = "yellow", 
+              width = 1,
+              size = 2,
+              alpha = 1,
+              show.legend = FALSE
+            )
           
         }else{}
         
@@ -1994,22 +1998,28 @@ close(progress.bar.c)
         header.columns = TRUE,
         add.rownames = FALSE,
         
-        header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #!Should put into configs instead of specifying in code
+        header.cell.props = cellProperties(
+          background.color = "#5F3356", 
+          border.style = "none"
+          ), #!Should put into configs instead of specifying in code
         header.text.props = textProperties(
           color = "white", 
           font.size = 15,
           font.family = "Century Gothic",
           font.weight = "bold"),
         header.par.props = parProperties(text.align = "center"),
+        
         body.cell.props = cellProperties(background.color = "white", border.style = "none"),
         body.text.props = textProperties(
           color = "#515151",
           font.size = 15,
           font.family = "Century Gothic"
-        )
+        ),
+        body.par.props = parProperties(text.align = "center")
+        
       )
       
-      if(g == 1){
+      if(g == 1){ 
         ft.g[dim(tabledata.ls.c[[f]][[g]])[1],] <- 
           chprop(
             textProperties(
@@ -2019,15 +2029,10 @@ close(progress.bar.c)
             )
           ) #Bold text on last line (totals)
         ft.g[,1] <- chprop(parProperties(text.align = "center"))
-        #ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(6,dim(tabledata.ls.c[[f]][[g]])[2]-1)))      
-        
       }
       
-      if(g != 1){
-        ft.g[,1] <- chprop(parProperties(text.align = "right"))
-      }
+      ft.g[,1] <- chprop(parProperties(text.align = "right"))
       
-      #ft.g[1,1] <-  chprop(parProperties(text.align = "left")) 
       ft.g[1:dim(tabledata.ls.c[[f]][[g]])[1],2:dim(tabledata.ls.c[[f]][[g]])[2]] <- #Center align numbers in all but first column
         chprop(parProperties(text.align = "center")) 
       ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
