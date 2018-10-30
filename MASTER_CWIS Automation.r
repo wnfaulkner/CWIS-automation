@@ -1666,7 +1666,7 @@ close(progress.bar.c)
     #Loop output object(s)
       graphs.ls.g <- list()
     
-    #g <- 1 #LOOP TESTER
+    #g <- 2 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -1734,8 +1734,8 @@ close(progress.bar.c)
           
           #Adding Columns (Clustered or Non-Clustered)
             #Fill values
-            #!Currently set manually - need to make it so fill happens within aes when have groups, within geom_bar() when setting manually
-            #!Would be nice to be able to set fill manually from config file as well.
+              #!Currently set manually - need to make it so fill happens within aes when have groups, within geom_bar() when setting manually
+              #!Would be nice to be able to set fill manually from config file as well.
             
               if(config.graphs.df.g$graph.type.id == "a"){
                 graph.fill.g <- c(rep("#5F3356",4),"#91AC3E")
@@ -1776,7 +1776,35 @@ close(progress.bar.c)
             }
             #windows()
             #graph.g
-                   
+          
+          #GRAPH CATEGORY NAMES, CORRECTING CATEGORY AXIS ORDERING
+            #!potential function 
+            #! if can make first character of all categories into numeric vector, then just order by that
+            
+            #year, school.level, module, answer
+            graph.cat.order.ls <-
+              list(
+                year = c("Baseline","2017-18"),
+                school.level = c("Elem.","Middle","High","Mult.","Other"),
+                role = c("Special Educator","Classroom Teacher","Instructional Coach","School Counselor","School Social Worker","Building Administrator","Other"),
+                module = c("ETLP", "CFA","DBDM","LEAD","PD"),
+                ans.text.freq = c("Always","Most of the time","About half the time","Sometimes","Never"),
+                ans.text.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree"),
+                practice = if("practice" %in% names(graphdata.df.g)){graphdata.df.g$practice}else{""} #!When moving this out of loop, will need to generalize for all module practices
+              )
+            
+            #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() command does a mirror image
+            if(config.graphs.df.g$graph.type.orientation == "bar"){
+              graph.order.g <- graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% rev)
+            }else{
+              graph.order.g <- graph.cat.order.ls[graph.cat.varname]  %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist)        
+            }
+            
+            #Graph category axis ordering
+            graph.g <- 
+              graph.g + 
+              scale_x_discrete(limits=levels(graph.order.g))
+          
         #GRAPH DATA LABELS 
         
 #FUN      #Function: Graph Label Heights (defined based on ratio of tallest to shortest columns)
@@ -1802,15 +1830,21 @@ close(progress.bar.c)
                 
                 #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
                 
+#FUN          #Function: Replace NA in a vector
+                gsub.na <- function(vector, na.replacement){
+                  vector[is.na(vector)] <- na.replacement
+                  result <- vector
+                  return(result)
+                }
+                
                 if(height.ratio < height.ratio.threshold){ 
                   graph.labels.heights.v <- rep(min/2, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
-                  above.label.vectorposition <- max/var > height.ratio.threshold
+                  above.label.vectorposition <- gsub.na(max/var > height.ratio.threshold, TRUE)
                 }
                 
                 if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
                   graph.labels.heights.v <- vector(length = length(var))
-                  above.label.vectorposition <- max/var > height.ratio.threshold
-                  above.label.vectorposition[is.na(above.label.vectorposition)] <- TRUE
+                  above.label.vectorposition <- gsub.na(max/var > height.ratio.threshold, TRUE)
                   graph.labels.heights.v[above.label.vectorposition == TRUE] <-   #labels for columns below threshold, position is height of bar plus 1/10 of max bar height 
                     var[above.label.vectorposition] + max/10
                   graph.labels.heights.v[graph.labels.heights.v == 0 | is.na(graph.labels.heights.v)] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
@@ -1827,18 +1861,18 @@ close(progress.bar.c)
                 }
               
               #Label visibility
-                graph.labels.alpha.v <- ifelse(var != 0, 1, 0)  
+                graph.labels.alpha.v <- gsub.na(ifelse(var != 0, 1, 0), 1)  
               
               #Label color for graph.type.e
                 if(config.graphs.df.g$graph.type.id == "e"){
-                  graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(df[,1])/2) %>% rev
+                  graph.labels.color.v <- ifelse(above.label.vectorposition == TRUE, "#000000", "#FFFFFF") #,length(df[,1])/2) %>% rev
                 }else{
-                  graph.labels.color.v <- rep(c("#000000","#FFFFFF"),100)[1:length(df[,1])]
+                  graph.labels.color.v <- ifelse(above.label.vectorposition == TRUE, "#000000", "#FFFFFF") #rep(c("#000000","#FFFFFF"),100)[1:length(df[,1])]
                 }
-                graph.labels.color.v[var==0] <- "#000000"
-                graph.labels.color.v[above.label.vectorposition] <- "#000000"
+                #graph.labels.color.v[var==0] <- "#000000"
+                #graph.labels.color.v[above.label.vectorposition] <- "#000000"
               
-              #result <- cbind(graph.labels.heights.v,graph.labels.text.v,graph.labels.color.v,graph.labels.alpha.v) %>% as.data.frame(., stringsAsFactors = FALSE)
+              #Assemble final result data frame
                 result <- data.frame(
                   graph.labels.text = graph.labels.text.v,
                   graph.labels.heights = graph.labels.heights.v,
@@ -1858,6 +1892,10 @@ close(progress.bar.c)
                 measure.var = "measure.var", 
                 height.ratio.threshold = 8.2
               )
+            
+              if(config.graphs.df.g$graph.type.orientation == "bar"){
+                graph.labels.df <- graph.labels.df[order(rev(row.names(graph.labels.df))),]
+              }
           
           #Add Data labels to graph
             graph.g <- 
@@ -1866,20 +1904,15 @@ close(progress.bar.c)
                 aes(                                                          
                   y = graph.labels.df$graph.labels.heights, 
                   x = graphdata.df.g[[graph.cat.varname]],
-                  label = graph.labels.df$graph.labels.text,
-                  #alpha = graph.labels.df$graph.labels.alpha.v,
-                  group = graphdata.df.g[,1]
-                  
+                  label = graph.labels.df$graph.labels.text %>% rev,
+                  group = graphdata.df.g[,1] 
                 ),
                 alpha = graph.labels.df$graph.labels.alpha.v,
-                #lineheight = 10.0,
-                
-                color = "#FFFFFF", #graph.labels.df$graph.labels.color,
+                color = graph.labels.df$graph.labels.color,
                 size = 4,
                 fontface = "bold",
                 position = position_dodge(width = 1),
                 show.legend = FALSE
-                
               )
             #windows()
             #graph.g
@@ -1893,7 +1926,7 @@ close(progress.bar.c)
               rep(c(0.8,0.0),nrow(graphdata.df.g))
             )
         
-        if(config.graphs.df.g$graph.average == "yes"){
+          if(config.graphs.df.g$graph.average == "yes"){
           graph.g <- 
             
             graph.g +
@@ -1931,34 +1964,6 @@ close(progress.bar.c)
           
         }else{}
         
-        #GRAPH CATEGORY NAMES, CORRECTING CATEGORY AXIS ORDERING
-        #!potential function 
-        #! if can make first character of all categories into numeric vector, then just order by that
-        
-          #year, school.level, module, answer
-            graph.cat.order.ls <-
-              list(
-                year = c("Baseline","2017-18"),
-                school.level = c("Elem.","Middle","High","Mult.","Other"),
-                role = c("Special Educator","Classroom Teacher","Instructional Coach","School Counselor","School Social Worker","Building Administrator","Other"),
-                module = c("ETLP", "CFA","DBDM","LEAD","PD"),
-                ans.text.freq = c("Always","Most of the time","About half the time","Sometimes","Never"),
-                ans.text.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree"),
-                practice = if("practice" %in% names(graphdata.df.g)){graphdata.df.g$practice}else{""} #!When moving this out of loop, will need to generalize for all module practices
-              )
-          
-          #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() command does a mirror image
-            if(config.graphs.df.g$graph.type.orientation == "bar"){
-              graph.order.g <- graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% rev)
-            }else{
-              graph.order.g <- graph.cat.order.ls[graph.cat.varname]  %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist)        
-            }
-          
-          #Graph category axis ordering
-            graph.g <- 
-              graph.g + 
-              scale_x_discrete(limits=levels(graph.order.g))
-          
         #GRAPH ORIENTATION
           if(config.graphs.df.g$graph.type.orientation == "bar"){
             graph.g <- 
@@ -1971,9 +1976,9 @@ close(progress.bar.c)
                   family = "Century Gothic",
                   color = "#5a6b63",
                   hjust = 1)
-              )
+              ) 
           }
-
+        
         graphs.ls.g[[g]] <<- graph.g
         setTxtProgressBar(progress.bar.f, 100*(g + graphdata.ls.c[1:(f-1)] %>% lengths %>% sum)/maxrow.f)
         
@@ -2123,9 +2128,9 @@ close(progress.bar.c)
       printed.reports.ls <- list()
     
     #h <- 69 #LOOP TESTER
-    #for(h in ceiling(runif(7,1,length(config.slides.ls.b)))){ #LOOP TESTER, RANDOM REPORT NUMBERS
+    for(h in ceiling(runif(7,1,length(config.slides.ls.b)))){ #LOOP TESTER, RANDOM REPORT NUMBERS
     #for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
-    for(h in 1:length(config.slides.ls.b)){
+    #for(h in 1:length(config.slides.ls.b)){
       
       #jgc()
        
