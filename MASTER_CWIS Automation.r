@@ -2135,8 +2135,9 @@ report.startnum <- 1
   config.pot.tb$color <- 
     config.pot.tb$color %>% 
     gsub("x","",.)
+  
   ###                          ###    
-  #   ### LOOP "h" BY REPORT UNIT  ###
+# ### LOOP "h" BY REPORT UNIT  ###
   ###                          ###
   
   #Progress Bar
@@ -2144,9 +2145,9 @@ report.startnum <- 1
   maxrow.h <- sapply(config.slides.ls.b, dim) %>% sapply(`[[`,1) %>% unlist %>% sum
   printed.reports.ls <- list()
   
-  h <- 69 #LOOP TESTER
+  #h <- 69 #LOOP TESTER
   #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
-  #for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
+  for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
     #for(h in 1:length(config.slides.ls.b)){
     
     #jgc()
