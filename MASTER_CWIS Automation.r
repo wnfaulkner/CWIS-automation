@@ -2007,69 +2007,69 @@ report.startnum <- 1
         setTxtProgressBar(progress.bar.f, 100*(g + graphdata.ls.c[1:(f-1)] %>% lengths %>% sum)/maxrow.f)
         
       })  ### END OF LOOP "g" BY GRAPH ###
-    #close(progress.bar.g)
+      #close(progress.bar.g)
     
-    graphs.ls.f[[f]] <- graphs.ls.g
-    
-    ###                       ###    
-    #   ### LOOP "g" BY TABLE     ###
-    ###                       ###
-    
-    #Loop output object(s)
-    tables.ls.g <- list()
-    
-    #g <- 1 #LOOP TESTER
-    #for(g in 1:2) #LOOP TESTER
-    for(g in 1:length(tabledata.ls.c[[f]])){
+      graphs.ls.f[[f]] <- graphs.ls.g
       
-      ft.g <- FlexTable(
-        data = tabledata.ls.c[[f]][[g]],
-        header.columns = TRUE,
-        add.rownames = FALSE,
+      ###                       ###    
+  #   ### LOOP "g" BY TABLE     ###
+      ###                       ###
+      
+      #Loop output object(s)
+        tables.ls.g <- list()
+      
+      #g <- 4 #LOOP TESTER
+      #for(g in 1:2) #LOOP TESTER
+      for(g in 1:length(tabledata.ls.c[[f]])){
         
-        header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #!Should put into configs instead of specifying in code
-        header.text.props = textProperties(
-          color = "white", 
-          font.size = 15,
-          font.family = "Century Gothic",
-          font.weight = "bold"),
-        header.par.props = parProperties(text.align = "center"),
-        body.cell.props = cellProperties(background.color = "white", border.style = "none"),
-        body.text.props = textProperties(
-          color = "#515151",
-          font.size = 15,
-          font.family = "Century Gothic"
+        ft.g <- FlexTable(
+          data = tabledata.ls.c[[f]][[g]],
+          header.columns = TRUE,
+          add.rownames = FALSE,
+          
+          header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #!Should put into configs instead of specifying in code
+          header.text.props = textProperties(
+            color = "white", 
+            font.size = 15,
+            font.family = "Century Gothic",
+            font.weight = "bold"),
+          header.par.props = parProperties(text.align = "center"),
+          body.cell.props = cellProperties(background.color = "white", border.style = "none"),
+          body.text.props = textProperties(
+            color = "#515151",
+            font.size = 15,
+            font.family = "Century Gothic"
+          )
         )
-      )
-      
-      if(g == 1){
-        ft.g[dim(tabledata.ls.c[[f]][[g]])[1],] <- 
-          chprop(
-            textProperties(
-              font.weight = "bold",
-              font.size = 18,
-              font.family = "Century Gothic"
-            )
-          ) #Bold text on last line (totals)
-        ft.g[,1] <- chprop(parProperties(text.align = "center"))
-        #ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(6,dim(tabledata.ls.c[[f]][[g]])[2]-1)))      
         
-      }
-      
-      if(g != 1){
-        ft.g[,1] <- chprop(parProperties(text.align = "right"))
-      }
-      
-      #ft.g[1,1] <-  chprop(parProperties(text.align = "left")) 
-      ft.g[1:dim(tabledata.ls.c[[f]][[g]])[1],2:dim(tabledata.ls.c[[f]][[g]])[2]] <- #Center align numbers in all but first column
-        chprop(parProperties(text.align = "center")) 
-      ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
-      
-      tables.ls.g[[g]] <- ft.g
-      
-    } ### END OF LOOP "g" BY TABLE ###
+        if(g == 1){
+          ft.g[dim(tabledata.ls.c[[f]][[g]])[1],] <- 
+            chprop(
+              textProperties(
+                font.weight = "bold",
+                font.size = 18,
+                font.family = "Century Gothic"
+              )
+            ) #Bold text on last line (totals)
+          ft.g[,1] <- chprop(parProperties(text.align = "center"))
+          #ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(6,dim(tabledata.ls.c[[f]][[g]])[2]-1)))      
+          
+        }
+        
+        if(g != 1){
+          ft.g[,1] <- chprop(parProperties(text.align = "right"))
+        }
+        
+        #ft.g[1,1] <-  chprop(parProperties(text.align = "left")) 
+        ft.g[1:dim(tabledata.ls.c[[f]][[g]])[1],2:dim(tabledata.ls.c[[f]][[g]])[2]] <- #Center align numbers in all but first column
+          chprop(parProperties(text.align = "center")) 
+        ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
+        
+        tables.ls.g[[g]] <- ft.g
+        
+      } ### END OF LOOP "g" BY TABLE ###
     
-    names(tables.ls.g) <- c("role","cfa","dbdm","etlp","lead","pd")
+    names(tables.ls.g) <- c("role","etlp","cfa","dbdm","pd","lead") #!WAS CAUSING PROBLEMS WITH ORDERING OF TABLES ON SLIDES BECAUSE HAD NOT BEEN UPDATED TO NEW ORDER OF MODULES
     tables.ls.f[[f]] <- tables.ls.g
     
   } ### END OF LOOP "f" BY REPORT.UNIT
@@ -2119,7 +2119,7 @@ report.startnum <- 1
 ########################################################################################################################################################      
 ### POWERPOINT SLIDE CREATION  ###        
 
-#{ #SECTION COLLAPSE BRACKET   
+{ #SECTION COLLAPSE BRACKET   
   #rm(resp.long.df, resp.wide.df)
   jgc <- function(){
     gc()
@@ -2150,8 +2150,8 @@ report.startnum <- 1
     maxrow.h <- sapply(config.slides.ls.b, dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     printed.reports.ls <- list()
   
-  h <- 50 #LOOP TESTER
-  #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
+  #h <- 50 #LOOP TESTER
+  for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
   #for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
     #for(h in 1:length(config.slides.ls.b)){
     
@@ -2207,7 +2207,7 @@ report.startnum <- 1
 #   ### LOOP "i" BY SLIDE   ###
     ###                     ###
     
-    #i <- 6 #LOOP TESTER
+    #i <- 5 #LOOP TESTER
     #for(i in 1:4){ #LOOP TESTER
     for(i in 1:dim(config.slides.ls.b[[h]])[1]){
       
