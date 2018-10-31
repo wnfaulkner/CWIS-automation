@@ -767,7 +767,7 @@ report.startnum <- 1
 ########################################################################################################################################################      
 ### PRODUCING SLIDE, GRAPH, AND TABLE CONFIGURATION TABLES ###
 
-#{ #SECTION COLLAPSE BRACKET
+{ #SECTION COLLAPSE BRACKET
 
   if(!report.unit %in% c("building","district")){
     stop("Report unit must be either 'building' or 'district.'")
@@ -819,9 +819,9 @@ report.startnum <- 1
   progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
   maxrow.b <- length(report.ids)
   
-  b <- 1 #LOOP TESTER (19 = "Raytown C-2")
+  #b <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
-  #for(b in report.startnum:length(report.ids)){   #START OF LOOP BY REPORT UNIT
+  for(b in report.startnum:length(report.ids)){   #START OF LOOP BY REPORT UNIT
   
     #print(b)
     loop.start.time.b <- Sys.time()
@@ -1670,7 +1670,7 @@ report.startnum <- 1
 {#SECTION COLLAPSE BRACKET
   
   ###                       ###    
-  # ### LOOP "f" BY DISTRICT  ###
+# ### LOOP "f" BY DISTRICT  ###
   ###                       ###
   
   graphs.ls.f <- list()
@@ -1679,22 +1679,22 @@ report.startnum <- 1
   maxrow.f <- graphdata.ls.c %>% lengths %>% sum
   
   
-  #f <- 1 #LOOP TESTER
-  for(f in 1:2){ #LOOP TESTER
-    #for(f in report.startnum:length(report.ids)){
+  #f <- 2 #LOOP TESTER
+  #for(f in 1:2){ #LOOP TESTER
+  for(f in report.startnum:length(report.ids)){
     
     if(f == report.startnum){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
     school.id.f <- report.ids[f]
     config.graphs.df.f <- config.graphs.ls.b[[f]]
     
     ###                       ###    
-    #   ### LOOP "g" BY GRAPH     ###
+#   ### LOOP "g" BY GRAPH     ###
     ###                       ###
     
     #Loop output object(s)
     graphs.ls.g <- list()
     
-    #g <- 1 #LOOP TESTER
+    #g <- 3 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -1765,7 +1765,7 @@ report.startnum <- 1
         #!Currently set manually - need to make it so fill happens within aes when have groups, within geom_bar() when setting manually
         #!Would be nice to be able to set fill manually from config file as well.
         
-        if(config.graphs.df.g$slide.graph.type == "a"){
+        if(config.graphs.df.g$graph.type.id == "a"){
           graph.fill.g <- c(rep("#5F3356",4),"#91AC3E")
         }else{
           graph.fill.g <- rep("#91AC3E",nrow(graphdata.df.g))
@@ -1854,7 +1854,7 @@ report.startnum <- 1
           graph.labels.alpha.v <- ifelse(var != 0, 1, 0)  
           
           #Label color for graph.type.e
-          if(config.graphs.df.g$slide.graph.type == "e"){
+          if(config.graphs.df.g$graph.type.id == "e"){
             graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(df[,1])/2) %>% rev
           }else{
             graph.labels.color.v <- rep(c("#000000","#FFFFFF"),100)[1:length(df[,1])]
@@ -2132,7 +2132,9 @@ report.startnum <- 1
   
   setwd(source.inputs.dir)  
   config.pot.tb <- gs_read(configs.ss, ws = "pot.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs_Jason Altman.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE) 
-  
+  config.pot.tb$color <- 
+    config.pot.tb$color %>% 
+    gsub("x","",.)
   ###                          ###    
   #   ### LOOP "h" BY REPORT UNIT  ###
   ###                          ###
@@ -2142,12 +2144,12 @@ report.startnum <- 1
   maxrow.h <- sapply(config.slides.ls.b, dim) %>% sapply(`[[`,1) %>% unlist %>% sum
   printed.reports.ls <- list()
   
-  #h <- 69 #LOOP TESTER
+  h <- 69 #LOOP TESTER
   #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
-  for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
+  #for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
     #for(h in 1:length(config.slides.ls.b)){
     
-    jgc()
+    #jgc()
     
     #Reading 'Cadre' so it can be added to file name
     cadre.h <- 
@@ -2196,7 +2198,7 @@ report.startnum <- 1
     tables.ls.h <- tables.ls.f[[h]]
     
     ###                     ###    
-    #     ### LOOP "i" BY SLIDE   ###
+#   ### LOOP "i" BY SLIDE   ###
     ###                     ###
     
     #i <- 6 #LOOP TESTER
@@ -2214,153 +2216,147 @@ report.startnum <- 1
       
       #ADD GRAPHS
       
-      #Graph Loop Inputs
-      config.graphs.df.i <- config.graphs.df.h %>% 
-        filter(slide.type.id == slide.type.id.i)
-      
-      if(dim(config.graphs.df.i)[1] !=0 && !is.na(config.graphs.df.i$slide.graph.type)){
-        #!Removed for expediencey but should be generalized.
-        #if(is.na(config.slide.df.i$school)){
-        #  config.graphs.df.i <- config.graphs.df.i[is.na(config.graphs.df.i$school),]
-        #}else{
-        #  config.graphs.df.i <- config.graphs.df.i[config.graphs.df.i$school == config.slide.df.i$school,]
-        #}
+        #Graph Loop Inputs
+          config.graphs.df.i <- config.graphs.df.h %>% 
+            filter(slide.type.id == slide.type.id.i)
         
-        if(is.na(config.slide.df.i$module)){
-          config.graphs.df.i <- config.graphs.df.i[is.na(config.graphs.df.i$module),]
-        }else{
-          config.graphs.df.i <- config.graphs.df.i[config.graphs.df.i$module == config.slide.df.i$module,]
+        if(dim(config.graphs.df.i)[1] !=0 && !is.na(config.graphs.df.i$graph.type.id)){
+          
+          if(is.na(config.slide.df.i$module)){
+            config.graphs.df.i <- config.graphs.df.i[is.na(config.graphs.df.i$module),]
+          }else{
+            config.graphs.df.i <- config.graphs.df.i[config.graphs.df.i$module == config.slide.df.i$module,]
+          }
+          
+          
+          ###                   ###    
+#         ### LOOP "k" BY GRAPH ###
+          ###                   ###
+          
+          #k <- 1 #LOOP TESTER
+          #for(k in 1:2){ #LOOP TESTER
+          for(k in 1:dim(config.graphs.df.i)[1]){
+            if(dim(config.graphs.df.i)[1] < 1){
+              #print(paste("No graph objects for slide.id: ",config.slide.df.i$slide.type.id,sep = ""))
+              next()
+            }
+            
+            graph.k <- graphs.ls.h[config.graphs.df.i$row.i[k]]
+            ppt.h <- 
+              addPlot(
+                ppt.h,
+                fun = print,
+                x = graph.k,
+                height = config.graphs.df.i$height[k],
+                width = config.graphs.df.i$width[k],
+                offx = config.graphs.df.i$offx[k],
+                offy = config.graphs.df.i$offy[k]
+              )
+            
+          } # END OF LOOP "k" BY GRAPH
         }
         
+      #ADD TABLES
+      
+        #! Will want to generalize so can add more than one table to each slide if necessary
+        config.tables.df.i <- config.tables.df.h %>% 
+          filter(slide.type.id == slide.type.id.i)
         
-        ###                   ###    
-        #           ### LOOP "k" BY GRAPH ###
-        ###                   ###
+        if(dim(config.tables.df.i)[1] != 0 && !is.na(config.tables.df.i$table.type.id)){
+          
+          if(is.na(config.slide.df.i$module)){
+            config.tables.df.i <- config.tables.df.i[is.na(config.tables.df.i$module),]
+          }else{
+            config.tables.df.i <- config.tables.df.i[config.tables.df.i$module == config.slide.df.i$module,]
+          }
+          
+          if(i == 2){
+            ft.i <- tables.ls.f[[h]][[1]]
+          }else{
+            ft.i <- tables.ls.f[[h]][[which(names(tables.ls.f[[h]])==config.tables.df.i$module)]]
+          }
+          
+          ppt.h <- addFlexTable(ppt.h, 
+                                ft.i, 
+                                height = config.tables.df.i$height,
+                                width = config.tables.df.i$width,
+                                offx = config.tables.df.i$offx,
+                                offy = config.tables.df.i$offy
+                                #par.properties=parProperties(text.align="center", padding=0)
+          )
+        }
         
-        #k <- 1 #LOOP TESTER
-        #for(k in 1:2){ #LOOP TESTER
-        for(k in 1:dim(config.graphs.df.i)[1]){
-          if(dim(config.graphs.df.i)[1] < 1){
-            #print(paste("No graph objects for slide.id: ",config.slide.df.i$slide.type.id,sep = ""))
+      #ADD POT OBJECTS
+        
+        ###                         ###    
+#       ### LOOP "j" BY POT OBJECT  ###
+        ###                         ###
+        
+        config.pot.i <- config.pot.tb[config.pot.tb$slide.type.id == slide.type.id.i,]
+        
+        if(any(!is.na(config.pot.i$module))){
+          config.pot.i <- filter(config.pot.i, grepl(as.character(config.slide.df.i$module), config.pot.i$module))
+        }  
+        
+        #j <- 1 #LOOP TESTER
+        #for(j in 1:2){ #LOOP TESTER
+        for(j in 1:dim(config.pot.i)[1]){
+          if(dim(config.pot.i)[1] < 1){
+            #print(paste("No text objects for slide.id: ",config.slide.df.i$slide.id,sep = ""))
             next()
           }
           
-          graph.k <- graphs.ls.h[config.graphs.df.i$row.i[k]]
-          ppt.h <- 
-            addPlot(
-              ppt.h,
-              fun = print,
-              x = graph.k,
-              height = config.graphs.df.i$height[k],
-              width = config.graphs.df.i$width[k],
-              offx = config.graphs.df.i$offx[k],
-              offy = config.graphs.df.i$offy[k]
+          #print(c(i,j))
+          
+          pot.content.j <- 
+            paste(
+              ifelse(
+                !is.na(config.pot.i$content.static[j]),
+                config.pot.i$content.static[j],
+                ""
+              ),
+              ifelse(
+                !is.na(config.pot.i$content.dynamic[j]),
+                eval(parse(text=config.pot.i$content.dynamic[j])),
+                ""
+              ),
+              sep = ""
             )
           
-        } # END OF LOOP "k" BY GRAPH
-      }
-      
-      #ADD TABLES
-      
-      #! Will want to generalize so can add more than one table to each slide if necessary
-      config.tables.df.i <- config.tables.df.h %>% 
-        filter(slide.type.id == slide.type.id.i)
-      
-      if(dim(config.tables.df.i)[1] != 0 && !is.na(config.tables.df.i$slide.table.type)){
-        
-        if(is.na(config.slide.df.i$module)){
-          config.tables.df.i <- config.tables.df.i[is.na(config.tables.df.i$module),]
-        }else{
-          config.tables.df.i <- config.tables.df.i[config.tables.df.i$module == config.slide.df.i$module,]
-        }
-        
-        if(i == 2){
-          ft.i <- tables.ls.f[[h]][[1]]
-        }else{
-          ft.i <- tables.ls.f[[h]][[which(names(tables.ls.f[[h]])==config.tables.df.i$module)]]
-        }
-        
-        ppt.h <- addFlexTable(ppt.h, 
-                              ft.i, 
-                              height = config.tables.df.i$height,
-                              width = config.tables.df.i$width,
-                              offx = config.tables.df.i$offx,
-                              offy = config.tables.df.i$offy
-                              #par.properties=parProperties(text.align="center", padding=0)
-        )
-      }
-      
-      #ADD POT OBJECTS
-      
-      ###                         ###    
-      #         ### LOOP "j" BY POT OBJECT  ###
-      ###                         ###
-      
-      config.pot.i <- config.pot.tb[config.pot.tb$slide.type.id == slide.type.id.i,]
-      
-      if(any(!is.na(config.pot.i$module))){
-        config.pot.i <- filter(config.pot.i, grepl(as.character(config.slide.df.i$module), config.pot.i$module))
-      }  
-      
-      #j <- 1 #LOOP TESTER
-      #for(j in 1:2){ #LOOP TESTER
-      for(j in 1:dim(config.pot.i)[1]){
-        if(dim(config.pot.i)[1] < 1){
-          #print(paste("No text objects for slide.id: ",config.slide.df.i$slide.id,sep = ""))
-          next()
-        }
-        
-        #print(c(i,j))
-        
-        pot.content.j <- 
-          paste(
-            ifelse(
-              !is.na(config.pot.i$content.static[j]),
-              config.pot.i$content.static[j],
-              ""
-            ),
-            ifelse(
-              !is.na(config.pot.i$content.dynamic[j]),
-              eval(parse(text=config.pot.i$content.dynamic[j])),
-              ""
-            ),
-            sep = ""
-          )
-        
-        pot.j <- 
-          pot(
-            pot.content.j,
-            textProperties(
-              color = 
-                alpha(
-                  ifelse(!is.na(config.pot.i$color[j]),
-                         config.pot.i$color[j] %>% 
-                           strsplit(.,",") %>% unlist %>% as.numeric %>% 
-                           rgb(red = .[1],green = .[2],blue = .[3] ,maxColorValue = 255) %>% .[1],
-                         "black"
-                  )
-                  ,1),
-              font.size = config.pot.i$font.size[j], 
-              font.weight = ifelse(is.na(config.pot.i$font.weight[j]),'normal',config.pot.i$font.weight[j]),
-              font.family = config.pot.i$font[j]
+          pot.j <- 
+            pot(
+              pot.content.j,
+              textProperties(
+                color = 
+                  alpha(
+                    ifelse(!is.na(config.pot.i$color[j]),
+                           config.pot.i$color[j] %>% 
+                             strsplit(.,",") %>% unlist %>% as.numeric %>% 
+                             rgb(red = .[1],green = .[2],blue = .[3] ,maxColorValue = 255) %>% .[1],
+                           "black"
+                    )
+                    ,1),
+                font.size = config.pot.i$font.size[j], 
+                font.weight = ifelse(is.na(config.pot.i$font.weight[j]),'normal',config.pot.i$font.weight[j]),
+                font.family = config.pot.i$font[j]
+              )
             )
-          )
-        
-        ppt.h <- 
-          addParagraph(
-            ppt.h,
-            pot.j,
-            height = config.pot.i$height[j],
-            width = config.pot.i$width[j],
-            offx = config.pot.i$offx[j],
-            offy = config.pot.i$offy[j],
-            par.properties = parProperties(
-              text.align=config.pot.i$text.align[j], 
-              padding=0
+          
+          ppt.h <- 
+            addParagraph(
+              ppt.h,
+              pot.j,
+              height = config.pot.i$height[j],
+              width = config.pot.i$width[j],
+              offx = config.pot.i$offx[j],
+              offy = config.pot.i$offy[j],
+              par.properties = parProperties(
+                text.align=config.pot.i$text.align[j], 
+                padding=0
+              )
             )
-          )
-        
-      } #END OF LOOP "j" BY POT OBJECT (ROW OF POT CONFIG TABLE)
+          
+        } #END OF LOOP "j" BY POT OBJECT (ROW OF POT CONFIG TABLE)
       
       #writeDoc(ppt.h, file = target.path.h) #test Slide 1 build
       #rm(ppt.h)
