@@ -769,55 +769,56 @@ report.startnum <- 1
 
 { #SECTION COLLAPSE BRACKET
 
-  if(!report.unit %in% c("building","district")){
-    stop("Report unit must be either 'building' or 'district.'")
-  }
-  
-  if(report.unit == "building"){
-    report.id.colname <- "building.id"
-  }else{
-    report.id.colname <- "district"
-  }
-  
-  report.id.col <- resp.wide.df[,names(resp.wide.df) == report.id.colname]
-  
-  if(tolower(report.ids) %in% "all" %>% any){
-    report.ids <- 
-      report.id.col[order(report.id.col)] %>%
-      unique %>% 
-      vector.filter.fun(
-        condition = !grepl("district office",.),
-        vector.input = .
-      )
-  }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
+  #Define Report Unit and Report IDs
+    if(!report.unit %in% c("building","district")){
+      stop("Report unit must be either 'building' or 'district.'")
+    }
+    
+    if(report.unit == "building"){
+      report.id.colname <- "building.id"
+    }else{
+      report.id.colname <- "district"
+    }
+    
+    report.id.col <- resp.wide.df[,names(resp.wide.df) == report.id.colname]
+    
+    if(tolower(report.ids) %in% "all" %>% any){
+      report.ids <- 
+        report.id.col[order(report.id.col)] %>%
+        unique %>% 
+        vector.filter.fun(
+          condition = !grepl("district office",.),
+          vector.input = .
+        )
+    }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
   
   #Load Graph & Slide Type Config Tables
   
-  #setwd(source.inputs.dir)
-  config.slidetypes.tb <- gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #
-  load.config.graphtypes.tb <- gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #
-  load.config.tabletypes.tb <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #
-  
-  config.graphtypes.df <- 
-    inner_join(config.slidetypes.tb, load.config.graphtypes.tb, by = "slide.type.id", all.x = FALSE) 
-  
-  config.tabletypes.df <- 
-    inner_join(config.slidetypes.tb, load.config.tabletypes.tb, by = c("slide.type.id")) 
+    #setwd(source.inputs.dir)
+    config.slidetypes.tb <- gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #
+    load.config.graphtypes.tb <- gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #
+    load.config.tabletypes.tb <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #
+    
+    config.graphtypes.df <- 
+      inner_join(config.slidetypes.tb, load.config.graphtypes.tb, by = "slide.type.id", all.x = FALSE) 
+    
+    config.tabletypes.df <- 
+      inner_join(config.slidetypes.tb, load.config.tabletypes.tb, by = c("slide.type.id")) 
   
   #Expand Config Tables for each district according to looping variables
   
   ###                          ###    
-  #   ### LOOP "b" BY REPORT.UNIT  ###
+# ### LOOP "b" BY REPORT.UNIT  ###
   ###                          ###
   
   #Loop Outputs 
-  config.graphs.ls.b <- list()
-  config.tables.ls.b <- list()
-  config.slides.ls.b <- list()
+    config.graphs.ls.b <- list()
+    config.tables.ls.b <- list()
+    config.slides.ls.b <- list()
   
   #Progress bar for loop
-  progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
-  maxrow.b <- length(report.ids)
+    progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
+    maxrow.b <- length(report.ids)
   
   #b <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
@@ -2118,7 +2119,7 @@ report.startnum <- 1
 ########################################################################################################################################################      
 ### POWERPOINT SLIDE CREATION  ###        
 
-{ #SECTION COLLAPSE BRACKET   
+#{ #SECTION COLLAPSE BRACKET   
   #rm(resp.long.df, resp.wide.df)
   jgc <- function(){
     gc()
@@ -2145,62 +2146,62 @@ report.startnum <- 1
   ###                          ###
   
   #Progress Bar
-  progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
-  maxrow.h <- sapply(config.slides.ls.b, dim) %>% sapply(`[[`,1) %>% unlist %>% sum
-  printed.reports.ls <- list()
+    progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
+    maxrow.h <- sapply(config.slides.ls.b, dim) %>% sapply(`[[`,1) %>% unlist %>% sum
+    printed.reports.ls <- list()
   
-  #h <- 69 #LOOP TESTER
+  h <- 50 #LOOP TESTER
   #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
-  for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
+  #for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
     #for(h in 1:length(config.slides.ls.b)){
     
     #jgc()
     
     #Reading 'Cadre' so it can be added to file name
-    cadre.h <- 
-      buildings.tb %>% 
-      filter(building.id == report.ids[h]) %>% 
-      select(cadre) %>% 
-      unlist %>% 
-      FirstLetterCap_OneElement()
+      cadre.h <- 
+        buildings.tb %>% 
+        filter(building.id == report.ids[h]) %>% 
+        select(cadre) %>% 
+        unlist %>% 
+        FirstLetterCap_OneElement()
     
     #Set up target file
-    template.file <- paste(source.inputs.dir,
-                           "template_green reports.pptx",
-                           sep = "")
-    target.path.h <- paste(outputs.dir,
-                           "/",
-                           cadre.h,
-                           "_",
-                           report.ids[h],
-                           "_",
-                           #gsub(":",".",Sys.time()) %>% substr(., 1,10),
-                           #"_",
-                           gsub(":",".",Sys.time()) %>% substr(., 15,19),
-                           ".pptx", sep="") 
-    
-    file.copy(template.file, target.path.h)
+      template.file <- paste(source.inputs.dir,
+                             "template_green reports.pptx",
+                             sep = "")
+      target.path.h <- paste(outputs.dir,
+                             "/",
+                             cadre.h,
+                             "_",
+                             report.ids[h],
+                             "_",
+                             #gsub(":",".",Sys.time()) %>% substr(., 1,10),
+                             #"_",
+                             gsub(":",".",Sys.time()) %>% substr(., 15,19),
+                             ".pptx", sep="") 
+      
+      file.copy(template.file, target.path.h)
     
     #Set up powerpoint object 
-    ppt.h <- pptx(template = target.path.h )
-    options("ReporteRs-fontsize" = 20)
-    options("ReporteRs-default-font" = "Century Gothic")
+      ppt.h <- pptx(template = target.path.h )
+      options("ReporteRs-fontsize" = 20)
+      options("ReporteRs-default-font" = "Century Gothic")
     
     #Set up report-level inputs
-    config.graphs.df.h <- 
-      config.graphs.ls.b[[h]] %>%
-      mutate(row.i = config.graphs.ls.b[[h]] %>% .[,ncol(config.graphs.ls.b[[h]])] %>% seq_along(.))
-    
-    config.tables.df.h <- config.tables.ls.b[[h]]
-    
-    #!Will need to generalize below for different report units (i.e. Repeated Measures vs. Green Reports)
-    report.id.h <- report.ids[h]
-    district.h <- strsplit(report.id.h, "_") %>% unlist %>% .[1] %>% toupper()
-    school.h <- strsplit(report.id.h, "_") %>% unlist %>% .[2] %>% toupper()
-    config.slides.df.h <- config.slides.ls.b[[h]]
-    
-    graphs.ls.h <- graphs.ls.f[[h]]
-    tables.ls.h <- tables.ls.f[[h]]
+      config.graphs.df.h <- 
+        config.graphs.ls.b[[h]] %>%
+        mutate(row.i = config.graphs.ls.b[[h]] %>% .[,ncol(config.graphs.ls.b[[h]])] %>% seq_along(.))
+      
+      config.tables.df.h <- config.tables.ls.b[[h]]
+      
+      #!Will need to generalize below for different report units (i.e. Repeated Measures vs. Green Reports)
+      report.id.h <- report.ids[h]
+      district.h <- strsplit(report.id.h, "_") %>% unlist %>% .[1] %>% toupper()
+      school.h <- strsplit(report.id.h, "_") %>% unlist %>% .[2] %>% toupper()
+      config.slides.df.h <- config.slides.ls.b[[h]]
+      
+      graphs.ls.h <- graphs.ls.f[[h]]
+      tables.ls.h <- tables.ls.f[[h]]
     
     ###                     ###    
 #   ### LOOP "i" BY SLIDE   ###
@@ -2216,8 +2217,8 @@ report.startnum <- 1
       
       #SLIDE FORMATION
       
-      ppt.h <- addSlide(ppt.h, slide.layout = layout.i)
-      ppt.h <- addPageNumber( ppt.h )
+        ppt.h <- addSlide(ppt.h, slide.layout = layout.i)
+        ppt.h <- addPageNumber( ppt.h )
       
       #ADD GRAPHS
       
