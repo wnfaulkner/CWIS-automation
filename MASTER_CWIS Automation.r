@@ -106,11 +106,11 @@ report.startnum <- 1
 } #END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
-#wd: working directory - Google Drive folder "2018-08 Green Reports"
-#source.code.dir: directory for R project; also contains source data, additional function scripts, and config tables.
-#source.resources.dir: directory with raw data
-#source.inputs.dir: directory with config tables and powerpoint template
-#outputs.dir: where outputs will be stored
+  #wd: working directory - Google Drive folder "2018-08 Green Reports"
+  #source.code.dir: directory for R project; also contains source data, additional function scripts, and config tables.
+  #source.resources.dir: directory with raw data
+  #source.inputs.dir: directory with config tables and powerpoint template
+  #outputs.dir: where outputs will be stored
 
 ########################################################################################################################################################      
 ### LOAD SOURCE CODE ###
@@ -168,8 +168,8 @@ report.startnum <- 1
 }#END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
-#questions.df
-#resp1.df (initial responses dataset which will need extensive cleaning and organization in next sections)
+  #questions.df
+  #resp1.df (initial responses dataset which will need extensive cleaning and organization in next sections)
 
 ########################################################################################################################################################      
 ### INITIAL INFORMATICS & 'UNBRANCHING' (STACKING) OF BRANCHED VARIABLES ###
@@ -357,9 +357,9 @@ report.startnum <- 1
 }#END SECTION COLLAPSE BRACKET    
 
 #OUTPUTS
-#resp2.df - now with all branch variables 'unbranched' (stacked), and having removed two extra header rows
-#questions.sem.df - now only with rows pertaining to this year and semester
-#ans.opt.always.df - global answer options table with numerical scale, agreement scale, and frequency scale lined up
+  #resp2.df - now with all branch variables 'unbranched' (stacked), and having removed two extra header rows
+  #questions.sem.df - now only with rows pertaining to this year and semester
+  #ans.opt.always.df - global answer options table with numerical scale, agreement scale, and frequency scale lined up
 
 ########################################################################################################################################################      
 ### FURTHER CLEANING & ADDING USEFUL VARIABLES ###
@@ -758,11 +758,11 @@ report.startnum <- 1
 }#END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
-#resp.wide.df: wide data with all variables including numeric and binary
-#resp.long.df: long format data frame with cwis responses
-#ans.opt.always.df: data frame with columns corresponding to answer numbers and answer text,
-#including both frequency scale (e.g. 'always', 'most of the time') and agreement scale (e.g.
-#'strongly agree', 'agree').
+  #resp.wide.df: wide data with all variables including numeric and binary
+  #resp.long.df: long format data frame with cwis responses
+  #ans.opt.always.df: data frame with columns corresponding to answer numbers and answer text,
+    #including both frequency scale (e.g. 'always', 'most of the time') and agreement scale (e.g.
+    #'strongly agree', 'agree').
 
 ########################################################################################################################################################      
 ### PRODUCING SLIDE, GRAPH, AND TABLE CONFIGURATION TABLES ###
@@ -1110,16 +1110,16 @@ report.startnum <- 1
 } # END SECTION COLLAPSE BRACKET
 
 #OUTPUTS:
-#report.ids: vector with all report unit names in resp.long.df (length = 19 for baseline data)
-#config.slides.ls.b
-#[[report.unit]]
-#data frame where each line represents a slide
-#config.tables.ls.b
-#[[report.unit]]
-#data frame where each line represents a table
-#config.graphs.ls.b
-#[[report.unit]]
-#data frame where each line represents a graph
+  #report.ids: vector with all report unit names in resp.long.df (length = 19 for baseline data)
+  #config.slides.ls.b
+    #[[report.unit]]
+      #data frame where each line represents a slide
+  #config.tables.ls.b
+    #[[report.unit]]
+      #data frame where each line represents a table
+  #config.graphs.ls.b
+    #[[report.unit]]
+      #data frame where each line represents a graph
 
 
 ########################################################################################################################################################      
@@ -2151,8 +2151,8 @@ report.startnum <- 1
     printed.reports.ls <- list()
   
   #h <- 50 #LOOP TESTER
-  for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
-  #for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
+  #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
+  for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
     #for(h in 1:length(config.slides.ls.b)){
     
     #jgc()
@@ -2172,6 +2172,8 @@ report.startnum <- 1
       target.path.h <- paste(outputs.dir,
                              "/",
                              cadre.h,
+                             "_",
+                             h,
                              "_",
                              report.ids[h],
                              "_",
