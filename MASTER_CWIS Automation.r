@@ -135,7 +135,7 @@ report.startnum <- 1
     substr(x, nchar(x)-n+1, nchar(x))
   }
   
-  #FUN #Find most recently modified file in a directory    
+#FUN #Find most recently modified file in a directory    
   most.recently.modified.filename.fun <- function(title.string.match, file.type, dir){
     match.files.v <-
       list.files()[
@@ -149,22 +149,22 @@ report.startnum <- 1
   }
   
   #Questions Table (imported as list)
-  configs.ss <- gs_key("1Ujw68I3kZVUpU_1DEURFVNHPK0DfdpNBc4Rq3T1cIpo",verbose = TRUE) 
-  questions.ls <- 	gs_read(configs.ss, ws = "questions", range = NULL, literal = TRUE) %>% as.list() %>% lapply(., tolower)
-  questions.df <- do.call(cbind, questions.ls) %>% as.data.frame(., stringsAsFactors = FALSE)
-  #! Update to read all configs from same google sheet?
+    configs.ss <- gs_key("1Ujw68I3kZVUpU_1DEURFVNHPK0DfdpNBc4Rq3T1cIpo",verbose = TRUE) 
+    questions.ls <- 	gs_read(configs.ss, ws = "questions", range = NULL, literal = TRUE) %>% as.list() %>% lapply(., tolower)
+    questions.df <- do.call(cbind, questions.ls) %>% as.data.frame(., stringsAsFactors = FALSE)
+    #! Update to read all configs from same google sheet?
   
   #Responses table (main data, imported as data frame)
-  resp1.df <- read.csv(
-    file =  
-      most.recently.modified.filename.fun(
-        title.string.match = "CWIS",
-        file.type = "csv",
-        dir = source.resources.dir
-      ),
-    stringsAsFactors = FALSE,
-    header = TRUE
-  )
+    resp1.df <- read.csv(
+      file =  
+        most.recently.modified.filename.fun(
+          title.string.match = "CWIS",
+          file.type = "csv",
+          dir = source.resources.dir
+        ),
+      stringsAsFactors = FALSE,
+      header = TRUE
+    )
 }#END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
@@ -1680,9 +1680,9 @@ report.startnum <- 1
   maxrow.f <- graphdata.ls.c %>% lengths %>% sum
   
   
-  f <- 353 #LOOP TESTER
+  #f <- 353 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  #for(f in report.startnum:length(report.ids)){
+  for(f in report.startnum:length(report.ids)){
     
     if(f == report.startnum){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
     school.id.f <- report.ids[f]
@@ -1695,10 +1695,10 @@ report.startnum <- 1
     #Loop output object(s)
     graphs.ls.g <- list()
     
-    g <- 2 #LOOP TESTER
+    #g <- 2 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    #for(g in 1:length(graphdata.ls.c[[f]]))
-      #local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
+    for(g in 1:length(graphdata.ls.c[[f]]))
+      local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         g<-g #same as above
         
         ### GRAPH INPUTS FOR GGPLOT ###
