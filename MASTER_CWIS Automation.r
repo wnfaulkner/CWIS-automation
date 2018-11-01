@@ -1142,7 +1142,7 @@ report.startnum <- 1
   
   slider.report.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
                             report.ids)
-  #c <- 26 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
+  #c <- 353 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
   #for(c in slider.report.ids){   #LOOP TESTER
   for(c in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
     
@@ -1159,14 +1159,14 @@ report.startnum <- 1
       resp.long.df[.,]
     
     ###                    ###
-    #   ### LOOP "d" BY GRAPH  ###
+#   ### LOOP "d" BY GRAPH  ###
     ###                    ###
     
     #Loop Inputs
     config.graphs.df.c <- config.graphs.ls.b[[c]]
     graphdata.ls.d <- list()
     
-    #d <- 5
+    #d <- 2
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:dim(config.graphs.df.c)[1]){
       
@@ -1216,7 +1216,7 @@ report.startnum <- 1
       names(all.cats.df.d) <- group_by.d
       #print(all.cats.df.d)
       
-      #FUN  #Function: Data restriction - district vs. building.id
+#FUN  #Function: Data restriction - district vs. building.id
       
       #!NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND GRAPH DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
       #BUILDING.ID AND DATA.LEVEL IS DISTRICT.
@@ -1249,10 +1249,10 @@ report.startnum <- 1
         return(result)
       }
       
-      #FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
+#FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
       #Test inputs
-      #config.input <- config.graphs.df.d
-      #data.input <-  resp.long.df.c %>% graph.data.restriction.fun %>% group_by(!!! syms(group_by.d))
+        #config.input <- config.graphs.df.d
+        #data.input <-  resp.long.df.c %>% graph.data.restriction.fun %>% group_by(!!! syms(group_by.d))
       
       summarize.data.fun <- function(config.input, data.input){
         if(config.input$data.measure == "participation"){
@@ -1291,7 +1291,7 @@ report.startnum <- 1
         group_by(!!! syms(group_by.d)) %>%
         summarize.data.fun(config.input = config.graphs.df.d, data.input = .) %>%
         left_join(all.cats.df.d, ., by = c(group_by.d))
-      graphdata.df.d$measure.var[is.na(graphdata.df.d$measure.var)] <- 0
+      #graphdata.df.d$measure.var[is.na(graphdata.df.d$measure.var)] <- 0
       
       #print(graphdata.df.d)
       
@@ -1680,9 +1680,9 @@ report.startnum <- 1
   maxrow.f <- graphdata.ls.c %>% lengths %>% sum
   
   
-  #f <- 2 #LOOP TESTER
+  f <- 353 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  for(f in report.startnum:length(report.ids)){
+  #for(f in report.startnum:length(report.ids)){
     
     if(f == report.startnum){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
     school.id.f <- report.ids[f]
@@ -1695,10 +1695,10 @@ report.startnum <- 1
     #Loop output object(s)
     graphs.ls.g <- list()
     
-    #g <- 3 #LOOP TESTER
+    g <- 2 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    for(g in 1:length(graphdata.ls.c[[f]]))
-      local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
+    #for(g in 1:length(graphdata.ls.c[[f]]))
+      #local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         g<-g #same as above
         
         ### GRAPH INPUTS FOR GGPLOT ###
@@ -2078,12 +2078,12 @@ report.startnum <- 1
 }#END SECTION COLLAPSE BRACKET
 
 #OUTPUT:
-#graphs.ls.f
-#[[report.unit]]
-#ggplot object
-#tables.ls.f
-#[[report.unit]]
-#FlexTable object
+  #graphs.ls.f
+    #[[report.unit]]
+      #ggplot object
+  #tables.ls.f
+    #[[report.unit]]
+      #FlexTable object
 
 
 ########################################################################################################################################################      
