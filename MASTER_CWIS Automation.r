@@ -178,7 +178,7 @@ report.startnum <- 1
 ########################################################################################################################################################      
 ### INITIAL INFORMATICS & 'UNBRANCHING' (STACKING) OF BRANCHED VARIABLES ###
 
-#{ #SECTION COLLAPSE BRACKET
+{ #SECTION COLLAPSE BRACKET
   
   #Initial informatics
   
@@ -276,15 +276,16 @@ report.startnum <- 1
         unique %>% 
         tolower == "yes"
       ){
-        report.ids.sample <- sample(
+        report.ids <- sample(
           report.ids,
           global.configs.df[
             global.configs.df$Config == "Sample Size",
             names(global.configs.df) == "Value"
             ] %>% as.numeric)
+        
         resp1.df <-
           resp1.df  %>%
-          filter(report.id %in% report.ids.sample)
+          filter(report.id %in% report.ids)
       }
         
     
@@ -887,27 +888,28 @@ report.startnum <- 1
     #print(c(b,100*b/length(report.ids)))
     
     #Create report.id.b (for this iteration) and skip if report for district office
-    report.id.b <- report.ids[b]
+      report.id.b <- report.ids[b]
     
-    if(report.unit != "district" & grepl("district office", report.id.b)){
-      next()
-    }
+      if(report.unit != "district" & grepl("district office", report.id.b)){
+        next()
+      }
     
     #Create data frames for this loop - restrict to district id i  
-    resp.long.df.b <- 
-      resp.long.df %>% 
-      select(names(resp.long.df)[names(resp.long.df) == report.id.colname]) %>% 
-      equals(report.id.b) %>% 
-      resp.long.df[.,]
-    #print(head(resp.long.df.b))
+      resp.long.df.b <- 
+        resp.long.df %>% filter(report.id == report.id.b)
+        #resp.long.df[resp.long.df$report.id == report.id.b,] %>% 
+        #select(report.id == report.id.b) %>% 
+        #equals(report.id.b) %>% 
+        #resp.long.df[.,]
+      #print(head(resp.long.df.b))
     
 #FUN#Function: Loop Expander for creating full config tables
     #Function input testers
-    #configs = config.slidetypes.tb
-    #loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3")
-    #collate.varname = "slide.section.1"
-    #source.data = resp.long.df.b  
-    
+      #configs = config.slidetypes.tb
+      #loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3")
+      #collate.varname = "slide.section.1"
+      #source.data = resp.long.df.b  
+      
     loop.expander.fun <- function(configs, loop.varnames, collate.varname, source.data){
       output.ls <- list()
       
