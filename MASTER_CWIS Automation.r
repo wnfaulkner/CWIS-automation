@@ -9,7 +9,7 @@
 { #SECTION COLLAPSE BRACKET
   
   rm(list=ls()) #Remove lists
-  options(java.parameters = "- Xmx30g") #helps r not to fail when importing large xlsx files with xlsx package
+  options(java.parameters = "- Xmx8g") #helps r not to fail when importing large xlsx files with xlsx package
   
   
   #Record code start time for processing time calculations
@@ -148,8 +148,11 @@ report.startnum <- 1
     return(most.recent.match.file)
   }
   
+  #Global Configs Table
+    configs.ss <- gs_key("102gmd5rRMyM4xy43gK-r3sF3hvI0IsYJoyG8fp5kHnE",verbose = TRUE) 
+    global.configs.df <- gs_read(configs.ss, ws = "global.configs", range = NULL, literal = TRUE)
+  
   #Questions Table (imported as list)
-    configs.ss <- gs_key("1Ujw68I3kZVUpU_1DEURFVNHPK0DfdpNBc4Rq3T1cIpo",verbose = TRUE) 
     questions.ls <- 	gs_read(configs.ss, ws = "questions", range = NULL, literal = TRUE) %>% as.list() %>% lapply(., tolower)
     questions.df <- do.call(cbind, questions.ls) %>% as.data.frame(., stringsAsFactors = FALSE)
     #! Update to read all configs from same google sheet?
@@ -165,6 +168,7 @@ report.startnum <- 1
       stringsAsFactors = FALSE,
       header = TRUE
     )
+
 }#END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
@@ -174,186 +178,260 @@ report.startnum <- 1
 ########################################################################################################################################################      
 ### INITIAL INFORMATICS & 'UNBRANCHING' (STACKING) OF BRANCHED VARIABLES ###
 
-{ #SECTION COLLAPSE BRACKET
+#{ #SECTION COLLAPSE BRACKET
   
   #Initial informatics
   
   #Global Answer Options
-  ans.opt.always.df <-  cbind(
-    c(5:1),
-    c("Always","Most of the time","About half the time","Sometimes","Never"),
-    c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
-  ) %>% as.data.frame
-  names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
-  ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
-  ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
-  ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
-  
+    ans.opt.always.df <-  cbind(
+      c(5:1),
+      c("Always","Most of the time","About half the time","Sometimes","Never"),
+      c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
+    ) %>% as.data.frame
+    names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
+    ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
+    ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
+    ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
+    
   #Restrict questions.df to only rows for this year/semester
-  questions.sem.df <- 
-    questions.df[
-      questions.df$year == year & questions.df$semester == semester,
-      ]
+    questions.sem.df <- 
+      questions.df[
+        questions.df$year == year & questions.df$semester == semester,
+        ]
   
   #Remove extra header rows
-  #dat.startrow <- 
-  resp1.df <- resp1.df[(which(substr(resp1.df[,1],1,1) == "{") + 1):length(resp1.df[,1]),]
+    #dat.startrow <- 
+    resp1.df <- resp1.df[(which(substr(resp1.df[,1],1,1) == "{") + 1):length(resp1.df[,1]),]
   
   #Edit variable names
-  names(resp1.df) <- resp1.df %>% names %>% tolower #Lower-case all variable names
-  #names(resp1.df)[names(resp1.df) == "id"] <- "responseid"
+    names(resp1.df) <- resp1.df %>% names %>% tolower #Lower-case all variable names
+    #names(resp1.df)[names(resp1.df) == "id"] <- "responseid"
   
   #Variable renaming of important variables
-  names(resp1.df) <-
-    mgsub(
-      questions.sem.df$row.1[!is.na(questions.sem.df$q.changename)], 
-      questions.sem.df$q.changename[!is.na(questions.sem.df$q.changename)], 
-      names(resp1.df)
-    )
+    names(resp1.df) <-
+      mgsub(
+        questions.sem.df$row.1[!is.na(questions.sem.df$q.changename)], 
+        questions.sem.df$q.changename[!is.na(questions.sem.df$q.changename)], 
+        names(resp1.df)
+      )
   
+  #Define Report Unit and Report IDs
+    if(!report.unit %in% c("building","district")){
+      stop("Report unit must be either 'building' or 'district.'")
+    }
+    
+    if(report.unit == "building"){
+      report.id.colname <- "building"
+    }else{
+      report.id.colname <- "district"
+    }
+    
+    report.id.col <- resp1.df[,names(resp1.df) == report.id.colname]
+    
+    if(tolower(report.ids) %in% c("all","sample") %>% any && report.id.colname %in% c("building","district")){
+      
+      if(report.id.colname == "district"){
+        resp1.df <-
+          resp1.df %>%
+          mutate(
+            report.id =
+              resp1.df[,grep(report.id.colname,names(resp1.df))] %>% tolower
+          )
+      }
+      
+      if(report.id.colname == "building"){
+        resp1.df <- 
+          resp1.df %>%
+          mutate(
+            report.id =
+              paste(
+                resp1.df[,grep("district",names(resp1.df))],
+                resp1.df[,grep(report.id.colname,names(resp1.df))],
+                sep = "_"
+              ) %>%
+              tolower %>%
+              replace(., . == "_", "")
+          )
+      }
+      
+      resp1.df$report.id <- gsub("\\/"," ",resp1.df$report.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
+      
+      report.ids <- 
+        resp1.df$report.id %>%
+        unique %>% 
+        vector.filter.fun(
+          condition = !grepl("district office",.),
+          vector.input = .
+        ) %>%
+        .[!grepl("_",substr(.,1,1))]
+      
+    }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
+    
+    #Restrict Responses table to produce only a sample of reports unless this is final print
+      if(
+        global.configs.df[
+          global.configs.df$Config == "Sample Print",
+          names(global.configs.df) == "Value"
+        ] %>% 
+        unique %>% 
+        tolower == "yes"
+      ){
+        report.ids.sample <- sample(
+          report.ids,
+          global.configs.df[
+            global.configs.df$Config == "Sample Size",
+            names(global.configs.df) == "Value"
+            ] %>% as.numeric)
+        resp1.df <-
+          resp1.df  %>%
+          filter(report.id %in% report.ids.sample)
+      }
+        
+    
+      #!FIND/REPLACE BUILDING ID WITH REPORT.ID
+    
   #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
   
-  #FUN #Function: output number of times specified substring occurs within vector of character strings
-  num.substring.matches <- 
-    function(pattern, vector){
-      sapply( gregexpr( pattern, as.character(vector)),
-              function(x) if( x[1]==-1 ){ 0 }else{ length(x) } )
-    }
-  
-  questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2] <- 
-    paste("x",questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2],sep="")
-  
-  #Stacking Columns Split by Survey Branching
-  #"branch" refers to branching questions, so branch0 are columns without branches, and branch1 are columns that are part of branching questions
-  #"ans" refers to having answer options, so ans0 are columns without answer options, and ans1 are columns that are part of questions with multiple answer options
-  
-  branch0.ans0.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==0]
-  branch0.ans1.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==1 & substr(names(resp1.df),1,1) == "q"]
-  branch1.ans0.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==1 & substr(names(resp1.df),1,1) == "x"]
-  branch1.ans1.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==2]
-  
-  #branch.q.colnums.v <- which(resp1.df %>% names %>% substr(.,1,1) == "x")
-  
+#FUN#Function: output number of times specified substring occurs within vector of character strings
+    num.substring.matches <- 
+      function(pattern, vector){
+        sapply( gregexpr( pattern, as.character(vector)),
+                function(x) if( x[1]==-1 ){ 0 }else{ length(x) } )
+      }
+    
+    questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2] <- 
+      paste("x",questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2],sep="")
+    
+    #Stacking Columns Split by Survey Branching
+    #"branch" refers to branching questions, so branch0 are columns without branches, and branch1 are columns that are part of branching questions
+    #"ans" refers to having answer options, so ans0 are columns without answer options, and ans1 are columns that are part of questions with multiple answer options
+    
+    branch0.ans0.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==0]
+    branch0.ans1.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==1 & substr(names(resp1.df),1,1) == "q"]
+    branch1.ans0.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==1 & substr(names(resp1.df),1,1) == "x"]
+    branch1.ans1.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==2]
+    
+    #branch.q.colnums.v <- which(resp1.df %>% names %>% substr(.,1,1) == "x")
+    
   #Make data frame of base variables (that require no stacking)  
-  branch0.df <- 
-    resp1.df[ ,                                           
-              names(resp1.df) %in% c("responseid",branch0.ans0.colnames.v,branch0.ans1.colnames.v)      
-              ]              
+    branch0.df <- 
+      resp1.df[ ,                                           
+                names(resp1.df) %in% c("responseid",branch0.ans0.colnames.v,branch0.ans1.colnames.v)      
+                ]              
   
   #Make data fram of variables to be stacked
-  branch1.df <- 
-    resp1.df[ ,
-              names(resp1.df) %in% c("responseid",branch1.ans0.colnames.v,branch1.ans1.colnames.v) # ResponseId plus all columns whose names begin with "X"
-              ]
-  
+    branch1.df <- 
+      resp1.df[ ,
+                names(resp1.df) %in% c("responseid",branch1.ans0.colnames.v,branch1.ans1.colnames.v) # ResponseId plus all columns whose names begin with "X"
+                ]
+    
   #Re-stack & collapse columns that are split up because of survey branching 
   
-  #Base names of questions that have multiple branches
-  branch1.q.v <- 
-    strsplit(c(branch1.ans1.colnames.v,branch1.ans0.colnames.v), "_") %>% 
-    unlist %>% 
-    .[grep("q",.)] %>% 
-    unique 
-  
-  ###                                                    ###
-  # Start of loop 'a' by base question of branched columns #
-  ###                                                    ###
-  
-  #Loop output storage
-  q.ls <- list()
-  varname.match.ls <- list()
-  
-  #a <- 1 #for testing loop
-  for(a in 1:length(branch1.q.v)){     ### START OF LOOP BY QUESTION; only for questions with branched variables
-    
-    q.name.a <- branch1.q.v[a]                                 # base question name
-    varnames.a <-                                              # all columns in branch0.df that belong to base question number
-      names(branch1.df)[names(branch1.df) != "responseid"][
-        which(names(branch1.df)[names(branch1.df) != "responseid"] %>% strsplit(.,"_") %>% lapply(., `[[`, 2) %>% unlist == q.name.a)
-        ]
-    
-    if(num.substring.matches("_",varnames.a) %>% unique() == 1){ # final column names once branching is collapsed
-      q.ans.options.a <- q.name.a
-    }else{}
-    
-    if(num.substring.matches("_",varnames.a) %>% unique() == 2){
-      q.ans.options.a <-
-        paste(q.name.a, 
-              varnames.a %>% strsplit(.,"_") %>% lapply(., `[[`, 3) %>% unique %>% unlist,
-              sep = "_")
-    }        
-    varname.match.ls[[a]] <- q.ans.options.a
-    
-    unbranch.a.ls <- list()
+    #Base names of questions that have multiple branches
+    branch1.q.v <- 
+      strsplit(c(branch1.ans1.colnames.v,branch1.ans0.colnames.v), "_") %>% 
+      unlist %>% 
+      .[grep("q",.)] %>% 
+      unique 
     
     ###                                                    ###
-    # Start of loop 'b' by base question of branched columns #
+    # Start of loop 'a' by base question of branched columns #
     ###                                                    ###
     
-    #b = 12
-    for(b in 1:length(q.ans.options.a)){    ### START OF LOOP BY ANSWER OPTION
-      
-      check.varnames.a <- str_sub(names(branch1.df), start = -nchar(q.ans.options.a[b]))
-      
-      branch.df.b <- #data frame of only columns to be stacked (for this question, for this answer option)
-        branch1.df[,
-                   c(
-                     grep("responseid",names(branch1.df)),
-                     grep(q.ans.options.a[b], check.varnames.a)
-                   )
-                   ]
-      
-      unbranch.df.b <- #reshaped data frame of stacked columns
-        reshape(
-          data = branch.df.b, 
-          idvar = "responseid",
-          timevar = NULL,
-          varying = names(branch.df.b)[names(branch.df.b) != "responseid"],
-          v.names = q.ans.options.a[b],
-          direction = "long"
-        ) %>% 
-        filter(.[,2] != "") #remove rows with blank answers
-      
-      unbranch.a.ls[[b]] <- unbranch.df.b
-      
-    } ### END OF LOOP BY ANSWER OPTION
+    #Loop output storage
+    q.ls <- list()
+    varname.match.ls <- list()
     
-    q.dat.df <- unbranch.a.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .)
-    q.ls[[a + 1]] <- q.dat.df
+    #a <- 1 #for testing loop
+    for(a in 1:length(branch1.q.v)){     ### START OF LOOP BY QUESTION; only for questions with branched variables
+      
+      q.name.a <- branch1.q.v[a]                                 # base question name
+      varnames.a <-                                              # all columns in branch0.df that belong to base question number
+        names(branch1.df)[names(branch1.df) != "responseid"][
+          which(names(branch1.df)[names(branch1.df) != "responseid"] %>% strsplit(.,"_") %>% lapply(., `[[`, 2) %>% unlist == q.name.a)
+          ]
+      
+      if(num.substring.matches("_",varnames.a) %>% unique() == 1){ # final column names once branching is collapsed
+        q.ans.options.a <- q.name.a
+      }else{}
+      
+      if(num.substring.matches("_",varnames.a) %>% unique() == 2){
+        q.ans.options.a <-
+          paste(q.name.a, 
+                varnames.a %>% strsplit(.,"_") %>% lapply(., `[[`, 3) %>% unique %>% unlist,
+                sep = "_")
+      }        
+      varname.match.ls[[a]] <- q.ans.options.a
+      
+      unbranch.a.ls <- list()
+      
+      ###                                                    ###
+      # Start of loop 'b' by base question of branched columns #
+      ###                                                    ###
+      
+      #b = 12
+      for(b in 1:length(q.ans.options.a)){    ### START OF LOOP BY ANSWER OPTION
+        
+        check.varnames.a <- str_sub(names(branch1.df), start = -nchar(q.ans.options.a[b]))
+        
+        branch.df.b <- #data frame of only columns to be stacked (for this question, for this answer option)
+          branch1.df[,
+                     c(
+                       grep("responseid",names(branch1.df)),
+                       grep(q.ans.options.a[b], check.varnames.a)
+                     )
+                     ]
+        
+        unbranch.df.b <- #reshaped data frame of stacked columns
+          reshape(
+            data = branch.df.b, 
+            idvar = "responseid",
+            timevar = NULL,
+            varying = names(branch.df.b)[names(branch.df.b) != "responseid"],
+            v.names = q.ans.options.a[b],
+            direction = "long"
+          ) %>% 
+          filter(.[,2] != "") #remove rows with blank answers
+        
+        unbranch.a.ls[[b]] <- unbranch.df.b
+        
+      } ### END OF LOOP BY ANSWER OPTION
+      
+      q.dat.df <- unbranch.a.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .)
+      q.ls[[a + 1]] <- q.dat.df
+      
+    } ### END OF LOOP BY QUESTION
     
-  } ### END OF LOOP BY QUESTION
-  
   #Re-merge with non-branched variables
-  
-  q.ls[[1]] <- branch0.df
-  #q.ls <- lapply(q.ls, tolower)
-  resp2.df <- q.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .) 
-  
+    q.ls[[1]] <- branch0.df
+    #q.ls <- lapply(q.ls, tolower)
+    resp2.df <- q.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .) 
+    
   
   #Re-do question table so no extraneous rows for roles that are now unbranched  
-  q.unbranched.df <- 
-    questions.sem.df[
-      questions.sem.df$row.1 %in% 
-        c(
-          branch0.ans0.colnames.v,
-          branch0.ans1.colnames.v,
-          varname.match.ls %>% unlist %>% paste("1_",.,sep="")
-        )
-      ,
-      ] #!looks like still uneven numbers - some columns must be missing from questions table, but seems to be columns we don't care about.
-  q.unbranched.df$row.1[grep("q",q.unbranched.df$row.1)] <- 
-    str_extract(
-      q.unbranched.df$row.1[grep("q",q.unbranched.df$row.1)], 
-      "q[0-9].+"
-    )
-  q.unbranched.df <-
-    SplitColReshape.ToLong(
-      df = q.unbranched.df,
-      id.varname = "row.1",
-      split.varname = "module",
-      split.char = ","
-    )
-  
+    q.unbranched.df <- 
+      questions.sem.df[
+        questions.sem.df$row.1 %in% 
+          c(
+            branch0.ans0.colnames.v,
+            branch0.ans1.colnames.v,
+            varname.match.ls %>% unlist %>% paste("1_",.,sep="")
+          )
+        ,
+        ] #!looks like still uneven numbers - some columns must be missing from questions table, but seems to be columns we don't care about.
+    q.unbranched.df$row.1[grep("q",q.unbranched.df$row.1)] <- 
+      str_extract(
+        q.unbranched.df$row.1[grep("q",q.unbranched.df$row.1)], 
+        "q[0-9].+"
+      )
+    q.unbranched.df <-
+      SplitColReshape.ToLong(
+        df = q.unbranched.df,
+        id.varname = "row.1",
+        split.varname = "module",
+        split.char = ","
+      )
+    
 }#END SECTION COLLAPSE BRACKET    
 
 #OUTPUTS
@@ -367,65 +445,65 @@ report.startnum <- 1
 { #SECTION COLLAPSE BRACKET
   
   #Lower-Case All Data
-  resp3.df <- apply(resp2.df,c(1:2),tolower) %>% as.data.frame(., stringsAsFactors = FALSE)
+    resp3.df <- apply(resp2.df,c(1:2),tolower) %>% as.data.frame(., stringsAsFactors = FALSE)
   
   #Recode role variable
-  resp3.df$role <- mgsub("Teacher", "Classroom Teacher", resp3.df$role)
+    resp3.df$role <- mgsub("Teacher", "Classroom Teacher", resp3.df$role)
   
   #Recode school & district names
-  #school.name.patterns <- c("elem\\.","sch\\.","co\\.","jr\\.","sr\\.","meramec valley early childhood")
-  #school.name.replacements <- c("elementary","school","county","junior","senior","early childhood center")
-  #school.name.patterns <- c("\\.")
-  #school.name.replacements <- c("")
-  #resp3.df$building <- mgsub(school.name.patterns,school.name.replacements,resp3.df$building)
-  resp3.df$building <- mgsub("bucahanan","buchanan",resp3.df$building)
-  resp3.df$district <- mgsub("bucahanan","buchanan",resp3.df$district)
+    #school.name.patterns <- c("elem\\.","sch\\.","co\\.","jr\\.","sr\\.","meramec valley early childhood")
+    #school.name.replacements <- c("elementary","school","county","junior","senior","early childhood center")
+    #school.name.patterns <- c("\\.")
+    #school.name.replacements <- c("")
+    #resp3.df$building <- mgsub(school.name.patterns,school.name.replacements,resp3.df$building)
+    resp3.df$building <- mgsub("bucahanan","buchanan",resp3.df$building)
+    resp3.df$district <- mgsub("bucahanan","buchanan",resp3.df$district)
   
   #Create school.id variable which is concatenation of school and district
-  resp3.df$building.id <- paste(resp3.df$district, resp3.df$building,sep = "_") %>% tolower
-  resp3.df$building.id <- gsub("\\/"," ",resp3.df$building.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
+    #resp3.df$report.id <- paste(resp3.df$district, resp3.df$building,sep = "_") %>% tolower
+    #resp3.df$report.id <- gsub("\\/"," ",resp3.df$report.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
   
   
   #Capitalize first letter of Building and District columns
-  #resp3.df$building <- FirstLetterCap_MultElements(resp3.df$building)
-  #resp3.df$district <- FirstLetterCap_MultElements(resp3.df$district)
+    #resp3.df$building <- FirstLetterCap_MultElements(resp3.df$building)
+    #resp3.df$district <- FirstLetterCap_MultElements(resp3.df$district)
   
   #School Level Variable
-  #school.level.df <- 
-  #  read.xlsx(
-  #    "MMD List with Grade Spans.xlsx",
-  #    sheetName = "MMD Cohort 1&2",
-  #    header = TRUE,
-  #    as.data.frame = TRUE,
-  #    stringsAsFactors = FALSE) %>%
-  #  mutate(school.id = paste(tolower(district.name),tolower(trimws(school.name, which = "both")),sep = "_"))
-  
-  #resp3.df <- left_join(resp3.df,school.level.df %>% select(school.id, school.level), by = "school.id")
-  #resp3.df$building.level[is.na(resp3.df$building.level)] <- "Other"
-  #resp3.df$building.level[resp3.df$building.id == "belton 124_bosco"] <- "Other"
-  #resp3.df$building.level[resp3.df$building.id == "cameron r-i_cameron high school"] <- "High"
-  #resp3.df$building.level[resp3.df$building.id == "poplar bluff r-i_poplar bluff early childhood center"] <- "Elem."
-  #resp3.df$building.level[resp3.df$building.id == "poplar bluff r-i_poplar bluff technical career center"] <- "Other"
-  #resp3.df$building.level[resp3.df$building.id == "sheldon r-viii_sheldon k-12"] <- "Other"
-  #resp3.df$building.level <- FirstLetterCap_MultElements(resp3.df$building.level)
+    #school.level.df <- 
+    #  read.xlsx(
+    #    "MMD List with Grade Spans.xlsx",
+    #    sheetName = "MMD Cohort 1&2",
+    #    header = TRUE,
+    #    as.data.frame = TRUE,
+    #    stringsAsFactors = FALSE) %>%
+    #  mutate(school.id = paste(tolower(district.name),tolower(trimws(school.name, which = "both")),sep = "_"))
+    
+    #resp3.df <- left_join(resp3.df,school.level.df %>% select(school.id, school.level), by = "school.id")
+    #resp3.df$building.level[is.na(resp3.df$building.level)] <- "Other"
+    #resp3.df$building.level[resp3.df$report.id == "belton 124_bosco"] <- "Other"
+    #resp3.df$building.level[resp3.df$report.id == "cameron r-i_cameron high school"] <- "High"
+    #resp3.df$building.level[resp3.df$report.id == "poplar bluff r-i_poplar bluff early childhood center"] <- "Elem."
+    #resp3.df$building.level[resp3.df$report.id == "poplar bluff r-i_poplar bluff technical career center"] <- "Other"
+    #resp3.df$building.level[resp3.df$report.id == "sheldon r-viii_sheldon k-12"] <- "Other"
+    #resp3.df$building.level <- FirstLetterCap_MultElements(resp3.df$building.level)
   
   #Capitalize First Letter of character variables
-  resp3.df[,names(resp3.df) %in% c("year","role","district","school","school.level")] <- 
-    apply(resp3.df[,names(resp3.df) %in% c("year","role","district","school","school.level")], 2, FirstLetterCap_MultElements)
+    resp3.df[,names(resp3.df) %in% c("year","role","district","school","school.level")] <- 
+      apply(resp3.df[,names(resp3.df) %in% c("year","role","district","school","school.level")], 2, FirstLetterCap_MultElements)
   
   
   #Rearrange data columns
-  resp3.df <- resp3.df[,   # CWIS response variables last, others first
-                       c(which(!grepl("_", names(resp3.df))),
-                         grep("_", names(resp3.df)))
-                       ]
+    resp3.df <- resp3.df[,   # CWIS response variables last, others first
+                         c(which(!grepl("_", names(resp3.df))),
+                           grep("_", names(resp3.df)))
+                         ]
   
-  resp3.df <-  resp3.df[, #Put "responseid" in first column
-                        c(grep("responseid", names(resp3.df)),which(!grepl("responseid", names(resp3.df))))
-                        ]
-  
+    resp3.df <-  resp3.df[, #Put "responseid" in first column
+                          c(grep("responseid", names(resp3.df)),which(!grepl("responseid", names(resp3.df))))
+                          ]
+    
   #Remove rows with no district or building name
-  resp3.df <- resp3.df %>% filter(building.id != "_")
+    resp3.df <- resp3.df %>% filter(report.id != "_")
   
   ##########################################################################################################################################
   #Column Class Conversions
@@ -769,28 +847,6 @@ report.startnum <- 1
 
 { #SECTION COLLAPSE BRACKET
 
-  #Define Report Unit and Report IDs
-    if(!report.unit %in% c("building","district")){
-      stop("Report unit must be either 'building' or 'district.'")
-    }
-    
-    if(report.unit == "building"){
-      report.id.colname <- "building.id"
-    }else{
-      report.id.colname <- "district"
-    }
-    
-    report.id.col <- resp.wide.df[,names(resp.wide.df) == report.id.colname]
-    
-    if(tolower(report.ids) %in% "all" %>% any){
-      report.ids <- 
-        report.id.col[order(report.id.col)] %>%
-        unique %>% 
-        vector.filter.fun(
-          condition = !grepl("district office",.),
-          vector.input = .
-        )
-    }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
   
   #Load Graph & Slide Type Config Tables
   
@@ -1150,7 +1206,7 @@ report.startnum <- 1
     
     #Loop Inputs (both graphs and tables)
     report.id.c <- report.ids[c]
-    district.c <- resp.long.df %>% filter(building.id == report.id.c) %>% select(district) %>% unique %>% unlist %>% remove.na.from.vector()
+    district.c <- resp.long.df %>% filter(report.id == report.id.c) %>% select(district) %>% unique %>% unlist %>% remove.na.from.vector()
     
     resp.long.df.c <- 
       resp.long.df %>% 
@@ -1216,10 +1272,10 @@ report.startnum <- 1
       names(all.cats.df.d) <- group_by.d
       #print(all.cats.df.d)
       
-#FUN  #Function: Data restriction - district vs. building.id
+#FUN  #Function: Data restriction - district vs. report.id
       
       #!NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND GRAPH DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
-      #BUILDING.ID AND DATA.LEVEL IS DISTRICT.
+      #report.id AND DATA.LEVEL IS DISTRICT.
       
       graph.data.restriction.fun <- function(x){
         
@@ -1227,10 +1283,10 @@ report.startnum <- 1
           y <- x
         }
         
-        if(config.graphs.df.d$data.level == "building.id"){
+        if(config.graphs.df.d$data.level == "building"){
           y <- 
             x %>% 
-            filter(building.id == report.id.c) 
+            filter(report.id == report.id.c) 
         }
         
         if(is.na(config.graphs.df.d$data.restriction)){
@@ -1306,10 +1362,10 @@ report.startnum <- 1
           y <- x
         }
         
-        if(config.graphs.df.d$data.level == "building.id"){
+        if(config.graphs.df.d$data.level == "building"){
           y <- 
             x %>% 
-            filter(district == unique(resp.long.df$district[resp.long.df$building.id == report.id.c])) 
+            filter(district == unique(resp.long.df$district[resp.long.df$report.id == report.id.c])) 
         }
         
         z <- y %>% filter(!is.na(y[,names(y)==group_by.d])) #!Might want to make flexible - i.e. add a parameter which allows user to inlcude NA
@@ -1502,7 +1558,7 @@ report.startnum <- 1
         )
       
       #!NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND table DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
-      #BUILDING.ID AND DATA.LEVEL IS DISTRICT.
+      #BUILDING AND DATA.LEVEL IS DISTRICT.
       
       table.data.filter.fun <- function(x){
         
@@ -1518,12 +1574,12 @@ report.startnum <- 1
           result <- y
         }else{
           
-          if(!config.tables.df.d$filter %in% c("building.id","district")){
-            stop("Configuration 'filter' is neither 'building.id' nor 'district.' Check input.")
+          if(!config.tables.df.d$filter %in% c("building","district")){
+            stop("Configuration 'filter' is neither 'building' nor 'district.' Check input.")
           }
           
-          if(config.tables.df.d$filter == "building.id"){
-            result <- y %>% filter(building.id == report.id.c)
+          if(config.tables.df.d$filter == "building"){
+            result <- y %>% filter(report.id == report.id.c)
           }
           
           if(config.tables.df.d$filter == "district"){
@@ -1548,7 +1604,7 @@ report.startnum <- 1
           result <-
             reshape2::dcast(
               data = result.1,
-              formula = role ~ building.id,
+              formula = role ~ report.id,
               value.var = "responseid",
               fun.aggregate = function(x){length(unique(x))}
             ) %>%
@@ -1658,12 +1714,12 @@ report.startnum <- 1
 } #END OF SECTION COLLAPSE BRACKET
 
 #OUTPUTS:
-#tabledata.ls.c
-#[[report.unit]]
-##data frame where each line represents a table
-#graphdata.ls.c
-#[[report unit]]
-#data frame where each line represents a graph
+  #tabledata.ls.c
+    #[[report.unit]]
+    #data frame where each line represents a table
+  #graphdata.ls.c
+    #[[report unit]]
+    #data frame where each line represents a graph
 
 ########################################################################################################################################################      
 ### PRODUCING GRAPHS & TABLES THEMSELVES  ###
@@ -1680,7 +1736,7 @@ report.startnum <- 1
   maxrow.f <- graphdata.ls.c %>% lengths %>% sum
   
   
-  #f <- 353 #LOOP TESTER
+  #f <- 25 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
   for(f in report.startnum:length(report.ids)){
     
@@ -1695,7 +1751,7 @@ report.startnum <- 1
     #Loop output object(s)
     graphs.ls.g <- list()
     
-    #g <- 2 #LOOP TESTER
+    #g <- 1 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -1704,39 +1760,39 @@ report.startnum <- 1
         ### GRAPH INPUTS FOR GGPLOT ###
         
         #GRAPH DATA & CONFIGS DATA FRAMES
-        graphdata.df.g <- graphdata.ls.c[[f]][[g]] %>% as.data.frame()
-        names(graphdata.df.g) <- gsub("graphdata.","",names(graphdata.df.g))
-        
-        if(names(graphdata.df.g)[!grepl("measure",names(graphdata.df.g))] %>% grepl("module",.)){
-          graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] <- graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] %>% toupper()
-        }else{
-          graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] <- graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] %>% FirstLetterCap_MultElements()
-        }
-        
-        config.graphs.df.g <- config.graphs.df.f[g,] %>% as.data.frame()
-        names(config.graphs.df.g) <- gsub("configs.","",names(config.graphs.df.g))
-        
-        graph.cat.varname <- config.graphs.df.g$data.group.by.var  
-        
-        if(config.graphs.df.g$data.group.by.var == "answer"){
-          graphdata.df.g <- left_join(graphdata.df.g,ans.opt.always.df, by = c("answer" = "ans.num"))#graphdata.df.g[order(graphdata.df.g[,2]),]
+          graphdata.df.g <- graphdata.ls.c[[f]][[g]] %>% as.data.frame()
+          names(graphdata.df.g) <- gsub("graphdata.","",names(graphdata.df.g))
           
-          if(config.graphs.df.g$module %in% c("LEAD","PD")){
-            graphdata.df.g <- graphdata.df.g %>% select(year, ans.text.agreement, measure.var, avg)
-            graph.cat.varname <- "ans.text.agreement"
+          if(names(graphdata.df.g)[!grepl("measure",names(graphdata.df.g))] %>% grepl("module",.)){
+            graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] <- graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] %>% toupper()
           }else{
-            graphdata.df.g <- graphdata.df.g %>% select(year, ans.text.freq, measure.var, avg)
-            graph.cat.varname <- "ans.text.freq"
+            graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] <- graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] %>% FirstLetterCap_MultElements()
           }
-        }else{}
-        
-        if(is.na(config.graphs.df.g$graph.group.by.var)){
-          graph.group.by.varname <- NULL
-          graph.group.by.var <- NULL
-        }else{
-          graph.group.by.varname <- config.graphs.df.g$graph.group.by.var
-          graph.group.by.var <- graphdata.df.g[,names(graphdata.df.g) == graph.group.by.varname] 
-        }
+          
+          config.graphs.df.g <- config.graphs.df.f[g,] %>% as.data.frame()
+          names(config.graphs.df.g) <- gsub("configs.","",names(config.graphs.df.g))
+          
+          graph.cat.varname <- config.graphs.df.g$data.group.by.var  
+          
+          if(config.graphs.df.g$data.group.by.var == "answer"){
+            graphdata.df.g <- left_join(graphdata.df.g,ans.opt.always.df, by = c("answer" = "ans.num"))#graphdata.df.g[order(graphdata.df.g[,2]),]
+            
+            if(config.graphs.df.g$module %in% c("LEAD","PD")){
+              graphdata.df.g <- graphdata.df.g %>% select(year, ans.text.agreement, measure.var, avg)
+              graph.cat.varname <- "ans.text.agreement"
+            }else{
+              graphdata.df.g <- graphdata.df.g %>% select(year, ans.text.freq, measure.var, avg)
+              graph.cat.varname <- "ans.text.freq"
+            }
+          }else{}
+          
+          if(is.na(config.graphs.df.g$graph.group.by.var)){
+            graph.group.by.varname <- NULL
+            graph.group.by.var <- NULL
+          }else{
+            graph.group.by.varname <- config.graphs.df.g$graph.group.by.var
+            graph.group.by.var <- graphdata.df.g[,names(graphdata.df.g) == graph.group.by.varname] 
+          }
         
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
         
@@ -1850,7 +1906,7 @@ report.startnum <- 1
             if(config.graphs.df.g$data.measure == "implementation"){
               graph.labels.text.v <- as.character(100*var %>% round(., 2)) %>% paste(.,"%",sep="")
             }else{
-              graph.labels.text.v <- var %>% as.numeric %>% round( ., 1) %>% trimws(., which = "both") 
+              graph.labels.text.v <- var %>% as.numeric %>% round( ., 1) %>% sprintf("%.1f",.) %>% trimws(., which = "both") 
             }
             graph.labels.text.v[df[,names(df) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric") %>% is.na(.)] <- "No Responses"
           
@@ -1898,66 +1954,62 @@ report.startnum <- 1
               label = graph.labels.df$graph.labels.text,
               #alpha = graph.labels.df$graph.labels.alpha.v,
               group = graphdata.df.g[,1]
-              
             ),
             alpha = graph.labels.df$graph.labels.alpha.v,
-            #lineheight = 10.0,
-            
             color = graph.labels.df$graph.labels.color,
             size = 4,
             fontface = "bold",
             position = position_dodge(width = 1),
             show.legend = FALSE
-            
           )
         #windows()
         #graph.g
         
         #GRAPH AVERAGES
-        #! Need to make so can group on arbitrary variable with arbitrary number of groups and sub-groups. Right now can only two groups of 2 (e.g. year in Repeated Measures)
-        graphdata.df.g$avg.alpha <- 
-          ifelse(
-            is.na(config.graphs.df.g$graph.group.by.vars),# != "Baseline" & graphdata.df.g$measure.var.avg != 0,
-            1,
-            rep(c(0.8,0.0),nrow(graphdata.df.g))
-          )
-        
-        if(config.graphs.df.g$graph.average == "yes"){
-          graph.g <- 
-            
-            graph.g +
-            
-            geom_errorbar( #error bar shadow
-              aes(
-                x = graphdata.df.g[[graph.cat.varname]],
-                #group = graphdata.df.g[[graph.cat.varname]], #!removed group for Green Reports because didn't need it, but will have ot add back in and generalize
-                ymin = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/450, 
-                ymax = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/450,
-                alpha = graphdata.df.g$avg.alpha
-              ), 
-              position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-              color = "black", 
-              width = 1,
-              size = 2,
-              show.legend = FALSE
-            ) #+
+          #! Need to make so can group on arbitrary variable with arbitrary number of groups and sub-groups. Right now can only two groups of 2 (e.g. year in Repeated Measures)
+          graphdata.df.g$avg.alpha <- 
+            ifelse(
+              is.na(config.graphs.df.g$graph.group.by.vars),# != "Baseline" & graphdata.df.g$measure.var.avg != 0,
+              1,
+              rep(c(0.8,0.0),nrow(graphdata.df.g))
+            )
           
-          #geom_errorbar(
-          #  aes(
-          #    x = graphdata.df.g[[graph.cat.varname]],
-          #    #group = graphdata.df.g[[graph.cat.varname]],
-          #    ymin = graphdata.df.g$measure.var.avg, 
-          #    ymax = graphdata.df.g$measure.var.avg,
-          #    alpha = graphdata.df.g$avg.alpha
-          #  ), 
-          #  position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-          #  color = "yellow", 
-          #  width = 1,
-          #  size = 2,
-          #  alpha = 1,
-          #  show.legend = FALSE
-          #)
-          
+          if(config.graphs.df.g$graph.average == "yes"){
+            graph.g <- 
+              
+              graph.g +
+              
+              #geom_errorbar( #error bar shadow
+              #  aes(
+              #    x = graphdata.df.g[[graph.cat.varname]],
+              #    #group = graphdata.df.g[[graph.cat.varname]], #!removed group for Green Reports because didn't need it, but will have ot add back in and generalize
+              #    ymin = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/450, 
+              #    ymax = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/450,
+              #    alpha = graphdata.df.g$avg.alpha
+              #  ), 
+              #  position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+              #  color = "black", 
+              #  width = 1,
+              #  size = 2,
+              #  show.legend = FALSE
+              #) #+
+            
+              geom_errorbar(
+                aes(
+                  x = graphdata.df.g[[graph.cat.varname]],
+                  #group = graphdata.df.g[[graph.cat.varname]],
+                  ymin = graphdata.df.g$measure.var.avg, 
+                  ymax = graphdata.df.g$measure.var.avg,
+                  alpha = graphdata.df.g$avg.alpha
+                ), 
+                position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+                color = "yellow", 
+                width = 1,
+                size = 2,
+                alpha = 1,
+                show.legend = FALSE
+              )
+            
         }else{}
         
         #GRAPH CATEGORY NAMES, CORRECTING CATEGORY AXIS ORDERING
@@ -2133,7 +2185,7 @@ report.startnum <- 1
     do.call(cbind, .) %>%
     as_tibble()
   
-  buildings.tb$building.id <- mgsub("bucahanan","buchanan",buildings.tb$building.id)
+  buildings.tb$report.id <- mgsub("bucahanan","buchanan",buildings.tb$report.id)
   
   setwd(source.inputs.dir)  
   config.pot.tb <- gs_read(configs.ss, ws = "pot.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs_Jason Altman.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE) 
@@ -2160,7 +2212,7 @@ report.startnum <- 1
     #Reading 'Cadre' so it can be added to file name
       cadre.h <- 
         buildings.tb %>% 
-        filter(building.id == report.ids[h]) %>% 
+        filter(report.id == report.ids[h]) %>% 
         select(cadre) %>% 
         unlist %>% 
         FirstLetterCap_OneElement()
