@@ -70,43 +70,43 @@ report.startnum <- 1
 
 { #SECTION COLLAPSE BRACKET
   
-  # Main data
   #Directories
-  
-  #M900
-  #wd <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-10 Green Reports Phase 3/"
-  
-  #Thinkpad T470
-  wd <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-10 Green Reports Phase 3/"
-  
-  #Source Code Directory
-  source.code.dir <- paste(wd,"2_source_code/",sep="")
-  
-  #Source Resources Director (raw data)
-  source.resources.dir <- paste(wd,"3_source_resources/", sep = "")
-  
-  #Source Inputs (configs)
-  source.inputs.dir <- paste(wd,"4_source_inputs/",sep="")
-  
-  #Outputs Directory
-  outputs.dir <- 
-    paste(
-      wd,
-      #"C:/Users/WNF/Desktop/",
-      "5_outputs/",
-      #"Output_",
-      gsub(":",".",Sys.time()), sep = ""
-    )
-  
-  dir.create(
-    outputs.dir,
-    recursive = TRUE
-  )
-  
+    
+    #M900
+      working.dir <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-11 Green Reports Phase 4/"
+      rproj.dir <- "C:/Users/WNF/Documents/GIT PROJECTS/CWIS-automation"
+    
+    #Thinkpad T470
+      #working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-10 Green Reports Phase 3/"
+    
+    #Source Code Directory
+      source.code.dir <- rproj.dir #paste(rproj.dir,"2_source_code/",sep="") #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
+    
+    #Source Resources Director (raw data)
+      source.resources.dir <- paste(working.dir,"3_source_resources/", sep = "")
+    
+    #Source Inputs (configs)
+      source.inputs.dir <- paste(working.dir,"4_source_inputs/",sep="")
+    
+    #Outputs Directory
+      outputs.dir <- 
+        paste(
+          working.dir,
+          #"C:/Users/WNF/Desktop/",
+          "5_outputs/",
+          #"Output_",
+          gsub(":",".",Sys.time()), sep = ""
+        )
+    
+      dir.create(
+        outputs.dir,
+        recursive = TRUE
+      )
+    
 } #END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
-  #wd: working directory - Google Drive folder "2018-08 Green Reports"
+  #working.dir: working directory - Google Drive folder "2018-08 Green Reports"
   #source.code.dir: directory for R project; also contains source data, additional function scripts, and config tables.
   #source.resources.dir: directory with raw data
   #source.inputs.dir: directory with config tables and powerpoint template
