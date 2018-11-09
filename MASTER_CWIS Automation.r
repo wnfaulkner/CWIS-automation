@@ -276,21 +276,28 @@ report.startnum <- 1
         unique %>% 
         tolower == "yes"
       ){
-        report.ids <- sample(
-          report.ids,
+        sample.size <- 
           global.configs.df[
             global.configs.df$Config == "Sample Size",
             names(global.configs.df) == "Value"
-            ] %>% as.numeric)
+          ] %>% 
+          as.numeric
+
+        if(report.unit == "building"){
+          report.districts.sample <- sample(resp1.df$district %>% unique,2) %>% .[. != ""] %>% tolower
+          unique.report.ids <- resp1.df$report.id %>% unique()
+          report.ids <- unique.report.ids[grep(paste(report.districts.sample,collapse = "|"),unique.report.ids)]
+          if(length(report.ids) > sample.size){
+            report.ids <- sample(report.ids, sample.size)
+          }
+          #while(length(report.ids) < sample.size){
+          #  print("Districts randomly sampled do not have enough buildings. Resampling...")
+          #  report.districts.sample <- sample(resp1.df$district %>% unique,3) %>% tolower
+          #  report.ids <- report.ids[grep(paste(report.districts.sample,collapse = "|"),report.ids)]
+          #}
+        }
+      }  
         
-        resp1.df <-
-          resp1.df  %>%
-          filter(report.id %in% report.ids)
-      }
-        
-    
-      #!FIND/REPLACE BUILDING ID WITH REPORT.ID
-    
   #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
   
 #FUN#Function: output number of times specified substring occurs within vector of character strings
@@ -852,9 +859,9 @@ report.startnum <- 1
   #Load Graph & Slide Type Config Tables
   
     #setwd(source.inputs.dir)
-    config.slidetypes.tb <- gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #
-    load.config.graphtypes.tb <- gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #
-    load.config.tabletypes.tb <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) #gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #
+    config.slidetypes.tb <- gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE) 
+    load.config.graphtypes.tb <- gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE) 
+    load.config.tabletypes.tb <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) 
     
     config.graphtypes.df <- 
       inner_join(config.slidetypes.tb, load.config.graphtypes.tb, by = "slide.type.id", all.x = FALSE) 
@@ -1200,7 +1207,7 @@ report.startnum <- 1
   
   slider.report.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
                             report.ids)
-  #c <- 353 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
+  #c <- 1 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
   #for(c in slider.report.ids){   #LOOP TESTER
   for(c in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
     
@@ -1211,10 +1218,12 @@ report.startnum <- 1
     district.c <- resp.long.df %>% filter(report.id == report.id.c) %>% select(district) %>% unique %>% unlist %>% remove.na.from.vector()
     
     resp.long.df.c <- 
-      resp.long.df %>% 
-      select(names(resp.long.df)[names(resp.long.df) == report.id.colname]) %>% 
-      equals(report.id.c) %>% 
-      resp.long.df[.,]
+      resp.long.df %>%
+      filter(report.id == report.id.c)
+       
+      #select(names(resp.long.df)[names(resp.long.df) == report.id.colname]) %>% 
+      #equals(report.id.c) %>% 
+      #resp.long.df[.,]
     
     ###                    ###
 #   ### LOOP "d" BY GRAPH  ###
@@ -1224,7 +1233,7 @@ report.startnum <- 1
     config.graphs.df.c <- config.graphs.ls.b[[c]]
     graphdata.ls.d <- list()
     
-    #d <- 2
+    #d <- 1
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:dim(config.graphs.df.c)[1]){
       
@@ -1343,21 +1352,24 @@ report.startnum <- 1
       }
       
       #Form final data frame (no averages)
-      graphdata.df.d <-  
-        resp.long.df.c %>%
-        graph.data.restriction.fun %>%
-        group_by(!!! syms(group_by.d)) %>%
-        summarize.data.fun(config.input = config.graphs.df.d, data.input = .) %>%
-        left_join(all.cats.df.d, ., by = c(group_by.d))
-      #graphdata.df.d$measure.var[is.na(graphdata.df.d$measure.var)] <- 0
+        graphdata.df.d <-  
+          resp.long.df.c %>%
+          graph.data.restriction.fun %>%
+          group_by(!!! syms(group_by.d)) %>%
+          summarize.data.fun(config.input = config.graphs.df.d, data.input = .) %>%
+          left_join(all.cats.df.d, ., by = c(group_by.d))
+        #graphdata.df.d$measure.var[is.na(graphdata.df.d$measure.var)] <- 0
       
       #print(graphdata.df.d)
       
-      #FUN  #Function: Restriction function for graph average data
+#FUN  #Function: Restriction function for graph average data
       
       #! THESE TWO FUNCTIONS ARE VERY SIMILAR TO THE ONES ABOVE WHICH HAVE BEEN CHANGED SO NOW NEED TO SPECIFY "config.input" BUT
       #   HAVE NOT MADE THOSE CHANGES HERE YET. PROBABLY COULD ROLL UP INTO ONE OR TWO FUNCTIONS.
       
+      #Test Inputs
+        #x <- resp.long.df
+          
       avg.data.restriction.fun <- function(x){
         
         if(config.graphs.df.d$data.level == "district"){
@@ -1370,7 +1382,7 @@ report.startnum <- 1
             filter(district == unique(resp.long.df$district[resp.long.df$report.id == report.id.c])) 
         }
         
-        z <- y %>% filter(!is.na(y[,names(y)==group_by.d])) #!Might want to make flexible - i.e. add a parameter which allows user to inlcude NA
+        z <- y %>% filter(!is.na(y[,names(y)==group_by.d])) #!Might want to make flexible - i.e. add a parameter which allows user to include NA
         
         if(!config.graphs.df.d$data.restriction=="module" | is.na(config.graphs.df.d$data.restriction)){ 
           #!Should look into a better way to deal with this restriction, think about input tables
@@ -1389,36 +1401,39 @@ report.startnum <- 1
         return(result)
       }
       
-      #FUN  #Function: Summary Function for Graph Averages
-      summarize.avg.fun <- function(x){
-        
-        if(config.graphs.df.d$data.measure == "participation"){
-          result <- x %>%
-            dplyr::summarize(avg = length(unique(responseid))/length(unique(school.id)))#participation
-        }
-        
-        if(config.graphs.df.d$data.measure == "implementation"){
-          result <- x %>% 
-            filter(.,impbinary == 1) %>%
-            dplyr::summarize(., avg = mean(as.numeric(answer), na.rm = TRUE))#implementation
+#FUN  #Function: Summary Function for Graph Averages
+        #Test Inputs
+          #x<-resp.long.df %>% avg.data.restriction.fun(.) %>% group_by(!!! syms(group_by.d))
           
+        summarize.avg.fun <- function(x){
+          
+          if(config.graphs.df.d$data.measure == "participation"){
+            result <- x %>%
+              dplyr::summarize(avg = length(unique(responseid))/length(unique(school.id)))#participation
+          }
+          
+          if(config.graphs.df.d$data.measure == "implementation"){
+            result <- x %>% 
+              filter(.,impbinary == 1) %>%
+              dplyr::summarize(., avg = mean(as.numeric(answer), na.rm = TRUE))#implementation
+            
+          }
+          
+          if(config.graphs.df.d$data.measure == "performance"){
+            result <- x %>%
+              filter(impbinary == 0, !is.na(answer)) %>%
+              dplyr::summarize(avg = length(unique(responseid))/length(unique(school.id)))
+          }
+          
+          if(config.graphs.df.d$data.measure == "average performance"){
+            result <- 
+              x %>%
+              filter(grepl("_num",question)) %>%
+              dplyr::summarize(., measure.var.avg =  mean(as.numeric(answer), na.rm = TRUE))
+          }
+          
+          return(result)
         }
-        
-        if(config.graphs.df.d$data.measure == "performance"){
-          result <- x %>%
-            filter(impbinary == 0, !is.na(answer)) %>%
-            dplyr::summarize(avg = length(unique(responseid))/length(unique(school.id)))
-        }
-        
-        if(config.graphs.df.d$data.measure == "average performance"){
-          result <- 
-            x %>%
-            filter(grepl("_num",question)) %>%
-            dplyr::summarize(., measure.var =  mean(as.numeric(answer), na.rm = TRUE))
-        }
-        
-        return(result)
-      }
       
       #Add average variable to final data frame
       graph.avg.df.d <- 
@@ -1427,7 +1442,7 @@ report.startnum <- 1
         group_by(!!! syms(group_by.d)) %>%
         summarize.avg.fun(.)
       
-      #FUN  #Function: Left Join ?with NA?
+#FUN  #Function: Left Join ?with NA?
       left.join.NA <- function(.x, .y, .by, na.replacement) {
         result <- left_join(x = .x, y = .y, by = .by, stringsAsFactors = FALSE) %>% 
           mutate_all(funs(replace(., which(is.na(.)), na.replacement)))
@@ -1738,7 +1753,7 @@ report.startnum <- 1
   maxrow.f <- graphdata.ls.c %>% lengths %>% sum
   
   
-  #f <- 25 #LOOP TESTER
+  #f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
   for(f in report.startnum:length(report.ids)){
     
