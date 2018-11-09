@@ -88,15 +88,43 @@ report.startnum <- 1
     #Source Inputs (configs)
       source.inputs.dir <- paste(working.dir,"4_source_inputs/",sep="")
     
-    #Outputs Directory
-      outputs.dir <- 
-        paste(
-          working.dir,
-          #"C:/Users/WNF/Desktop/",
-          "5_outputs/",
-          #"Output_",
-          gsub(":",".",Sys.time()), sep = ""
+    #Global Configs Table
+      configs.ss <- gs_key("102gmd5rRMyM4xy43gK-r3sF3hvI0IsYJoyG8fp5kHnE",verbose = TRUE) 
+      global.configs.df <- gs_read(configs.ss, ws = "global.configs", range = NULL, literal = TRUE)
+      
+      sample.print <- 
+        ifelse(
+          global.configs.df[
+            global.configs.df$Config == "Sample Print",
+            names(global.configs.df) == "Value"
+            ] %>% 
+          unique %>% 
+          tolower == "yes",
+          TRUE,
+          FALSE
         )
+      
+    #Outputs Directory
+      if(sample.print){
+        outputs.dir <- 
+          paste(
+            working.dir,
+            #"C:/Users/WNF/Desktop/",
+            "5_outputs/",
+            #"Output_",
+            gsub(":",".",Sys.time()), 
+            sep = ""
+          )
+      }else{
+        outputs.dir <- 
+          paste(
+            working.dir,
+            "5_outputs/",
+            gsub(":",".",Sys.Date()),
+            "_FULL PRINT",
+            sep = ""
+          )
+      }
     
       dir.create(
         outputs.dir,
@@ -147,10 +175,6 @@ report.startnum <- 1
     most.recent.match.file <- match.files.v[file.info(match.files.v)$mtime == sapply(match.files.v, function(x){file.info(x)$mtime}) %>% max]
     return(most.recent.match.file)
   }
-  
-  #Global Configs Table
-    configs.ss <- gs_key("102gmd5rRMyM4xy43gK-r3sF3hvI0IsYJoyG8fp5kHnE",verbose = TRUE) 
-    global.configs.df <- gs_read(configs.ss, ws = "global.configs", range = NULL, literal = TRUE)
   
   #Questions Table (imported as list)
     questions.ls <- 	gs_read(configs.ss, ws = "questions", range = NULL, literal = TRUE) %>% as.list() %>% lapply(., tolower)
@@ -263,19 +287,13 @@ report.startnum <- 1
           condition = !grepl("district office",.),
           vector.input = .
         ) %>%
-        .[!grepl("_",substr(.,1,1))]
+        .[!grepl("_",substr(.,1,1))] %>%
+        .[. != ""]
       
     }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
     
     #Restrict Responses table to produce only a sample of reports unless this is final print
-      if(
-        global.configs.df[
-          global.configs.df$Config == "Sample Print",
-          names(global.configs.df) == "Value"
-        ] %>% 
-        unique %>% 
-        tolower == "yes"
-      ){
+      if(sample.print){
         sample.size <- 
           global.configs.df[
             global.configs.df$Config == "Sample Size",
@@ -284,19 +302,21 @@ report.startnum <- 1
           as.numeric
 
         if(report.unit == "building"){
-          report.districts.sample <- sample(resp1.df$district %>% unique,2) %>% .[. != ""] %>% tolower
+          report.districts.sample <- sample(resp1.df$district %>% unique,2) %>% 
+            .[. != ""] %>% 
+            tolower
           unique.report.ids <- resp1.df$report.id %>% unique()
-          report.ids <- unique.report.ids[grep(paste(report.districts.sample,collapse = "|"),unique.report.ids)]
+          report.ids <- 
+            unique.report.ids[grep(paste(report.districts.sample,collapse = "|"),unique.report.ids)] %>%
+            .[. != ""]
           if(length(report.ids) > sample.size){
             report.ids <- sample(report.ids, sample.size)
           }
-          #while(length(report.ids) < sample.size){
-          #  print("Districts randomly sampled do not have enough buildings. Resampling...")
-          #  report.districts.sample <- sample(resp1.df$district %>% unique,3) %>% tolower
-          #  report.ids <- report.ids[grep(paste(report.districts.sample,collapse = "|"),report.ids)]
-          #}
         }
-      }  
+      }
+    
+    #Remove any empty report ids
+      resp1.df <- resp1.df[resp1.df$report.id %in% report.ids,]
         
   #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
   
@@ -1207,9 +1227,9 @@ report.startnum <- 1
   
   slider.report.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
                             report.ids)
-  #c <- 1 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
+  c <- 33 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
   #for(c in slider.report.ids){   #LOOP TESTER
-  for(c in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
+  #for(c in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
     
     if(c == report.startnum){print("Forming input data tables for graphs...")}
     
@@ -1480,14 +1500,14 @@ report.startnum <- 1
     graphdata.ls.c[[c]] <- graphdata.ls.d
     
     ###                    ###
-    #   ### LOOP "d" BY TABLE  ###
+#   ### LOOP "d" BY TABLE  ###
     ###                    ###
     
     #Loop Inputs
     config.tables.df.c <- config.tables.ls.b[[c]]
     tabledata.ls.d <- list()
     
-    #d <- 5
+    #d <- 1
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:dim(config.tables.df.c)[1]){
       
@@ -1607,10 +1627,10 @@ report.startnum <- 1
         return(result)
       }
       
-      #FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
+#FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
       #Test inputs
-      config.input <- config.tables.df.d
-      data.input <-  resp.long.df.c %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
+        #config.input <- config.tables.df.d
+        #data.input <-  resp.long.df.c %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
       
       summarize.data.fun <- function(config.input, data.input){
         #na.replace <- function(x, na.replacement){x[is.na(x)] <- na.replacement} #!This didn't work, but may not need after generalizing.
@@ -1636,7 +1656,7 @@ report.startnum <- 1
             replace.names.fun(
               df = .,
               current.names = report.id.c,
-              new.names = "num. responses"
+              new.names = "num.responses"
             ) %>%
             replace.names.fun(
               df = .,
@@ -1724,8 +1744,8 @@ report.startnum <- 1
     
     names(tabledata.ls.d) <- config.tables.df.c$module %>% remove.na.from.vector() %>% as.character %>% c("role",.)
     tabledata.ls.c[[c]] <- tabledata.ls.d   
-    
-  } ### END OF LOOP "c" BY DISTRICT     
+    print(c)
+  } ### END OF LOOP "c" BY REPORT UNIT     
   close(progress.bar.c)  
   
 } #END OF SECTION COLLAPSE BRACKET
@@ -2238,6 +2258,29 @@ report.startnum <- 1
       template.file <- paste(source.inputs.dir,
                              "template_green reports.pptx",
                              sep = "")
+      if(sample.print){
+        file.name.h <- 
+          paste(
+            cadre.h,
+            "_",
+            h,
+            "_",
+            report.ids[h],
+            "_",
+            gsub(":",".",Sys.time()) %>% substr(., 15,19),
+            ".pptx", 
+            sep=""
+          ) 
+      }else{
+        file.name.h <- 
+          paste(
+            cadre.h,
+            "_",
+            report.ids[h],
+            sep = ""
+          )
+      }
+      
       target.path.h <- paste(outputs.dir,
                              "/",
                              cadre.h,
