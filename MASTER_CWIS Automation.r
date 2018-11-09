@@ -49,7 +49,7 @@
 ########################################################################################################################################################      
 ### USER INPUTS ###
 
-report.startnum <- 1
+report.startnum <- 46
 
 { #SECTION COLLAPSE BRACKET
   
@@ -1227,9 +1227,9 @@ report.startnum <- 1
   
   slider.report.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
                             report.ids)
-  c <- 33 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
+  #c <- 33 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
   #for(c in slider.report.ids){   #LOOP TESTER
-  #for(c in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
+  for(c in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
     
     if(c == report.startnum){print("Forming input data tables for graphs...")}
     
@@ -1523,8 +1523,8 @@ report.startnum <- 1
       #!Should generalize so that can handle arbitrary number of nested variables on both axes like pivot
       
       #Test Inputs
-      varnames <- c(config.tables.df.d$x.var, config.tables.df.d$y.var) %>% remove.na.from.vector()
-      tb <- resp.long.df %>% as_tibble()
+        #varnames <- c(config.tables.df.d$x.var, config.tables.df.d$y.var) %>% remove.na.from.vector()
+        #tb <- resp.long.df %>% as_tibble()
       
       unique.variable.values.fun <- function(varnames, tb){
         
@@ -1629,8 +1629,8 @@ report.startnum <- 1
       
 #FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
       #Test inputs
-        #config.input <- config.tables.df.d
-        #data.input <-  resp.long.df.c %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
+        config.input <- config.tables.df.d
+        data.input <-  resp.long.df.c %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
       
       summarize.data.fun <- function(config.input, data.input){
         #na.replace <- function(x, na.replacement){x[is.na(x)] <- na.replacement} #!This didn't work, but may not need after generalizing.
@@ -1656,7 +1656,7 @@ report.startnum <- 1
             replace.names.fun(
               df = .,
               current.names = report.id.c,
-              new.names = "num.responses"
+              new.names = "num. responses"
             ) %>%
             replace.names.fun(
               df = .,
