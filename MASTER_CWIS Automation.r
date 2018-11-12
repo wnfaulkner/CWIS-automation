@@ -49,7 +49,7 @@
 ########################################################################################################################################################      
 ### USER INPUTS ###
 
-report.startnum <- 46
+report.startnum <- 1
 
 { #SECTION COLLAPSE BRACKET
   
@@ -78,7 +78,8 @@ report.startnum <- 46
     
     #Thinkpad T470
       #working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-10 Green Reports Phase 3/"
-    
+      #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
+      
     #Source Code Directory
       source.code.dir <- rproj.dir #paste(rproj.dir,"2_source_code/",sep="") #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
     
@@ -224,8 +225,13 @@ report.startnum <- 46
         ]
   
   #Remove extra header rows
-    #dat.startrow <- 
-    resp1.df <- resp1.df[(which(substr(resp1.df[,1],1,1) == "{") + 1):length(resp1.df[,1]),]
+    dat.startrow <- 
+      ifelse(
+        any(substr(resp1.df[,1],1,1) == "{"),
+        which(substr(resp1.df[,1],1,1) == "{") + 1,
+        2
+      )
+    resp1.df <- resp1.df[dat.startrow:length(resp1.df[,1]),]
   
   #Edit variable names
     names(resp1.df) <- resp1.df %>% names %>% tolower #Lower-case all variable names
@@ -619,22 +625,26 @@ report.startnum <- 46
   names(binary.ansopt.vars.df) <- paste(names(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v]),"_binary",sep = "")
   
   
-  #FUN  #Function: apply to columns to be converted into binary implementation
+#FUN  #Function: apply to columns to be converted into binary implementation
   #binary.recode.fun <- function(vector, binary.cutoff){
   #  result <- ifelse(vector >= binary.cutoff, 1, 0)
   #  return(result)
   #}
   
-  #FUN  #Function: output variable names in data frame which can be converted to numeric       
+#FUN  #Function: output variable names in data frame which can be converted to numeric       
   numeric.varnames.v <-
     function(df){
       result <- 
         df %>%
         apply(., 2, unique) %>%
         sapply(., 
-               function(x){
-                 (as.numeric(x) %>% is.na(.) %>% sum) <= 1
-               }
+              function(x){
+                ifelse(
+                  length(x) == 1,
+                  as.numeric(x) %>% is.na(.) %>% sum(.) < 1,
+                  as.numeric(x) %>% is.na(.) %>% sum(.) <= 1
+                )
+              }
         ) %>%
         names(df)[.]
       return(result)
@@ -932,10 +942,10 @@ report.startnum <- 46
     
 #FUN#Function: Loop Expander for creating full config tables
     #Function input testers
-      #configs = config.slidetypes.tb
-      #loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3")
-      #collate.varname = "slide.section.1"
-      #source.data = resp.long.df.b  
+      configs = config.slidetypes.tb
+      loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3")
+      collate.varname = "slide.section.1"
+      source.data = resp.long.df.b  
       
     loop.expander.fun <- function(configs, loop.varnames, collate.varname, source.data){
       output.ls <- list()
@@ -2110,6 +2120,10 @@ report.startnum <- 46
       #g <- 4 #LOOP TESTER
       #for(g in 1:2) #LOOP TESTER
       for(g in 1:length(tabledata.ls.c[[f]])){
+        
+        if(dim(tabledata.ls.c[[f]][[g]])[1] == 0){
+          tabledata.ls.c[[f]][[g]][1,] <- rep(0, dim(tabledata.ls.c[[f]][[g]])[2]) 
+        }
         
         ft.g <- FlexTable(
           data = tabledata.ls.c[[f]][[g]],
