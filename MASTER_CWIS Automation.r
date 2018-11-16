@@ -121,7 +121,7 @@ report.startnum <- 1
           paste(
             working.dir,
             "5_outputs/",
-            gsub(":",".",Sys.Date()),
+            gsub(":",".",Sys.time()),
             "_FULL PRINT",
             sep = ""
           )
@@ -229,7 +229,7 @@ report.startnum <- 1
       ifelse(
         any(substr(resp1.df[,1],1,1) == "{"),
         which(substr(resp1.df[,1],1,1) == "{") + 1,
-        2
+        1
       )
     resp1.df <- resp1.df[dat.startrow:length(resp1.df[,1]),]
   
@@ -275,8 +275,8 @@ report.startnum <- 1
           mutate(
             report.id =
               paste(
-                resp1.df[,grep("district",names(resp1.df))],
-                resp1.df[,grep(report.id.colname,names(resp1.df))],
+                resp1.df[,names(resp1.df) %in% "district"],
+                resp1.df[,names(resp1.df) %in% report.id.colname],
                 sep = "_"
               ) %>%
               tolower %>%
@@ -2297,15 +2297,7 @@ report.startnum <- 1
       
       target.path.h <- paste(outputs.dir,
                              "/",
-                             cadre.h,
-                             "_",
-                             h,
-                             "_",
-                             report.ids[h],
-                             "_",
-                             #gsub(":",".",Sys.time()) %>% substr(., 1,10),
-                             #"_",
-                             gsub(":",".",Sys.time()) %>% substr(., 15,19),
+                             file.name.h,
                              ".pptx", sep="") 
       
       file.copy(template.file, target.path.h)
