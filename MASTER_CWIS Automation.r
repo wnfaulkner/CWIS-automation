@@ -73,12 +73,12 @@ report.startnum <- 1
   #Directories
     
     #M900
-      working.dir <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-11 Green Reports Phase 4/"
-      rproj.dir <- "C:/Users/WNF/Documents/GIT PROJECTS/CWIS-automation"
+      #working.dir <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-11 Green Reports Phase 4/"
+      #rproj.dir <- "C:/Users/WNF/Documents/GIT PROJECTS/CWIS-automation"
     
     #Thinkpad T470
-      #working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-10 Green Reports Phase 3/"
-      #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
+      working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-11 Green Reports Phase 4/"
+      rproj.dir <- "C:/Users/WNF/Documents/GIT PROJECTS/CWIS-automation"
       
     #Source Code Directory
       source.code.dir <- rproj.dir #paste(rproj.dir,"2_source_code/",sep="") #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
