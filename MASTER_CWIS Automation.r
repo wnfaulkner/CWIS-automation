@@ -73,11 +73,11 @@ report.startnum <- 1
   #Directories
     
     #M900
-      working.dir <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-11 Green Reports Phase 4/"
+      working.dir <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 5/"
       rproj.dir <- "C:/Users/WNF/Documents/GIT PROJECTS/CWIS-automation"
     
     #Thinkpad T470
-      #working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-10 Green Reports Phase 3/"
+      #working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 5/"
       #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
       
     #Source Code Directory
@@ -90,7 +90,7 @@ report.startnum <- 1
       source.inputs.dir <- paste(working.dir,"4_source_inputs/",sep="")
     
     #Global Configs Table
-      configs.ss <- gs_key("102gmd5rRMyM4xy43gK-r3sF3hvI0IsYJoyG8fp5kHnE",verbose = TRUE) 
+      configs.ss <- gs_key("1IfIG7HkE2qQq5MM4AdbfFQnRVQfJe6m7l9_f6nQDkl0",verbose = TRUE) 
       global.configs.df <- gs_read(configs.ss, ws = "global.configs", range = NULL, literal = TRUE)
       
       sample.print <- 
