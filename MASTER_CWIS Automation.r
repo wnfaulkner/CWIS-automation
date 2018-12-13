@@ -15,54 +15,6 @@
   #Record code start time for processing time calculations
   start_time <- Sys.time()
   
-  #Load libraries
-  
-  #In case working on new R install that does not have packages installed
-  #install.packages('devtools')
-  #install.packages("httr")
-  #install.packages("readr")
-  #install.packages("data.table")
-  #install.packages("dplyr")
-  #install.packages("googlesheets")
-  #install.packages("stringr")
-  #install.packages("ReporteRs")
-  #install.packages("jsonline")
-  
-  #library(devtools)
-  library(extrafont)
-  extrafont::loadfonts(device="win")
-  library(magrittr)
-  library(googlesheets)
-  library(plyr) 
-  library(tidyr)
-  library(dplyr)
-  library(ReporteRs)
-  library(ggplot2)
-  library(stringr)
-  library(reshape2)
-  library(xlsx)
-  library(jsonlite)
-  library(rlang)
-  
-} #END SECTION COLLAPSE BRACKET   
-
-########################################################################################################################################################      
-### USER INPUTS ###
-
-report.startnum <- 1
-
-{ #SECTION COLLAPSE BRACKET
-  
-  year <- "2018"
-  #year <- readline("What year is this data from? (enter number in formay YYYY): ") %>% as.character
-  
-  semester <- "fall"
-  #semester <- readline("What semester is this data from? (enter 'Fall' or 'Spring'): ") %>% tolower
-  
-  #Report Unit Selection
-  report.unit <- "building" #can be either "building" or "district"
-  report.ids <- "all"
-  
 } #END SECTION COLLAPSE BRACKET
 
 ########################################################################################################################################################      
@@ -70,68 +22,23 @@ report.startnum <- 1
 
 { #SECTION COLLAPSE BRACKET
   
-  #Directories
+  #M900
+    #working.dir <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 5/"
+    #rproj.dir <- "C:/Users/WNF/Documents/GIT PROJECTS/CWIS-automation"
     
-    #M900
-      working.dir <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 5/"
-      rproj.dir <- "C:/Users/WNF/Documents/GIT PROJECTS/CWIS-automation"
-    
-    #Thinkpad T470
-      #working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 5/"
-      #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
-      
-    #Source Code Directory
-      source.code.dir <- rproj.dir #paste(rproj.dir,"2_source_code/",sep="") #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
-    
-    #Source Resources Director (raw data)
-      source.resources.dir <- paste(working.dir,"3_source_resources/", sep = "")
-    
-    #Source Inputs (configs)
-      source.inputs.dir <- paste(working.dir,"4_source_inputs/",sep="")
-    
-    #Global Configs Table
-      configs.ss <- gs_key("1IfIG7HkE2qQq5MM4AdbfFQnRVQfJe6m7l9_f6nQDkl0",verbose = TRUE) 
-      global.configs.df <- gs_read(configs.ss, ws = "global.configs", range = NULL, literal = TRUE)
-      
-      sample.print <- 
-        ifelse(
-          global.configs.df[
-            global.configs.df$Config == "Sample Print",
-            names(global.configs.df) == "Value"
-            ] %>% 
-          unique %>% 
-          tolower == "yes",
-          TRUE,
-          FALSE
-        )
-      
-    #Outputs Directory
-      if(sample.print){
-        outputs.dir <- 
-          paste(
-            working.dir,
-            #"C:/Users/WNF/Desktop/",
-            "5_outputs/",
-            #"Output_",
-            gsub(":",".",Sys.time()), 
-            sep = ""
-          )
-      }else{
-        outputs.dir <- 
-          paste(
-            working.dir,
-            "5_outputs/",
-            gsub(":",".",Sys.time()),
-            "_FULL PRINT",
-            sep = ""
-          )
-      }
-    
-      dir.create(
-        outputs.dir,
-        recursive = TRUE
-      )
-    
+  #Thinkpad T470
+    working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 5/"
+    rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
+  
+  #Source Code Directory
+    source.code.dir <- rproj.dir #paste(rproj.dir,"2_source_code/",sep="") #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
+  
+  #Source Resources Director (raw data)
+    source.resources.dir <- paste(working.dir,"3_source_resources/", sep = "")
+  
+  #Source Inputs (configs)
+    source.inputs.dir <- paste(working.dir,"4_source_inputs/",sep="")
+  
 } #END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
@@ -139,50 +46,132 @@ report.startnum <- 1
   #source.code.dir: directory for R project; also contains source data, additional function scripts, and config tables.
   #source.resources.dir: directory with raw data
   #source.inputs.dir: directory with config tables and powerpoint template
-  #outputs.dir: where outputs will be stored
+
 
 ########################################################################################################################################################      
 ### LOAD SOURCE CODE ###
 
 { #SECTION COLLAPSE BRACKET
   setwd(source.code.dir)
-  source("FUN_FirstLetterCap.r")
-  source("FUN_ColClassConvert.r")
+  source("Utils.r")
+  #source("FUN_FirstLetterCap.r")
+  #source("FUN_ColClassConvert.r")
+} #END SECTION COLLAPSE BRACKET
+
+########################################################################################################################################################      
+### LOAD LIBRARIES/PACKAGES ###
+
+{ #SECTION COLLAPSE BRACKET
+ 
+  #In case working on new R install that does not have packages installed
+    #install.common.packages()
+    #install.packages("ReporteRs")
+    #install.packages("jsonline")
+  
+  load.common.packages()
+  library(extrafont)
+  extrafont::loadfonts(device="win")
+  library(jsonlite)
+  library(rlang)
+  
 } #END SECTION COLLAPSE BRACKET
 
 ########################################################################################################################################################      
 ### LOAD SOURCES, RESOURCES, INPUTS ###
 
+report.startnum <- 1
+
 { #SECTION COLLAPSE BRACKET
   
-  setwd(source.resources.dir)
-  
-  #Read data files
-  
-  #FUN #Function: Select right 'n' characters of string
-  substrRight <- function(x, n){
-    substr(x, nchar(x)-n+1, nchar(x))
-  }
-  
-#FUN #Find most recently modified file in a directory    
-  most.recently.modified.filename.fun <- function(title.string.match, file.type, dir){
-    match.files.v <-
-      list.files()[
-        grepl(tolower(title.string.match), tolower(list.files())) &  #match title string
-          grepl(file.type, sapply(list.files(), function(x){substrRight(x, nchar(file.type))})) &           #match file type
-          !grepl("\\~\\$", list.files())       #restrict to non-temporary files
-        ]
+  #Global Configs Table
+    configs.ss <- gs_key("1IfIG7HkE2qQq5MM4AdbfFQnRVQfJe6m7l9_f6nQDkl0",verbose = TRUE) 
+    global.configs.df <- gs_read(configs.ss, ws = "global.configs", range = NULL, literal = TRUE)
     
-    most.recent.match.file <- match.files.v[file.info(match.files.v)$mtime == sapply(match.files.v, function(x){file.info(x)$mtime}) %>% max]
-    return(most.recent.match.file)
-  }
+    report.unit <- 
+      global.configs.df[
+        global.configs.df$Config == "Report Unit",
+        tolower(names(global.configs.df)) == "value"
+      ] %>% unlist %>% tolower
+    
+    report.ids <- 
+      global.configs.df[
+        global.configs.df$Config == "Report Ids",
+        tolower(names(global.configs.df)) == "value"
+      ] %>% unlist %>% tolower
+    
+    report.version <- 
+      global.configs.df[
+        global.configs.df$Config == "Report Version",
+        tolower(names(global.configs.df)) == "value"
+      ] %>% unlist %>% tolower
+    
+    year <- 
+      global.configs.df[
+        global.configs.df$Config == "Data Year",
+        tolower(names(global.configs.df)) == "value"
+      ] %>% unlist %>% tolower
+    
+    semester <- 
+      global.configs.df[
+        global.configs.df$Config == "Data Semester",
+        tolower(names(global.configs.df)) == "value"
+      ] %>% unlist %>% tolower
+    
+    sample.print <- 
+      ifelse(
+        global.configs.df[
+          global.configs.df$Config == "Sample Print",
+          names(global.configs.df) == "Value"
+          ] %>% 
+          unique %>% 
+          tolower == "yes",
+        TRUE,
+        FALSE
+      )
+    
+    sample.size <- 
+      global.configs.df[
+        global.configs.df$Config == "Sample Print Size",
+        tolower(names(global.configs.df)) == "value"
+      ] %>% unlist %>% as.numeric()
+   
+  #Slide Types Configs Table 
+    config.slidetypes.tb <- gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE) 
   
-  #Questions Table (imported as list)
+  #Graph Types Configs Table
+    load.config.graphtypes.tb <- gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE) 
+    config.graphtypes.df <- 
+      inner_join(config.slidetypes.tb, load.config.graphtypes.tb, by = "slide.type.id", all.x = FALSE) 
+  
+  #Table Types Configs Table
+    load.config.tabletypes.tb <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) 
+    config.tabletypes.df <- 
+      inner_join(config.slidetypes.tb, load.config.tabletypes.tb, by = c("slide.type.id")) 
+    
+  #Piece-of-text (POT) Config Table
+    config.pot.tb <- gs_read(configs.ss, ws = "pot.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs_Jason Altman.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE) 
+    config.pot.tb$color <- 
+      config.pot.tb$color %>% 
+      gsub("x","",.)
+  
+  #Questions Configs Table (imported as list)
     questions.ls <- 	gs_read(configs.ss, ws = "questions", range = NULL, literal = TRUE) %>% as.list() %>% lapply(., tolower)
     questions.df <- do.call(cbind, questions.ls) %>% as.data.frame(., stringsAsFactors = FALSE)
-    #! Update to read all configs from same google sheet?
   
+  #Buildings Config Table  
+    buildings.tb <- 	
+      gs_read(configs.ss, ws = "buildings", range = NULL, literal = TRUE) %>% 
+      as.list() %>% 
+      lapply(., tolower) %>%
+      do.call(cbind, .) %>%
+      as_tibble()
+    
+    buildings.tb$report.id <- mgsub("bucahanan","buchanan",buildings.tb$report.id)
+    
   #Responses table (main data, imported as data frame)
+    
+    setwd(source.resources.dir)
+    
     resp1.df <- read.csv(
       file =  
         most.recently.modified.filename.fun(
@@ -205,138 +194,122 @@ report.startnum <- 1
 
 { #SECTION COLLAPSE BRACKET
   
-  #Initial informatics
+  #INITIAL INFORMATICS
   
-  #Global Answer Options
-    ans.opt.always.df <-  cbind(
-      c(5:1),
-      c("Always","Most of the time","About half the time","Sometimes","Never"),
-      c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
-    ) %>% as.data.frame
-    names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
-    ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
-    ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
-    ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
-    
-  #Restrict questions.df to only rows for this year/semester
-    questions.sem.df <- 
-      questions.df[
-        questions.df$year == year & questions.df$semester == semester,
+    #Global Answer Options
+      ans.opt.always.df <-  cbind(
+        c(5:1),
+        c("Always","Most of the time","About half the time","Sometimes","Never"),
+        c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
+      ) %>% as.data.frame
+      names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
+      ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
+      ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
+      ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
+      
+    #Restrict questions.df to only rows for this year/semester
+      questions.sem.df <- 
+        questions.df[
+          questions.df$year == year & questions.df$semester == semester,
         ]
-  
-  #Remove extra header rows
-    dat.startrow <- 
-      ifelse(
-        any(substr(resp1.df[,1],1,1) == "{"),
-        which(substr(resp1.df[,1],1,1) == "{") + 1,
-        1
-      )
-    resp1.df <- resp1.df[dat.startrow:length(resp1.df[,1]),]
-  
-  #Edit variable names
-    names(resp1.df) <- resp1.df %>% names %>% tolower #Lower-case all variable names
-    #names(resp1.df)[names(resp1.df) == "id"] <- "responseid"
-  
-  #Variable renaming of important variables
-    names(resp1.df) <-
-      mgsub(
-        questions.sem.df$row.1[!is.na(questions.sem.df$q.changename)], 
-        questions.sem.df$q.changename[!is.na(questions.sem.df$q.changename)], 
-        names(resp1.df)
-      )
-  
-  #Define Report Unit and Report IDs
-    if(!report.unit %in% c("building","district")){
-      stop("Report unit must be either 'building' or 'district.'")
-    }
     
-    if(report.unit == "building"){
-      report.id.colname <- "building"
-    }else{
-      report.id.colname <- "district"
-    }
+    #Remove extra header rows
+      dat.startrow <- 
+        ifelse(
+          any(substr(resp1.df[,1],1,1) == "{"),
+          which(substr(resp1.df[,1],1,1) == "{") + 1,
+          1
+        )
+      resp1.df <- resp1.df[dat.startrow:length(resp1.df[,1]),]
     
-    report.id.col <- resp1.df[,names(resp1.df) == report.id.colname]
+    #Lower-case all variable names
+      names(resp1.df) <- resp1.df %>% names %>% tolower 
     
-    if(tolower(report.ids) %in% c("all","sample") %>% any && report.id.colname %in% c("building","district")){
-      
-      if(report.id.colname == "district"){
-        resp1.df <-
-          resp1.df %>%
-          mutate(
-            report.id =
-              resp1.df[,grep(report.id.colname,names(resp1.df))] %>% tolower
-          )
+    #Variable renaming of important variables
+      names(resp1.df) <-
+        mgsub(
+          questions.sem.df$row.1[!is.na(questions.sem.df$q.changename)], 
+          questions.sem.df$q.changename[!is.na(questions.sem.df$q.changename)], 
+          names(resp1.df)
+        )
+    
+    #Define Report Unit and Report IDs
+      if(!report.unit %in% c("building","district")){
+        stop("Report unit must be either 'building' or 'district.'")
       }
       
-      if(report.id.colname == "building"){
-        resp1.df <- 
-          resp1.df %>%
-          mutate(
-            report.id =
-              paste(
-                resp1.df[,names(resp1.df) %in% "district"],
-                resp1.df[,names(resp1.df) %in% report.id.colname],
-                sep = "_"
-              ) %>%
-              tolower %>%
-              replace(., . == "_", "")
-          )
+      if(report.unit == "building"){
+        report.id.colname <- "building"
+      }else{
+        report.id.colname <- "district"
       }
       
-      resp1.df$report.id <- gsub("\\/"," ",resp1.df$report.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
+      report.id.col <- resp1.df[,names(resp1.df) == report.id.colname]
       
-      report.ids <- 
-        resp1.df$report.id %>%
-        unique %>% 
-        vector.filter.fun(
-          condition = !grepl("district office",.),
-          vector.input = .
-        ) %>%
-        .[!grepl("_",substr(.,1,1))] %>%
-        .[. != ""]
+      if(tolower(report.ids) %in% c("all","sample") %>% any && report.id.colname %in% c("building","district")){
+        
+        if(report.id.colname == "district"){
+          resp1.df <-
+            resp1.df %>%
+            mutate(
+              report.id =
+                resp1.df[,grep(report.id.colname,names(resp1.df))] %>% tolower
+            )
+        }
+        
+        if(report.id.colname == "building"){
+          resp1.df <- 
+            resp1.df %>%
+            mutate(
+              report.id =
+                paste(
+                  resp1.df[,names(resp1.df) %in% "district"],
+                  resp1.df[,names(resp1.df) %in% report.id.colname],
+                  sep = "_"
+                ) %>%
+                tolower %>%
+                replace(., . == "_", "")
+            )
+        }
+        
+        resp1.df$report.id <- gsub("\\/"," ",resp1.df$report.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
+        
+        report.ids <- 
+          resp1.df$report.id %>%
+          unique %>% 
+          filter.vector(
+            condition = !grepl("district office",.),
+            vector.input = .
+          ) %>%
+          .[!grepl("_",substr(.,1,1))] %>%
+          .[. != ""]
+        
+      }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
       
-    }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
-    
-    #Restrict Responses table to produce only a sample of reports unless this is final print
-      if(sample.print){
-        sample.size <- 
-          global.configs.df[
-            global.configs.df$Config == "Sample Size",
-            names(global.configs.df) == "Value"
-          ] %>% 
-          as.numeric
-
-        if(report.unit == "building"){
-          report.districts.sample <- sample(resp1.df$district %>% unique,2) %>% 
-            .[. != ""] %>% 
-            tolower
-          unique.report.ids <- resp1.df$report.id %>% unique()
-          report.ids <- 
-            unique.report.ids[grep(paste(report.districts.sample,collapse = "|"),unique.report.ids)] %>%
-            .[. != ""]
-          if(length(report.ids) > sample.size){
-            report.ids <- sample(report.ids, sample.size)
+      #Restrict Responses table to produce only a sample of reports unless this is final print
+        if(sample.print){
+          if(report.unit == "building"){ #!generalize so will work if report.unit is district
+            report.districts.sample <- sample(resp1.df$district %>% unique,2) %>% 
+              .[. != ""] %>% 
+              tolower
+            unique.report.ids <- resp1.df$report.id %>% unique()
+            report.ids <- 
+              unique.report.ids[grep(paste(report.districts.sample,collapse = "|"),unique.report.ids)] %>%
+              .[. != ""]
+            if(length(report.ids) > sample.size){
+              report.ids <- sample(report.ids, sample.size)
+            }
           }
         }
-      }
-    
-    #Remove any empty report ids
-      resp1.df <- resp1.df[resp1.df$report.id %in% report.ids,]
-        
-  #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
-  
-#FUN#Function: output number of times specified substring occurs within vector of character strings
-    num.substring.matches <- 
-      function(pattern, vector){
-        sapply( gregexpr( pattern, as.character(vector)),
-                function(x) if( x[1]==-1 ){ 0 }else{ length(x) } )
-      }
-    
-    questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2] <- 
-      paste("x",questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2],sep="")
-    
-    #Stacking Columns Split by Survey Branching
+      
+      #Remove any empty report ids
+        resp1.df <- resp1.df[resp1.df$report.id %in% report.ids,]
+          
+    #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
+      questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2] <- 
+        paste("x",questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2],sep="")
+      
+  #STACKING COLUMNS SPLIT BY SURVEY BRANCHING
     #"branch" refers to branching questions, so branch0 are columns without branches, and branch1 are columns that are part of branching questions
     #"ans" refers to having answer options, so ans0 are columns without answer options, and ans1 are columns that are part of questions with multiple answer options
     
@@ -493,15 +466,6 @@ report.startnum <- 1
     resp3.df$building <- mgsub("bucahanan","buchanan",resp3.df$building)
     resp3.df$district <- mgsub("bucahanan","buchanan",resp3.df$district)
   
-  #Create school.id variable which is concatenation of school and district
-    #resp3.df$report.id <- paste(resp3.df$district, resp3.df$building,sep = "_") %>% tolower
-    #resp3.df$report.id <- gsub("\\/"," ",resp3.df$report.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
-  
-  
-  #Capitalize first letter of Building and District columns
-    #resp3.df$building <- FirstLetterCap_MultElements(resp3.df$building)
-    #resp3.df$district <- FirstLetterCap_MultElements(resp3.df$district)
-  
   #School Level Variable
     #school.level.df <- 
     #  read.xlsx(
@@ -539,59 +503,55 @@ report.startnum <- 1
   #Remove rows with no district or building name
     resp3.df <- resp3.df %>% filter(report.id != "_")
   
-  ##########################################################################################################################################
-  #Column Class Conversions
-  #resp3.df <- ColClassConvert(resp3.df)
-  
   #Add useful variables for analysis 
   
   #Useful vectors for selecting cwis answer variables
-  cwis.vars.v <- which(names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$module)])
-  cwis.varnames.v <- names(resp3.df)[names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$module)]]
-  cwis.modules.v <- 
-    questions.sem.df$module[!is.na(questions.sem.df$module)] %>% 
-    unique %>% 
-    strsplit(.,"\\/") %>% 
-    unlist %>% 
-    unique
+    cwis.vars.v <- which(names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$module)])
+    cwis.varnames.v <- names(resp3.df)[names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$module)]]
+    cwis.modules.v <- 
+      questions.sem.df$module[!is.na(questions.sem.df$module)] %>% 
+      unique %>% 
+      strsplit(.,"\\/") %>% 
+      unlist %>% 
+      unique
   
   #Recode answer option variables as numeric
-  numeric.recode.fun <- 
-    function(x){
-      recode(
-        x,
-        `always` = 5,
-        `most of the time` = 4,
-        `about half the time` = 3,
-        `sometimes` = 2,
-        `never` = 1,
-        `strongly agree` = 5,
-        `agree` = 4,
-        `neutral` = 3,
-        `neither agree nor disagree` = 3,
-        `neither agree or disagree` = 3,
-        `disagree` = 2,
-        `strongly disagree` = 1
-      )
-    }
-  
-  recode.ansopt.varnames.v <- 
-    which(resp3.df %>% 
-            apply(., 2, unique) %>%
-            sapply(., function(x) {
-              x %in% c("always","most of the time","about half the time","sometimes","never","strongly agree","agree","neutral","disagree","strongly disagree")
-            }) %>%
-            sapply(., any)) %>%
-    names(resp3.df)[.]
-  
-  num.ansopt.vars.df <- 
-    apply(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v], 
-          2,
-          numeric.recode.fun
-    ) %>% 
-    as.data.frame
-  
-  names(num.ansopt.vars.df) <- paste(names(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v]),"_num", sep = "")
+    numeric.recode.fun <- 
+      function(x){
+        recode(
+          x,
+          `always` = 5,
+          `most of the time` = 4,
+          `about half the time` = 3,
+          `sometimes` = 2,
+          `never` = 1,
+          `strongly agree` = 5,
+          `agree` = 4,
+          `neutral` = 3,
+          `neither agree nor disagree` = 3,
+          `neither agree or disagree` = 3,
+          `disagree` = 2,
+          `strongly disagree` = 1
+        )
+      }
+    
+    recode.ansopt.varnames.v <- 
+      which(resp3.df %>% 
+              apply(., 2, unique) %>%
+              sapply(., function(x) {
+                x %in% c("always","most of the time","about half the time","sometimes","never","strongly agree","agree","neutral","disagree","strongly disagree")
+              }) %>%
+              sapply(., any)) %>%
+     names(resp3.df)[.]
+    
+    num.ansopt.vars.df <- 
+      apply(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v], 
+            2,
+            numeric.recode.fun
+      ) %>% 
+      as.data.frame
+    
+    names(num.ansopt.vars.df) <- paste(names(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v]),"_num", sep = "")
   
   #Recode Original Answers to add numbers (e.g. "Always" becomes "1. Always")
   addnums.recode.fun <- 
@@ -706,7 +666,7 @@ report.startnum <- 1
   slider.num.vars.df <- 
     do.call(cbind, slider.num.vars.ls) %>% 
     as.data.frame %>%
-    replace.names.fun(
+    replace.names(
       df = .,
       current.names = names(.),
       new.names = names(slider.vars.df)
@@ -744,7 +704,7 @@ report.startnum <- 1
   
   slider.text.df <- 
     cbind(slider.agreement.df, slider.freq.df) %>%
-    replace.names.fun(
+    replace.names(
       df = .,
       current.names = names(.),
       new.names = paste(names(.),"_text",sep="")
@@ -753,38 +713,38 @@ report.startnum <- 1
   slider.binary.vars.df <- 
     do.call(cbind, slider.binary.vars.ls) %>% 
     as.data.frame %>%
-    replace.names.fun(
+    replace.names(
       df = .,
       current.names = names(.),
       new.names = paste(names(slider.vars.df),"_binary",sep="")
     )
   
   #Create final data frames: 1. Wide; 2. Long for original CWIS data; 3. Long for impbinary data (both long include all original id variables)
-  resp.wide.df <- 
-    cbind(
-      resp3.df[,setdiff(names(resp3.df),names(recode.addnums.df))], 
-      recode.addnums.df, 
-      num.ansopt.vars.df, 
-      binary.ansopt.vars.df,
-      slider.num.vars.df %>% replace.names.fun(df = ., current.names = names(.), new.names = paste(names(.),"_num",sep = "")),
-      slider.binary.vars.df,
-      slider.text.df
-    )
-  resp.long.df <- 
-    melt(
-      data = resp.wide.df,
-      id.vars = names(resp.wide.df)[!grepl("q[0-9]",names(resp.wide.df))],
-      variable.name = "question",
-      value.name = "answer",
-      stringsAsFactors = FALSE
-    )
-  resp.long.df$question <- as.character(resp.long.df$question)
-  
-  #filter.varnames.v <- resp.long.df$question %>% unique %>% vector.filter.fun(grepl("num|binary",.),.) %>% str_extract(., "q[0-9]*_[0-9]*") %>% unique
-  #c(branch1.ans0.colnames.v,branch1.ans1.colnames.v) %>% gsub("x[0-9]*\\_","",.) %>% unique      
-  #resp.long.df <- 
-  #  resp.long.df[!resp.long.df$question %in% filter.varnames.v,]
-  
+    resp.wide.df <- 
+      cbind(
+        resp3.df[,setdiff(names(resp3.df),names(recode.addnums.df))], 
+        recode.addnums.df, 
+        num.ansopt.vars.df, 
+        binary.ansopt.vars.df,
+        slider.num.vars.df %>% replace.names(df = ., current.names = names(.), new.names = paste(names(.),"_num",sep = "")),
+        slider.binary.vars.df,
+        slider.text.df
+      )
+    resp.long.df <- 
+      melt(
+        data = resp.wide.df,
+        id.vars = names(resp.wide.df)[!grepl("q[0-9]",names(resp.wide.df))],
+        variable.name = "question",
+        value.name = "answer",
+        stringsAsFactors = FALSE
+      )
+    resp.long.df$question <- as.character(resp.long.df$question)
+    
+    #filter.varnames.v <- resp.long.df$question %>% unique %>% filter.vector(grepl("num|binary",.),.) %>% str_extract(., "q[0-9]*_[0-9]*") %>% unique
+    #c(branch1.ans0.colnames.v,branch1.ans1.colnames.v) %>% gsub("x[0-9]*\\_","",.) %>% unique      
+    #resp.long.df <- 
+    #  resp.long.df[!resp.long.df$question %in% filter.varnames.v,]
+    
   #Creating additional useful variables for long data frames
   
   #Variable for module
@@ -811,7 +771,7 @@ report.startnum <- 1
     ) 
   
   #Variable designating questions to be used in implementation calculations (binary)
-  resp.long.df$impbinary <- ifelse(grepl("binary",resp.long.df$question),1,0)
+    resp.long.df$impbinary <- ifelse(grepl("binary",resp.long.df$question),1,0)
   
   #Variable designating questions to be used in average performance calculations
   #avg.perf.q.varnames.v <-
@@ -841,39 +801,55 @@ report.startnum <- 1
   #    mean() 
   #}
   
-  #Write Unbranched Data to Excel File
-  if(report.startnum == 1){
-    unbranched.file.name <- 
-      paste( 
-        "widedata_",
-        gsub(":",".",Sys.time()),
-        ".csv", 
-        sep=""
-      ) 
+  
+  #Establish Outputs Directory
+    if(sample.print){
+      outputs.dir <- 
+        paste(
+          working.dir,
+          "5_outputs/",
+          gsub(":",".",Sys.time()), 
+          sep = ""
+        )
+    }else{
+      outputs.dir <- 
+        paste(
+          working.dir,
+          "5_outputs/",
+          gsub(":",".",Sys.time()),
+          "_FULL PRINT",
+          sep = ""
+        )
+    }
+  
+    dir.create(
+      outputs.dir,
+      recursive = TRUE
+    )
     
     setwd(outputs.dir)
+  
+  #Write Unbranched Data to Excel File
+    if(report.startnum == 1){
+      unbranched.file.name <- 
+        paste( 
+          "widedata_",
+          gsub(":",".",Sys.time()),
+          ".csv", 
+          sep=""
+        )
     
     write.csv(
       resp.wide.df,
       file = unbranched.file.name,
-      #sheetName = "responses",
       row.names = FALSE
-      #showNA = FALSE,
-      #append = FALSE
     )
-    
-    #write.xlsx(
-    #  questions.sem.df,
-    #  file = "unbranched_data.xlsx",
-    #  sheetName = "questions",
-    #  row.names = FALSE,
-    #  showNA = FALSE,
-    #  append = TRUE
-    #)
+
   }
 }#END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
+  #outputs.dir: directory for all outputs. Will have "FULL PRINT" if full print, or just the system date & time if sample print
   #resp.wide.df: wide data with all variables including numeric and binary
   #resp.long.df: long format data frame with cwis responses
   #ans.opt.always.df: data frame with columns corresponding to answer numbers and answer text,
@@ -889,16 +865,7 @@ report.startnum <- 1
   #Load Graph & Slide Type Config Tables
   
     #setwd(source.inputs.dir)
-    config.slidetypes.tb <- gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE) 
-    load.config.graphtypes.tb <- gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE) 
-    load.config.tabletypes.tb <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) 
-    
-    config.graphtypes.df <- 
-      inner_join(config.slidetypes.tb, load.config.graphtypes.tb, by = "slide.type.id", all.x = FALSE) 
-    
-    config.tabletypes.df <- 
-      inner_join(config.slidetypes.tb, load.config.tabletypes.tb, by = c("slide.type.id")) 
-  
+   
   #Expand Config Tables for each district according to looping variables
   
   ###                          ###    
@@ -994,7 +961,7 @@ report.startnum <- 1
           result <- 
             unique.vals.from.colnames(df, varnames) %>%
             expand.grid(., stringsAsFactors = FALSE) %>%
-            replace.names.fun(., current.names = names(.), new.names = varnames)
+            replace.names(., current.names = names(.), new.names = varnames)
           return(result)
         }
         
@@ -1016,7 +983,7 @@ report.startnum <- 1
         strsplit(.,",") %>% 
         unlist %>%
         as.data.frame(.) %>%
-        replace.names.fun(
+        replace.names(
           ., 
           current.names = names(.), 
           new.names = "module" #! Not abstracted
@@ -1227,16 +1194,17 @@ report.startnum <- 1
   ###                          ###
   
   #Loop outputs
-  graphdata.ls.c <- list()
-  tabledata.ls.c <- list()
-  #graphs.ls.c <- list()
+    graphdata.ls.c <- list()
+    tabledata.ls.c <- list()
+    #graphs.ls.c <- list()
   
   #Progress bar for loop
-  progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
-  maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
+    progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
+    maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
+    
+    slider.report.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
+                              report.ids)
   
-  slider.report.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
-                            report.ids)
   #c <- 33 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
   #for(c in slider.report.ids){   #LOOP TESTER
   for(c in report.startnum:length(report.ids)){   #START OF LOOP BY DISTRICT
@@ -1486,7 +1454,7 @@ report.startnum <- 1
           .by = c(group_by.d),
           na.replacement = 0
         ) %>%
-        replace.names.fun(
+        replace.names(
           df = .,
           current.names = c(names(.)),
           new.names = c(config.graphs.df.d$data.group.by.var,"measure.var","measure.var.avg")
@@ -1591,7 +1559,7 @@ report.startnum <- 1
               .[.!=""]
           }
           
-          all.cats.ls[[i]] <- result %>% as.data.frame %>% replace.names.fun(df = ., current.names = ".", new.names = "all.cats")
+          all.cats.ls[[i]] <- result %>% as.data.frame %>% replace.names(df = ., current.names = ".", new.names = "all.cats")
           
         } # END OF LOOP 'i' BY VARNAME
         names(all.cats.ls) <- c("x","y")
@@ -1663,12 +1631,12 @@ report.startnum <- 1
             filter(role != "District Administrator") %>%
             .[c(2,3,5,6,7,4,8,1),] %>%
             #.[c(1,2,3,4,6,7,8,5),] %>%
-            replace.names.fun(
+            replace.names(
               df = .,
               current.names = report.id.c,
               new.names = "num. responses"
             ) %>%
-            replace.names.fun(
+            replace.names(
               df = .,
               current.names = names(.),
               new.names = FirstLetterCap_MultElements(names(.))
@@ -1692,7 +1660,7 @@ report.startnum <- 1
               value.var ="responseid",
               fun.aggregate = length
             ) %>% 
-            replace.names.fun(
+            replace.names(
               df = .,
               current.names = "unlist(data.input[names(data.input) == config.tables.df.d$y.varname])",
               new.names = "all.cats"
@@ -1715,18 +1683,18 @@ report.startnum <- 1
               nrow = dim(result.3)[1]
             ) %>%
             as_tibble() %>%
-            replace.names.fun(
+            replace.names(
               df = .,
               current.names = names(.),
               new.names = missing.cats
             ) %>%
             cbind(result.3, .) %>%
-            df.order.by.var.fun(
+            df.order.by.var(
               df = .,
               order.by.varname = "all.cats",
               rev = TRUE
             ) %>%
-            replace.names.fun(
+            replace.names(
               df = .,
               current.names = "all.cats",
               new.names = FirstLetterCap_OneElement(config.tables.df.d$y.varname)
@@ -2227,22 +2195,9 @@ report.startnum <- 1
   jgc <- function(){
     gc()
     .jcall("java/lang/System", method = "gc")
-  }    
+  }
   
-  buildings.tb <- 	
-    gs_read(configs.ss, ws = "buildings", range = NULL, literal = TRUE) %>% 
-    as.list() %>% 
-    lapply(., tolower) %>%
-    do.call(cbind, .) %>%
-    as_tibble()
-  
-  buildings.tb$report.id <- mgsub("bucahanan","buchanan",buildings.tb$report.id)
-  
-  setwd(source.inputs.dir)  
-  config.pot.tb <- gs_read(configs.ss, ws = "pot.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs_Jason Altman.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE) 
-  config.pot.tb$color <- 
-    config.pot.tb$color %>% 
-    gsub("x","",.)
+  setwd(source.inputs.dir)
   
   ###                          ###    
 # ### LOOP "h" BY REPORT UNIT  ###
