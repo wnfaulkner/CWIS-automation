@@ -340,7 +340,7 @@ report.startnum <- 1
         }
       
       #Restrict response dataset to rows for generated report ids
-        resp2.df <- resp1.df[resp1.df$report.id %in% report.ids,]
+        resp2.df <- resp1.df[resp1.df$report.id %in% report.ids.sample,]
       
   #STACKING COLUMNS SPLIT BY SURVEY BRANCHING
     #"branch" refers to branching questions, so branch0 are columns without branches, and branch1 are columns that are part of branching questions
