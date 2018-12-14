@@ -186,6 +186,12 @@ report.startnum <- 1
 }#END SECTION COLLAPSE BRACKET
 
 #OUTPUTS
+  #global.configs.df
+  #config.slidetypes.tb
+  #config.graphtypes.df
+  #config.tabletypes.df
+  #config.pot.tb
+  #buildings.tb
   #questions.df
   #resp1.df (initial responses dataset which will need extensive cleaning and organization in next sections)
 
@@ -212,6 +218,10 @@ report.startnum <- 1
         questions.df[
           questions.df$year == year & questions.df$semester == semester,
         ]
+      
+    #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
+      questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2] <- 
+        paste("x",questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2],sep="")
     
     #Remove extra header rows
       dat.startrow <- 
@@ -274,7 +284,7 @@ report.startnum <- 1
         
         resp1.df$report.id <- gsub("\\/"," ",resp1.df$report.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
         
-        report.ids <- 
+        report.ids.all <- #report ids filtering out district office, ids without a district, or blanks
           resp1.df$report.id %>%
           unique %>% 
           filter.vector(
@@ -287,49 +297,72 @@ report.startnum <- 1
       }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
       
       #Restrict Responses table to produce only a sample of reports unless this is final print
-        if(sample.print){
-          if(report.unit == "building"){ #!generalize so will work if report.unit is district
-            report.districts.sample <- sample(resp1.df$district %>% unique,2) %>% 
+        #Notes: code selects whole districts at random so that it will generate all reports for those districts. This is important so that you don't get
+        #a bunch of scattered districts and the district averages aren't realistic. The code samples district combinations until it finds one where the
+        #number of report ids is equalt to the user-defined sample size.
+      
+        if(sample.print & report.unit == "building"){ #!generalize so will work if report.unit is district
+            
+          building.counts.df <- 
+            resp1.df %>% 
+            group_by(district) %>% 
+            dplyr::summarize(n_buildings = n_distinct(building)) %>% 
+            as.data.frame()
+          
+          report.ids.sample <- ""
+          report.districts.sample <- ""
+          unique.report.ids <- resp1.df$report.id %>% unique()
+          
+          i <- 1
+          
+          while(length(report.ids.sample) != sample.size){            
+            
+            report.districts.sample <-
+              c(
+                report.districts.sample,
+                sample(resp1.df$district %>% unique,1)
+              ) %>% 
               .[. != ""] %>% 
               tolower
-            unique.report.ids <- resp1.df$report.id %>% unique()
-            report.ids <- 
+            
+            report.ids.sample <- 
               unique.report.ids[grep(paste(report.districts.sample,collapse = "|"),unique.report.ids)] %>%
               .[. != ""]
-            if(length(report.ids) > sample.size){
-              report.ids <- sample(report.ids, sample.size)
+            
+            if(length(report.ids.sample) > sample.size){
+              report.districts.sample <- ""
+              report.ids.sample <- ""
             }
+            #print(i)
+            print(length(report.ids.sample))
+            i = i+1
           }
         }
       
-      #Remove any empty report ids
-        resp1.df <- resp1.df[resp1.df$report.id %in% report.ids,]
-          
-    #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
-      questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2] <- 
-        paste("x",questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2],sep="")
+      #Restrict response dataset to rows for generated report ids
+        resp2.df <- resp1.df[resp1.df$report.id %in% report.ids,]
       
   #STACKING COLUMNS SPLIT BY SURVEY BRANCHING
     #"branch" refers to branching questions, so branch0 are columns without branches, and branch1 are columns that are part of branching questions
     #"ans" refers to having answer options, so ans0 are columns without answer options, and ans1 are columns that are part of questions with multiple answer options
     
-    branch0.ans0.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==0]
-    branch0.ans1.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==1 & substr(names(resp1.df),1,1) == "q"]
-    branch1.ans0.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==1 & substr(names(resp1.df),1,1) == "x"]
-    branch1.ans1.colnames.v <- names(resp1.df)[num.substring.matches("_",names(resp1.df))==2]
+    branch0.ans0.colnames.v <- names(resp2.df)[num.substring.matches("_",names(resp2.df))==0]
+    branch0.ans1.colnames.v <- names(resp2.df)[num.substring.matches("_",names(resp2.df))==1 & substr(names(resp2.df),1,1) == "q"]
+    branch1.ans0.colnames.v <- names(resp2.df)[num.substring.matches("_",names(resp2.df))==1 & substr(names(resp2.df),1,1) == "x"]
+    branch1.ans1.colnames.v <- names(resp2.df)[num.substring.matches("_",names(resp2.df))==2]
     
-    #branch.q.colnums.v <- which(resp1.df %>% names %>% substr(.,1,1) == "x")
+    #branch.q.colnums.v <- which(resp2.df %>% names %>% substr(.,1,1) == "x")
     
   #Make data frame of base variables (that require no stacking)  
     branch0.df <- 
-      resp1.df[ ,                                           
-                names(resp1.df) %in% c("responseid",branch0.ans0.colnames.v,branch0.ans1.colnames.v)      
+      resp2.df[ ,                                           
+                names(resp2.df) %in% c("responseid",branch0.ans0.colnames.v,branch0.ans1.colnames.v)      
                 ]              
   
   #Make data fram of variables to be stacked
     branch1.df <- 
-      resp1.df[ ,
-                names(resp1.df) %in% c("responseid",branch1.ans0.colnames.v,branch1.ans1.colnames.v) # ResponseId plus all columns whose names begin with "X"
+      resp2.df[ ,
+                names(resp2.df) %in% c("responseid",branch1.ans0.colnames.v,branch1.ans1.colnames.v) # ResponseId plus all columns whose names begin with "X"
                 ]
     
   #Re-stack & collapse columns that are split up because of survey branching 
