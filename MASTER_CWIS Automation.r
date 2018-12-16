@@ -53,7 +53,7 @@
 
 { #SECTION COLLAPSE BRACKET
   setwd(source.code.dir)
-  source("Utils.r")
+  source("utils_wnf.r")
   source("CWIS Automation_Custom Functions.r")
   #source("FUN_FirstLetterCap.r")
   #source("FUN_ColClassConvert.r")
@@ -70,10 +70,11 @@
     #install.packages("jsonline")
   
   load.common.packages()
-  library(extrafont)
-  extrafont::loadfonts(device="win")
+  library(proftools)
   library(jsonlite)
   library(rlang)
+  library(extrafont)
+  extrafont::loadfonts(device="win")
   
 } #END SECTION COLLAPSE BRACKET
 

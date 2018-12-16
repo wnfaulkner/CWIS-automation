@@ -2,7 +2,7 @@
 #####       CWIS AUTOMATION CUSTOM FUNCTIONS            #####
 #############################################################
 
-source("Utils.r")
+source("utils_wnf.r")
 
   #Loop Expander for creating full config tables
     #Function input testers
