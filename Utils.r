@@ -76,6 +76,13 @@
       return(result)
     }
   
+  #Replace NAs in a vector with a replacement value
+    na.sub <- function(vector,na.replacement){
+      vector[is.na(vector)] <- na.replacement
+      return(vector)
+    }       
+    
+  
   #Output number of times specified substring occurs within vector of character strings
     num.substring.matches <- function(pattern, vector){
       sapply(
@@ -104,6 +111,73 @@
         num.replacements[i] <- length(grep(pattern[i], x))
       }
       print(cbind(pattern,replacement,num.replacements))
+      return(result)
+    }
+  
+  #Unique values from multiple columns of a data frame (returns list)
+    #TEST INPUTS
+    #df <- resp.long.df.b
+    #varnames <- loop.varnames.c
+    
+    unique.vals.from.colnames <- function(df, varnames){  
+      result <- 
+        df[,names(df) %in% varnames] %>%
+        as.data.frame %>%
+        lapply(., unique) %>%
+        lapply(., remove.na.from.vector) %>%
+        lapply(., as.character) %>%
+        lapply(., function(x) {strsplit(x, ",")}) %>%
+        lapply(., unlist) %>%
+        lapply(., unique)
+      return(result)
+    }
+    
+  #All combinations of unique values of variables in a data frame
+    unique.combn.from.colnames <- function(df, varnames){
+      result <- 
+        unique.vals.from.colnames(df, varnames) %>%
+        expand.grid(., stringsAsFactors = FALSE) %>%
+        replace.names(., current.names = names(.), new.names = varnames)
+      return(result)
+    }
+    
+  #Check which elements in a vector are different from the one before and return position of spots where values change
+    vector.value.change.positions.fun <- function(x){
+      check.mtx <-
+        cbind(
+          x[1:length(x)-1],
+          x[2:length(x)]
+        )
+      check.mtxl <- matrix(nrow = nrow(check.mtx),ncol=ncol(check.mtx))
+      for(i in 1:dim(check.mtx)[1]){
+        
+        check.mtx.i <- check.mtx[i,]
+        
+        if(any(is.na(check.mtx.i))){
+          check.mtxl[i,] <- is.na(check.mtx.i)
+        }else{
+          check.mtxl[i,] <- check.mtx.i[1] == check.mtx.i[2]
+        }
+      }
+      value.change.positions <- c(1,which(apply(check.mtxl,1,function(x){unlist(x[1]!=x[2])})),length(x))
+      value.change.positions
+      value.change.positions + 1
+      
+      result.ls <- list()
+      for(j in 1:(length(value.change.positions)-1)){
+        result.ls[[j]] <- 
+          data.frame(
+            start.position = ifelse(j == 1, 1, value.change.positions[j]+1), 
+            end.position = value.change.positions[j+1]
+          )
+      }
+      
+      result <- 
+        cbind(
+          section.id = c(1:length(result.ls)),
+          do.call(rbind, result.ls)
+        )
+      
       return(result)
     }
     
