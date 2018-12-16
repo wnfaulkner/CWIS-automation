@@ -93,11 +93,11 @@ report.startnum <- 1
         tolower(names(global.configs.df)) == "value"
       ] %>% unlist %>% tolower
     
-    report.ids <- 
-      global.configs.df[
-        global.configs.df$Config == "Report Ids",
-        tolower(names(global.configs.df)) == "value"
-      ] %>% unlist %>% tolower
+    #report.ids <- 
+    #  global.configs.df[
+    #    global.configs.df$Config == "Report Ids",
+    #    tolower(names(global.configs.df)) == "value"
+    #  ] %>% unlist %>% tolower
     
     report.version <- 
       global.configs.df[
@@ -256,7 +256,7 @@ report.startnum <- 1
       
       report.id.col <- resp1.df[,names(resp1.df) == report.id.colname]
       
-      if(tolower(report.ids) %in% c("all","sample") %>% any && report.id.colname %in% c("building","district")){
+      if(report.id.colname %in% c("building","district")){
         
         if(report.id.colname == "district"){
           resp1.df <-
@@ -301,7 +301,7 @@ report.startnum <- 1
         #a bunch of scattered districts and the district averages aren't realistic. The code samples district combinations until it finds one where the
         #number of report ids is equalt to the user-defined sample size.
       
-        if(sample.print & report.unit == "building"){ #!generalize so will work if report.unit is district
+        if(sample.print & report.unit == "building"){ #TODO: generalize so will work if report.unit is district
             
           building.counts.df <- 
             resp1.df %>% 
@@ -458,7 +458,7 @@ report.startnum <- 1
             varname.match.ls %>% unlist %>% paste("1_",.,sep="")
           )
         ,
-        ] #!looks like still uneven numbers - some columns must be missing from questions table, but seems to be columns we don't care about.
+        ] #TODO:looks like still uneven numbers - some columns must be missing from questions table, but seems to be columns we don't care about.
     q.unbranched.df$row.1[grep("q",q.unbranched.df$row.1)] <- 
       str_extract(
         q.unbranched.df$row.1[grep("q",q.unbranched.df$row.1)], 
@@ -660,7 +660,7 @@ report.startnum <- 1
   slider.binary.vars.ls <- list()
   slider.num.vars.ls <- list()
   
-  #!Should straighten out letters for loops
+  #TODO:Should straighten out letters for loops
   for(c in 1:ncol(slider.vars.df)){
     
     colname.c <- names(slider.vars.df)[c]
@@ -971,34 +971,6 @@ report.startnum <- 1
           next()
         }
         
-#FUN  #FUNCTION: Unique values from multiple columns of a data frame (returns list)
-        #TEST INPUTS
-        #df <- resp.long.df.b
-        #varnames <- loop.varnames.c
-        
-        unique.vals.from.colnames <- function(df, varnames){  
-          result <- 
-            df[,names(df) %in% varnames] %>%
-            as.data.frame %>%
-            lapply(., unique) %>%
-            lapply(., remove.na.from.vector) %>%
-            lapply(., as.character) %>%
-            lapply(., function(x) {strsplit(x, ",")}) %>%
-            lapply(., unlist) %>%
-            lapply(., unique)
-          return(result)
-        }
-        
-#FUN  #Function: All combinations of unique values of variables in a data frame
-        unique.combn.from.colnames <- function(df, varnames){
-          result <- 
-            unique.vals.from.colnames(df, varnames) %>%
-            expand.grid(., stringsAsFactors = FALSE) %>%
-            replace.names(., current.names = names(.), new.names = varnames)
-          return(result)
-        }
-        
-        #unique.vals.from.colnames(resp.long.df.b, loop.varnames.c)
         output.ls[[c]] <- 
           unique.combn.from.colnames(resp.long.df.b,loop.varnames.c) %>%
           cbind(configs.c,.)
@@ -1019,7 +991,7 @@ report.startnum <- 1
         replace.names(
           ., 
           current.names = names(.), 
-          new.names = "module" #! Not abstracted
+          new.names = "module" #TODO: Not abstracted
         )
       
       
@@ -1276,7 +1248,7 @@ report.startnum <- 1
       
       #Create data frame "all.cats.df.e" of all possible answers for x-axis (role, module, year, answer)
       
-      #!
+      #TODO:
       #1. EVENTUALLY WILL NEED TO GENERALIZE THIS FUNCTION SO CAN TAKE AN ARBITRARY NUMBER OF CATEGORIES AS INPUT
       #   RIGHT NOW CAN ONLY TAKE TWO AND ONE OF THEM MUST BE 'YEAR,' AND THAT NOT EVEN IN CURRENT VERSION (SEE FINAL COMMAND COMMENTED OUT).
       #2. ALSO, RIGHT NOW WHEN SELECTING 'practice' IT LOOKS FOR THE CHARACTER SUBSTRING OCCURENCE IN THE 'module' VARIABLE WITH GREPL
@@ -1285,7 +1257,7 @@ report.startnum <- 1
       
       
       
-      #! WILL NEED TO DO SAME THING FOR TABLES
+      #TODO: WILL NEED TO DO SAME THING FOR TABLES
       
       #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
       if(!is.na(config.graphs.df.d$data.group.by.var) && config.graphs.df.d$data.group.by.var == "practice"){
@@ -1316,7 +1288,7 @@ report.startnum <- 1
       
 #FUN  #Function: Data restriction - district vs. report.id
       
-      #!NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND GRAPH DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
+      #TODO:NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND GRAPH DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
       #report.id AND DATA.LEVEL IS DISTRICT.
       
       graph.data.restriction.fun <- function(x){
@@ -1395,7 +1367,7 @@ report.startnum <- 1
       
 #FUN  #Function: Restriction function for graph average data
       
-      #! THESE TWO FUNCTIONS ARE VERY SIMILAR TO THE ONES ABOVE WHICH HAVE BEEN CHANGED SO NOW NEED TO SPECIFY "config.input" BUT
+      #TODO: THESE TWO FUNCTIONS ARE VERY SIMILAR TO THE ONES ABOVE WHICH HAVE BEEN CHANGED SO NOW NEED TO SPECIFY "config.input" BUT
       #   HAVE NOT MADE THOSE CHANGES HERE YET. PROBABLY COULD ROLL UP INTO ONE OR TWO FUNCTIONS.
       
       #Test Inputs
@@ -1413,10 +1385,10 @@ report.startnum <- 1
             filter(district == unique(resp.long.df$district[resp.long.df$report.id == report.id.c])) 
         }
         
-        z <- y %>% filter(!is.na(y[,names(y)==group_by.d])) #!Might want to make flexible - i.e. add a parameter which allows user to include NA
+        z <- y %>% filter(!is.na(y[,names(y)==group_by.d])) #TODO:Might want to make flexible - i.e. add a parameter which allows user to include NA
         
         if(!config.graphs.df.d$data.restriction=="module" | is.na(config.graphs.df.d$data.restriction)){ 
-          #!Should look into a better way to deal with this restriction, think about input tables
+          #TODO:Should look into a better way to deal with this restriction, think about input tables
           result <- z
         }
         
@@ -1525,13 +1497,13 @@ report.startnum <- 1
       config.tables.df.d <- config.tables.df.c[d,]
       
       #Define all possible category values from table
-      #!If table category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
+      #TODO:If table category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
       
       all.cats.varnames.v.d <- c(config.tables.df.d$x.var, config.tables.df.d$y.var)
       
-      #!Generalize to graph code as well? So treat like a pivot table with arbitrary number of x.vars and y.vars, a summary var and a summary function.
-      #! Maybe would make it so could use a single config table?
-      #!Should generalize so that can handle arbitrary number of nested variables on both axes like pivot
+      #TODO:Generalize to graph code as well? So treat like a pivot table with arbitrary number of x.vars and y.vars, a summary var and a summary function.
+      #TODO: Maybe would make it so could use a single config table?
+      #TODO:Should generalize so that can handle arbitrary number of nested variables on both axes like pivot
       
       #Test Inputs
         #varnames <- c(config.tables.df.d$x.var, config.tables.df.d$y.var) %>% remove.na.from.vector()
@@ -1605,7 +1577,7 @@ report.startnum <- 1
           tb = resp.long.df %>% as_tibble()
         )
       
-      #!NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND table DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
+      #TODO:NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND table DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
       #BUILDING AND DATA.LEVEL IS DISTRICT.
       
       table.data.filter.fun <- function(x){
@@ -1644,11 +1616,11 @@ report.startnum <- 1
         data.input <-  resp.long.df.c %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
       
       summarize.data.fun <- function(config.input, data.input){
-        #na.replace <- function(x, na.replacement){x[is.na(x)] <- na.replacement} #!This didn't work, but may not need after generalizing.
+        #na.replace <- function(x, na.replacement){x[is.na(x)] <- na.replacement} #TODO:This didn't work, but may not need after generalizing.
         
         result.1 <- melt(data.input, id.vars = names(data.input)) 
         
-        if(d == 1){ #!Needs to be generalized - right now just uses number of loop but should be based on configs
+        if(d == 1){ #TODO:Needs to be generalized - right now just uses number of loop but should be based on configs
           result <-
             reshape2::dcast(
               data = result.1,
@@ -1867,8 +1839,8 @@ report.startnum <- 1
         
         #Adding Columns (Clustered or Non-Clustered)
         #Fill values
-        #!Currently set manually - need to make it so fill happens within aes when have groups, within geom_bar() when setting manually
-        #!Would be nice to be able to set fill manually from config file as well.
+        #TODO:Currently set manually - need to make it so fill happens within aes when have groups, within geom_bar() when setting manually
+        #TODO:Would be nice to be able to set fill manually from config file as well.
         
         if(config.graphs.df.g$graph.type.id == "a"){
           graph.fill.g <- c(rep("#5F3356",4),"#91AC3E")
@@ -2014,7 +1986,7 @@ report.startnum <- 1
         #graph.g
         
         #GRAPH AVERAGES
-          #! Need to make so can group on arbitrary variable with arbitrary number of groups and sub-groups. Right now can only two groups of 2 (e.g. year in Repeated Measures)
+          #TODO: Need to make so can group on arbitrary variable with arbitrary number of groups and sub-groups. Right now can only two groups of 2 (e.g. year in Repeated Measures)
           graphdata.df.g$avg.alpha <- 
             ifelse(
               is.na(config.graphs.df.g$graph.group.by.vars),# != "Baseline" & graphdata.df.g$measure.var.avg != 0,
@@ -2030,7 +2002,7 @@ report.startnum <- 1
               #geom_errorbar( #error bar shadow
               #  aes(
               #    x = graphdata.df.g[[graph.cat.varname]],
-              #    #group = graphdata.df.g[[graph.cat.varname]], #!removed group for Green Reports because didn't need it, but will have ot add back in and generalize
+              #    #group = graphdata.df.g[[graph.cat.varname]], #TODO:removed group for Green Reports because didn't need it, but will have ot add back in and generalize
               #    ymin = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/450, 
               #    ymax = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/450,
               #    alpha = graphdata.df.g$avg.alpha
@@ -2061,8 +2033,8 @@ report.startnum <- 1
         }else{}
         
         #GRAPH CATEGORY NAMES, CORRECTING CATEGORY AXIS ORDERING
-        #!potential function 
-        #! if can make first character of all categories into numeric vector, then just order by that
+        #TODO:potential function 
+        #TODO: if can make first character of all categories into numeric vector, then just order by that
         
         #year, school.level, module, answer
         graph.cat.order.ls <-
@@ -2073,7 +2045,7 @@ report.startnum <- 1
             module = c("ETLP", "CFA","DBDM","LEAD","PD"),
             ans.text.freq = c("Always","Most of the time","About half the time","Sometimes","Never"),
             ans.text.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree"),
-            practice = if("practice" %in% names(graphdata.df.g)){graphdata.df.g$practice}else{""} #!When moving this out of loop, will need to generalize for all module practices
+            practice = if("practice" %in% names(graphdata.df.g)){graphdata.df.g$practice}else{""} #TODO:When moving this out of loop, will need to generalize for all module practices
           )
         
         #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() command does a mirror image
@@ -2131,7 +2103,7 @@ report.startnum <- 1
           header.columns = TRUE,
           add.rownames = FALSE,
           
-          header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #!Should put into configs instead of specifying in code
+          header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #TODO:Should put into configs instead of specifying in code
           header.text.props = textProperties(
             color = "white", 
             font.size = 15,
@@ -2173,7 +2145,7 @@ report.startnum <- 1
         
       } ### END OF LOOP "g" BY TABLE ###
     
-    names(tables.ls.g) <- c("role","etlp","cfa","dbdm","pd","lead") #!WAS CAUSING PROBLEMS WITH ORDERING OF TABLES ON SLIDES BECAUSE HAD NOT BEEN UPDATED TO NEW ORDER OF MODULES
+    names(tables.ls.g) <- c("role","etlp","cfa","dbdm","pd","lead") #TODO:WAS CAUSING PROBLEMS WITH ORDERING OF TABLES ON SLIDES BECAUSE HAD NOT BEEN UPDATED TO NEW ORDER OF MODULES
     tables.ls.f[[f]] <- tables.ls.g
     
   } ### END OF LOOP "f" BY REPORT.UNIT
@@ -2302,7 +2274,7 @@ report.startnum <- 1
       
       config.tables.df.h <- config.tables.ls.b[[h]]
       
-      #!Will need to generalize below for different report units (i.e. Repeated Measures vs. Green Reports)
+      #TODO:Will need to generalize below for different report units (i.e. Repeated Measures vs. Green Reports)
       report.id.h <- report.ids[h]
       district.h <- strsplit(report.id.h, "_") %>% unlist %>% .[1] %>% toupper()
       school.h <- strsplit(report.id.h, "_") %>% unlist %>% .[2] %>% toupper()
@@ -2372,7 +2344,7 @@ report.startnum <- 1
         
       #ADD TABLES
       
-        #! Will want to generalize so can add more than one table to each slide if necessary
+        #TODO: Will want to generalize so can add more than one table to each slide if necessary
         config.tables.df.i <- config.tables.df.h %>% 
           filter(slide.type.id == slide.type.id.i)
         
