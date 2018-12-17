@@ -956,9 +956,9 @@ report.startnum <- 1
     slider.report.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
                               report.ids.sample)
   
-  #c <- 33 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
+  #c <- 1 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
   #for(c in slider.report.ids.sample){   #LOOP TESTER
-  for(c in report.startnum:length(report.ids.sample)){   #START OF LOOP BY DISTRICT
+  for(c in 1:length(report.ids.sample)){   #START OF LOOP BY DISTRICT
     
     if(c == report.startnum){print("Forming input data tables for graphs...")}
     
@@ -988,19 +988,27 @@ report.startnum <- 1
       
       config.graphs.df.d <- config.graphs.df.c[d,]
       
-      group_by.d <- config.graphs.df.d$data.group.by.var %>% 
+      group_by.d <- config.graphs.df.d$x.varname.1 %>% 
         strsplit(., ",") %>% 
         unlist
       
+      graph.varnames.d <- 
+        GraphVarnamesInData(
+          config.input = config.graphs.df.d,
+          data.input = resp.long.df
+        )
+      
+      #TODO: still needs work to make sure this forms the correct list with all possible x-axis categories
+        #Then it gets used by the summarize.table.fun to form the final table data. Currently not working.
       all.cats.ls.d <- 
         unique.variable.values.fun(
-          varnames = c(config.graphs.df.d$x.varname, config.graphs.df.d$y.varname), 
-          tb = resp.long.df %>% as_tibble()
+          varnames = graph.varnames.d, 
+          tb = resp.wide.df %>% as_tibble()
         )
       
       #Create data frame "all.cats.df.e" of all possible answers for x-axis (role, module, year, answer)
         #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
-        if(!is.na(config.graphs.df.d$data.group.by.var) && config.graphs.df.d$data.group.by.var == "practice"){
+        if(!is.na(config.graphs.df.d$x.varname.1) && config.graphs.df.d$x.varname.1 == "practice"){
           all.cats.input1.d <- 
             resp.long.df %>% 
             filter(grepl(config.graphs.df.d$module,module))
@@ -1012,7 +1020,7 @@ report.startnum <- 1
         all.cats.input2.d <-
           all.cats.input1.d %>%
           filter(impbinary == 0) %>%
-          .[,names(resp.long.df) == config.graphs.df.d$data.group.by.var] %>% 
+          .[,names(resp.long.df) == config.graphs.df.d$x.varname.1] %>% 
           unique %>%
           strsplit(., ",") %>% 
           unlist %>%
@@ -1031,46 +1039,38 @@ report.startnum <- 1
           resp.long.df.c %>%
           graph.data.restriction.fun %>%
           group_by(!!! syms(group_by.d)) %>%
-          summarize.data.fun(config.input = config.graphs.df.d, data.input = .) %>%
+          summarize.graph.fun(config.input = config.graphs.df.d, data.input = .) %>%
           left_join(all.cats.df.d, ., by = c(group_by.d))
-        #graphdata.df.d$measure.var[is.na(graphdata.df.d$measure.var)] <- 0
-      
+
       #print(graphdata.df.d)
       
 
       #Add average variable to final data frame
-      graph.avg.df.d <- 
-        resp.long.df %>%
-        avg.data.restriction.fun(.) %>%
-        group_by(!!! syms(group_by.d)) %>%
-        summarize.avg.fun(.)
+        graph.avg.df.d <- 
+          resp.long.df %>%
+          avg.data.restriction.fun(.) %>%
+          group_by(!!! syms(group_by.d)) %>%
+          summarize.avg.fun(.)
 
       
-      graphdata.df.d <- 
-        left.join.NA(
-          .x = graphdata.df.d, 
-          .y = graph.avg.df.d, 
-          .by = c(group_by.d),
-          na.replacement = 0
-        ) %>%
-        ReplaceNames(
-          df = .,
-          current.names = c(names(.)),
-          new.names = c(config.graphs.df.d$data.group.by.var,"measure.var","measure.var.avg")
-        )
+        graphdata.df.d <- 
+          left.join.NA(
+            .x = graphdata.df.d, 
+            .y = graph.avg.df.d, 
+            .by = c(group_by.d),
+            na.replacement = 0
+          ) %>%
+          ReplaceNames(
+            df = .,
+            current.names = c(names(.)),
+            new.names = c(config.graphs.df.d$x.varname.1,"measure.var","measure.var.avg")
+          )
       
-      #storage.ls.index <- length(graphdata.ls.d) + 1
       graphdata.ls.d[[d]] <- graphdata.df.d
       setTxtProgressBar(
         progress.bar.c, 
         100*(d + config.graphs.ls.b[1:(c-1)] %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum)/maxrow.c
       )
-      
-      #print(c(d))
-      #print(config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.restriction] %>% as.character)
-      #print(config.graphs.df.e[,names(config.graphs.df.e) == config.graphs.df.e$data.level] %>% as.character)
-      #print(graphdata.df.d)
-      #print(graphdata.ls.d[[graphdata.ls.index]])
       
     } ### END OF LOOP "d" BY GRAPH ###
     
@@ -1091,15 +1091,14 @@ report.startnum <- 1
       config.tables.df.d <- config.tables.df.c[d,]
       
       #Define all possible category values from table
-      #TODO:If table category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
+
+      #all.cats.varnames.v.d <- c(config.tables.df.d$x.varnamename, config.tables.df.d$y.varname)
       
-      all.cats.varnames.v.d <- c(config.tables.df.d$x.varnamename, config.tables.df.d$y.varname)
-      
-      all.cats.ls.d <- 
-        unique.variable.values.fun(
-          varnames = c(config.tables.df.d$x.varname, config.tables.df.d$y.varname), 
-          tb = resp.long.df %>% as_tibble()
-        )
+      #all.cats.ls.d <- 
+      #  unique.variable.values.fun(
+      #    varnames = c(config.tables.df.d$x.varname, config.tables.df.d$y.varname), 
+      #    tb = resp.wide.df %>% as_tibble()
+      #  )
       
       
       #Form final data frame (no averages)
@@ -1107,7 +1106,7 @@ report.startnum <- 1
           resp.long.df.c %>%
           table.data.filter.fun(.) %>%
           group_by(!!! syms(config.tables.df.d$summary.var)) %>%
-          summarize.data.fun(config.input = config.tables.df.d, data.input = .) %>%
+          summarize.table.fun(config.input = config.tables.df.d, data.input = .) %>%
           mutate_all(funs(replace(., is.na(.), 0)))
         tabledata.df.d[,1] <- FirstLetterCap_MultElements(tabledata.df.d[,1])
       

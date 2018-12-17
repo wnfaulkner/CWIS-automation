@@ -186,41 +186,6 @@ source("utils_wnf.r")
     return(result)
   }
   
-#Data Summarize - participation vs. implementation vs. performance 
-  #Test inputs
-  #config.input <- config.graphs.df.d
-  #data.input <-  resp.long.df.c %>% graph.data.restriction.fun %>% group_by(!!! syms(group_by.d))
-  
-  summarize.data.fun <- function(config.input, data.input){
-    if(config.input$data.measure == "participation"){
-      result <- 
-        dplyr::summarize(data.input, measure.var =  length(unique(responseid)))
-    }
-    
-    if(config.input$data.measure == "implementation"){
-      result <- 
-        data.input %>% 
-        filter(impbinary == 1) %>%
-        dplyr::summarize(measure.var = mean(as.numeric(answer), na.rm = TRUE)) %>%
-        as.data.frame(., stringsAsFactors = FALSE)
-    }
-    
-    if(config.input$data.measure == "performance"){
-      result <- data.input %>%
-        filter(impbinary == 0, !is.na(answer)) %>%
-        dplyr::summarize(measure.var = as.character(length(unique(responseid))))
-    }
-    
-    if(config.input$data.measure == "average performance"){
-      result <- 
-        data.input %>%
-        filter(grepl("_num",question)) %>%
-        dplyr::summarize(., measure.var =  mean(as.numeric(answer), na.rm = TRUE))
-    }
-    
-    return(result)
-  }
-  
 #Restriction function for graph average data
   
   #TODO: THESE TWO FUNCTIONS ARE VERY SIMILAR TO THE ONES ABOVE WHICH HAVE BEEN CHANGED SO NOW NEED TO SPECIFY "config.input" BUT
@@ -327,18 +292,121 @@ source("utils_wnf.r")
     }
     return(result)
   }
+
+  
+#Selecting variable names that will be used in graph/table calculations
+  #TEST INPUTS
+    #config.input <- config.graphs.df.d
+    #data.input <- resp.long.df
+    
+  GraphVarnamesInData <- function(config.input, data.input) {
+    varname.i <- config.input %>% select(x.varname.1)
+    
+    if(is.na(varname.i)){
+      all.cats.ls[[i]] <- ""
+      next()
+    }
+    
+    if(varname.i == "answer"){
+      module.varnames <- 
+        q.unbranched.df %>% 
+        filter(module == config.input$module) %>% 
+        select(row.1) %>% 
+        unlist %>% 
+        setdiff(., names(slider.vars.df))
+      
+      result <- 
+        data.input$question %in% module.varnames %>% 
+        data.input$answer[.] %>% 
+        unique %>%
+        .[.!=""] %>%
+        RemoveNA() %>%
+        .[.!=""]
+    }
+    
+    if(varname.i == "module"){
+      result <- "module"
+    }
+    
+    if(varname.i == "practice"){
+      result <- 
+        q.unbranched.df %>% 
+        filter(module == config.input$module) %>% 
+        select(row.1) %>% 
+        unique %>% 
+        unlist %>%
+        RemoveNA() %>%
+        .[.!=""]
+    }
+    
+    if(varname.i == "role"){
+      result <- 
+        data.input %>%
+        select(varname.i) %>%
+        unique %>% 
+        unlist %>%
+        RemoveNA() %>%
+        .[.!=""]
+    }
+    
+    #all.cats.ls[[i]] <- result %>% as.data.frame %>% ReplaceNames(df = ., current.names = ".", new.names = "all.cats")
+    return(result)
+  }  
+    
+#Data Summarize - participation vs. implementation vs. performance 
+  #Test inputs
+  #config.input <- config.graphs.df.d
+  #data.input <-  resp.long.df.c %>% graph.data.restriction.fun %>% group_by(!!! syms(group_by.d))
+  
+  summarize.graph.fun <- function(config.input, data.input){
+    if(config.input$data.measure == "participation"){
+      result <- 
+        dplyr::summarize(data.input, measure.var =  length(unique(responseid)))
+    }
+    
+    if(config.input$data.measure == "implementation"){
+      result <- 
+        data.input %>% 
+        filter(impbinary == 1) %>%
+        dplyr::summarize(measure.var = mean(as.numeric(answer), na.rm = TRUE)) %>%
+        as.data.frame(., stringsAsFactors = FALSE)
+    }
+    
+    if(config.input$data.measure == "performance"){
+      result <- data.input %>%
+        filter(impbinary == 0, !is.na(answer)) %>%
+        dplyr::summarize(measure.var = as.character(length(unique(responseid))))
+    }
+    
+    if(config.input$data.measure == "average performance"){
+      result <- 
+        data.input %>%
+        filter(grepl("_num",question)) %>%
+        dplyr::summarize(., measure.var =  mean(as.numeric(answer), na.rm = TRUE))
+    }
+    
+    return(result)
+  }
   
 #Data Summarize - participation vs. implementation vs. performance 
   #Test inputs
-  #config.input <- config.tables.df.d
+  config.input <- config.tables.df.d
   #data.input <-  resp.long.df.c %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
   
-  summarize.data.fun <- function(config.input, data.input){
+  #TODO:
+  #1. EVENTUALLY WILL NEED TO GENERALIZE THIS FUNCTION SO CAN TAKE AN ARBITRARY NUMBER OF CATEGORIES AS INPUT
+  #   RIGHT NOW CAN ONLY TAKE TWO AND ONE OF THEM MUST BE 'YEAR,' AND THAT NOT EVEN IN CURRENT VERSION (SEE FINAL COMMAND COMMENTED OUT).
+  #2. ALSO, RIGHT NOW WHEN SELECTING 'practice' IT LOOKS FOR THE CHARACTER SUBSTRING OCCURENCE IN THE 'module' VARIABLE WITH GREPL
+  #   EVENTUALLY WILL WANT TO DO A STRINGSPLIT AND EXACT MATCH IN CASE THERE ARE MODULES THAT CONTAIN THE CHARACTERSTRINGS OF 
+  #   OTHER MODULES (E.G. IF THERE WAS A MODULE 'CFAM' AND 'CFA' THEN THE FUNCTION WOULD PICK UP BOTH WHEN LOOKING FOR JUST 'CFA').
+  
+  
+  summarize.table.fun <- function(config.input, data.input){
     #na.replace <- function(x, na.replacement){x[is.na(x)] <- na.replacement} #TODO:This didn't work, but may not need after generalizing.
     
     result.1 <- melt(data.input, id.vars = names(data.input)) 
     
-    if(d == 1){ #TODO:Needs to be generalized - right now just uses number of loop but should be based on configs
+    if(is.na(config.input$x.varname)){ #TODO: finalize modifications (see line 1001 of MASTER file)
       result <-
         reshape2::dcast(
           data = result.1,

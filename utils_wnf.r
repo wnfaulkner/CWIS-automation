@@ -447,71 +447,19 @@
     #TODO:Should generalize so that can handle arbitrary number of nested variables on both axes like pivot
     
     #Test Inputs
-    #varnames <- c(config.tables.df.d$x.var, config.tables.df.d$y.var) %>% RemoveNA()
+    #varnames <- graph.varnames.d
     #tb <- resp.long.df %>% as_tibble()
     
     unique.variable.values.fun <- function(varnames, tb){
       
       varnames <- as.character(varnames)
       tb <- as_tibble(tb)
-      all.cats.ls <- list()
+      #all.cats.ls <- list()
       
-      #LOOP 'i' BY VARNAME
-      #i<-2 #LOOP TESTER
-      for(i in 1:length(varnames)){
-        
-        varname.i <- varnames[i]
-        
-        if(is.na(varname.i)){
-          all.cats.ls[[i]] <- ""
-          next()
-        }
-        
-        if(varname.i == "answer"){
-          module.varnames <- 
-            q.unbranched.df %>% 
-            filter(module == config.tables.df.d$module) %>% 
-            select(row.1) %>% 
-            unlist %>% 
-            setdiff(., names(slider.vars.df))
-          
-          result <- 
-            tb$question %in% module.varnames %>% 
-            tb$answer[.] %>% 
-            unique %>%
-            .[.!=""] %>%
-            RemoveNA() %>%
-            .[.!=""]
-        }
-        
-        if(varname.i == "practice"){
-          result <- 
-            q.unbranched.df %>% 
-            filter(module == config.tables.df.d$module) %>% 
-            select(varname.i) %>% 
-            unique %>% 
-            unlist %>%
-            RemoveNA() %>%
-            .[.!=""]
-        }
-        
-        if(varname.i == "role"){
-          result <- 
-            tb %>%
-            select(varname.i) %>%
-            unique %>% 
-            unlist %>%
-            RemoveNA() %>%
-            .[.!=""]
-        }
-        
-        all.cats.ls[[i]] <- result %>% as.data.frame %>% ReplaceNames(df = ., current.names = ".", new.names = "all.cats")
-        
-      } # END OF LOOP 'i' BY VARNAME
-      names(all.cats.ls) <- c("x","y")
-      return(all.cats.ls)
-    }  
-  
+      result <- apply(tb %>% select(varnames), 2, function(x) RemoveNA(unique(x)))
+      
+      return(result)
+    }
   
   #Reshaping data into long format based on splitting a column on a character
     #Test inputs
