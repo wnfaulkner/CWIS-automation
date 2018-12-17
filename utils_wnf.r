@@ -7,7 +7,7 @@
 { #SECTION COLLAPSE BRACKET
   
   #Install commonly used packages
-    install.common.packages <- function(){
+    InstallCommonPackages <- function(){
       install.packages('devtools')
       install.packages("readr")
       install.packages("data.table")
@@ -23,7 +23,7 @@
     }
   
   #Install commonly used packages
-    load.common.packages <- function(){
+    LoadCommonPackages <- function(){
       library(devtools)
       library(readr)
       library(data.table)
@@ -46,7 +46,7 @@
     }
     
   #Find most recently modified file in a directory    
-    most.recently.modified.filename.fun <- function(title.string.match, file.type, dir){
+    MostRecentlyModifiedFilename <- function(title.string.match, file.type, dir){
       match.files.v <-
         list.files()[
           grepl(tolower(title.string.match), tolower(list.files())) &  #match title string
@@ -65,26 +65,26 @@
 { #SECTION COLLAPSE BRACKET
   
   #Filter Vector based on condition
-    filter.vector <- function(condition,vector.input){
+    FilterVector <- function(condition,vector.input){
       vector.input[condition]
     }
   
   #Remove NA from vector
-    remove.na.from.vector <- function(x){
+    RemoveNA <- function(x){
       if(!is.null(dim(x))){stop("Input must be a vector.")}
       result <- x[!is.na(x)]
       return(result)
     }
   
   #Replace NAs in a vector with a replacement value
-    na.sub <- function(vector,na.replacement){
+    SubNA <- function(vector,na.replacement){
       vector[is.na(vector)] <- na.replacement
       return(vector)
     }       
     
   
-  #Output number of times specified substring occurs within vector of character strings
-    num.substring.matches <- function(pattern, vector){
+  #Number of times specified substring occurs within vector of character strings
+    NumSubstringMatches <- function(pattern, vector){
       sapply(
         gregexpr( pattern, as.character(vector)),
         function(x) if( x[1]==-1 ){ 0 }else{ length(x) } 
@@ -119,12 +119,12 @@
     #df <- resp.long.df.b
     #varnames <- loop.varnames.c
     
-    unique.vals.from.colnames <- function(df, varnames){  
+    UniqueValsFromColnames <- function(df, varnames){  
       result <- 
         df[,names(df) %in% varnames] %>%
         as.data.frame %>%
         lapply(., unique) %>%
-        lapply(., remove.na.from.vector) %>%
+        lapply(., RemoveNA) %>%
         lapply(., as.character) %>%
         lapply(., function(x) {strsplit(x, ",")}) %>%
         lapply(., unlist) %>%
@@ -133,16 +133,16 @@
     }
     
   #All combinations of unique values of variables in a data frame
-    unique.combn.from.colnames <- function(df, varnames){
+    UniqueCombnFromColnames <- function(df, varnames){
       result <- 
-        unique.vals.from.colnames(df, varnames) %>%
+        UniqueValsFromColnames(df, varnames) %>%
         expand.grid(., stringsAsFactors = FALSE) %>%
-        replace.names(., current.names = names(.), new.names = varnames)
+        ReplaceNames(., current.names = names(.), new.names = varnames)
       return(result)
     }
     
   #Check which elements in a vector are different from the one before and return position of spots where values change
-    vector.value.change.positions.fun <- function(x){
+    VectorValueChangePositions <- function(x){
       check.mtx <-
         cbind(
           x[1:length(x)-1],
@@ -343,8 +343,26 @@
 
 {#SECTION COLLAPSE BRACKET
   
+  #Output variable names in data frame which can be converted to numeric       
+    NumericVarnames <- function(df) {
+        result <- 
+          df %>%
+          apply(., 2, unique) %>%
+          sapply(., 
+                 function(x){
+                   ifelse(
+                     length(x) == 1,
+                     as.numeric(x) %>% is.na(.) %>% sum(.) < 1,
+                     as.numeric(x) %>% is.na(.) %>% sum(.) <= 1
+                   )
+                 }
+          ) %>%
+          names(df)[.]
+        return(result)
+      }
+  
   #Order Data Frame by specific column
-    df.order.by.var <- function(df, order.by.varname, rev){
+    OrderDfByVar <- function(df, order.by.varname, rev) {
       if(!exists("rev")){rev <- FALSE}
       
       df <- as.data.frame(df)
@@ -359,7 +377,7 @@
     }
   
   #Replace names in a data frame
-    replace.names <- function(df,current.names, new.names){
+    ReplaceNames <- function(df,current.names, new.names) {
       
       #Data Checks
       if(!is.data.frame(df)){
@@ -452,12 +470,12 @@
         ) %>% 
         unnest(new.split.var, .drop = FALSE) %>% 
         .[,names(.)[names(.) != split.varname]] %>%
-        df.order.by.var(
+        OrderDfByVar(
           df = ., 
           order.by.varname = id.varname,
           rev = FALSE
         ) %>%
-        replace.names(
+        ReplaceNames(
           df = .,
           current.names = "new.split.var",
           new.names = split.varname

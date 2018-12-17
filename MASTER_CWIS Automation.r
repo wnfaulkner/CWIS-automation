@@ -3,10 +3,7 @@
 #########################################################
 
 
-########################################################################################################################################################      
-### INITIAL SETUP ###
-
-{ #SECTION COLLAPSE BRACKET
+# INITIAL SETUP -----------------------------------------------------------
   
   rm(list=ls()) #Remove lists
   options(java.parameters = "- Xmx8g") #helps r not to fail when importing large xlsx files with xlsx package
@@ -14,14 +11,11 @@
   
   #Record code start time for processing time calculations
   start_time <- Sys.time()
-  
-} #END SECTION COLLAPSE BRACKET
 
-########################################################################################################################################################      
-### ESTABLISH DIRECTORIES ###
-
-{ #SECTION COLLAPSE BRACKET
   
+
+# ESTABLISH DIRECTORIES ---------------------------------------------------
+
   #M900
     #working.dir <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 5/"
     #rproj.dir <- "C:/Users/WNF/Documents/GIT PROJECTS/CWIS-automation"
@@ -38,31 +32,22 @@
   
   #Source Inputs (configs)
     source.inputs.dir <- paste(working.dir,"4_source_inputs/",sep="")
-  
-} #END SECTION COLLAPSE BRACKET
 
-#OUTPUTS
+##### OUTPUTS #####
   #working.dir: working directory - Google Drive folder "2018-08 Green Reports"
   #source.code.dir: directory for R project; also contains source data, additional function scripts, and config tables.
   #source.resources.dir: directory with raw data
   #source.inputs.dir: directory with config tables and powerpoint template
 
 
-########################################################################################################################################################      
-### LOAD SOURCE CODE ###
+# LOAD SOURCE CODE --------------------------------------------------------
 
-{ #SECTION COLLAPSE BRACKET
   setwd(source.code.dir)
   source("utils_wnf.r")
-  source("CWIS Automation_Custom Functions.r")
-  #source("FUN_FirstLetterCap.r")
-  #source("FUN_ColClassConvert.r")
-} #END SECTION COLLAPSE BRACKET
+  source("CWIS_custom.r")
 
-########################################################################################################################################################      
-### LOAD LIBRARIES/PACKAGES ###
 
-{ #SECTION COLLAPSE BRACKET
+# LOAD LIBRARIES/PACKAGES  ------------------------------------------------
  
   #In case working on new R install that does not have packages installed
     #install.common.packages()
@@ -75,15 +60,11 @@
   library(rlang)
   library(extrafont)
   extrafont::loadfonts(device="win")
-  
-} #END SECTION COLLAPSE BRACKET
 
-########################################################################################################################################################      
-### LOAD SOURCES, RESOURCES, INPUTS ###
+
+# LOAD SOURCES, RESOURCES, INPUTS -----------------------------------------
 
 report.startnum <- 1
-
-{ #SECTION COLLAPSE BRACKET
   
   #Global Configs Table
     configs.ss <- gs_key("1IfIG7HkE2qQq5MM4AdbfFQnRVQfJe6m7l9_f6nQDkl0",verbose = TRUE) 
@@ -185,9 +166,7 @@ report.startnum <- 1
       header = TRUE
     )
 
-}#END SECTION COLLAPSE BRACKET
-
-#OUTPUTS
+##### OUTPUTS #####
   #global.configs.df
   #config.slidetypes.tb
   #config.graphtypes.df
@@ -197,10 +176,8 @@ report.startnum <- 1
   #questions.df
   #resp1.df (initial responses dataset which will need extensive cleaning and organization in next sections)
 
-########################################################################################################################################################      
-### INITIAL INFORMATICS & 'UNBRANCHING' (STACKING) OF BRANCHED VARIABLES ###
 
-{ #SECTION COLLAPSE BRACKET
+# INITIAL INFORMATICS & 'UNBRANCHING' (STACKING) OF BRANCHED VARIA --------
   
   #INITIAL INFORMATICS
   
@@ -222,8 +199,8 @@ report.startnum <- 1
         ]
       
     #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
-      questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2] <- 
-        paste("x",questions.df$row.1[num.substring.matches("_",questions.df$row.1) == 2],sep="")
+      questions.df$row.1[NumSubstringMatches("_",questions.df$row.1) == 2] <- 
+        paste("x",questions.df$row.1[NumSubstringMatches("_",questions.df$row.1) == 2],sep="")
     
     #Remove extra header rows
       dat.startrow <- 
@@ -352,10 +329,10 @@ report.startnum <- 1
     #"branch" refers to branching questions, so branch0 are columns without branches, and branch1 are columns that are part of branching questions
     #"ans" refers to having answer options, so ans0 are columns without answer options, and ans1 are columns that are part of questions with multiple answer options
     
-    branch0.ans0.colnames.v <- names(resp2.df)[num.substring.matches("_",names(resp2.df))==0]
-    branch0.ans1.colnames.v <- names(resp2.df)[num.substring.matches("_",names(resp2.df))==1 & substr(names(resp2.df),1,1) == "q"]
-    branch1.ans0.colnames.v <- names(resp2.df)[num.substring.matches("_",names(resp2.df))==1 & substr(names(resp2.df),1,1) == "x"]
-    branch1.ans1.colnames.v <- names(resp2.df)[num.substring.matches("_",names(resp2.df))==2]
+    branch0.ans0.colnames.v <- names(resp2.df)[NumSubstringMatches("_",names(resp2.df))==0]
+    branch0.ans1.colnames.v <- names(resp2.df)[NumSubstringMatches("_",names(resp2.df))==1 & substr(names(resp2.df),1,1) == "q"]
+    branch1.ans0.colnames.v <- names(resp2.df)[NumSubstringMatches("_",names(resp2.df))==1 & substr(names(resp2.df),1,1) == "x"]
+    branch1.ans1.colnames.v <- names(resp2.df)[NumSubstringMatches("_",names(resp2.df))==2]
     
     #branch.q.colnums.v <- which(resp2.df %>% names %>% substr(.,1,1) == "x")
     
@@ -397,11 +374,11 @@ report.startnum <- 1
           which(names(branch1.df)[names(branch1.df) != "responseid"] %>% strsplit(.,"_") %>% lapply(., `[[`, 2) %>% unlist == q.name.a)
           ]
       
-      if(num.substring.matches("_",varnames.a) %>% unique() == 1){ # final column names once branching is collapsed
+      if(NumSubstringMatches("_",varnames.a) %>% unique() == 1){ # final column names once branching is collapsed
         q.ans.options.a <- q.name.a
       }else{}
       
-      if(num.substring.matches("_",varnames.a) %>% unique() == 2){
+      if(NumSubstringMatches("_",varnames.a) %>% unique() == 2){
         q.ans.options.a <-
           paste(q.name.a, 
                 varnames.a %>% strsplit(.,"_") %>% lapply(., `[[`, 3) %>% unique %>% unlist,
@@ -477,18 +454,14 @@ report.startnum <- 1
         split.varname = "module",
         split.char = ","
       )
-    
-}#END SECTION COLLAPSE BRACKET    
 
-#OUTPUTS
+##### OUTPUTS #####
   #resp2.df - now with all branch variables 'unbranched' (stacked), and having removed two extra header rows
   #questions.sem.df - now only with rows pertaining to this year and semester
   #ans.opt.always.df - global answer options table with numerical scale, agreement scale, and frequency scale lined up
 
-########################################################################################################################################################      
-### FURTHER CLEANING & ADDING USEFUL VARIABLES ###
 
-{ #SECTION COLLAPSE BRACKET
+# FURTHER CLEANING & ADDING USEFUL VARIABLES ------------------------------
   
   #Lower-Case All Data
     resp3.df <- apply(resp2.df,c(1:2),tolower) %>% as.data.frame(., stringsAsFactors = FALSE)
@@ -620,51 +593,25 @@ report.startnum <- 1
     as.data.frame
   
   #Create 'implementation' binary variables
-  binary.ansopt.vars.df <- apply(num.ansopt.vars.df,c(1:2),function(x){ifelse(x >= 3.5,1,0)}) %>% as.data.frame
-  names(binary.ansopt.vars.df) <- paste(names(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v]),"_binary",sep = "")
-  
-  
-#FUN  #Function: apply to columns to be converted into binary implementation
-  #binary.recode.fun <- function(vector, binary.cutoff){
-  #  result <- ifelse(vector >= binary.cutoff, 1, 0)
-  #  return(result)
-  #}
-  
-#FUN  #Function: output variable names in data frame which can be converted to numeric       
-  numeric.varnames.v <-
-    function(df){
-      result <- 
-        df %>%
-        apply(., 2, unique) %>%
-        sapply(., 
-              function(x){
-                ifelse(
-                  length(x) == 1,
-                  as.numeric(x) %>% is.na(.) %>% sum(.) < 1,
-                  as.numeric(x) %>% is.na(.) %>% sum(.) <= 1
-                )
-              }
-        ) %>%
-        names(df)[.]
-      return(result)
-    }
+    binary.ansopt.vars.df <- apply(num.ansopt.vars.df,c(1:2),function(x){ifelse(x >= 3.5,1,0)}) %>% as.data.frame
+    names(binary.ansopt.vars.df) <- paste(names(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v]),"_binary",sep = "")
   
   #Convert numeric variables in original data to numeric
-  resp3.df[,names(resp3.df) %in% numeric.varnames.v(resp3.df)] <-
-    apply(
-      resp3.df[,names(resp3.df) %in% numeric.varnames.v(resp3.df)],
-      c(1:2),
-      as.numeric
-    )
+    resp3.df[,names(resp3.df) %in% NumericVarnames(resp3.df)] <-
+      apply(
+        resp3.df[,names(resp3.df) %in% NumericVarnames(resp3.df)],
+        c(1:2),
+        as.numeric
+      )
   
   #Converting Slider variables to numeric and binary (according to different max/min/thresholds)
-  slider.vars.df <- 
-    resp3.df[,
-             names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$var.min)]
-             ]
-  
-  slider.binary.vars.ls <- list()
-  slider.num.vars.ls <- list()
+    slider.vars.df <- 
+      resp3.df[,
+               names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$var.min)]
+               ]
+    
+    slider.binary.vars.ls <- list()
+    slider.num.vars.ls <- list()
   
   #TODO:Should straighten out letters for loops
   for(c in 1:ncol(slider.vars.df)){
@@ -885,9 +832,8 @@ report.startnum <- 1
     )
 
   }
-}#END SECTION COLLAPSE BRACKET
 
-#OUTPUTS
+##### OUTPUTS #####
   #outputs.dir: directory for all outputs. Will have "FULL PRINT" if full print, or just the system date & time if sample print
   #resp.wide.df: wide data with all variables including numeric and binary
   #resp.long.df: long format data frame with cwis responses
@@ -895,11 +841,8 @@ report.startnum <- 1
     #including both frequency scale (e.g. 'always', 'most of the time') and agreement scale (e.g.
     #'strongly agree', 'agree').
 
-########################################################################################################################################################      
-### PRODUCING SLIDE, GRAPH, AND TABLE CONFIGURATION TABLES ###
 
-{ #SECTION COLLAPSE BRACKET
-
+# PRODUCING SLIDE, GRAPH, AND TABLE CONFIGURATION TABLES ------------------
   
   #Load Graph & Slide Type Config Tables
   
@@ -980,9 +923,7 @@ report.startnum <- 1
   } # END OF LOOP 'b' BY REPORT.UNIT
   close(progress.bar.b)
 
-} # END SECTION COLLAPSE BRACKET
-
-#OUTPUTS:
+##### OUTPUTS #####
   #report.ids.sample: vector with all report unit names in resp.long.df (length = 19 for baseline data)
   #config.slides.ls.b
     #[[report.unit]]
@@ -995,11 +936,8 @@ report.startnum <- 1
       #data frame where each line represents a graph
 
 
-########################################################################################################################################################      
-### PRODUCING GRAPH & TABLE DATA ###
+# PRODUCING GRAPH & TABLE DATA --------------------------------------------
 
-{# SECTION COLLAPSE BRACKET
-  
   ###                          ###    
   ### LOOP "c" BY REPORT UNIT  ###
   ###                          ###
@@ -1500,7 +1438,7 @@ report.startnum <- 1
               new.names = missing.cats
             ) %>%
             cbind(result.3, .) %>%
-            df.order.by.var(
+            OrderDfByVar(
               df = .,
               order.by.varname = "all.cats",
               rev = TRUE
@@ -1536,10 +1474,8 @@ report.startnum <- 1
     print(c)
   } ### END OF LOOP "c" BY REPORT UNIT     
   close(progress.bar.c)  
-  
-} #END OF SECTION COLLAPSE BRACKET
 
-#OUTPUTS:
+##### OUTPUTS #####
   #tabledata.ls.c
     #[[report.unit]]
     #data frame where each line represents a table
@@ -1547,11 +1483,10 @@ report.startnum <- 1
     #[[report unit]]
     #data frame where each line represents a graph
 
-########################################################################################################################################################      
-### PRODUCING GRAPHS & TABLES THEMSELVES  ###
 
-{#SECTION COLLAPSE BRACKET
-  
+
+# PRODUCING GRAPHS & TABLES THEMSELVES ------------------------------------
+
   ###                       ###    
 # ### LOOP "f" BY DISTRICT  ###
   ###                       ###
@@ -1882,10 +1817,8 @@ report.startnum <- 1
     
   } ### END OF LOOP "f" BY REPORT.UNIT
   close(progress.bar.f)
-  
-}#END SECTION COLLAPSE BRACKET
 
-#OUTPUT:
+##### OUTPUTS #####
   #graphs.ls.f
     #[[report.unit]]
       #ggplot object
@@ -1894,11 +1827,8 @@ report.startnum <- 1
       #FlexTable object
 
 
-########################################################################################################################################################      
-### POWERPOINT GLOBAL CONFIGURATIONS ###
+# POWERPOINT GLOBAL CONFIGURATIONS ----------------------------------------
 
-{ #SECTION COLLAPSE BRACKET
-  
   #Useful colors
   titlegreen <- rgb(118,153,48, maxColorValue=255)
   notesgrey <- rgb(131,130,105, maxColorValue=255)
@@ -1920,19 +1850,9 @@ report.startnum <- 1
   subtitle.format <- textProperties(color = notesgrey, font.size = 28, font.weight = "bold", font.family = "Century Gothic")
   section.title.format <- textProperties(color = "white", font.size = 48, font.weight = "bold", font.family = "Century Gothic")
   notes.format <- textProperties(color = notesgrey, font.size = 14, font.family = "Century Gothic")
-  
-  
-} # END OF SECTION COLLAPSE BRACKET
 
-########################################################################################################################################################      
-### POWERPOINT SLIDE CREATION  ###        
 
-{ #SECTION COLLAPSE BRACKET   
-  #rm(resp.long.df, resp.wide.df)
-  jgc <- function(){
-    gc()
-    .jcall("java/lang/System", method = "gc")
-  }
+# POWERPOINT SLIDE CREATION -----------------------------------------------
   
   setwd(source.inputs.dir)
   
@@ -1948,9 +1868,6 @@ report.startnum <- 1
   #h <- 50 #LOOP TESTER
   #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
   for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
-    #for(h in 1:length(config.slides.ls.b)){
-    
-    #jgc()
     
     #Reading 'Cadre' so it can be added to file name
       cadre.h <- 
@@ -2188,9 +2105,6 @@ report.startnum <- 1
     printed.reports.ls[[h]] <- report.ids.sample[h]
   } # END OF LOOP "h" BY REPORT.UNIT      
   close(progress.bar.h)      
-  
-  
-} #END SECTION COLLAPSE BRACKET          
 
 end_time <- Sys.time()
 code_runtime <- end_time - start_time

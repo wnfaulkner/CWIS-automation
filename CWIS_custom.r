@@ -4,12 +4,12 @@
 
 source("utils_wnf.r")
 
-  #Loop Expander for creating full config tables
-    #Function input testers
-      #configs = config.slidetypes.tb
-      #loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3")
-      #collate.varname = "slide.section.1"
-      #source.data = resp.long.df.b  
+#Loop Expander for creating full config tables
+  #Function input testers
+    #configs = config.slidetypes.tb
+    #loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3")
+    #collate.varname = "slide.section.1"
+    #source.data = resp.long.df.b  
   
   loop.expander.fun <- function(configs, loop.varnames, collate.varname, source.data){
     output.ls <- list()
@@ -28,7 +28,7 @@ source("utils_wnf.r")
       loop.varnames.c <- configs[c,names(configs) %in% loop.varnames] %>% 
         as.matrix %>% 
         as.vector %>% 
-        remove.na.from.vector()
+        RemoveNA()
       
       if(length(loop.varnames.c) == 0){
         output.ls[[c]] <- configs[c,]
@@ -36,7 +36,7 @@ source("utils_wnf.r")
       }
       
       output.ls[[c]] <- 
-        unique.combn.from.colnames(resp.long.df.b,loop.varnames.c) %>%
+        UniqueCombnFromColnames(resp.long.df.b,loop.varnames.c) %>%
         cbind(configs.c,.)
       
     } ### END OF LOOP "C" BY ROW OF CONFIG INPUT ###
@@ -48,11 +48,11 @@ source("utils_wnf.r")
     manual.order.1 <- 
       output.df$slide.order.1 %>% 
       unique %>% 
-      remove.na.from.vector() %>% 
+      RemoveNA() %>% 
       strsplit(.,",") %>% 
       unlist %>%
       as.data.frame(.) %>%
-      replace.names(
+      ReplaceNames(
         ., 
         current.names = names(.), 
         new.names = "module" #TODO: Not abstracted
@@ -80,7 +80,7 @@ source("utils_wnf.r")
     #if(!missing(collate.varname)){
     
     #Form inputs for collating loop: list with sections (collated and non-colated, in order) 
-    #collate.section.configs.df <- vector.value.change.positions.fun(output.df[,collate.varname])
+    #collate.section.configs.df <- VectorValueChangePositions(output.df[,collate.varname])
     #collate.ls <- list()
     #for(e in 1:nrow(collate.section.configs.df)){
     #  collate.ls[[e]] <- output.df[collate.section.configs.df$start.position[e]:collate.section.configs.df$end.position[e],]
@@ -149,7 +149,7 @@ source("utils_wnf.r")
     }
     
     if(report.unit == "district"){
-      x[!(grepl("school", x$slide.loop.var) & (x$school %>% na.sub(.,"")) == "District Office"),] %>% 
+      x[!(grepl("school", x$slide.loop.var) & (x$school %>% SubNA(.,"")) == "District Office"),] %>% 
         return(.)
     }
   }
