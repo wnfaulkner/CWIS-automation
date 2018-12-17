@@ -433,8 +433,87 @@
       return(df)
     }
   
-  #Reshaping data into long format based on splitting a column on a character
     
+  #Left Join & Replace NAs
+    left.join.NA <- function(.x, .y, .by, na.replacement) {
+      result <- left_join(x = .x, y = .y, by = .by, stringsAsFactors = FALSE) %>% 
+        mutate_all(funs(replace(., which(is.na(.)), na.replacement)))
+      return(result)
+    }
+
+  #Unique Values of Named Variables in Data Frame
+    #TODO:Generalize to graph code as well? So treat like a pivot table with arbitrary number of x.vars and y.vars, a summary var and a summary function.
+    #TODO: Maybe would make it so could use a single config table?
+    #TODO:Should generalize so that can handle arbitrary number of nested variables on both axes like pivot
+    
+    #Test Inputs
+    #varnames <- c(config.tables.df.d$x.var, config.tables.df.d$y.var) %>% RemoveNA()
+    #tb <- resp.long.df %>% as_tibble()
+    
+    unique.variable.values.fun <- function(varnames, tb){
+      
+      varnames <- as.character(varnames)
+      tb <- as_tibble(tb)
+      all.cats.ls <- list()
+      
+      #LOOP 'i' BY VARNAME
+      #i<-2 #LOOP TESTER
+      for(i in 1:length(varnames)){
+        
+        varname.i <- varnames[i]
+        
+        if(is.na(varname.i)){
+          all.cats.ls[[i]] <- ""
+          next()
+        }
+        
+        if(varname.i == "answer"){
+          module.varnames <- 
+            q.unbranched.df %>% 
+            filter(module == config.tables.df.d$module) %>% 
+            select(row.1) %>% 
+            unlist %>% 
+            setdiff(., names(slider.vars.df))
+          
+          result <- 
+            tb$question %in% module.varnames %>% 
+            tb$answer[.] %>% 
+            unique %>%
+            .[.!=""] %>%
+            RemoveNA() %>%
+            .[.!=""]
+        }
+        
+        if(varname.i == "practice"){
+          result <- 
+            q.unbranched.df %>% 
+            filter(module == config.tables.df.d$module) %>% 
+            select(varname.i) %>% 
+            unique %>% 
+            unlist %>%
+            RemoveNA() %>%
+            .[.!=""]
+        }
+        
+        if(varname.i == "role"){
+          result <- 
+            tb %>%
+            select(varname.i) %>%
+            unique %>% 
+            unlist %>%
+            RemoveNA() %>%
+            .[.!=""]
+        }
+        
+        all.cats.ls[[i]] <- result %>% as.data.frame %>% ReplaceNames(df = ., current.names = ".", new.names = "all.cats")
+        
+      } # END OF LOOP 'i' BY VARNAME
+      names(all.cats.ls) <- c("x","y")
+      return(all.cats.ls)
+    }  
+  
+  
+  #Reshaping data into long format based on splitting a column on a character
     #Test inputs
       #library(magrittr)
       #id.varname = "slide.type.id"

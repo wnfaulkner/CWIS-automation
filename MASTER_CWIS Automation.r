@@ -3,6 +3,7 @@
 #########################################################
 
 
+
 # INITIAL SETUP -----------------------------------------------------------
   
   rm(list=ls()) #Remove lists
@@ -13,6 +14,7 @@
   start_time <- Sys.time()
 
   
+
 
 # ESTABLISH DIRECTORIES ---------------------------------------------------
 
@@ -50,17 +52,16 @@
 # LOAD LIBRARIES/PACKAGES  ------------------------------------------------
  
   #In case working on new R install that does not have packages installed
-    #install.common.packages()
+    #InstallCommonPackages()
     #install.packages("ReporteRs")
     #install.packages("jsonline")
   
-  load.common.packages()
+  LoadCommonPackages()
   library(proftools)
   library(jsonlite)
   library(rlang)
   library(extrafont)
   extrafont::loadfonts(device="win")
-
 
 # LOAD SOURCES, RESOURCES, INPUTS -----------------------------------------
 
@@ -157,7 +158,7 @@ report.startnum <- 1
     
     resp1.df <- read.csv(
       file =  
-        most.recently.modified.filename.fun(
+        MostRecentlyModifiedFilename(
           title.string.match = "CWIS",
           file.type = "csv",
           dir = source.resources.dir
@@ -478,6 +479,7 @@ report.startnum <- 1
     resp3.df$building <- mgsub("bucahanan","buchanan",resp3.df$building)
     resp3.df$district <- mgsub("bucahanan","buchanan",resp3.df$district)
   
+  #TODO: remove extraneous code
   #School Level Variable
     #school.level.df <- 
     #  read.xlsx(
@@ -652,7 +654,7 @@ report.startnum <- 1
   slider.num.vars.df <- 
     do.call(cbind, slider.num.vars.ls) %>% 
     as.data.frame %>%
-    replace.names(
+    ReplaceNames(
       df = .,
       current.names = names(.),
       new.names = names(slider.vars.df)
@@ -660,11 +662,11 @@ report.startnum <- 1
   
   slider.agreement.varnames.v <- 
     q.unbranched.df$row.1[q.unbranched.df$var.type == "continuous" & q.unbranched.df$scale.type == "agreement"] %>%
-    remove.na.from.vector()
+    RemoveNA()
   
   slider.freq.varnames.v <-
     q.unbranched.df$row.1[q.unbranched.df$var.type == "continuous" & q.unbranched.df$scale.type == "frequency"] %>%
-    remove.na.from.vector()
+    RemoveNA()
   
   slider.agreement.df <-
     slider.num.vars.df[,names(slider.num.vars.df) %in% slider.agreement.varnames.v] %>%
@@ -690,7 +692,7 @@ report.startnum <- 1
   
   slider.text.df <- 
     cbind(slider.agreement.df, slider.freq.df) %>%
-    replace.names(
+    ReplaceNames(
       df = .,
       current.names = names(.),
       new.names = paste(names(.),"_text",sep="")
@@ -699,7 +701,7 @@ report.startnum <- 1
   slider.binary.vars.df <- 
     do.call(cbind, slider.binary.vars.ls) %>% 
     as.data.frame %>%
-    replace.names(
+    ReplaceNames(
       df = .,
       current.names = names(.),
       new.names = paste(names(slider.vars.df),"_binary",sep="")
@@ -712,7 +714,7 @@ report.startnum <- 1
         recode.addnums.df, 
         num.ansopt.vars.df, 
         binary.ansopt.vars.df,
-        slider.num.vars.df %>% replace.names(df = ., current.names = names(.), new.names = paste(names(.),"_num",sep = "")),
+        slider.num.vars.df %>% ReplaceNames(df = ., current.names = names(.), new.names = paste(names(.),"_num",sep = "")),
         slider.binary.vars.df,
         slider.text.df
       )
@@ -962,7 +964,7 @@ report.startnum <- 1
     
     #Loop Inputs (both graphs and tables)
     report.id.c <- report.ids.sample[c]
-    district.c <- resp.long.df %>% filter(report.id == report.id.c) %>% select(district) %>% unique %>% unlist %>% remove.na.from.vector()
+    district.c <- resp.long.df %>% filter(report.id == report.id.c) %>% select(district) %>% unique %>% unlist %>% RemoveNA()
     
     resp.long.df.c <- 
       resp.long.df %>%
@@ -990,114 +992,40 @@ report.startnum <- 1
         strsplit(., ",") %>% 
         unlist
       
+      all.cats.ls.d <- 
+        unique.variable.values.fun(
+          varnames = c(config.graphs.df.d$x.varname, config.graphs.df.d$y.varname), 
+          tb = resp.long.df %>% as_tibble()
+        )
+      
       #Create data frame "all.cats.df.e" of all possible answers for x-axis (role, module, year, answer)
-      
-      #TODO:
-      #1. EVENTUALLY WILL NEED TO GENERALIZE THIS FUNCTION SO CAN TAKE AN ARBITRARY NUMBER OF CATEGORIES AS INPUT
-      #   RIGHT NOW CAN ONLY TAKE TWO AND ONE OF THEM MUST BE 'YEAR,' AND THAT NOT EVEN IN CURRENT VERSION (SEE FINAL COMMAND COMMENTED OUT).
-      #2. ALSO, RIGHT NOW WHEN SELECTING 'practice' IT LOOKS FOR THE CHARACTER SUBSTRING OCCURENCE IN THE 'module' VARIABLE WITH GREPL
-      #   EVENTUALLY WILL WANT TO DO A STRINGSPLIT AND EXACT MATCH IN CASE THERE ARE MODULES THAT CONTAIN THE CHARACTERSTRINGS OF 
-      #   OTHER MODULES (E.G. IF THERE WAS A MODULE 'CFAM' AND 'CFA' THEN THE FUNCTION WOULD PICK UP BOTH WHEN LOOKING FOR JUST 'CFA').
-      
-      
-      
-      #TODO: WILL NEED TO DO SAME THING FOR TABLES
-      
-      #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
-      if(!is.na(config.graphs.df.d$data.group.by.var) && config.graphs.df.d$data.group.by.var == "practice"){
-        all.cats.input1.d <- 
-          resp.long.df %>% 
-          filter(grepl(config.graphs.df.d$module,module))
-      }else{
-        all.cats.input1.d <- 
-          resp.long.df #%>%
-      }
-      
-      all.cats.input2.d <-
-        all.cats.input1.d %>%
-        filter(impbinary == 0) %>%
-        .[,names(resp.long.df) == config.graphs.df.d$data.group.by.var] %>% 
-        unique %>%
-        strsplit(., ",") %>% 
-        unlist %>%
-        unique %>%
-        remove.na.from.vector(.)
-      
-      all.cats.df.d <- 
-        all.cats.input2.d[order(all.cats.input2.d)] %>%
-        as.data.frame(., stringsAsFactors = FALSE)
-      
-      names(all.cats.df.d) <- group_by.d
-      #print(all.cats.df.d)
-      
-#FUN  #Function: Data restriction - district vs. report.id
-      
-      #TODO:NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND GRAPH DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
-      #report.id AND DATA.LEVEL IS DISTRICT.
-      
-      graph.data.restriction.fun <- function(x){
-        
-        if(config.graphs.df.d$data.level == "district"){
-          y <- x
+        #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
+        if(!is.na(config.graphs.df.d$data.group.by.var) && config.graphs.df.d$data.group.by.var == "practice"){
+          all.cats.input1.d <- 
+            resp.long.df %>% 
+            filter(grepl(config.graphs.df.d$module,module))
+        }else{
+          all.cats.input1.d <- 
+            resp.long.df #%>%
         }
         
-        if(config.graphs.df.d$data.level == "building"){
-          y <- 
-            x %>% 
-            filter(report.id == report.id.c) 
-        }
+        all.cats.input2.d <-
+          all.cats.input1.d %>%
+          filter(impbinary == 0) %>%
+          .[,names(resp.long.df) == config.graphs.df.d$data.group.by.var] %>% 
+          unique %>%
+          strsplit(., ",") %>% 
+          unlist %>%
+          unique %>%
+          RemoveNA(.)
         
-        if(is.na(config.graphs.df.d$data.restriction)){
-          result <- y
-        }
+        all.cats.df.d <- 
+          all.cats.input2.d[order(all.cats.input2.d)] %>%
+          as.data.frame(., stringsAsFactors = FALSE)
         
-        if(!is.na(config.graphs.df.d$data.restriction)){
-          result <- 
-            y %>% 
-            filter(
-              y[,names(y) == config.graphs.df.d$data.restriction] == 
-                config.graphs.df.d[,names(config.graphs.df.d) == config.graphs.df.d$data.restriction]
-            )
-        }
+        names(all.cats.df.d) <- group_by.d
+        #print(all.cats.df.d)
         
-        return(result)
-      }
-      
-#FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
-      #Test inputs
-        #config.input <- config.graphs.df.d
-        #data.input <-  resp.long.df.c %>% graph.data.restriction.fun %>% group_by(!!! syms(group_by.d))
-      
-      summarize.data.fun <- function(config.input, data.input){
-        if(config.input$data.measure == "participation"){
-          result <- 
-            dplyr::summarize(data.input, measure.var =  length(unique(responseid)))
-        }
-        
-        if(config.input$data.measure == "implementation"){
-          result <- 
-            data.input %>% 
-            filter(impbinary == 1) %>%
-            dplyr::summarize(measure.var = mean(as.numeric(answer), na.rm = TRUE)) %>%
-            as.data.frame(., stringsAsFactors = FALSE)
-        }
-        
-        if(config.input$data.measure == "performance"){
-          result <- data.input %>%
-            filter(impbinary == 0, !is.na(answer)) %>%
-            dplyr::summarize(measure.var = as.character(length(unique(responseid))))
-        }
-        
-        if(config.input$data.measure == "average performance"){
-          result <- 
-            data.input %>%
-            filter(grepl("_num",question)) %>%
-            dplyr::summarize(., measure.var =  mean(as.numeric(answer), na.rm = TRUE))
-        }
-        
-        return(result)
-      }
-      
       #Form final data frame (no averages)
         graphdata.df.d <-  
           resp.long.df.c %>%
@@ -1109,92 +1037,14 @@ report.startnum <- 1
       
       #print(graphdata.df.d)
       
-#FUN  #Function: Restriction function for graph average data
-      
-      #TODO: THESE TWO FUNCTIONS ARE VERY SIMILAR TO THE ONES ABOVE WHICH HAVE BEEN CHANGED SO NOW NEED TO SPECIFY "config.input" BUT
-      #   HAVE NOT MADE THOSE CHANGES HERE YET. PROBABLY COULD ROLL UP INTO ONE OR TWO FUNCTIONS.
-      
-      #Test Inputs
-        #x <- resp.long.df
-          
-      avg.data.restriction.fun <- function(x){
-        
-        if(config.graphs.df.d$data.level == "district"){
-          y <- x
-        }
-        
-        if(config.graphs.df.d$data.level == "building"){
-          y <- 
-            x %>% 
-            filter(district == unique(resp.long.df$district[resp.long.df$report.id == report.id.c])) 
-        }
-        
-        z <- y %>% filter(!is.na(y[,names(y)==group_by.d])) #TODO:Might want to make flexible - i.e. add a parameter which allows user to include NA
-        
-        if(!config.graphs.df.d$data.restriction=="module" | is.na(config.graphs.df.d$data.restriction)){ 
-          #TODO:Should look into a better way to deal with this restriction, think about input tables
-          result <- z
-        }
-        
-        if(config.graphs.df.d$data.restriction=="module" & !is.na(config.graphs.df.d$data.restriction)){
-          result <- 
-            z %>%
-            filter(
-              z[,names(z)==config.graphs.df.d$data.restriction] == 
-                config.graphs.df.d[,names(config.graphs.df.d)==config.graphs.df.d$data.restriction]
-            )
-        }
-        
-        return(result)
-      }
-      
-#FUN  #Function: Summary Function for Graph Averages
-        #Test Inputs
-          #x<-resp.long.df %>% avg.data.restriction.fun(.) %>% group_by(!!! syms(group_by.d))
-          
-        summarize.avg.fun <- function(x){
-          
-          if(config.graphs.df.d$data.measure == "participation"){
-            result <- x %>%
-              dplyr::summarize(avg = length(unique(responseid))/length(unique(school.id)))#participation
-          }
-          
-          if(config.graphs.df.d$data.measure == "implementation"){
-            result <- x %>% 
-              filter(.,impbinary == 1) %>%
-              dplyr::summarize(., avg = mean(as.numeric(answer), na.rm = TRUE))#implementation
-            
-          }
-          
-          if(config.graphs.df.d$data.measure == "performance"){
-            result <- x %>%
-              filter(impbinary == 0, !is.na(answer)) %>%
-              dplyr::summarize(avg = length(unique(responseid))/length(unique(school.id)))
-          }
-          
-          if(config.graphs.df.d$data.measure == "average performance"){
-            result <- 
-              x %>%
-              filter(grepl("_num",question)) %>%
-              dplyr::summarize(., measure.var.avg =  mean(as.numeric(answer), na.rm = TRUE))
-          }
-          
-          return(result)
-        }
-      
+
       #Add average variable to final data frame
       graph.avg.df.d <- 
         resp.long.df %>%
         avg.data.restriction.fun(.) %>%
         group_by(!!! syms(group_by.d)) %>%
         summarize.avg.fun(.)
-      
-#FUN  #Function: Left Join ?with NA?
-      left.join.NA <- function(.x, .y, .by, na.replacement) {
-        result <- left_join(x = .x, y = .y, by = .by, stringsAsFactors = FALSE) %>% 
-          mutate_all(funs(replace(., which(is.na(.)), na.replacement)))
-        return(result)
-      }
+
       
       graphdata.df.d <- 
         left.join.NA(
@@ -1203,7 +1053,7 @@ report.startnum <- 1
           .by = c(group_by.d),
           na.replacement = 0
         ) %>%
-        replace.names(
+        ReplaceNames(
           df = .,
           current.names = c(names(.)),
           new.names = c(config.graphs.df.d$data.group.by.var,"measure.var","measure.var.avg")
@@ -1243,224 +1093,23 @@ report.startnum <- 1
       #Define all possible category values from table
       #TODO:If table category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
       
-      all.cats.varnames.v.d <- c(config.tables.df.d$x.var, config.tables.df.d$y.var)
-      
-      #TODO:Generalize to graph code as well? So treat like a pivot table with arbitrary number of x.vars and y.vars, a summary var and a summary function.
-      #TODO: Maybe would make it so could use a single config table?
-      #TODO:Should generalize so that can handle arbitrary number of nested variables on both axes like pivot
-      
-      #Test Inputs
-        #varnames <- c(config.tables.df.d$x.var, config.tables.df.d$y.var) %>% remove.na.from.vector()
-        #tb <- resp.long.df %>% as_tibble()
-      
-      unique.variable.values.fun <- function(varnames, tb){
-        
-        varnames <- as.character(varnames)
-        tb <- as_tibble(tb)
-        all.cats.ls <- list()
-        
-        #LOOP 'i' BY VARNAME
-        #i<-2 #LOOP TESTER
-        for(i in 1:length(varnames)){
-          
-          varname.i <- varnames[i]
-          
-          if(is.na(varname.i)){
-            all.cats.ls[[i]] <- ""
-            next()
-          }
-          
-          if(varname.i == "answer"){
-            module.varnames <- 
-              q.unbranched.df %>% 
-              filter(module == config.tables.df.d$module) %>% 
-              select(row.1) %>% 
-              unlist %>% 
-              setdiff(., names(slider.vars.df))
-            
-            result <- 
-              tb$question %in% module.varnames %>% 
-              tb$answer[.] %>% 
-              unique %>%
-              .[.!=""] %>%
-              remove.na.from.vector() %>%
-              .[.!=""]
-          }
-          
-          if(varname.i == "practice"){
-            result <- 
-              q.unbranched.df %>% 
-              filter(module == config.tables.df.d$module) %>% 
-              select(varname.i) %>% 
-              unique %>% 
-              unlist %>%
-              remove.na.from.vector() %>%
-              .[.!=""]
-          }
-          
-          if(varname.i == "role"){
-            result <- 
-              tb %>%
-              select(varname.i) %>%
-              unique %>% 
-              unlist %>%
-              remove.na.from.vector() %>%
-              .[.!=""]
-          }
-          
-          all.cats.ls[[i]] <- result %>% as.data.frame %>% replace.names(df = ., current.names = ".", new.names = "all.cats")
-          
-        } # END OF LOOP 'i' BY VARNAME
-        names(all.cats.ls) <- c("x","y")
-        return(all.cats.ls)
-      }
+      all.cats.varnames.v.d <- c(config.tables.df.d$x.varnamename, config.tables.df.d$y.varname)
       
       all.cats.ls.d <- 
         unique.variable.values.fun(
-          varnames = c(config.tables.df.d$x.var, config.tables.df.d$y.var), 
+          varnames = c(config.tables.df.d$x.varname, config.tables.df.d$y.varname), 
           tb = resp.long.df %>% as_tibble()
         )
       
-      #TODO:NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND table DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
-      #BUILDING AND DATA.LEVEL IS DISTRICT.
-      
-      table.data.filter.fun <- function(x){
-        
-        if(is.na(config.tables.df.d$module)){
-          y <- x
-        }else{
-          y <- x %>% filter(module == config.tables.df.d$module) %>% filter()
-        }
-        
-        y <- y %>% filter(table.q == 1) 
-        
-        if(is.na(config.tables.df.d$filter)){ #
-          result <- y
-        }else{
-          
-          if(!config.tables.df.d$filter %in% c("building","district")){
-            stop("Configuration 'filter' is neither 'building' nor 'district.' Check input.")
-          }
-          
-          if(config.tables.df.d$filter == "building"){
-            result <- y %>% filter(report.id == report.id.c)
-          }
-          
-          if(config.tables.df.d$filter == "district"){
-            result <- y %>% filter(district == district.c)
-          }
-          
-        }
-        return(result)
-      }
-      
-#FUN  #Function: Data Summarize - participation vs. implementation vs. performance 
-      #Test inputs
-        config.input <- config.tables.df.d
-        data.input <-  resp.long.df.c %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
-      
-      summarize.data.fun <- function(config.input, data.input){
-        #na.replace <- function(x, na.replacement){x[is.na(x)] <- na.replacement} #TODO:This didn't work, but may not need after generalizing.
-        
-        result.1 <- melt(data.input, id.vars = names(data.input)) 
-        
-        if(d == 1){ #TODO:Needs to be generalized - right now just uses number of loop but should be based on configs
-          result <-
-            reshape2::dcast(
-              data = result.1,
-              formula = role ~ report.id,
-              value.var = "responseid",
-              fun.aggregate = function(x){length(unique(x))}
-            ) %>%
-            right_join(
-              ., 
-              all.cats.ls.d$y, 
-              by = c("role" = "all.cats")
-            ) %>%
-            filter(role != "District Administrator") %>%
-            .[c(2,3,5,6,7,4,8,1),] %>%
-            #.[c(1,2,3,4,6,7,8,5),] %>%
-            replace.names(
-              df = .,
-              current.names = report.id.c,
-              new.names = "num. responses"
-            ) %>%
-            replace.names(
-              df = .,
-              current.names = names(.),
-              new.names = FirstLetterCap_MultElements(names(.))
-            ) %>%
-            rbind(
-              .,
-              c("Total",sum(select(., "Num. Responses"), na.rm = TRUE))
-            )
-          result[is.na(result)] <- 0
-          
-          return(result)
-        }else{
-          
-          #Draft table (have to merge with all.cats to make sure have every column and row represented)
-          result.2 <- 
-            reshape2::dcast(
-              data = result.1, 
-              formula = 
-                unlist(data.input[names(data.input) == config.tables.df.d$y.varname]) ~ 
-                unlist(data.input[names(data.input) == config.tables.df.d$x.varname]),#syms(paste(config.input$x.var,"~",config.input$y.var,sep="")), 
-              value.var ="responseid",
-              fun.aggregate = length
-            ) %>% 
-            replace.names(
-              df = .,
-              current.names = "unlist(data.input[names(data.input) == config.tables.df.d$y.varname])",
-              new.names = "all.cats"
-            ) 
-          
-          #Add all.cats to rows (y axis) 
-          result.3 <- 
-            right_join(
-              result.2, 
-              all.cats.ls.d$y, 
-              by = "all.cats"
-            )
-          
-          ##Add all.cats to columns (x axis)
-          missing.cats <- unlist(all.cats.ls.d$x)[!unlist(all.cats.ls.d$x) %in% names(result.3)] %>% as.character
-          
-          result.4 <- 
-            matrix(
-              ncol = length(missing.cats),
-              nrow = dim(result.3)[1]
-            ) %>%
-            as_tibble() %>%
-            replace.names(
-              df = .,
-              current.names = names(.),
-              new.names = missing.cats
-            ) %>%
-            cbind(result.3, .) %>%
-            OrderDfByVar(
-              df = .,
-              order.by.varname = "all.cats",
-              rev = TRUE
-            ) %>%
-            replace.names(
-              df = .,
-              current.names = "all.cats",
-              new.names = FirstLetterCap_OneElement(config.tables.df.d$y.varname)
-            )
-          
-          return(result.4)
-        }
-      }
       
       #Form final data frame (no averages)
-      tabledata.df.d <-  
-        resp.long.df.c %>%
-        table.data.filter.fun(.) %>%
-        group_by(!!! syms(config.tables.df.d$summary.var)) %>%
-        summarize.data.fun(config.input = config.tables.df.d, data.input = .) %>%
-        mutate_all(funs(replace(., is.na(.), 0)))
-      tabledata.df.d[,1] <- FirstLetterCap_MultElements(tabledata.df.d[,1])
+        tabledata.df.d <-  
+          resp.long.df.c %>%
+          table.data.filter.fun(.) %>%
+          group_by(!!! syms(config.tables.df.d$summary.var)) %>%
+          summarize.data.fun(config.input = config.tables.df.d, data.input = .) %>%
+          mutate_all(funs(replace(., is.na(.), 0)))
+        tabledata.df.d[,1] <- FirstLetterCap_MultElements(tabledata.df.d[,1])
       
       #storage.ls.index <- length(tabledata.ls.d) + 1
       tabledata.ls.d[[d]] <- tabledata.df.d
@@ -1469,7 +1118,7 @@ report.startnum <- 1
       
     } ### END OF LOOP "d" BY TABLE ###
     
-    names(tabledata.ls.d) <- config.tables.df.c$module %>% remove.na.from.vector() %>% as.character %>% c("role",.)
+    names(tabledata.ls.d) <- config.tables.df.c$module %>% RemoveNA() %>% as.character %>% c("role",.)
     tabledata.ls.c[[c]] <- tabledata.ls.d   
     print(c)
   } ### END OF LOOP "c" BY REPORT UNIT     
@@ -1517,6 +1166,78 @@ report.startnum <- 1
     for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         g<-g #same as above
+        
+        #Graph Label Heights (defined based on ratio of tallest to shortest columns)
+        #Test Inputs
+        #df = graphdata.df.g
+        #measure.var = "measure.var"
+        #height.ratio.threshold = 8.2
+        
+        create.graph.labels.fun <- function(df, measure.var, height.ratio.threshold){
+          
+          if(!is.data.frame(as.data.frame(df))){stop("Input cannot be coerced into data frame.")}
+          
+          df <- as.data.frame(df)
+          
+          var <- df[,names(df) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric")
+          
+          #Label Heights
+          min <- min(var, na.rm = TRUE)
+          max <- max(var, na.rm = TRUE)
+          height.ratio.threshold <- height.ratio.threshold
+          height.ratio <- ifelse(max == 0, 0, max/min)
+          
+          #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
+          
+          if(height.ratio < height.ratio.threshold){ 
+            graph.labels.heights.v <- rep(min/2, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
+            above.label.vectorposition <- max/var > height.ratio.threshold
+          }
+          
+          if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
+            graph.labels.heights.v <- vector(length = length(var))
+            above.label.vectorposition <- max/var > height.ratio.threshold
+            above.label.vectorposition[is.na(above.label.vectorposition)] <- TRUE
+            var[is.na(var)] <- 0
+            graph.labels.heights.v[above.label.vectorposition] <-   #labels for columns below threshold, position is height of bar plus 1/10 of max bar height 
+              var[above.label.vectorposition] + max/10
+            graph.labels.heights.v[graph.labels.heights.v == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
+              min(var[!above.label.vectorposition])/2
+          }
+          
+          #Label Text
+          if(config.graphs.df.g$data.measure == "implementation"){
+            graph.labels.text.v <- as.character(100*var %>% round(., 2)) %>% paste(.,"%",sep="")
+          }else{
+            graph.labels.text.v <- var %>% as.numeric %>% round( ., 1) %>% sprintf("%.1f",.) %>% trimws(., which = "both") 
+          }
+          graph.labels.text.v[df[,names(df) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric") %>% is.na(.)] <- "No Responses"
+          
+          #Label visibility
+          graph.labels.alpha.v <- 1 #ifelse(var != 0, 1, 0)  
+          
+          #Label color for graph.type.e
+          if(config.graphs.df.g$graph.type.id == "e"){
+            graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(df[,1])/2) %>% rev
+          }else{
+            graph.labels.color.v <- rep("#FFFFFF",100)[1:length(df[,1])]
+          }
+          graph.labels.color.v[var==0] <- "#000000"
+          graph.labels.color.v[above.label.vectorposition] <- "#000000"
+          graph.labels.color.v <- graph.labels.color.v %>% rev
+          
+          result <- data.frame(
+            graph.labels.text = graph.labels.text.v,
+            graph.labels.heights = graph.labels.heights.v,
+            graph.labels.alpha.v = graph.labels.alpha.v,
+            graph.labels.color = graph.labels.color.v,
+            stringsAsFactors = FALSE
+          )
+          
+          #print(paste("Graph Label Heights: ",paste(graph.labels.heights.v, collapse = ", "),sep=""))
+          return(result)
+        }
+        
         
         ### GRAPH INPUTS FOR GGPLOT ###
         
