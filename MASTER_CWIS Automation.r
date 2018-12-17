@@ -65,7 +65,7 @@
 
 # LOAD SOURCES, RESOURCES, INPUTS -----------------------------------------
 
-report.startnum <- 1
+1 <- 1
   
   #Global Configs Table
     configs.ss <- gs_key("1IfIG7HkE2qQq5MM4AdbfFQnRVQfJe6m7l9_f6nQDkl0",verbose = TRUE) 
@@ -818,7 +818,6 @@ report.startnum <- 1
     setwd(outputs.dir)
   
   #Write Unbranched Data to Excel File
-    if(report.startnum == 1){
       unbranched.file.name <- 
         paste( 
           "widedata_",
@@ -832,8 +831,6 @@ report.startnum <- 1
       file = unbranched.file.name,
       row.names = FALSE
     )
-
-  }
 
 ##### OUTPUTS #####
   #outputs.dir: directory for all outputs. Will have "FULL PRINT" if full print, or just the system date & time if sample print
@@ -867,12 +864,12 @@ report.startnum <- 1
   
   #b <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
-  for(b in report.startnum:length(report.ids.sample)){   #START OF LOOP BY REPORT UNIT
+  for(b in 1:length(report.ids.sample)){   #START OF LOOP BY REPORT UNIT
   
     #print(b)
     loop.start.time.b <- Sys.time()
     
-    if(b == report.startnum){print("FORMING SLIDE, GRAPH, AND TABLE CONFIG TABLES...")}
+    if(b == 1){print("FORMING SLIDE, GRAPH, AND TABLE CONFIG TABLES...")}
     #print(c(b,100*b/length(report.ids.sample)))
     
     #Create report.id.b (for this iteration) and skip if report for district office
@@ -960,7 +957,7 @@ report.startnum <- 1
   #for(c in slider.report.ids.sample){   #LOOP TESTER
   for(c in 1:length(report.ids.sample)){   #START OF LOOP BY DISTRICT
     
-    if(c == report.startnum){print("Forming input data tables for graphs...")}
+    if(c == 1){print("Forming input data tables for graphs...")}
     
     #Loop Inputs (both graphs and tables)
     report.id.c <- report.ids.sample[c]
@@ -1147,9 +1144,9 @@ report.startnum <- 1
   
   #f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  for(f in report.startnum:length(report.ids.sample)){
+  for(f in 1:length(report.ids.sample)){
     
-    if(f == report.startnum){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
+    if(f == 1){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
     school.id.f <- report.ids.sample[f]
     config.graphs.df.f <- config.graphs.ls.b[[f]]
     
@@ -1587,7 +1584,7 @@ report.startnum <- 1
   
   #h <- 50 #LOOP TESTER
   #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
-  for(h in report.startnum:length(config.slides.ls.b)){ #LOOP TESTER
+  for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
     
     #Reading 'Cadre' so it can be added to file name
       cadre.h <- 
