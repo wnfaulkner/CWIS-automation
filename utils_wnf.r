@@ -12,14 +12,15 @@
       install.packages("readr")
       install.packages("data.table")
       install.packages("dplyr")
+      install.packages('tidyr')
       install.packages("googlesheets")
       install.packages("stringr")
+      install.packages('officer')
       install.packages("magrittr")
-      install.packages("googlesheets")
       install.packages('reshape2')
-      install.packages('tidyr')
       install.packages('ggplot2')
       install.packages('xlsx')
+      install.packages('styler')
     }
   
   #Install commonly used packages
@@ -32,12 +33,12 @@
       library(tidyr)
       library(googlesheets)
       library(stringr)
-      library(ReporteRs)
+      library(officer)
       library(magrittr)
-      library(googlesheets)
       library(reshape2)
       library(ggplot2)
       library(xlsx)
+      library(styler)
     }
 
   #Select right 'n' characters of string
@@ -442,22 +443,43 @@
     }
 
   #Unique Values of Named Variables in Data Frame
-    #TODO:Generalize to graph code as well? So treat like a pivot table with arbitrary number of x.vars and y.vars, a summary var and a summary function.
+    #TODO: Generalize to graph code as well? So treat like a pivot table with arbitrary number of x.vars and y.vars, a summary var and a summary function.
     #TODO: Maybe would make it so could use a single config table?
-    #TODO:Should generalize so that can handle arbitrary number of nested variables on both axes like pivot
+    #TODO: Should generalize so that can handle arbitrary number of nested variables on both axes like pivot
     
     #Test Inputs
     #varnames <- graph.varnames.d
     #tb <- resp.long.df %>% as_tibble()
     
-    unique.variable.values.fun <- function(varnames, tb){
+    unique.variable.values.fun <- function( .data, .varnames){
       
-      varnames <- as.character(varnames)
-      tb <- as_tibble(tb)
+      varnames <- as.character(.varnames)
+      tb <- as_tibble(.data)
       #all.cats.ls <- list()
       
       result <- apply(tb %>% select(varnames), 2, function(x) RemoveNA(unique(x)))
       
+      return(result)
+    }
+    
+  #Unique Values of Measures of Key Column (for long data)
+    #Test Inputs
+      .data <- resp.long.df
+      .keyvarname <- 
+    
+    UniqueKeyVals <- function(.data, .keyvarname, .keyvals, .measurevarname) {
+      keyvals <- as.character(.keyvals)
+      keyvarname <- as.character(.keyvarname)
+      measurevarname <- as.character(.measurevarname)
+      tb <- as_tibble(.data)
+      
+      result <- 
+        tb %>%
+        filter(keyvarname %in% keyvals) %>%
+        select(measurevarname) %>%
+        unique(.)
+        
+        
       return(result)
     }
   

@@ -263,29 +263,29 @@ source("utils_wnf.r")
   #TODO:NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND table DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
   #BUILDING AND DATA.LEVEL IS DISTRICT.
   
-  table.data.filter.fun <- function(x){
+  table.data.filter.fun <- function(data.input, config.input){
     
-    if(is.na(config.tables.df.d$module)){
+    if(is.na(config.input$module)){
       y <- x
     }else{
-      y <- x %>% filter(module == config.tables.df.d$module) %>% filter()
+      y <- x %>% filter(module == config.input$module) %>% filter()
     }
     
     y <- y %>% filter(table.q == 1) 
     
-    if(is.na(config.tables.df.d$filter)){ #
+    if(is.na(config.input$filter)){ #
       result <- y
     }else{
       
-      if(!config.tables.df.d$filter %in% c("building","district")){
+      if(!config.input$filter %in% c("building","district")){
         stop("Configuration 'filter' is neither 'building' nor 'district.' Check input.")
       }
       
-      if(config.tables.df.d$filter == "building"){
+      if(config.input$filter == "building"){
         result <- y %>% filter(report.id == report.id.c)
       }
       
-      if(config.tables.df.d$filter == "district"){
+      if(config.input$filter == "district"){
         result <- y %>% filter(district == district.c)
       }
       
@@ -390,7 +390,7 @@ source("utils_wnf.r")
   
 #Data Summarize - participation vs. implementation vs. performance 
   #Test inputs
-  config.input <- config.tables.df.d
+  #config.input <- config.tables.df.d
   #data.input <-  resp.long.df.c %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
   
   #TODO:
@@ -446,8 +446,8 @@ source("utils_wnf.r")
         reshape2::dcast(
           data = result.1, 
           formula = 
-            unlist(data.input[names(data.input) == config.tables.df.d$y.varname]) ~ 
-            unlist(data.input[names(data.input) == config.tables.df.d$x.varname]),#syms(paste(config.input$x.var,"~",config.input$y.var,sep="")), 
+            unlist(data.input[names(data.input) == config.input$y.varname]) ~ 
+            unlist(data.input[names(data.input) == config.input$x.varname]),#syms(paste(config.input$x.var,"~",config.input$y.var,sep="")), 
           value.var ="responseid",
           fun.aggregate = length
         ) %>% 
@@ -488,7 +488,7 @@ source("utils_wnf.r")
         ReplaceNames(
           df = .,
           current.names = "all.cats",
-          new.names = FirstLetterCap_OneElement(config.tables.df.d$y.varname)
+          new.names = FirstLetterCap_OneElement(config.input$y.varname)
         )
       
       return(result.4)

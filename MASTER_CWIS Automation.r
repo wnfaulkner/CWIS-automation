@@ -12,19 +12,17 @@
   
   #Record code start time for processing time calculations
   start_time <- Sys.time()
-
   
-
 
 # ESTABLISH DIRECTORIES ---------------------------------------------------
 
   #M900
-    #working.dir <- "C:/Users/WNF/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 5/"
-    #rproj.dir <- "C:/Users/WNF/Documents/GIT PROJECTS/CWIS-automation"
+    working.dir <- "C:/Users/willi/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
+    rproj.dir <- "C:/Users/willi/Documents/GIT PROJECTS/CWIS-automation"
     
   #Thinkpad T470
-    working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 5/"
-    rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
+    #working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
+    #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
   
   #Source Code Directory
     source.code.dir <- rproj.dir #paste(rproj.dir,"2_source_code/",sep="") #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
@@ -35,6 +33,7 @@
   #Source Inputs (configs)
     source.inputs.dir <- paste(working.dir,"4_source_inputs/",sep="")
 
+    
 ##### OUTPUTS #####
   #working.dir: working directory - Google Drive folder "2018-08 Green Reports"
   #source.code.dir: directory for R project; also contains source data, additional function scripts, and config tables.
@@ -55,6 +54,11 @@
     #InstallCommonPackages()
     #install.packages("ReporteRs")
     #install.packages("jsonline")
+    #install.packages('httpuv')
+    #install.packages('xtable')
+    #install.packages('sourcetools')
+    #install.packages('shiny')
+    #install.packages('miniUI')
   
   LoadCommonPackages()
   library(proftools)
@@ -63,12 +67,11 @@
   library(extrafont)
   extrafont::loadfonts(device="win")
 
+  
 # LOAD SOURCES, RESOURCES, INPUTS -----------------------------------------
-
-1 <- 1
   
   #Global Configs Table
-    configs.ss <- gs_key("1IfIG7HkE2qQq5MM4AdbfFQnRVQfJe6m7l9_f6nQDkl0",verbose = TRUE) 
+    configs.ss <- gs_key("1ku_OC9W87ut6W1qrdpFeYBlWlPN5X4fGHJ3h1k0HrOA",verbose = TRUE) 
     global.configs.df <- gs_read(configs.ss, ws = "global.configs", range = NULL, literal = TRUE)
     
     report.unit <- 
@@ -178,7 +181,7 @@
   #resp1.df (initial responses dataset which will need extensive cleaning and organization in next sections)
 
 
-# INITIAL INFORMATICS & 'UNBRANCHING' (STACKING) OF BRANCHED VARIA --------
+# INITIAL INFORMATICS & 'UNBRANCHING' (STACKING) OF BRANCHED VARIABLES --------
   
   #INITIAL INFORMATICS
   
@@ -200,8 +203,8 @@
         ]
       
     #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
-      questions.df$row.1[NumSubstringMatches("_",questions.df$row.1) == 2] <- 
-        paste("x",questions.df$row.1[NumSubstringMatches("_",questions.df$row.1) == 2],sep="")
+      questions.sem.df$row.1[NumSubstringMatches("_",questions.sem.df$row.1) == 2] <- 
+        paste("x",questions.sem.df$row.1[NumSubstringMatches("_",questions.sem.df$row.1) == 2],sep="")
     
     #Remove extra header rows
       dat.startrow <- 
@@ -267,7 +270,7 @@
         report.ids.all <- #report ids filtering out district office, ids without a district, or blanks
           resp1.df$report.id %>%
           unique %>% 
-          filter.vector(
+          FilterVector(
             condition = !grepl("district office",.),
             vector.input = .
           ) %>%
@@ -314,17 +317,31 @@
               report.ids.sample <- ""
             }
             #print(i)
-            print(length(report.ids.sample))
+            #print(length(report.ids.sample))
             i = i+1
           }
         }
         
-      if(!sample.print & report.unit == "building"){
-        report.ids.sample <- report.ids.all
-      }
+        if(!sample.print & report.unit == "building"){
+          report.ids.sample <- report.ids.all
+        }
+        
+        #Restrict response dataset to rows for generated report ids
+          resp2.df <- resp1.df[resp1.df$report.id %in% report.ids.sample,]
       
-      #Restrict response dataset to rows for generated report ids
-        resp2.df <- resp1.df[resp1.df$report.id %in% report.ids.sample,]
+    #Remove extraneous variables
+      remove.colnames <- 
+        questions.df %>% 
+        filter(tolower(necessary.in.final.data) == "no") %>%
+        filter(year == year) %>%
+        filter(semester == semester) %>%
+        select(row.1) %>%
+        unlist %>%
+        RemoveNA
+      
+      resp2.df <-
+        resp2.df[ , !(names(resp2.df) %in% remove.colnames)]
+          
       
   #STACKING COLUMNS SPLIT BY SURVEY BRANCHING
     #"branch" refers to branching questions, so branch0 are columns without branches, and branch1 are columns that are part of branching questions
@@ -443,11 +460,13 @@
           )
         ,
         ] #TODO:looks like still uneven numbers - some columns must be missing from questions table, but seems to be columns we don't care about.
+    
     q.unbranched.df$row.1[grep("q",q.unbranched.df$row.1)] <- 
       str_extract(
         q.unbranched.df$row.1[grep("q",q.unbranched.df$row.1)], 
         "q[0-9].+"
       )
+    
     q.unbranched.df <-
       SplitColReshape.ToLong(
         df = q.unbranched.df,
@@ -471,33 +490,8 @@
     resp3.df$role <- mgsub("Teacher", "Classroom Teacher", resp3.df$role)
   
   #Recode school & district names
-    #school.name.patterns <- c("elem\\.","sch\\.","co\\.","jr\\.","sr\\.","meramec valley early childhood")
-    #school.name.replacements <- c("elementary","school","county","junior","senior","early childhood center")
-    #school.name.patterns <- c("\\.")
-    #school.name.replacements <- c("")
-    #resp3.df$building <- mgsub(school.name.patterns,school.name.replacements,resp3.df$building)
     resp3.df$building <- mgsub("bucahanan","buchanan",resp3.df$building)
     resp3.df$district <- mgsub("bucahanan","buchanan",resp3.df$district)
-  
-  #TODO: remove extraneous code
-  #School Level Variable
-    #school.level.df <- 
-    #  read.xlsx(
-    #    "MMD List with Grade Spans.xlsx",
-    #    sheetName = "MMD Cohort 1&2",
-    #    header = TRUE,
-    #    as.data.frame = TRUE,
-    #    stringsAsFactors = FALSE) %>%
-    #  mutate(school.id = paste(tolower(district.name),tolower(trimws(school.name, which = "both")),sep = "_"))
-    
-    #resp3.df <- left_join(resp3.df,school.level.df %>% select(school.id, school.level), by = "school.id")
-    #resp3.df$building.level[is.na(resp3.df$building.level)] <- "Other"
-    #resp3.df$building.level[resp3.df$report.id == "belton 124_bosco"] <- "Other"
-    #resp3.df$building.level[resp3.df$report.id == "cameron r-i_cameron high school"] <- "High"
-    #resp3.df$building.level[resp3.df$report.id == "poplar bluff r-i_poplar bluff early childhood center"] <- "Elem."
-    #resp3.df$building.level[resp3.df$report.id == "poplar bluff r-i_poplar bluff technical career center"] <- "Other"
-    #resp3.df$building.level[resp3.df$report.id == "sheldon r-viii_sheldon k-12"] <- "Other"
-    #resp3.df$building.level <- FirstLetterCap_MultElements(resp3.df$building.level)
   
   #Capitalize First Letter of character variables
     resp3.df[,names(resp3.df) %in% c("year","role","district","school","school.level")] <- 
@@ -519,194 +513,195 @@
   
   #Add useful variables for analysis 
   
-  #Useful vectors for selecting cwis answer variables
-    cwis.vars.v <- which(names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$module)])
-    cwis.varnames.v <- names(resp3.df)[names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$module)]]
-    cwis.modules.v <- 
-      questions.sem.df$module[!is.na(questions.sem.df$module)] %>% 
-      unique %>% 
-      strsplit(.,"\\/") %>% 
-      unlist %>% 
-      unique
-  
-  #Recode answer option variables as numeric
-    numeric.recode.fun <- 
-      function(x){
-        recode(
-          x,
-          `always` = 5,
-          `most of the time` = 4,
-          `about half the time` = 3,
-          `sometimes` = 2,
-          `never` = 1,
-          `strongly agree` = 5,
-          `agree` = 4,
-          `neutral` = 3,
-          `neither agree nor disagree` = 3,
-          `neither agree or disagree` = 3,
-          `disagree` = 2,
-          `strongly disagree` = 1
+    #Useful vectors for selecting cwis answer variables
+      cwis.vars.v <- which(names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$module)])
+      cwis.varnames.v <- names(resp3.df)[names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$module)]]
+      cwis.modules.v <- 
+        questions.sem.df$module[!is.na(questions.sem.df$module)] %>% 
+        unique %>% 
+        strsplit(.,"\\/") %>% 
+        unlist %>% 
+        unique
+    
+    #Recode answer option variables as numeric
+      numeric.recode.fun <- 
+        function(x){
+          recode(
+            x,
+            `always` = 5,
+            `most of the time` = 4,
+            `about half the time` = 3,
+            `sometimes` = 2,
+            `never` = 1,
+            `strongly agree` = 5,
+            `agree` = 4,
+            `neutral` = 3,
+            `neither agree nor disagree` = 3,
+            `neither agree or disagree` = 3,
+            `disagree` = 2,
+            `strongly disagree` = 1
+          )
+        }
+      
+      recode.ansopt.varnames.v <- 
+        which(resp3.df %>% 
+                apply(., 2, unique) %>%
+                sapply(., function(x) {
+                  x %in% c("always","most of the time","about half the time","sometimes","never","strongly agree","agree","neutral","disagree","strongly disagree")
+                }) %>%
+                sapply(., any)) %>%
+       names(resp3.df)[.]
+      
+      num.ansopt.vars.df <- 
+        apply(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v], 
+              2,
+              numeric.recode.fun
+        ) %>% 
+        as.data.frame
+      
+      names(num.ansopt.vars.df) <- paste(names(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v]),"_num", sep = "")
+    
+    #Recode Original Answers to add numbers (e.g. "Always" becomes "1. Always")
+      addnums.recode.fun <- 
+        function(x){
+          recode(
+            x,
+            `always` = '5. always',
+            `most of the time` = '4. most of the time',
+            `about half the time` = '3. about half the time',
+            `sometimes` = "2. sometimes",
+            `never` = "1. never",
+            `strongly agree` = "5. strongly agree",
+            `agree` = "4. agree",
+            `neutral` = "3. neutral",
+            `neither agree nor disagree` = "3. neutral",
+            `neither agree or disagree` = "3. neutral",
+            `disagree` = "2. disagree",
+            `strongly disagree` = "1. strongly disagree"
+          )
+        }
+      
+      recode.addnums.df <- 
+        apply(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v], 
+              2,
+              addnums.recode.fun
+        ) %>% 
+        as.data.frame
+      
+    #Create 'implementation' binary variables
+      binary.ansopt.vars.df <- apply(num.ansopt.vars.df,c(1:2),function(x){ifelse(x >= 3.5,1,0)}) %>% as.data.frame
+      names(binary.ansopt.vars.df) <- paste(names(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v]),"_binary",sep = "")
+    
+    #Convert numeric variables in original data to numeric
+      resp3.df[,names(resp3.df) %in% NumericVarnames(resp3.df)] <-
+        apply(
+          resp3.df[,names(resp3.df) %in% NumericVarnames(resp3.df)],
+          c(1:2),
+          as.numeric
         )
+    
+    #Converting Slider variables to numeric and binary (according to different max/min/thresholds)
+      slider.vars.df <- 
+        resp3.df[,
+                 names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$var.min)]
+                 ]
+      
+      slider.binary.vars.ls <- list()
+      slider.num.vars.ls <- list()
+    
+      for(c in 1:ncol(slider.vars.df)){
+        
+        colname.c <- names(slider.vars.df)[c]
+        
+        var.min.c <- 
+          q.unbranched.df$var.min[q.unbranched.df$row.1 == colname.c][!is.na(q.unbranched.df$var.min[q.unbranched.df$row.1 == colname.c])] %>% 
+          .[1] %>%                 #Once did SplitColReshape on the questions table, have two rows for some questions so have to select first one only.
+          as.character %>% 
+          as.numeric
+        
+        var.max.c <- 
+          q.unbranched.df$var.max[q.unbranched.df$row.1 == colname.c][!is.na(q.unbranched.df$var.max[q.unbranched.df$row.1 == colname.c])] %>% 
+          .[1] %>%
+          as.character %>% 
+          as.numeric
+        
+        if(var.min.c == 1 & var.max.c == 5){
+          cuts <- c(1.5,2.5,3.5,4.5)
+          slider.binary.threshold.c <- 3.5
+        }
+        
+        if(var.min.c == 1 & var.max.c == 10){
+          cuts <- seq(
+            from = var.min.c,
+            to = var.max.c, 
+            #by = ((to - from)/(length.out - 1)), 
+            length.out = 5)[1:4]
+          slider.binary.threshold.c <- 7
+        }
+        
+        if(length(var.min.c == 1 & var.max.c == 5) > 1){
+          print(c)
+        }
+        slider.num.vars.ls[[c]] <- findInterval(slider.vars.df[,c], cuts)+1
+        slider.binary.vars.ls[[c]] <- ifelse(slider.vars.df[,c] >= slider.binary.threshold.c, 1, 0)
       }
+      
+      slider.num.vars.df <- 
+        do.call(cbind, slider.num.vars.ls) %>% 
+        as.data.frame %>%
+        ReplaceNames(
+          df = .,
+          current.names = names(.),
+          new.names = names(slider.vars.df)
+        ) 
+      
+      slider.agreement.varnames.v <- 
+        q.unbranched.df$row.1[q.unbranched.df$var.type == "continuous" & q.unbranched.df$scale.type == "agreement"] %>%
+        RemoveNA()
+      
+      slider.freq.varnames.v <-
+        q.unbranched.df$row.1[q.unbranched.df$var.type == "continuous" & q.unbranched.df$scale.type == "frequency"] %>%
+        RemoveNA()
+      
+      slider.agreement.df <-
+        slider.num.vars.df[,names(slider.num.vars.df) %in% slider.agreement.varnames.v] %>%
+        apply(., 2, function(x){
+          mgsub(
+            pattern = c(5:1),
+            replacement = paste(ans.opt.always.df$ans.num,". ",ans.opt.always.df$ans.text.agreement, sep = "") %>% tolower,
+            x = x
+          )
+        }) %>%
+        as.data.frame()
+      
+      slider.freq.df <-
+        slider.num.vars.df[,names(slider.num.vars.df) %in% slider.freq.varnames.v] %>%
+        apply(., 2, function(x){
+          mgsub(
+            pattern = c(5:1),
+            replacement = paste(ans.opt.always.df$ans.num,". ",ans.opt.always.df$ans.text.freq, sep = "") %>% tolower,
+            x = x
+          )
+        }) %>%
+        as.data.frame()
+      
+      slider.text.df <- 
+        cbind(slider.agreement.df, slider.freq.df) %>%
+        ReplaceNames(
+          df = .,
+          current.names = names(.),
+          new.names = paste(names(.),"_text",sep="")
+        )
+      
+      slider.binary.vars.df <- 
+        do.call(cbind, slider.binary.vars.ls) %>% 
+        as.data.frame %>%
+        ReplaceNames(
+          df = .,
+          current.names = names(.),
+          new.names = paste(names(slider.vars.df),"_binary",sep="")
+        )
     
-    recode.ansopt.varnames.v <- 
-      which(resp3.df %>% 
-              apply(., 2, unique) %>%
-              sapply(., function(x) {
-                x %in% c("always","most of the time","about half the time","sometimes","never","strongly agree","agree","neutral","disagree","strongly disagree")
-              }) %>%
-              sapply(., any)) %>%
-     names(resp3.df)[.]
-    
-    num.ansopt.vars.df <- 
-      apply(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v], 
-            2,
-            numeric.recode.fun
-      ) %>% 
-      as.data.frame
-    
-    names(num.ansopt.vars.df) <- paste(names(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v]),"_num", sep = "")
-  
-  #Recode Original Answers to add numbers (e.g. "Always" becomes "1. Always")
-  addnums.recode.fun <- 
-    function(x){
-      recode(
-        x,
-        `always` = '5. always',
-        `most of the time` = '4. most of the time',
-        `about half the time` = '3. about half the time',
-        `sometimes` = "2. sometimes",
-        `never` = "1. never",
-        `strongly agree` = "5. strongly agree",
-        `agree` = "4. agree",
-        `neutral` = "3. neutral",
-        `neither agree nor disagree` = "3. neutral",
-        `neither agree or disagree` = "3. neutral",
-        `disagree` = "2. disagree",
-        `strongly disagree` = "1. strongly disagree"
-      )
-    }
-  
-  recode.addnums.df <- 
-    apply(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v], 
-          2,
-          addnums.recode.fun
-    ) %>% 
-    as.data.frame
-  
-  #Create 'implementation' binary variables
-    binary.ansopt.vars.df <- apply(num.ansopt.vars.df,c(1:2),function(x){ifelse(x >= 3.5,1,0)}) %>% as.data.frame
-    names(binary.ansopt.vars.df) <- paste(names(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v]),"_binary",sep = "")
-  
-  #Convert numeric variables in original data to numeric
-    resp3.df[,names(resp3.df) %in% NumericVarnames(resp3.df)] <-
-      apply(
-        resp3.df[,names(resp3.df) %in% NumericVarnames(resp3.df)],
-        c(1:2),
-        as.numeric
-      )
-  
-  #Converting Slider variables to numeric and binary (according to different max/min/thresholds)
-    slider.vars.df <- 
-      resp3.df[,
-               names(resp3.df) %in% q.unbranched.df$row.1[!is.na(q.unbranched.df$var.min)]
-               ]
-    
-    slider.binary.vars.ls <- list()
-    slider.num.vars.ls <- list()
-  
-  #TODO:Should straighten out letters for loops
-  for(c in 1:ncol(slider.vars.df)){
-    
-    colname.c <- names(slider.vars.df)[c]
-    var.min.c <- 
-      q.unbranched.df$var.min[q.unbranched.df$row.1 == colname.c][!is.na(q.unbranched.df$var.min[q.unbranched.df$row.1 == colname.c])] %>% 
-      .[1] %>%                 #Once did SplitColReshape on the questions table, have two rows for some questions so have to select first one only.
-      as.character %>% 
-      as.numeric
-    var.max.c <- 
-      q.unbranched.df$var.max[q.unbranched.df$row.1 == colname.c][!is.na(q.unbranched.df$var.max[q.unbranched.df$row.1 == colname.c])] %>% 
-      .[1] %>%
-      as.character %>% 
-      as.numeric
-    
-    if(var.min.c == 1 & var.max.c == 5){
-      cuts <- c(1.5,2.5,3.5,4.5)
-      slider.binary.threshold.c <- 3.5
-    }
-    
-    if(var.min.c == 1 & var.max.c == 10){
-      cuts <- seq(
-        from = var.min.c,
-        to = var.max.c, 
-        #by = ((to - from)/(length.out - 1)), 
-        length.out = 5)[1:4]
-      slider.binary.threshold.c <- 7
-    }
-    
-    if(length(var.min.c == 1 & var.max.c == 5) > 1){
-      print(c)
-    }
-    slider.num.vars.ls[[c]] <- findInterval(slider.vars.df[,c], cuts)+1
-    slider.binary.vars.ls[[c]] <- ifelse(slider.vars.df[,c] >= slider.binary.threshold.c, 1, 0)
-  }
-  
-  slider.num.vars.df <- 
-    do.call(cbind, slider.num.vars.ls) %>% 
-    as.data.frame %>%
-    ReplaceNames(
-      df = .,
-      current.names = names(.),
-      new.names = names(slider.vars.df)
-    ) 
-  
-  slider.agreement.varnames.v <- 
-    q.unbranched.df$row.1[q.unbranched.df$var.type == "continuous" & q.unbranched.df$scale.type == "agreement"] %>%
-    RemoveNA()
-  
-  slider.freq.varnames.v <-
-    q.unbranched.df$row.1[q.unbranched.df$var.type == "continuous" & q.unbranched.df$scale.type == "frequency"] %>%
-    RemoveNA()
-  
-  slider.agreement.df <-
-    slider.num.vars.df[,names(slider.num.vars.df) %in% slider.agreement.varnames.v] %>%
-    apply(., 2, function(x){
-      mgsub(
-        pattern = c(5:1),
-        replacement = paste(ans.opt.always.df$ans.num,". ",ans.opt.always.df$ans.text.agreement, sep = "") %>% tolower,
-        x = x
-      )
-    }) %>%
-    as.data.frame()
-  
-  slider.freq.df <-
-    slider.num.vars.df[,names(slider.num.vars.df) %in% slider.freq.varnames.v] %>%
-    apply(., 2, function(x){
-      mgsub(
-        pattern = c(5:1),
-        replacement = paste(ans.opt.always.df$ans.num,". ",ans.opt.always.df$ans.text.freq, sep = "") %>% tolower,
-        x = x
-      )
-    }) %>%
-    as.data.frame()
-  
-  slider.text.df <- 
-    cbind(slider.agreement.df, slider.freq.df) %>%
-    ReplaceNames(
-      df = .,
-      current.names = names(.),
-      new.names = paste(names(.),"_text",sep="")
-    )
-  
-  slider.binary.vars.df <- 
-    do.call(cbind, slider.binary.vars.ls) %>% 
-    as.data.frame %>%
-    ReplaceNames(
-      df = .,
-      current.names = names(.),
-      new.names = paste(names(slider.vars.df),"_binary",sep="")
-    )
-  
   #Create final data frames: 1. Wide; 2. Long for original CWIS data; 3. Long for impbinary data (both long include all original id variables)
     resp.wide.df <- 
       cbind(
@@ -728,7 +723,7 @@
       )
     resp.long.df$question <- as.character(resp.long.df$question)
     
-    #filter.varnames.v <- resp.long.df$question %>% unique %>% filter.vector(grepl("num|binary",.),.) %>% str_extract(., "q[0-9]*_[0-9]*") %>% unique
+    #filter.varnames.v <- resp.long.df$question %>% unique %>% FilterVector(grepl("num|binary",.),.) %>% str_extract(., "q[0-9]*_[0-9]*") %>% unique
     #c(branch1.ans0.colnames.v,branch1.ans1.colnames.v) %>% gsub("x[0-9]*\\_","",.) %>% unique      
     #resp.long.df <- 
     #  resp.long.df[!resp.long.df$question %in% filter.varnames.v,]
@@ -1000,10 +995,10 @@
       all.cats.ls.d <- 
         unique.variable.values.fun(
           varnames = graph.varnames.d, 
-          tb = resp.wide.df %>% as_tibble()
+          tb = resp.long.df
         )
       
-      #Create data frame "all.cats.df.e" of all possible answers for x-axis (role, module, year, answer)
+      #Create data frame "all.cats.df.d" of all possible answers for x-axis (role, module, year, answer)
         #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
         if(!is.na(config.graphs.df.d$x.varname.1) && config.graphs.df.d$x.varname.1 == "practice"){
           all.cats.input1.d <- 
@@ -1101,7 +1096,7 @@
       #Form final data frame (no averages)
         tabledata.df.d <-  
           resp.long.df.c %>%
-          table.data.filter.fun(.) %>%
+          table.data.filter.fun(data.input = ., config.input = config.tables.df.d) %>%
           group_by(!!! syms(config.tables.df.d$summary.var)) %>%
           summarize.table.fun(config.input = config.tables.df.d, data.input = .) %>%
           mutate_all(funs(replace(., is.na(.), 0)))
