@@ -17,14 +17,14 @@
   
     #M900
       working.dir <- "C:/Users/willi/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
-      rproj.dir <- "C:/Users/willi/Documents/GIT PROJECTS/CWIS-automation"
+      rproj.dir <- "C:/Users/willi/Documents/GIT PROJECTS/CWIS-automation/"
       
     #Thinkpad T470
       #working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
       #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
     
     #Source Code Directory
-      source.code.dir <- rproj.dir #paste(rproj.dir,"2_source_code/",sep="") #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
+      rproj.dir <- rproj.dir #paste(rproj.dir,"2_source_code/",sep="") #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
     
     #Source Resources Director (raw data)
       source.resources.dir <- paste(working.dir,"3_source_resources/", sep = "")
@@ -34,7 +34,7 @@
   
   # LOAD SOURCE CODE
       
-    setwd(source.code.dir)
+    setwd(rproj.dir)
     source("utils_wnf.r")
     source("CWIS_custom.r")
     
@@ -60,92 +60,35 @@
 # 0-SETUP OUTPUTS -----------------------------------------------------------
   #start_time: sys.time for code
   #working.dir: working directory - Google Drive folder "2018-08 Green Reports"
-  #source.code.dir: directory for R project; also contains source data, additional function scripts, and config tables.
+  #rproj.dir: directory for R project; also contains source data, additional function scripts, and config tables.
   #source.resources.dir: directory with raw data
   #source.inputs.dir: directory with config tables and powerpoint template
 
 # 1-IMPORT -----------------------------------------
   
-  #Global Configs Table
+  import.source.dir <- paste(rproj.dir,"1-Import/", sep = "")
+  setwd(import.source.dir)
+  source("import_functions.r")
+  
+  #Config Tables
     configs.ss <- gs_key("1ku_OC9W87ut6W1qrdpFeYBlWlPN5X4fGHJ3h1k0HrOA",verbose = TRUE) 
     
-    global.configs.df <- gs_read(configs.ss, ws = "global.configs", range = NULL, literal = TRUE)
+    #Load all tables from config google sheet as tibbles
+      all.configs.ls <- GoogleSheetLoadAllWorksheets(configs.ss)
     
-    report.unit <- 
-      global.configs.df[
-        global.configs.df$Config == "Report Unit",
-        tolower(names(global.configs.df)) == "value"
-      ] %>% unlist %>% tolower
+    #Assign each table to its own tibble object
+      ListToTibbleObjects(all.configs.ls) #Converts list elements to separate tibble objects names with
+                                          #their respective sheet names with ".tb" appended
     
-    report.version <- 
-      global.configs.df[
-        global.configs.df$Config == "Report Version",
-        tolower(names(global.configs.df)) == "value"
-      ] %>% unlist %>% tolower
-    
-    year <- 
-      global.configs.df[
-        global.configs.df$Config == "Data Year",
-        tolower(names(global.configs.df)) == "value"
-      ] %>% unlist %>% tolower
-    
-    semester <- 
-      global.configs.df[
-        global.configs.df$Config == "Data Semester",
-        tolower(names(global.configs.df)) == "value"
-      ] %>% unlist %>% tolower
-    
-    sample.print <- 
+  #Extract global configs from tibble as their own character objects
+    TibbleToCharObjects(config.global.tb)
+    sample.print <- #Convert sample.print to TRUE/FALSE
       ifelse(
-        global.configs.df[
-          global.configs.df$Config == "Sample Print",
-          names(global.configs.df) == "Value"
-          ] %>% 
-          unique %>% 
-          tolower == "yes",
+        sample.print == "TRUE",
         TRUE,
         FALSE
       )
-    
-    sample.size <- 
-      global.configs.df[
-        global.configs.df$Config == "Sample Print Size",
-        tolower(names(global.configs.df)) == "value"
-      ] %>% unlist %>% as.numeric()
-   
-  #Slide Types Configs Table 
-    config.slidetypes.tb <- gs_read(configs.ss, ws = "slide.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "slide.types",header = TRUE, stringsAsFactors = FALSE) 
-  
-  #Graph Types Configs Table
-    load.config.graphtypes.tb <- gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE) 
-    config.graphtypes.df <- 
-      inner_join(config.slidetypes.tb, load.config.graphtypes.tb, by = "slide.type.id", all.x = FALSE) 
-  
-  #Table Types Configs Table
-    load.config.tabletypes.tb <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) 
-    config.tabletypes.df <- 
-      inner_join(config.slidetypes.tb, load.config.tabletypes.tb, by = c("slide.type.id")) 
-    
-  #Piece-of-text (POT) Config Table
-    config.pot.tb <- gs_read(configs.ss, ws = "pot.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs_Jason Altman.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE) 
-    config.pot.tb$color <- 
-      config.pot.tb$color %>% 
-      gsub("x","",.)
-  
-  #Questions Configs Table (imported as list)
-    questions.ls <- 	gs_read(configs.ss, ws = "questions", range = NULL, literal = TRUE) %>% as.list() %>% lapply(., tolower)
-    questions.df <- do.call(cbind, questions.ls) %>% as.data.frame(., stringsAsFactors = FALSE)
-  
-  #Buildings Config Table  
-    buildings.tb <- 	
-      gs_read(configs.ss, ws = "buildings", range = NULL, literal = TRUE) %>% 
-      as.list() %>% 
-      lapply(., tolower) %>%
-      do.call(cbind, .) %>%
-      as_tibble()
-    
-    buildings.tb$report.id <- mgsub("bucahanan","buchanan",buildings.tb$report.id)
-    
+
   #Responses table (main data, imported as data frame)
     
     setwd(source.resources.dir)
@@ -162,18 +105,57 @@
     )
 
 # 1-IMPORT OUTPUTS -----------------------------------------
-  #global.configs.df
-  #config.slidetypes.tb
+  #config.global.tb
+  #config.slide.types.tb
   #config.graphtypes.df
   #config.tabletypes.df
   #config.pot.tb
   #buildings.tb
-  #questions.df
+  #questions.tb
   #resp1.df (initial responses dataset which will need extensive cleaning and organization in next sections)
 
 
 # 2-CLEANING ROUND 1 (UNBRANCHING) --------
   
+    #TODO: INITIAL IMPORT CLEANING ITEMS STILL PENDING  
+    #TODO: graph, table, pot inner-joining (to cleaning section?)
+    #TODO: buildings.tb - mgsub for misspelling 'bucahanan' to 'buchanan' (to cleaning section?)
+    #TODO: config.pot.tb - removing 'x' from colors
+    #TODO: questions.tb, buildings.tb - lower-casing
+    
+    {
+      #Graph Types Configs Table
+      load.config.graph.types.tb <- gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE) 
+      config.graphtypes.df <- 
+        inner_join(config.slide.types.tb, load.config.graph.types.tb, by = "slide.type.id", all.x = FALSE) 
+      
+      #Table Types Configs Table
+      load.config.tabletypes.tb <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) 
+      config.tabletypes.df <- 
+        inner_join(config.slide.types.tb, load.config.tabletypes.tb, by = c("slide.type.id")) 
+      
+      #Piece-of-text (POT) Config Table
+      config.pot.tb <- gs_read(configs.ss, ws = "pot.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs_Jason Altman.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE) 
+      config.pot.tb$color <- 
+        config.pot.tb$color %>% 
+        gsub("x","",.)
+      
+      #Questions Configs Table (imported as list)
+      questions.ls <- 	gs_read(configs.ss, ws = "questions", range = NULL, literal = TRUE) %>% as.list() %>% lapply(., tolower)
+      questions.tb <- do.call(cbind, questions.ls) %>% as.data.frame(., stringsAsFactors = FALSE)
+      
+      #Buildings Config Table  
+      buildings.tb <- 	
+        gs_read(configs.ss, ws = "buildings", range = NULL, literal = TRUE) %>% 
+        as.list() %>% 
+        lapply(., tolower) %>%
+        do.call(cbind, .) %>%
+        as_tibble()
+      
+      buildings.tb$report.id <- mgsub("bucahanan","buchanan",buildings.tb$report.id)
+    }  
+    
+
   #INITIAL INFORMATICS
   
     #Global Answer Options
@@ -187,10 +169,10 @@
       ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
       ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
       
-    #Restrict questions.df to only rows for this year/semester
+    #Restrict questions.tb to only rows for this data.year/data.semester
       questions.sem.df <- 
-        questions.df[
-          questions.df$year == year & questions.df$semester == semester,
+        questions.tb[
+          questions.tb$data.year == data.year & questions.tb$data.semester == data.semester,
         ]
       
     #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
@@ -322,10 +304,10 @@
       
     #Remove extraneous variables
       remove.colnames <- 
-        questions.df %>% 
+        questions.tb %>% 
         filter(tolower(necessary.in.final.data) == "no") %>%
-        filter(year == year) %>%
-        filter(semester == semester) %>%
+        filter(data.year == data.year) %>%
+        filter(data.semester == data.semester) %>%
         select(row.1) %>%
         unlist %>%
         RemoveNA
@@ -468,7 +450,7 @@
 
 # 2-CLEANING ROUND 1 (UNBRANCHING) OUTPUTS --------
   #resp2.df - now with all branch variables 'unbranched' (stacked), and having removed two extra header rows
-  #questions.sem.df - now only with rows pertaining to this year and semester
+  #questions.sem.df - now only with rows pertaining to this data.year and data.semester
   #ans.opt.always.df - global answer options table with numerical scale, agreement scale, and frequency scale lined up
 
 
@@ -485,8 +467,8 @@
     resp3.df$district <- mgsub("bucahanan","buchanan",resp3.df$district)
   
   #Capitalize First Letter of character variables
-    resp3.df[,names(resp3.df) %in% c("year","role","district","school","school.level")] <- 
-      apply(resp3.df[,names(resp3.df) %in% c("year","role","district","school","school.level")], 2, FirstLetterCap_MultElements)
+    resp3.df[,names(resp3.df) %in% c("data.year","role","district","school","school.level")] <- 
+      apply(resp3.df[,names(resp3.df) %in% c("data.year","role","district","school","school.level")], 2, FirstLetterCap_MultElements)
   
   
   #Rearrange data columns
@@ -894,7 +876,7 @@
     #Slide config table for this report unit
       config.slides.df <- 
         loop.expander.fun(
-          configs = config.slidetypes.tb,
+          configs = config.slide.types.tb,
           loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"),
           collate.varname = "slide.section.1",
           source.data = resp.long.df.b  
@@ -989,7 +971,7 @@
           tb = resp.long.df
         )
       
-      #Create data frame "all.cats.df.d" of all possible answers for x-axis (role, module, year, answer)
+      #Create data frame "all.cats.df.d" of all possible answers for x-axis (role, module, data.year, answer)
         #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
         if(!is.na(config.graphs.df.d$x.varname.1) && config.graphs.df.d$x.varname.1 == "practice"){
           all.cats.input1.d <- 
@@ -1242,10 +1224,10 @@
             graphdata.df.g <- left_join(graphdata.df.g,ans.opt.always.df, by = c("answer" = "ans.num"))#graphdata.df.g[order(graphdata.df.g[,2]),]
             
             if(config.graphs.df.g$module %in% c("LEAD","PD")){
-              graphdata.df.g <- graphdata.df.g %>% select(year, ans.text.agreement, measure.var, avg)
+              graphdata.df.g <- graphdata.df.g %>% select(data.year, ans.text.agreement, measure.var, avg)
               graph.cat.varname <- "ans.text.agreement"
             }else{
-              graphdata.df.g <- graphdata.df.g %>% select(year, ans.text.freq, measure.var, avg)
+              graphdata.df.g <- graphdata.df.g %>% select(data.year, ans.text.freq, measure.var, avg)
               graph.cat.varname <- "ans.text.freq"
             }
           }else{}
@@ -1358,7 +1340,7 @@
         #graph.g
         
         #GRAPH AVERAGES
-          #TODO: Need to make so can group on arbitrary variable with arbitrary number of groups and sub-groups. Right now can only two groups of 2 (e.g. year in Repeated Measures)
+          #TODO: Need to make so can group on arbitrary variable with arbitrary number of groups and sub-groups. Right now can only two groups of 2 (e.g. data.year in Repeated Measures)
           graphdata.df.g$avg.alpha <- 
             ifelse(
               is.na(config.graphs.df.g$graph.group.by.vars),# != "Baseline" & graphdata.df.g$measure.var.avg != 0,
@@ -1410,7 +1392,7 @@
         
         graph.cat.order.ls <-
           list(
-            year = c("Baseline","2017-18"),
+            data.year = c("Baseline","2017-18"),
             school.level = c("Elem.","Middle","High","Mult.","Other"),
             role = c("Special Educator","Classroom Teacher","Instructional Coach","School Counselor","School Social Worker","Building Administrator","Other"),
             module = c("ETLP", "CFA","DBDM","LEAD","PD"),
