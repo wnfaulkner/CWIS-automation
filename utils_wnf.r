@@ -2,6 +2,21 @@
 #####       STANDARD UTIL FUNCTIONS FOR R SCRIPTS       #####
 #############################################################
 
+#FUNCTIONS FOR ERROR HANDLING
+  #Return TRUE/FALSE if expression throws an error
+    IsError <- function(.expr){
+      result <-
+        ifelse(
+          tryCatch(
+            .expr, 
+            error = function(x) {return(TRUE)}
+          ) == TRUE,
+          TRUE,
+          FALSE
+        )
+      return(result)
+    }
+
 #FUNCTIONS FOR INITIAL CODE SETUP & LOADING DATA
 
 { #SECTION COLLAPSE BRACKET
@@ -464,8 +479,8 @@
     
   #Unique Values of Measures of Key Column (for long data)
     #Test Inputs
-      .data <- resp.long.df
-      .keyvarname <- 
+      #.data <- resp.long.df
+      #.keyvarname <- 
     
     UniqueKeyVals <- function(.data, .keyvarname, .keyvals, .measurevarname) {
       keyvals <- as.character(.keyvals)

@@ -3,38 +3,38 @@
 #########################################################
 
 
-
-# INITIAL SETUP -----------------------------------------------------------
+# 0-SETUP -----------------------------------------------------------
   
-  rm(list=ls()) #Remove lists
-  options(java.parameters = "- Xmx8g") #helps r not to fail when importing large xlsx files with xlsx package
-  
-  
-  #Record code start time for processing time calculations
-  start_time <- Sys.time()
-  
-
-# ESTABLISH DIRECTORIES ---------------------------------------------------
-
-  #M900
-    working.dir <- "C:/Users/willi/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
-    rproj.dir <- "C:/Users/willi/Documents/GIT PROJECTS/CWIS-automation"
+  #INITIAL SETUP
+    rm(list=ls()) #Remove lists
+    options(java.parameters = "- Xmx8g") #helps r not to fail when importing large xlsx files with xlsx package
     
-  #Thinkpad T470
-    #working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
-    #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
+    
+    #Record code start time for processing time calculations
+      start_time <- Sys.time()
   
-  #Source Code Directory
-    source.code.dir <- rproj.dir #paste(rproj.dir,"2_source_code/",sep="") #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
+  # ESTABLISH BASE DIRECTORIES
   
-  #Source Resources Director (raw data)
-    source.resources.dir <- paste(working.dir,"3_source_resources/", sep = "")
-  
-  #Source Inputs (configs)
-    source.inputs.dir <- paste(working.dir,"4_source_inputs/",sep="")
+    #M900
+      working.dir <- "C:/Users/willi/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
+      rproj.dir <- "C:/Users/willi/Documents/GIT PROJECTS/CWIS-automation"
+      
+    #Thinkpad T470
+      #working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
+      #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
+    
+    #Source Code Directory
+      source.code.dir <- rproj.dir #paste(rproj.dir,"2_source_code/",sep="") #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
+    
+    #Source Resources Director (raw data)
+      source.resources.dir <- paste(working.dir,"3_source_resources/", sep = "")
+    
+    #Source Inputs (configs)
+      source.inputs.dir <- paste(working.dir,"4_source_inputs/",sep="")
 
     
-##### OUTPUTS #####
+# 0-SETUP OUTPUTS -----------------------------------------------------------
+  #start_time: sys.time for code start
   #working.dir: working directory - Google Drive folder "2018-08 Green Reports"
   #source.code.dir: directory for R project; also contains source data, additional function scripts, and config tables.
   #source.resources.dir: directory with raw data
@@ -72,7 +72,36 @@
   
   #Global Configs Table
     configs.ss <- gs_key("1ku_OC9W87ut6W1qrdpFeYBlWlPN5X4fGHJ3h1k0HrOA",verbose = TRUE) 
+    
     global.configs.df <- gs_read(configs.ss, ws = "global.configs", range = NULL, literal = TRUE)
+    
+    #ARIE'S CODE FROM DISCUSSION ABOUT ABSTRACTION
+    #################################################
+    
+    #report.unit = get_config(global.configs.df, "Report Unit", "value2")
+    #report.version = get_config(global.configs.df, "Report Version")
+    #year = get_config(global.configs.df, YEAR)
+    
+    #config_names = get_config_names(global.configs.df) # output: ["Report Unit", "Report Version", ...]
+    
+    #config_obj = get_configS(global.configs.df, config_names) # output: {"Report Unit" : "building", "Report Version":2018,...}
+    
+    #value_name = "value"
+    #report.version <- 
+    #  global.configs.df[
+    #    global.configs.df$Config == "Report Version",
+    #    tolower(names(global.configs.df)) == value_name
+    #    ] %>% unlist %>% tolower
+    
+    #year <- 
+    #  global.configs.df[
+    #    global.configs.df$Config == "Data Year",
+    #    tolower(names(global.configs.df)) == value_name
+    #    ] %>% unlist %>% tolower
+    
+    
+    #################################################
+    
     
     report.unit <- 
       global.configs.df[
@@ -523,7 +552,7 @@
         unlist %>% 
         unique
     
-    #Recode answer option variables as numeric
+#FUN  #Recode answer option variables as numeric
       numeric.recode.fun <- 
         function(x){
           recode(
@@ -561,7 +590,7 @@
       
       names(num.ansopt.vars.df) <- paste(names(resp3.df[,names(resp3.df) %in% recode.ansopt.varnames.v]),"_num", sep = "")
     
-    #Recode Original Answers to add numbers (e.g. "Always" becomes "1. Always")
+#FUN  #Recode Original Answers to add numbers (e.g. "Always" becomes "1. Always")
       addnums.recode.fun <- 
         function(x){
           recode(
