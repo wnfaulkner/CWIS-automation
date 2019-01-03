@@ -31,26 +31,16 @@
     
     #Source Inputs (configs)
       source.inputs.dir <- paste(working.dir,"4_source_inputs/",sep="")
-
+  
+  # LOAD SOURCE CODE
+      
+    setwd(source.code.dir)
+    source("utils_wnf.r")
+    source("CWIS_custom.r")
     
-# 0-SETUP OUTPUTS -----------------------------------------------------------
-  #start_time: sys.time for code start
-  #working.dir: working directory - Google Drive folder "2018-08 Green Reports"
-  #source.code.dir: directory for R project; also contains source data, additional function scripts, and config tables.
-  #source.resources.dir: directory with raw data
-  #source.inputs.dir: directory with config tables and powerpoint template
-
-
-# LOAD SOURCE CODE --------------------------------------------------------
-
-  setwd(source.code.dir)
-  source("utils_wnf.r")
-  source("CWIS_custom.r")
-
-
-# LOAD LIBRARIES/PACKAGES  ------------------------------------------------
- 
-  #In case working on new R install that does not have packages installed
+  # LOAD LIBRARIES/PACKAGES
+    
+    #In case working on new R install that does not have packages installed
     #InstallCommonPackages()
     #install.packages("ReporteRs")
     #install.packages("jsonline")
@@ -59,61 +49,33 @@
     #install.packages('sourcetools')
     #install.packages('shiny')
     #install.packages('miniUI')
-  
-  LoadCommonPackages()
-  library(proftools)
-  library(jsonlite)
-  library(rlang)
-  library(extrafont)
-  extrafont::loadfonts(device="win")
+    
+    LoadCommonPackages()
+    library(proftools)
+    library(jsonlite)
+    library(rlang)
+    library(extrafont)
+    extrafont::loadfonts(device="win")
+    
+# 0-SETUP OUTPUTS -----------------------------------------------------------
+  #start_time: sys.time for code
+  #working.dir: working directory - Google Drive folder "2018-08 Green Reports"
+  #source.code.dir: directory for R project; also contains source data, additional function scripts, and config tables.
+  #source.resources.dir: directory with raw data
+  #source.inputs.dir: directory with config tables and powerpoint template
 
-  
-# LOAD SOURCES, RESOURCES, INPUTS -----------------------------------------
+# 1-IMPORT -----------------------------------------
   
   #Global Configs Table
     configs.ss <- gs_key("1ku_OC9W87ut6W1qrdpFeYBlWlPN5X4fGHJ3h1k0HrOA",verbose = TRUE) 
     
     global.configs.df <- gs_read(configs.ss, ws = "global.configs", range = NULL, literal = TRUE)
     
-    #ARIE'S CODE FROM DISCUSSION ABOUT ABSTRACTION
-    #################################################
-    
-    #report.unit = get_config(global.configs.df, "Report Unit", "value2")
-    #report.version = get_config(global.configs.df, "Report Version")
-    #year = get_config(global.configs.df, YEAR)
-    
-    #config_names = get_config_names(global.configs.df) # output: ["Report Unit", "Report Version", ...]
-    
-    #config_obj = get_configS(global.configs.df, config_names) # output: {"Report Unit" : "building", "Report Version":2018,...}
-    
-    #value_name = "value"
-    #report.version <- 
-    #  global.configs.df[
-    #    global.configs.df$Config == "Report Version",
-    #    tolower(names(global.configs.df)) == value_name
-    #    ] %>% unlist %>% tolower
-    
-    #year <- 
-    #  global.configs.df[
-    #    global.configs.df$Config == "Data Year",
-    #    tolower(names(global.configs.df)) == value_name
-    #    ] %>% unlist %>% tolower
-    
-    
-    #################################################
-    
-    
     report.unit <- 
       global.configs.df[
         global.configs.df$Config == "Report Unit",
         tolower(names(global.configs.df)) == "value"
       ] %>% unlist %>% tolower
-    
-    #report.ids <- 
-    #  global.configs.df[
-    #    global.configs.df$Config == "Report Ids",
-    #    tolower(names(global.configs.df)) == "value"
-    #  ] %>% unlist %>% tolower
     
     report.version <- 
       global.configs.df[
@@ -199,7 +161,7 @@
       header = TRUE
     )
 
-##### OUTPUTS #####
+# 1-IMPORT OUTPUTS -----------------------------------------
   #global.configs.df
   #config.slidetypes.tb
   #config.graphtypes.df
@@ -210,7 +172,7 @@
   #resp1.df (initial responses dataset which will need extensive cleaning and organization in next sections)
 
 
-# INITIAL INFORMATICS & 'UNBRANCHING' (STACKING) OF BRANCHED VARIABLES --------
+# 2-CLEANING ROUND 1 (UNBRANCHING) --------
   
   #INITIAL INFORMATICS
   
@@ -504,13 +466,13 @@
         split.char = ","
       )
 
-##### OUTPUTS #####
+# 2-CLEANING ROUND 1 (UNBRANCHING) OUTPUTS --------
   #resp2.df - now with all branch variables 'unbranched' (stacked), and having removed two extra header rows
   #questions.sem.df - now only with rows pertaining to this year and semester
   #ans.opt.always.df - global answer options table with numerical scale, agreement scale, and frequency scale lined up
 
 
-# FURTHER CLEANING & ADDING USEFUL VARIABLES ------------------------------
+# 3-CLEANING ROUND 2 (ADDING USEFUL VARIABLES) ------------------------------
   
   #Lower-Case All Data
     resp3.df <- apply(resp2.df,c(1:2),tolower) %>% as.data.frame(., stringsAsFactors = FALSE)
@@ -856,7 +818,7 @@
       row.names = FALSE
     )
 
-##### OUTPUTS #####
+# 3-CLEANING ROUND 2 (ADDING USEFUL VARIABLES) OUTPUTS ------------------------------
   #outputs.dir: directory for all outputs. Will have "FULL PRINT" if full print, or just the system date & time if sample print
   #resp.wide.df: wide data with all variables including numeric and binary
   #resp.long.df: long format data frame with cwis responses
@@ -865,7 +827,7 @@
     #'strongly agree', 'agree').
 
 
-# PRODUCING SLIDE, GRAPH, AND TABLE CONFIGURATION TABLES ------------------
+# 4-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) ------------------
   
   #Load Graph & Slide Type Config Tables
   
@@ -946,7 +908,7 @@
   } # END OF LOOP 'b' BY REPORT.UNIT
   close(progress.bar.b)
 
-##### OUTPUTS #####
+# 4-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) OUTPUTS ------------------
   #report.ids.sample: vector with all report unit names in resp.long.df (length = 19 for baseline data)
   #config.slides.ls.b
     #[[report.unit]]
@@ -959,7 +921,7 @@
       #data frame where each line represents a graph
 
 
-# PRODUCING GRAPH & TABLE DATA --------------------------------------------
+# 5-SOURCE DATA TABLES --------------------------------------------
 
   ###                          ###    
   ### LOOP "c" BY REPORT UNIT  ###
@@ -1144,7 +1106,7 @@
   } ### END OF LOOP "c" BY REPORT UNIT     
   close(progress.bar.c)  
 
-##### OUTPUTS #####
+# 5-SOURCE DATA TABLES OUTPUTS --------------------------------------------
   #tabledata.ls.c
     #[[report.unit]]
     #data frame where each line represents a table
@@ -1154,7 +1116,7 @@
 
 
 
-# PRODUCING GRAPHS & TABLES THEMSELVES ------------------------------------
+# 6-OBJECT CREATION (GRAPHS & TABLES) ------------------------------------
 
   ###                       ###    
 # ### LOOP "f" BY DISTRICT  ###
@@ -1559,7 +1521,8 @@
   } ### END OF LOOP "f" BY REPORT.UNIT
   close(progress.bar.f)
 
-##### OUTPUTS #####
+# 6-OBJECT CREATION (GRAPHS & TABLES) OUTPUTS ------------------------------------
+  
   #graphs.ls.f
     #[[report.unit]]
       #ggplot object
@@ -1568,34 +1531,30 @@
       #FlexTable object
 
 
-# POWERPOINT GLOBAL CONFIGURATIONS ----------------------------------------
-
-  #Useful colors
-  titlegreen <- rgb(118,153,48, maxColorValue=255)
-  notesgrey <- rgb(131,130,105, maxColorValue=255)
-  graphlabelsgrey <- "#5a6b63"
-  graphgridlinesgrey <- "#e6e6e6"
-  purpleshade <- "#d0abd6"
-  purpleheader <- "#3d2242"
-  purplegraphshade <- "#402339"
-  backgroundgreen <- "#94c132"
-  subtextgreen <- "#929e78"
+# 7-POWERPOINTS & EXPORT -----------------------------------------------
   
-  bar_series_fill.cols <- c("#800080","#ff33ff")
+  # POWERPOINT GLOBAL CONFIGURATIONS
   
-  #notesgray <- rgb(131,130,105, maxColorValue=255)
-  
-  #Text formatting
-  title.format <- textProperties(color = titlegreen, font.size = 48, font.weight = "bold", font.family = "Century Gothic")
-  title.format.small <- textProperties(color = titlegreen, font.size = 40, font.weight = "bold", font.family = "Century Gothic")
-  subtitle.format <- textProperties(color = notesgrey, font.size = 28, font.weight = "bold", font.family = "Century Gothic")
-  section.title.format <- textProperties(color = "white", font.size = 48, font.weight = "bold", font.family = "Century Gothic")
-  notes.format <- textProperties(color = notesgrey, font.size = 14, font.family = "Century Gothic")
-
-
-# POWERPOINT SLIDE CREATION -----------------------------------------------
-  
-  setwd(source.inputs.dir)
+    #Useful colors
+      titlegreen <- rgb(118,153,48, maxColorValue=255)
+      notesgrey <- rgb(131,130,105, maxColorValue=255)
+      graphlabelsgrey <- "#5a6b63"
+      graphgridlinesgrey <- "#e6e6e6"
+      purpleshade <- "#d0abd6"
+      purpleheader <- "#3d2242"
+      purplegraphshade <- "#402339"
+      backgroundgreen <- "#94c132"
+      subtextgreen <- "#929e78"
+      
+      bar_series_fill.cols <- c("#800080","#ff33ff")
+    
+    #Text formatting
+      title.format <- textProperties(color = titlegreen, font.size = 48, font.weight = "bold", font.family = "Century Gothic")
+      title.format.small <- textProperties(color = titlegreen, font.size = 40, font.weight = "bold", font.family = "Century Gothic")
+      subtitle.format <- textProperties(color = notesgrey, font.size = 28, font.weight = "bold", font.family = "Century Gothic")
+      section.title.format <- textProperties(color = "white", font.size = 48, font.weight = "bold", font.family = "Century Gothic")
+      notes.format <- textProperties(color = notesgrey, font.size = 14, font.family = "Century Gothic")
+      setwd(source.inputs.dir)
   
   ###                          ###    
 # ### LOOP "h" BY REPORT UNIT  ###
