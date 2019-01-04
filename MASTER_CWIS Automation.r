@@ -119,21 +119,22 @@
 
 # 2-CLEANING ROUND 1 (UNBRANCHING) --------
   
-    
   #Source Import Functions
     cleaning.source.dir <- paste(rproj.dir,"2-Cleaning/", sep = "")
     setwd(cleaning.source.dir)
     source("cleaning_functions.r")
   
   #config.graph.types.tb
-    #Add slide.type columns via inner-join
+    AddSlideTypeCols(config.graph.types.tb) #Add slide.type columns via inner-join
+    
     
   #config.table.types.tb
-    #Add slide.type columns via inner-join
+    AddSlideTypeCols(config.table.types.tb) #Add slide.type columns via inner-join
+    
     
   #config.pot.tb
-    #Add slide.type columns via inner-join
-    #Removing 'x' from colors
+    AddSlideTypeCols(config.pot.types.tb) #Add slide.type columns via inner-join
+      #Removing 'x' from colors
     
   #buildings.tb
     #Correct misspelling 'bucahanan' to 'buchanan' (to cleaning section?)
