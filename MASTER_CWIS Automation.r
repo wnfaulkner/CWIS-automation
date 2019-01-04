@@ -66,14 +66,15 @@
 
 # 1-IMPORT -----------------------------------------
   
-  import.source.dir <- paste(rproj.dir,"1-Import/", sep = "")
-  setwd(import.source.dir)
-  source("import_functions.r")
+  #Source Import Functions
+    import.source.dir <- paste(rproj.dir,"1-Import/", sep = "")
+    setwd(import.source.dir)
+    source("import_functions.r")
   
-  #Config Tables
+  #Import Config Tables
     configs.ss <- gs_key("1ku_OC9W87ut6W1qrdpFeYBlWlPN5X4fGHJ3h1k0HrOA",verbose = TRUE) 
     
-    #Load all tables from config google sheet as tibbles
+    #Import all tables from config google sheet as tibbles
       all.configs.ls <- GoogleSheetLoadAllWorksheets(configs.ss)
     
     #Assign each table to its own tibble object
@@ -89,7 +90,7 @@
         FALSE
       )
 
-  #Responses table (main data, imported as data frame)
+  #Import Responses table (main data, imported as data frame)
     
     setwd(source.resources.dir)
     
@@ -106,6 +107,7 @@
 
 # 1-IMPORT OUTPUTS -----------------------------------------
   #config.global.tb
+  #config.ans.opt.tb
   #config.slide.types.tb
   #config.graphtypes.df
   #config.tabletypes.df
@@ -117,11 +119,52 @@
 
 # 2-CLEANING ROUND 1 (UNBRANCHING) --------
   
-    #TODO: INITIAL IMPORT CLEANING ITEMS STILL PENDING  
-    #TODO: graph, table, pot inner-joining (to cleaning section?)
-    #TODO: buildings.tb - mgsub for misspelling 'bucahanan' to 'buchanan' (to cleaning section?)
-    #TODO: config.pot.tb - removing 'x' from colors
-    #TODO: questions.tb, buildings.tb - lower-casing
+    
+  #Source Import Functions
+    cleaning.source.dir <- paste(rproj.dir,"2-Cleaning/", sep = "")
+    setwd(cleaning.source.dir)
+    source("cleaning_functions.r")
+    
+  #Build global answer options table
+  
+  #config.global.tb
+    
+    
+  #config.slide.types.tb
+    
+  
+  #config.graphtypes.df
+    #add slide.type columns via inner-join
+    
+  #config.tabletypes.df
+    #add slide.type columns via inner-join
+    
+  #config.pot.tb
+    #add slide.type columns via inner-join
+    #removing 'x' from colors
+    
+  #buildings.tb
+    #mgsub for misspelling 'bucahanan' to 'buchanan' (to cleaning section?)
+    #lower-casing all content
+    
+  #questions.tb
+    #lower-casing all content
+    #restrict to only questions for this year/semester that are necessary in final data
+    #QUALTRICS: add 'x' to questions so match export exactly
+    #re-do question table so no extraneous rows for roles that are now unbranched
+    
+  #resp1.df (initial responses dataset which will need extensive cleaning and organization in next sections)
+    #QUALTRICS: remove extra header rows
+    #lower-case all variable names
+    #rename important variables with names that make sense
+    #add id column which is either unique district name or unique building_district combo
+    #restrict responses data to sample of user-defined size if doing sample print
+    #restrict to columns necessary in final data
+    #QUALTRICS: unbranch columns
+    #filter out district office rows
+    
+    
+ 
     
     {
       #Graph Types Configs Table
@@ -130,9 +173,9 @@
         inner_join(config.slide.types.tb, load.config.graph.types.tb, by = "slide.type.id", all.x = FALSE) 
       
       #Table Types Configs Table
-      load.config.tabletypes.tb <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) 
+      load.config.table.types.tb <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) 
       config.tabletypes.df <- 
-        inner_join(config.slide.types.tb, load.config.tabletypes.tb, by = c("slide.type.id")) 
+        inner_join(config.slide.types.tb, config.table.types.tb, by = c("slide.type.id")) 
       
       #Piece-of-text (POT) Config Table
       config.pot.tb <- gs_read(configs.ss, ws = "pot.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs_Jason Altman.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE) 
@@ -156,19 +199,7 @@
     }  
     
 
-  #INITIAL INFORMATICS
-  
-    #Global Answer Options
-      ans.opt.always.df <-  cbind(
-        c(5:1),
-        c("Always","Most of the time","About half the time","Sometimes","Never"),
-        c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree")
-      ) %>% as.data.frame
-      names(ans.opt.always.df) <- c("ans.num","ans.text.freq","ans.text.agreement")
-      ans.opt.always.df[,1] <- ans.opt.always.df[,1] %>% as.character %>% as.numeric
-      ans.opt.always.df[,2] <- ans.opt.always.df[,2] %>% as.character
-      ans.opt.always.df[,3] <- ans.opt.always.df[,3] %>% as.character
-      
+ 
     #Restrict questions.tb to only rows for this data.year/data.semester
       questions.sem.df <- 
         questions.tb[
@@ -253,9 +284,10 @@
       }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
       
       #Restrict Responses table to produce only a sample of reports unless this is final print
-        #Notes: code selects whole districts at random so that it will generate all reports for those districts. This is important so that you don't get
-        #a bunch of scattered districts and the district averages aren't realistic. The code samples district combinations until it finds one where the
-        #number of report ids is equalt to the user-defined sample size.
+        #Notes: code selects whole districts at random so that it will generate all reports for those 
+        #districts. This is important so that you don't get a bunch of scattered districts and the 
+        #district averages aren't realistic. The code samples district combinations until it finds one
+        #where the number of report ids is equal to the user-defined sample size.
       
         if(sample.print & report.unit == "building"){ #TODO: generalize so will work if report.unit is district
             
@@ -327,100 +359,100 @@
     
     #branch.q.colnums.v <- which(resp2.df %>% names %>% substr(.,1,1) == "x")
     
-  #Make data frame of base variables (that require no stacking)  
-    branch0.df <- 
-      resp2.df[ ,                                           
-                names(resp2.df) %in% c("responseid",branch0.ans0.colnames.v,branch0.ans1.colnames.v)      
-                ]              
-  
-  #Make data fram of variables to be stacked
-    branch1.df <- 
-      resp2.df[ ,
-                names(resp2.df) %in% c("responseid",branch1.ans0.colnames.v,branch1.ans1.colnames.v) # ResponseId plus all columns whose names begin with "X"
-                ]
+    #Make data frame of base variables (that require no stacking)  
+      branch0.df <- 
+        resp2.df[ ,                                           
+                  names(resp2.df) %in% c("responseid",branch0.ans0.colnames.v,branch0.ans1.colnames.v)      
+                  ]              
     
-  #Re-stack & collapse columns that are split up because of survey branching 
-  
-    #Base names of questions that have multiple branches
-    branch1.q.v <- 
-      strsplit(c(branch1.ans1.colnames.v,branch1.ans0.colnames.v), "_") %>% 
-      unlist %>% 
-      .[grep("q",.)] %>% 
-      unique 
+    #Make data fram of variables to be stacked
+      branch1.df <- 
+        resp2.df[ ,
+                  names(resp2.df) %in% c("responseid",branch1.ans0.colnames.v,branch1.ans1.colnames.v) # ResponseId plus all columns whose names begin with "X"
+                  ]
+      
+    #Re-stack & collapse columns that are split up because of survey branching 
     
-    ###                                                    ###
-    # Start of loop 'a' by base question of branched columns #
-    ###                                                    ###
-    
-    #Loop output storage
-    q.ls <- list()
-    varname.match.ls <- list()
-    
-    #a <- 1 #for testing loop
-    for(a in 1:length(branch1.q.v)){     ### START OF LOOP BY QUESTION; only for questions with branched variables
-      
-      q.name.a <- branch1.q.v[a]                                 # base question name
-      varnames.a <-                                              # all columns in branch0.df that belong to base question number
-        names(branch1.df)[names(branch1.df) != "responseid"][
-          which(names(branch1.df)[names(branch1.df) != "responseid"] %>% strsplit(.,"_") %>% lapply(., `[[`, 2) %>% unlist == q.name.a)
-          ]
-      
-      if(NumSubstringMatches("_",varnames.a) %>% unique() == 1){ # final column names once branching is collapsed
-        q.ans.options.a <- q.name.a
-      }else{}
-      
-      if(NumSubstringMatches("_",varnames.a) %>% unique() == 2){
-        q.ans.options.a <-
-          paste(q.name.a, 
-                varnames.a %>% strsplit(.,"_") %>% lapply(., `[[`, 3) %>% unique %>% unlist,
-                sep = "_")
-      }        
-      varname.match.ls[[a]] <- q.ans.options.a
-      
-      unbranch.a.ls <- list()
+      #Base names of questions that have multiple branches
+      branch1.q.v <- 
+        strsplit(c(branch1.ans1.colnames.v,branch1.ans0.colnames.v), "_") %>% 
+        unlist %>% 
+        .[grep("q",.)] %>% 
+        unique 
       
       ###                                                    ###
-      # Start of loop 'b' by base question of branched columns #
+      # Start of loop 'a' by base question of branched columns #
       ###                                                    ###
       
-      #b = 12
-      for(b in 1:length(q.ans.options.a)){    ### START OF LOOP BY ANSWER OPTION
-        
-        check.varnames.a <- str_sub(names(branch1.df), start = -nchar(q.ans.options.a[b]))
-        
-        branch.df.b <- #data frame of only columns to be stacked (for this question, for this answer option)
-          branch1.df[,
-                     c(
-                       grep("responseid",names(branch1.df)),
-                       grep(q.ans.options.a[b], check.varnames.a)
-                     )
-                     ]
-        
-        unbranch.df.b <- #reshaped data frame of stacked columns
-          reshape(
-            data = branch.df.b, 
-            idvar = "responseid",
-            timevar = NULL,
-            varying = names(branch.df.b)[names(branch.df.b) != "responseid"],
-            v.names = q.ans.options.a[b],
-            direction = "long"
-          ) %>% 
-          filter(.[,2] != "") #remove rows with blank answers
-        
-        unbranch.a.ls[[b]] <- unbranch.df.b
-        
-      } ### END OF LOOP BY ANSWER OPTION
+      #Loop output storage
+      q.ls <- list()
+      varname.match.ls <- list()
       
-      q.dat.df <- unbranch.a.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .)
-      q.ls[[a + 1]] <- q.dat.df
+      #a <- 1 #for testing loop
+      for(a in 1:length(branch1.q.v)){     ### START OF LOOP BY QUESTION; only for questions with branched variables
+        
+        q.name.a <- branch1.q.v[a]                                 # base question name
+        varnames.a <-                                              # all columns in branch0.df that belong to base question number
+          names(branch1.df)[names(branch1.df) != "responseid"][
+            which(names(branch1.df)[names(branch1.df) != "responseid"] %>% strsplit(.,"_") %>% lapply(., `[[`, 2) %>% unlist == q.name.a)
+            ]
+        
+        if(NumSubstringMatches("_",varnames.a) %>% unique() == 1){ # final column names once branching is collapsed
+          q.ans.options.a <- q.name.a
+        }else{}
+        
+        if(NumSubstringMatches("_",varnames.a) %>% unique() == 2){
+          q.ans.options.a <-
+            paste(q.name.a, 
+                  varnames.a %>% strsplit(.,"_") %>% lapply(., `[[`, 3) %>% unique %>% unlist,
+                  sep = "_")
+        }        
+        varname.match.ls[[a]] <- q.ans.options.a
+        
+        unbranch.a.ls <- list()
+        
+        ###                                                    ###
+        # Start of loop 'b' by base question of branched columns #
+        ###                                                    ###
+        
+        #b = 12
+        for(b in 1:length(q.ans.options.a)){    ### START OF LOOP BY ANSWER OPTION
+          
+          check.varnames.a <- str_sub(names(branch1.df), start = -nchar(q.ans.options.a[b]))
+          
+          branch.df.b <- #data frame of only columns to be stacked (for this question, for this answer option)
+            branch1.df[,
+                       c(
+                         grep("responseid",names(branch1.df)),
+                         grep(q.ans.options.a[b], check.varnames.a)
+                       )
+                       ]
+          
+          unbranch.df.b <- #reshaped data frame of stacked columns
+            reshape(
+              data = branch.df.b, 
+              idvar = "responseid",
+              timevar = NULL,
+              varying = names(branch.df.b)[names(branch.df.b) != "responseid"],
+              v.names = q.ans.options.a[b],
+              direction = "long"
+            ) %>% 
+            filter(.[,2] != "") #remove rows with blank answers
+          
+          unbranch.a.ls[[b]] <- unbranch.df.b
+          
+        } ### END OF LOOP BY ANSWER OPTION
+        
+        q.dat.df <- unbranch.a.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .)
+        q.ls[[a + 1]] <- q.dat.df
+        
+      } ### END OF LOOP BY QUESTION
       
-    } ### END OF LOOP BY QUESTION
-    
-  #Re-merge with non-branched variables
-    q.ls[[1]] <- branch0.df
-    #q.ls <- lapply(q.ls, tolower)
-    resp2.df <- q.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .) 
-    
+    #Re-merge with non-branched variables
+      q.ls[[1]] <- branch0.df
+      #q.ls <- lapply(q.ls, tolower)
+      resp2.df <- q.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .) 
+      
   
   #Re-do question table so no extraneous rows for roles that are now unbranched  
     q.unbranched.df <- 
@@ -451,7 +483,7 @@
 # 2-CLEANING ROUND 1 (UNBRANCHING) OUTPUTS --------
   #resp2.df - now with all branch variables 'unbranched' (stacked), and having removed two extra header rows
   #questions.sem.df - now only with rows pertaining to this data.year and data.semester
-  #ans.opt.always.df - global answer options table with numerical scale, agreement scale, and frequency scale lined up
+  #config.ans.opt.tb - global answer options table with numerical scale, agreement scale, and frequency scale lined up
 
 
 # 3-CLEANING ROUND 2 (ADDING USEFUL VARIABLES) ------------------------------
@@ -641,7 +673,7 @@
         apply(., 2, function(x){
           mgsub(
             pattern = c(5:1),
-            replacement = paste(ans.opt.always.df$ans.num,". ",ans.opt.always.df$ans.text.agreement, sep = "") %>% tolower,
+            replacement = paste(config.ans.opt.tb$ans.num,". ",config.ans.opt.tb$ans.text.agreement, sep = "") %>% tolower,
             x = x
           )
         }) %>%
@@ -652,7 +684,7 @@
         apply(., 2, function(x){
           mgsub(
             pattern = c(5:1),
-            replacement = paste(ans.opt.always.df$ans.num,". ",ans.opt.always.df$ans.text.freq, sep = "") %>% tolower,
+            replacement = paste(config.ans.opt.tb$ans.num,". ",config.ans.opt.tb$ans.text.freq, sep = "") %>% tolower,
             x = x
           )
         }) %>%
@@ -804,7 +836,7 @@
   #outputs.dir: directory for all outputs. Will have "FULL PRINT" if full print, or just the system date & time if sample print
   #resp.wide.df: wide data with all variables including numeric and binary
   #resp.long.df: long format data frame with cwis responses
-  #ans.opt.always.df: data frame with columns corresponding to answer numbers and answer text,
+  #config.ans.opt.tb: data frame with columns corresponding to answer numbers and answer text,
     #including both frequency scale (e.g. 'always', 'most of the time') and agreement scale (e.g.
     #'strongly agree', 'agree').
 
@@ -1221,7 +1253,7 @@
           graph.cat.varname <- config.graphs.df.g$data.group.by.var  
           
           if(config.graphs.df.g$data.group.by.var == "answer"){
-            graphdata.df.g <- left_join(graphdata.df.g,ans.opt.always.df, by = c("answer" = "ans.num"))#graphdata.df.g[order(graphdata.df.g[,2]),]
+            graphdata.df.g <- left_join(graphdata.df.g,config.ans.opt.tb, by = c("answer" = "ans.num"))#graphdata.df.g[order(graphdata.df.g[,2]),]
             
             if(config.graphs.df.g$module %in% c("LEAD","PD")){
               graphdata.df.g <- graphdata.df.g %>% select(data.year, ans.text.agreement, measure.var, avg)

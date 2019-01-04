@@ -22,7 +22,7 @@
             literal = TRUE
           )
         
-        names(result.ls[[i]]) <- names(result.ls[[i]]) %>% tolower
+        #names(result.ls[[i]]) <- ws_names[i]
       
       }
       
