@@ -109,8 +109,8 @@
   #config.global.tb
   #config.ans.opt.tb
   #config.slide.types.tb
-  #config.graphtypes.df
-  #config.tabletypes.df
+  #config.graph.types.tb
+  #config.table.types.tb
   #config.pot.tb
   #buildings.tb
   #questions.tb
@@ -124,57 +124,82 @@
     cleaning.source.dir <- paste(rproj.dir,"2-Cleaning/", sep = "")
     setwd(cleaning.source.dir)
     source("cleaning_functions.r")
-    
-  #Build global answer options table
   
-  #config.global.tb
+  #config.graph.types.tb
+    #Add slide.type columns via inner-join
     
-    
-  #config.slide.types.tb
-    
-  
-  #config.graphtypes.df
-    #add slide.type columns via inner-join
-    
-  #config.tabletypes.df
-    #add slide.type columns via inner-join
+  #config.table.types.tb
+    #Add slide.type columns via inner-join
     
   #config.pot.tb
-    #add slide.type columns via inner-join
-    #removing 'x' from colors
+    #Add slide.type columns via inner-join
+    #Removing 'x' from colors
     
   #buildings.tb
-    #mgsub for misspelling 'bucahanan' to 'buchanan' (to cleaning section?)
-    #lower-casing all content
+    #Correct misspelling 'bucahanan' to 'buchanan' (to cleaning section?)
+    #Lower-case all content
     
   #questions.tb
-    #lower-casing all content
-    #restrict to only questions for this year/semester that are necessary in final data
+    #Lower-case all content
+    #Restrict to only questions for this year/semester that are necessary in final data
     #QUALTRICS: add 'x' to questions so match export exactly
-    #re-do question table so no extraneous rows for roles that are now unbranched
+    #Re-do question table so no extraneous rows for roles that are now unbranched
     
-  #resp1.df (initial responses dataset which will need extensive cleaning and organization in next sections)
+  #RESPONSES - (initial responses dataset which will need extensive cleaning and organization in next sections)
     #QUALTRICS: remove extra header rows
-    #lower-case all variable names
-    #rename important variables with names that make sense
-    #add id column which is either unique district name or unique building_district combo
-    #restrict responses data to sample of user-defined size if doing sample print
-    #restrict to columns necessary in final data
-    #QUALTRICS: unbranch columns
-    #filter out district office rows
+    #Lower-case all variable names
+    #Lower-case all data
+    #Rename important variables with names that make sense
+    #Add id column which is either unique district name or unique building_district combo
     
+    #restrict rows 
+      #Data to sample of user-defined size if doing sample print
+      #Filter out district office rows
+      #With nothing in columns necessary to define report.id (district or building) 
     
+    #restrict columns 
+      #Necessary in final data
+    
+    #rearrange columns
+      #Response.id in first column
+      #CWIS response variables to right, all others first
+    
+    #QUALTRICS: Unbranch columns
+    
+    #Data type conversions for CWIS vars
+      #Text vars (freq & agreement): 
+        #preserve text; add numbers (e.g. "Always" becomes "1. Always")
+        #convert to integer
+        #convert to binary (move to table formation?)
+        
+        #TODO: 1. use external config.ans.opt to allow adding new scales
+        #TODO: 2. create standard mapping function to convert any number of integer choices to any standard
+          #number of allowed answer options.
+      
+      #Slider vars:
+        #convert to integer (based on min/max, e.g. cutoff points at 1.5, 2.5, 3.5)
+        #convert to text 
+        #convert to binary
+    
+    #Create useful objects
+      #Vectors for selecting CWIS answer variables
+    
+    #Synthesize final response data tables 
+      #Wide table 
+      #Long table
+    
+    #Write wide table to csv
  
     
     {
       #Graph Types Configs Table
       load.config.graph.types.tb <- gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE) 
-      config.graphtypes.df <- 
+      config.graph.types.tb <- 
         inner_join(config.slide.types.tb, load.config.graph.types.tb, by = "slide.type.id", all.x = FALSE) 
       
       #Table Types Configs Table
       load.config.table.types.tb <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) 
-      config.tabletypes.df <- 
+       config.table.types.tb <- 
         inner_join(config.slide.types.tb, config.table.types.tb, by = c("slide.type.id")) 
       
       #Piece-of-text (POT) Config Table
@@ -832,6 +857,11 @@
       row.names = FALSE
     )
 
+  #NO CHANGES  
+    #config.ans.opt.tb
+    #config.global.tb
+    #config.slide.types.tb
+    
 # 3-CLEANING ROUND 2 (ADDING USEFUL VARIABLES) OUTPUTS ------------------------------
   #outputs.dir: directory for all outputs. Will have "FULL PRINT" if full print, or just the system date & time if sample print
   #resp.wide.df: wide data with all variables including numeric and binary
@@ -886,7 +916,7 @@
     #Graphs config table for this report unit
       config.graphs.df <- 
         loop.expander.fun(
-          configs = config.graphtypes.df, 
+          configs = config.graph.types.tb, 
           loop.varname = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
           collate.varname = "slide.section.1",
           source.data = resp.long.df.b
@@ -897,7 +927,7 @@
     #Tables config table for this report unit
       config.tables.df <-
         loop.expander.fun(
-          configs = config.tabletypes.df, 
+          configs =  config.table.types.tb, 
           loop.varname = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
           collate.varname = "slide.section.1",
           source.data = resp.long.df.b
