@@ -125,23 +125,23 @@
     source("cleaning_functions.r")
   
   #config.graph.types.tb
-    AddSlideTypeCols(config.graph.types.tb) #Add slide.type columns via inner-join
+    config.graph.types.tb <- AddSlideTypeCols(config.graph.types.tb) #Add slide.type columns via inner-join
     
     
   #config.table.types.tb
-    AddSlideTypeCols(config.table.types.tb) #Add slide.type columns via inner-join
+    config.table.types.tb <- AddSlideTypeCols(config.table.types.tb) #Add slide.type columns via inner-join
     
     
   #config.pot.tb
-    AddSlideTypeCols(config.pot.types.tb) #Add slide.type columns via inner-join
-      #Removing 'x' from colors
+    config.pot.types.tb <- AddSlideTypeCols(config.pot.types.tb) #Add slide.type columns via inner-join
+    config.pot.types.tb$color <- config.pot.types.tb$color %>% gsub("x","",.)  #Removing 'x' from colors
     
   #buildings.tb
-    #Correct misspelling 'bucahanan' to 'buchanan' (to cleaning section?)
-    #Lower-case all content
+    #Correct misspelling 'bucahanan' to 'buchanan'
+    buildings.tb <- LowerCaseCharVars(buildings.tb)#Lower-case all content
     
   #questions.tb
-    #Lower-case all content
+    questions.tb <- LowerCaseCharVars(questions.tb)#Lower-case all content
     #Restrict to only questions for this year/semester that are necessary in final data
     #QUALTRICS: add 'x' to questions so match export exactly
     #Re-do question table so no extraneous rows for roles that are now unbranched

@@ -448,7 +448,6 @@
       names(df)[names(df) %in% current.names] <- new.names
       return(df)
     }
-  
     
   #Left Join & Replace NAs
     left.join.NA <- function(.x, .y, .by, na.replacement) {
