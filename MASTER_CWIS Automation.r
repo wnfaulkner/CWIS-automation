@@ -147,370 +147,56 @@
     #Re-do question table so no extraneous rows for roles that are now unbranched
     
   #RESPONSES - (initial responses dataset which will need extensive cleaning and organization in next sections)
-    #QUALTRICS: remove extra header rows
-    #Lower-case all variable names
-    #Lower-case all data
-    #Rename important variables with names that make sense
-    #Add id column which is either unique district name or unique building_district combo
+    #Define whether data coming in through Qualtrics or SurveyGizmo
     
-    #restrict rows 
-      #Data to sample of user-defined size if doing sample print
-      #Filter out district office rows
-      #With nothing in columns necessary to define report.id (district or building) 
+    #QUALTRICS-SPECIFIC: remove extra header rows
     
-    #restrict columns 
-      #Necessary in final data
+    #SURVEYGIZMO-SPECIFIC
     
-    #rearrange columns
-      #Response.id in first column
-      #CWIS response variables to right, all others first
-    
-    #QUALTRICS: Unbranch columns
-    
-    #Data type conversions for CWIS vars
-      #Text vars (freq & agreement): 
-        #preserve text; add numbers (e.g. "Always" becomes "1. Always")
-        #convert to integer
-        #convert to binary (move to table formation?)
-        
-        #TODO: 1. use external config.ans.opt to allow adding new scales
-        #TODO: 2. create standard mapping function to convert any number of integer choices to any standard
-          #number of allowed answer options.
+    #BOTH DATA SOURCES
       
-      #Slider vars:
-        #convert to integer (based on min/max, e.g. cutoff points at 1.5, 2.5, 3.5)
-        #convert to text 
-        #convert to binary
-    
-    #Create useful objects
-      #Vectors for selecting CWIS answer variables
-    
-    #Synthesize final response data tables 
-      #Wide table 
-      #Long table
-    
-    #Write wide table to csv
- 
-    
-    {
-      #Graph Types Configs Table
-      load.config.graph.types.tb <- gs_read(configs.ss, ws = "graph.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "graph.types",header = TRUE, stringsAsFactors = FALSE) 
-      config.graph.types.tb <- 
-        inner_join(config.slide.types.tb, load.config.graph.types.tb, by = "slide.type.id", all.x = FALSE) 
+      #Lower-case all variable names
+      #Lower-case all data
+      #Rename important variables with names that make sense
+      #Add id column which is either unique district name or unique building_district combo
       
-      #Table Types Configs Table
-      load.config.table.types.tb <- gs_read(configs.ss, ws = "table.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs.xlsx", sheetName = "table.types",header = TRUE, stringsAsFactors = FALSE) 
-       config.table.types.tb <- 
-        inner_join(config.slide.types.tb, config.table.types.tb, by = c("slide.type.id")) 
+      #restrict rows 
+        #Data to sample of user-defined size if doing sample print
+        #Filter out district office rows
+        #With nothing in columns necessary to define report.id (district or building) 
       
-      #Piece-of-text (POT) Config Table
-      config.pot.tb <- gs_read(configs.ss, ws = "pot.types", range = NULL, literal = TRUE) #read.xlsx("graph_configs_Jason Altman.xlsx", sheetName = "slide.pot.objects",header = TRUE, stringsAsFactors = FALSE) 
-      config.pot.tb$color <- 
-        config.pot.tb$color %>% 
-        gsub("x","",.)
+      #restrict columns 
+        #Necessary in final data
       
-      #Questions Configs Table (imported as list)
-      questions.ls <- 	gs_read(configs.ss, ws = "questions", range = NULL, literal = TRUE) %>% as.list() %>% lapply(., tolower)
-      questions.tb <- do.call(cbind, questions.ls) %>% as.data.frame(., stringsAsFactors = FALSE)
+      #rearrange columns
+        #Response.id in first column
+        #CWIS response variables to right, all others first
       
-      #Buildings Config Table  
-      buildings.tb <- 	
-        gs_read(configs.ss, ws = "buildings", range = NULL, literal = TRUE) %>% 
-        as.list() %>% 
-        lapply(., tolower) %>%
-        do.call(cbind, .) %>%
-        as_tibble()
+      #QUALTRICS: Unbranch columns
       
-      buildings.tb$report.id <- mgsub("bucahanan","buchanan",buildings.tb$report.id)
-    }  
-    
-
- 
-    #Restrict questions.tb to only rows for this data.year/data.semester
-      questions.sem.df <- 
-        questions.tb[
-          questions.tb$data.year == data.year & questions.tb$data.semester == data.semester,
-        ]
-      
-    #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
-      questions.sem.df$row.1[NumSubstringMatches("_",questions.sem.df$row.1) == 2] <- 
-        paste("x",questions.sem.df$row.1[NumSubstringMatches("_",questions.sem.df$row.1) == 2],sep="")
-    
-    #Remove extra header rows
-      dat.startrow <- 
-        ifelse(
-          any(substr(resp1.df[,1],1,1) == "{"),
-          which(substr(resp1.df[,1],1,1) == "{") + 1,
-          1
-        )
-      resp1.df <- resp1.df[dat.startrow:length(resp1.df[,1]),]
-    
-    #Lower-case all variable names
-      names(resp1.df) <- resp1.df %>% names %>% tolower 
-    
-    #Variable renaming of important variables
-      names(resp1.df) <-
-        mgsub(
-          questions.sem.df$row.1[!is.na(questions.sem.df$q.changename)], 
-          questions.sem.df$q.changename[!is.na(questions.sem.df$q.changename)], 
-          names(resp1.df)
-        )
-    
-    #Define Report Unit and Report IDs
-      if(!report.unit %in% c("building","district")){
-        stop("Report unit must be either 'building' or 'district.'")
-      }
-      
-      if(report.unit == "building"){
-        report.id.colname <- "building"
-      }else{
-        report.id.colname <- "district"
-      }
-      
-      report.id.col <- resp1.df[,names(resp1.df) == report.id.colname]
-      
-      if(report.id.colname %in% c("building","district")){
-        
-        if(report.id.colname == "district"){
-          resp1.df <-
-            resp1.df %>%
-            mutate(
-              report.id =
-                resp1.df[,grep(report.id.colname,names(resp1.df))] %>% tolower
-            )
-        }
-        
-        if(report.id.colname == "building"){
-          resp1.df <- 
-            resp1.df %>%
-            mutate(
-              report.id =
-                paste(
-                  resp1.df[,names(resp1.df) %in% "district"],
-                  resp1.df[,names(resp1.df) %in% report.id.colname],
-                  sep = "_"
-                ) %>%
-                tolower %>%
-                replace(., . == "_", "")
-            )
-        }
-        
-        resp1.df$report.id <- gsub("\\/"," ",resp1.df$report.id) #in case there is a slash in the school name itself, this replaces it so file storage for ppt works properly
-        
-        report.ids.all <- #report ids filtering out district office, ids without a district, or blanks
-          resp1.df$report.id %>%
-          unique %>% 
-          FilterVector(
-            condition = !grepl("district office",.),
-            vector.input = .
-          ) %>%
-          .[!grepl("_",substr(.,1,1))] %>%
-          .[. != ""]
-        
-      }else{}   #If user has designated district names as "all", code will create reports for all district names present in the data
-      
-      #Restrict Responses table to produce only a sample of reports unless this is final print
-        #Notes: code selects whole districts at random so that it will generate all reports for those 
-        #districts. This is important so that you don't get a bunch of scattered districts and the 
-        #district averages aren't realistic. The code samples district combinations until it finds one
-        #where the number of report ids is equal to the user-defined sample size.
-      
-        if(sample.print & report.unit == "building"){ #TODO: generalize so will work if report.unit is district
-            
-          building.counts.df <- 
-            resp1.df %>% 
-            group_by(district) %>% 
-            dplyr::summarize(n_buildings = n_distinct(building)) %>% 
-            as.data.frame()
+      #Data type conversions for CWIS vars
+        #Text vars (freq & agreement): 
+          #preserve text; add numbers (e.g. "Always" becomes "1. Always")
+          #convert to integer
+          #convert to binary (move to table formation?)
           
-          report.ids.sample <- ""
-          report.districts.sample <- ""
-          unique.report.ids <- resp1.df$report.id %>% unique()
-          
-          i <- 1
-          
-          while(length(report.ids.sample) != sample.size){            
-            
-            report.districts.sample <-
-              c(
-                report.districts.sample,
-                sample(resp1.df$district %>% unique,1)
-              ) %>% 
-              .[. != ""] %>% 
-              tolower
-            
-            report.ids.sample <- 
-              unique.report.ids[grep(paste(report.districts.sample,collapse = "|"),unique.report.ids)] %>%
-              .[. != ""] %>% .[!grepl("district office", .)]
-            
-            if(length(report.ids.sample) > sample.size){
-              report.districts.sample <- ""
-              report.ids.sample <- ""
-            }
-            #print(i)
-            #print(length(report.ids.sample))
-            i = i+1
-          }
-        }
+          #TODO: 1. use external config.ans.opt to allow adding new scales
+          #TODO: 2. create standard mapping function to convert any number of integer choices to any standard
+            #number of allowed answer options.
         
-        if(!sample.print & report.unit == "building"){
-          report.ids.sample <- report.ids.all
-        }
-        
-        #Restrict response dataset to rows for generated report ids
-          resp2.df <- resp1.df[resp1.df$report.id %in% report.ids.sample,]
+        #Slider vars:
+          #convert to integer (based on min/max, e.g. cutoff points at 1.5, 2.5, 3.5)
+          #convert to text 
+          #convert to binary
       
-    #Remove extraneous variables
-      remove.colnames <- 
-        questions.tb %>% 
-        filter(tolower(necessary.in.final.data) == "no") %>%
-        filter(data.year == data.year) %>%
-        filter(data.semester == data.semester) %>%
-        select(row.1) %>%
-        unlist %>%
-        RemoveNA
+      #Create useful objects
+        #Vectors for selecting CWIS answer variables
       
-      resp2.df <-
-        resp2.df[ , !(names(resp2.df) %in% remove.colnames)]
-          
+      #Synthesize final response data tables 
+        #Wide table 
+        #Long table
       
-  #STACKING COLUMNS SPLIT BY SURVEY BRANCHING
-    #"branch" refers to branching questions, so branch0 are columns without branches, and branch1 are columns that are part of branching questions
-    #"ans" refers to having answer options, so ans0 are columns without answer options, and ans1 are columns that are part of questions with multiple answer options
-    
-    branch0.ans0.colnames.v <- names(resp2.df)[NumSubstringMatches("_",names(resp2.df))==0]
-    branch0.ans1.colnames.v <- names(resp2.df)[NumSubstringMatches("_",names(resp2.df))==1 & substr(names(resp2.df),1,1) == "q"]
-    branch1.ans0.colnames.v <- names(resp2.df)[NumSubstringMatches("_",names(resp2.df))==1 & substr(names(resp2.df),1,1) == "x"]
-    branch1.ans1.colnames.v <- names(resp2.df)[NumSubstringMatches("_",names(resp2.df))==2]
-    
-    #branch.q.colnums.v <- which(resp2.df %>% names %>% substr(.,1,1) == "x")
-    
-    #Make data frame of base variables (that require no stacking)  
-      branch0.df <- 
-        resp2.df[ ,                                           
-                  names(resp2.df) %in% c("responseid",branch0.ans0.colnames.v,branch0.ans1.colnames.v)      
-                  ]              
-    
-    #Make data fram of variables to be stacked
-      branch1.df <- 
-        resp2.df[ ,
-                  names(resp2.df) %in% c("responseid",branch1.ans0.colnames.v,branch1.ans1.colnames.v) # ResponseId plus all columns whose names begin with "X"
-                  ]
-      
-    #Re-stack & collapse columns that are split up because of survey branching 
-    
-      #Base names of questions that have multiple branches
-      branch1.q.v <- 
-        strsplit(c(branch1.ans1.colnames.v,branch1.ans0.colnames.v), "_") %>% 
-        unlist %>% 
-        .[grep("q",.)] %>% 
-        unique 
-      
-      ###                                                    ###
-      # Start of loop 'a' by base question of branched columns #
-      ###                                                    ###
-      
-      #Loop output storage
-      q.ls <- list()
-      varname.match.ls <- list()
-      
-      #a <- 1 #for testing loop
-      for(a in 1:length(branch1.q.v)){     ### START OF LOOP BY QUESTION; only for questions with branched variables
-        
-        q.name.a <- branch1.q.v[a]                                 # base question name
-        varnames.a <-                                              # all columns in branch0.df that belong to base question number
-          names(branch1.df)[names(branch1.df) != "responseid"][
-            which(names(branch1.df)[names(branch1.df) != "responseid"] %>% strsplit(.,"_") %>% lapply(., `[[`, 2) %>% unlist == q.name.a)
-            ]
-        
-        if(NumSubstringMatches("_",varnames.a) %>% unique() == 1){ # final column names once branching is collapsed
-          q.ans.options.a <- q.name.a
-        }else{}
-        
-        if(NumSubstringMatches("_",varnames.a) %>% unique() == 2){
-          q.ans.options.a <-
-            paste(q.name.a, 
-                  varnames.a %>% strsplit(.,"_") %>% lapply(., `[[`, 3) %>% unique %>% unlist,
-                  sep = "_")
-        }        
-        varname.match.ls[[a]] <- q.ans.options.a
-        
-        unbranch.a.ls <- list()
-        
-        ###                                                    ###
-        # Start of loop 'b' by base question of branched columns #
-        ###                                                    ###
-        
-        #b = 12
-        for(b in 1:length(q.ans.options.a)){    ### START OF LOOP BY ANSWER OPTION
-          
-          check.varnames.a <- str_sub(names(branch1.df), start = -nchar(q.ans.options.a[b]))
-          
-          branch.df.b <- #data frame of only columns to be stacked (for this question, for this answer option)
-            branch1.df[,
-                       c(
-                         grep("responseid",names(branch1.df)),
-                         grep(q.ans.options.a[b], check.varnames.a)
-                       )
-                       ]
-          
-          unbranch.df.b <- #reshaped data frame of stacked columns
-            reshape(
-              data = branch.df.b, 
-              idvar = "responseid",
-              timevar = NULL,
-              varying = names(branch.df.b)[names(branch.df.b) != "responseid"],
-              v.names = q.ans.options.a[b],
-              direction = "long"
-            ) %>% 
-            filter(.[,2] != "") #remove rows with blank answers
-          
-          unbranch.a.ls[[b]] <- unbranch.df.b
-          
-        } ### END OF LOOP BY ANSWER OPTION
-        
-        q.dat.df <- unbranch.a.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .)
-        q.ls[[a + 1]] <- q.dat.df
-        
-      } ### END OF LOOP BY QUESTION
-      
-    #Re-merge with non-branched variables
-      q.ls[[1]] <- branch0.df
-      #q.ls <- lapply(q.ls, tolower)
-      resp2.df <- q.ls %>% Reduce(function(x, y) full_join(x,y, all = TRUE), .) 
-      
-  
-  #Re-do question table so no extraneous rows for roles that are now unbranched  
-    q.unbranched.df <- 
-      questions.sem.df[
-        questions.sem.df$row.1 %in% 
-          c(
-            branch0.ans0.colnames.v,
-            branch0.ans1.colnames.v,
-            varname.match.ls %>% unlist %>% paste("1_",.,sep="")
-          )
-        ,
-        ] #TODO:looks like still uneven numbers - some columns must be missing from questions table, but seems to be columns we don't care about.
-    
-    q.unbranched.df$row.1[grep("q",q.unbranched.df$row.1)] <- 
-      str_extract(
-        q.unbranched.df$row.1[grep("q",q.unbranched.df$row.1)], 
-        "q[0-9].+"
-      )
-    
-    q.unbranched.df <-
-      SplitColReshape.ToLong(
-        df = q.unbranched.df,
-        id.varname = "row.1",
-        split.varname = "module",
-        split.char = ","
-      )
-
-# 2-CLEANING ROUND 1 (UNBRANCHING) OUTPUTS --------
-  #resp2.df - now with all branch variables 'unbranched' (stacked), and having removed two extra header rows
-  #questions.sem.df - now only with rows pertaining to this data.year and data.semester
-  #config.ans.opt.tb - global answer options table with numerical scale, agreement scale, and frequency scale lined up
-
+      #Write wide table to csv
 
 # 3-CLEANING ROUND 2 (ADDING USEFUL VARIABLES) ------------------------------
   
