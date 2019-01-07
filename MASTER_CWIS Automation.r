@@ -94,7 +94,7 @@
     
     setwd(source.resources.dir)
     
-    resp1.df <- read.csv(
+    resp1.tb <- read.csv(
       file =  
         MostRecentlyModifiedFilename(
           title.string.match = "CWIS",
@@ -103,7 +103,7 @@
         ),
       stringsAsFactors = FALSE,
       header = TRUE
-    )
+    ) %>% as_tibble(.)
 
 # 1-IMPORT OUTPUTS -----------------------------------------
   #config.global.tb
@@ -114,12 +114,12 @@
   #config.pot.tb
   #buildings.tb
   #questions.tb
-  #resp1.df (initial responses dataset which will need extensive cleaning and organization in next sections)
+  #resp1.tb (initial responses dataset which will need extensive cleaning and organization in next sections)
 
 
 # 2-CLEANING ROUND 1 (UNBRANCHING) --------
-  
-  #Source Import Functions
+    
+  #Source Cleaning Functions
     cleaning.source.dir <- paste(rproj.dir,"2-Cleaning/", sep = "")
     setwd(cleaning.source.dir)
     source("cleaning_functions.r")
@@ -139,24 +139,39 @@
   #buildings.tb
     #Correct misspelling 'bucahanan' to 'buchanan'
     buildings.tb <- LowerCaseCharVars(buildings.tb)#Lower-case all content
+  
+  #RESPONSES (round 1)  
+    names(resp1.tb) <- LowerCaseNames(resp1.tb)  #Lower-case all variable names
+    resp1.tb <- LowerCaseCharVars(resp1.tb) #Lower-case all data
+    data.from.qualtrics.logical <- #Define whether data coming in through Qualtrics or SurveyGizmo
+      ifelse(names(resp1.tb)[1] == "startdate", TRUE, FALSE)
     
-  #questions.tb
-    questions.tb <- LowerCaseCharVars(questions.tb)#Lower-case all content
-    #Restrict to only questions for this year/semester that are necessary in final data
+  #questions.tb (round 1)
+    questions.tb <- LowerCaseCharVars(questions.tb)  #Lower-case all content
+    questiosn.tb <- #Restrict to rows for questions for this year/semester that are necessary in final data
+      questions.tb[ 
+        as.character(questions.tb$year) == data.year & tolower(questions.tb$semester) == data.semester
+      ,] 
+    
     #QUALTRICS: add 'x' to questions so match export exactly
-    #Re-do question table so no extraneous rows for roles that are now unbranched
     
-  #RESPONSES - (initial responses dataset which will need extensive cleaning and organization in next sections)
-    #Define whether data coming in through Qualtrics or SurveyGizmo
+    
+  #RESPONSES (round 2)
     
     #QUALTRICS-SPECIFIC: remove extra header rows
+      dat.startrow <- 
+        ifelse(
+          any(substr(resp1.tb[,1],1,1) == "{"),
+          which(substr(resp1.tb[,1],1,1) == "{") + 1,
+          1
+        )
+      resp1.tb <- resp1.tb[dat.startrow:length(resp1.tb[,1]),]
+      
     
     #SURVEYGIZMO-SPECIFIC
     
     #BOTH DATA SOURCES
       
-      #Lower-case all variable names
-      #Lower-case all data
       #Rename important variables with names that make sense
       #Add id column which is either unique district name or unique building_district combo
       
@@ -197,7 +212,11 @@
         #Long table
       
       #Write wide table to csv
-
+    
+    #questions.tb (round 2)
+      #Re-do question table so no extraneous rows for roles that are now unbranched
+    
+    
 # 3-CLEANING ROUND 2 (ADDING USEFUL VARIABLES) ------------------------------
   
   #Lower-Case All Data

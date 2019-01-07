@@ -15,7 +15,6 @@
       return(x)
     }
   
-  #
   #Lower-case all character values in a tibble
     LowerCaseCharVars <- function(tb){
       for(i in 1:dim(tb)[2]){
@@ -24,5 +23,10 @@
         } 
       }
       return(tb)
+    }
+    
+  #QUALTRICS: Remove extra header rows
+    QualtricsRemoveExtraHeaderRows <- function(tb){
+      
     }
 

@@ -44,14 +44,7 @@
         paste("x",questions.sem.df$row.1[NumSubstringMatches("_",questions.sem.df$row.1) == 2],sep="")
     
     #Remove extra header rows
-      dat.startrow <- 
-        ifelse(
-          any(substr(resp1.df[,1],1,1) == "{"),
-          which(substr(resp1.df[,1],1,1) == "{") + 1,
-          1
-        )
-      resp1.df <- resp1.df[dat.startrow:length(resp1.df[,1]),]
-    
+      
     #Lower-case all variable names
       names(resp1.df) <- resp1.df %>% names %>% tolower 
     
