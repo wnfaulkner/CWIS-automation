@@ -203,7 +203,12 @@
         
       #Restrict rows 
         #Data to sample of user-defined size if doing sample print
-          
+          RestrictDataToSample(
+            tb = resp1.tb,
+            report.unit = report.unit,
+            group.unit = "district",
+            sample.size = sample.size
+          )
         
         
         #Filter out district office rows

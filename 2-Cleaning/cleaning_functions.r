@@ -193,6 +193,11 @@
     #district averages aren't realistic. The code samples district combinations until it finds one
     #where the number of report ids is equal to the user-defined sample size.
     
+    tb = resp1.tb
+    report.unit = report.unit
+    group.unit = "district"
+    sample.size = sample.size
+      
     RestrictDataToSample <- function(tb, sample.print, report.unit, group.unit, sample.size){
       
       report.unit.counts.tb <-
