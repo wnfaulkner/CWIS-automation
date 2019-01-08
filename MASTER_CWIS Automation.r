@@ -107,6 +107,13 @@
 
 # 1-IMPORT OUTPUTS -----------------------------------------
   #config.global.tb
+    #Objects extracted from config.global.tb
+      #report.unit
+      #report.version
+      #data.year
+      #data.semester
+      #sample.print
+      #sample.size
   #config.ans.opt.tb
   #config.slide.types.tb
   #config.graph.types.tb
@@ -140,6 +147,7 @@
   
   #RESPONSES (round 1)  
     resp1.tb <- LowerCaseNames(resp1.tb)  #Lower-case all variable names
+    names(resp1.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(resp1.tb), char = ".")
     resp1.tb <- LowerCaseCharVars(resp1.tb) #Lower-case all data
     data.from.qualtrics.logical <- #Define whether data coming in through Qualtrics or SurveyGizmo
       ifelse(names(resp1.tb)[1] == "startdate", TRUE, FALSE)
@@ -156,29 +164,38 @@
     
     #SURVEYGIZMO-SPECIFIC
       #Set up variable 'row.1' so can replace response variable names with short names
-        
+      questions.tb$row.1 <- SubRepeatedCharWithSingleChar(string.vector = questions.tb$row.1, char = ".")  
     
     #QUALTRICS: add 'x' to questions so match export exactly
       #TODO: couldn't just remove it from column names? Wouldn't that be more efficient?
     
   #RESPONSES (round 2)
     
-    #QUALTRICS-SPECIFIC: remove extra header rows
-      resp1.tb <- 
-        RemoveExtraHeaderRowsBasedOnStartChar(
-          tb = resp1.tb, 
-          header.rownum = 1,
-          search.colname = names(resp1.tb)[1],
-          search.char = "{"
+    #QUALTRICS-SPECIFIC: 
+      #Remove extra header rows
+        resp1.tb <- 
+          RemoveExtraHeaderRowsBasedOnStartChar(
+            tb = resp1.tb, 
+            header.rownum = 1,
+            search.colname = names(resp1.tb)[1],
+            search.char = "{"
+          )
+      #TODO:Rename important variables with names that make sense
+        
+    #SURVEYGIZMO-SPECIFIC: 
+      #Replace names of resp1.df with short names from questions.tb
+        names(resp1.tb) <- IndexMatchToVectorFromTibble(
+          vector = names(resp1.tb),
+          lookup.tb = questions.tb,
+          match.colname = "row.1",
+          replacement.vals.colname = "var.id"
         )
-    
-    #SURVEYGIZMO-SPECIFIC
-    
+
     #BOTH DATA SOURCES
       
-      #Rename important variables with names that make sense
       #Add id column which is either unique district name or unique building_district combo
-      
+        
+        
       #restrict rows 
         #Data to sample of user-defined size if doing sample print
         #Filter out district office rows

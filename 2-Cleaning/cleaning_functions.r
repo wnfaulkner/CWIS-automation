@@ -81,3 +81,21 @@
       return(result)
     }
 
+  #Index-match equivalent for replacing values of a vector with values from a tibble given column names
+    IndexMatchToVectorFromTibble <- function(vector, lookup.tb, match.colname, replacement.vals.colname){
+      match.col <- lookup.tb %>% select(match.colname) %>% unlist
+      replacement.col <- lookup.tb %>% select(replacement.vals.colname) %>% unlist
+      
+      for(i in 1:length(vector)){
+        if(!any(match.col == vector[i])){
+          warning(
+            paste("No match for '", vector[i], "' found in column '", match.colname, "'.", sep = "")
+          )
+        }else{
+          vector[i] <- replacement.col %>% unlist %>% .[match.col == vector[i]]
+        }
+      }
+      return(vector)
+    }
+    
+  
