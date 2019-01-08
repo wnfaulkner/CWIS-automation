@@ -192,14 +192,23 @@
         )
 
     #BOTH DATA SOURCES
-      
       #Add id column which is either unique district name or unique building_district combo
+        resp1.tb <- CreateUnitIDCol(
+          tb = resp1.tb,
+          id.unit = report.unit,
+          additional.colnames = c("district"),
+          remove.blanks = "ANY.MISSING",
+          paste.char = "_"
+        )
         
-        
-      #restrict rows 
+      #Restrict rows 
         #Data to sample of user-defined size if doing sample print
+          
+        
+        
         #Filter out district office rows
-        #With nothing in columns necessary to define report.id (district or building) 
+          
+        #Filter out rows with nothing in columns necessary to define report.id (district and building) 
       
       #restrict columns 
         #Necessary in final data
@@ -208,7 +217,7 @@
         #Response.id in first column
         #CWIS response variables to right, all others first
       
-      #QUALTRICS: Unbranch columns
+      #Unbranch columns
       
       #Data type conversions for CWIS vars
         #Text vars (freq & agreement): 

@@ -98,4 +98,150 @@
       return(vector)
     }
     
-  
+  #Create ID Column by concatenating two columns
+    #TEST INPUTS
+      #tb = resp1.tb
+      #id.unit = report.unit
+      #additional.colnames = c("district")
+      #remove.blanks = "ANY.MISSING"
+      #paste.char = "_"
+      
+    CreateUnitIDCol <- 
+      function(
+        tb, 
+        id.unit, 
+        additional.colnames = NULL, 
+        remove.blanks = c("NONE", "ALL.MISSING",  "ANY.MISSING"),
+        paste.char
+      ){
+        
+        #Check that additional.colnames of length one or greater
+          if(missing(additional.colnames)){
+            print("No additional.colnames specified. Returning tb with additional column 'id' equal to column specified in id.unit.")
+            return(tb %>% mutate(id = tb %>% select(id.unit) %>% unlist))
+          }
+        
+        #Check additional.colnames in tb names
+          if(!all(additional.colnames %in% names(tb))){ 
+            stop(
+              paste0(
+                "additional.colnames '",
+                paste(additional.colnames[!additional.colnames %in% names(tb)], collapse = "', '"),
+                "' do(es) not appear in tb names."
+              )
+            )
+          }
+          
+        #Check that the id.unit in tb names
+          if(!(id.unit %in% names(tb))){ 
+            stop(
+              paste0(
+                "id.unit '",
+                id.unit,
+                "' does not appear in tb names."
+              )
+            )
+          }
+        
+        #Remove blanks according to user specification
+          remove.blanks <- match.arg(remove.blanks)
+          colnames <- c(id.unit, additional.colnames)
+          if(remove.blanks == "NONE"){}
+          if(remove.blanks == "ALL.MISSING"){
+            tb <- tb %>% filter(tb %>% select(colnames) %>% apply(., 1, function(x){!all(x == "")}))
+          }
+          if(remove.blanks == "ANY.MISSING"){
+            tb <- tb %>% filter(tb %>% select(colnames) %>% apply(., 1, function(x){!any(x == "")}))
+          }
+          
+        #TODO: Check that the report unit is the most disaggregated unit of the values in the columns to be concatenated
+          #disaggregate.check.data.tb <- tb %>% select(additional.colnames) %>% filter(!duplicated(.)) %>% melt
+          #disaggregate.check.formula <- 
+          #  paste0(
+          #    id.unit, "+", 
+          #    ifelse(
+          #      additional.colnames[additional.colnames != id.unit] %>% length %>% ispaste0(additional.colnames[additional.colnames != id.unit])
+          #  )
+          #dcast(
+          #  data = disaggregate.check.tb, 
+          #  formula =  
+          #    "building + district ~ .", #additional.colnames[additional.colnames == id.unit]
+          #  function(x) length(x)
+          #)
+        
+        #Substitute slash for " " in both id.unit column and additional.colnames so file storage for report works properly
+          for(i in 1:length(colnames)){
+            tb[names(tb) == colnames[i]] <- gsub("\\/", " ", unlist(tb[names(tb) == colnames[i]]))
+          }
+          
+        #Create ID column itself
+          tb <- 
+            tb %>% 
+              mutate(
+                id = tb %>% 
+                  select(additional.colnames) %>% 
+                  apply(., 1, function(x){paste(x, collapse = paste.char)}) %>%
+                  cbind(., tb %>% select(id.unit)) %>%
+                  apply(., 1, function(x){paste(x, collapse = paste.char)})
+              )
+          return(tb)
+      }
+   
+  #Restrict data to a sample given a unit and an aggregate unit (e.g. 'building' and 'district'
+    #Notes for CWIS: code selects whole districts at random so that it will generate all reports for those 
+    #districts. This is important so that you don't get a bunch of scattered districts and the 
+    #district averages aren't realistic. The code samples district combinations until it finds one
+    #where the number of report ids is equal to the user-defined sample size.
+    
+    RestrictDataToSample <- function(tb, sample.print, report.unit, group.unit, sample.size){
+      
+      report.unit.counts.tb <-
+        tb %>% 
+        group_by(group.unit)
+    }
+    
+    if(sample.print & report.unit == "building"){ #TODO: generalize so will work if report.unit is district
+      
+      building.counts.df <- 
+        resp1.df %>% 
+        group_by(district) %>% 
+        dplyr::summarize(n_buildings = n_distinct(building)) %>% 
+        as.data.frame()
+      
+      report.ids.sample <- ""
+      report.districts.sample <- ""
+      unique.report.ids <- resp1.df$report.id %>% unique()
+      
+      #i <- 1
+      
+      while(length(report.ids.sample) != sample.size){            
+        
+        report.districts.sample <-
+          c(
+            report.districts.sample,
+            sample(resp1.df$district %>% unique,1)
+          ) %>% 
+          .[. != ""] %>% 
+          tolower
+        
+        report.ids.sample <- 
+          unique.report.ids[grep(paste(report.districts.sample,collapse = "|"),unique.report.ids)] %>%
+          .[. != ""] %>% .[!grepl("district office", .)]
+        
+        if(length(report.ids.sample) > sample.size){
+          report.districts.sample <- ""
+          report.ids.sample <- ""
+        }
+        #print(i)
+        #print(length(report.ids.sample))
+        i = i+1
+      }
+    }
+    
+    if(!sample.print & report.unit == "building"){
+      report.ids.sample <- report.ids.all
+    }
+    
+    #Restrict response dataset to rows for generated report ids
+    resp2.df <- resp1.df[resp1.df$report.id %in% report.ids.sample,]
+    
