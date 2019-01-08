@@ -63,6 +63,8 @@
     
   #Find most recently modified file in a directory    
     MostRecentlyModifiedFilename <- function(title.string.match, file.type, dir){
+      setwd(dir)
+      print(paste("File Directory: ", dir, sep = ""))
       match.files.v <-
         list.files()[
           grepl(tolower(title.string.match), tolower(list.files())) &  #match title string
@@ -71,6 +73,7 @@
           ]
       
       most.recent.match.file <- match.files.v[file.info(match.files.v)$mtime == sapply(match.files.v, function(x){file.info(x)$mtime}) %>% max]
+      print(paste("File Name: ", most.recent.match.file, sep = ""))
       return(most.recent.match.file)
     }
     
