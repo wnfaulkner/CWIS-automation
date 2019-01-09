@@ -193,60 +193,63 @@
     #district averages aren't realistic. The code samples district combinations until it finds one
     #where the number of report ids is equal to the user-defined sample size.
     
-    tb = resp1.tb
-    report.unit = report.unit
-    group.unit = "district"
-    sample.size = sample.size
+    #TEST INPUTS
+      #tb = resp1.tb
+      #report.unit = report.unit
+      #sample.group.unit = sample.group.unit
+      #sample.size = sample.size
       
-    RestrictDataToSample <- function(tb, sample.print, report.unit, group.unit, sample.size){
+    RestrictDataToSample <- function(tb, report.unit, sample.group.unit, sample.size){
+      
+      sample.size <- as.numeric(sample.size)
+      
+      if(nrow(tb) < sample.size){
+        stop(
+          paste0("Dataset has fewer rows (", nrow(tb), ") than requested for sample (", sample.size, ").")
+        )
+      }
+      
+      num.reports <- 0
       
       report.unit.counts.tb <-
         tb %>% 
-        group_by(group.unit)
-    }
-    
-    if(sample.print & report.unit == "building"){ #TODO: generalize so will work if report.unit is district
+        group_by(!!sym(sample.group.unit)) %>%
+        dplyr::summarize(count = n_distinct(!!sym(report.unit))) %>%
+        set_names(c("group","count"))
       
-      building.counts.df <- 
-        resp1.df %>% 
-        group_by(district) %>% 
-        dplyr::summarize(n_buildings = n_distinct(building)) %>% 
-        as.data.frame()
+      sample.groups.tb <- tibble()
       
-      report.ids.sample <- ""
-      report.districts.sample <- ""
-      unique.report.ids <- resp1.df$report.id %>% unique()
-      
-      #i <- 1
-      
-      while(length(report.ids.sample) != sample.size){            
-        
-        report.districts.sample <-
-          c(
-            report.districts.sample,
-            sample(resp1.df$district %>% unique,1)
-          ) %>% 
-          .[. != ""] %>% 
-          tolower
-        
-        report.ids.sample <- 
-          unique.report.ids[grep(paste(report.districts.sample,collapse = "|"),unique.report.ids)] %>%
-          .[. != ""] %>% .[!grepl("district office", .)]
-        
-        if(length(report.ids.sample) > sample.size){
-          report.districts.sample <- ""
-          report.ids.sample <- ""
+      #While loop to define random sample of group unit that will give correct number of report units equal to sample size
+        while(num.reports != sample.size){
+         
+          sample.groups.tb <- 
+            rbind(
+              sample.groups.tb,
+              sample_n(report.unit.counts.tb, size = 1, replace = FALSE)
+            )
+          
+          num.reports <- sum(sample.groups.tb$count)
+          report.unit.counts.tb <- report.unit.counts.tb %>% filter(!(group %in% sample.groups.tb$count))
+          
+          #print(sample.groups.tb)
+          #print(num.reports)
+          
+          if(num.reports > sample.size){
+            num.reports <- 0
+            sample.groups.tb  <- tibble()
+            report.unit.counts.tb <-
+              tb %>% 
+              group_by(!!sym(sample.group.unit)) %>%
+              dplyr::summarize(count = n_distinct(!!sym(report.unit))) %>%
+              set_names(c("group","count"))
+          }
         }
-        #print(i)
-        #print(length(report.ids.sample))
-        i = i+1
-      }
+      
+      #Restricting data to group units as defined in while loop
+        result <-
+          tb %>% filter(!!sym(sample.group.unit) %in% sample.groups.tb$group)
+      
+      return(result)
     }
     
-    if(!sample.print & report.unit == "building"){
-      report.ids.sample <- report.ids.all
-    }
-    
-    #Restrict response dataset to rows for generated report ids
-    resp2.df <- resp1.df[resp1.df$report.id %in% report.ids.sample,]
     

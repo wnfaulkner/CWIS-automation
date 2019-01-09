@@ -173,7 +173,7 @@
     
     #QUALTRICS-SPECIFIC: 
       #Remove extra header rows
-        resp1.tb <- 
+        resp2.tb <- 
           RemoveExtraHeaderRowsBasedOnStartChar(
             tb = resp1.tb, 
             header.rownum = 1,
@@ -184,40 +184,48 @@
         
     #SURVEYGIZMO-SPECIFIC: 
       #Replace names of resp1.df with short names from questions.tb
-        names(resp1.tb) <- IndexMatchToVectorFromTibble(
-          vector = names(resp1.tb),
+        names(resp2.tb) <- IndexMatchToVectorFromTibble(
+          vector = names(resp2.tb),
           lookup.tb = questions.tb,
           match.colname = "row.1",
           replacement.vals.colname = "var.id"
         )
 
     #BOTH DATA SOURCES
-      #Add id column which is either unique district name or unique building_district combo
-        resp1.tb <- CreateUnitIDCol(
-          tb = resp1.tb,
+      #Add id column which is either unique district name or unique building_district combo &
+      #Filter out rows with nothing in columns necessary to define report.id (e.g. district and building) 
+        resp3.tb <- CreateUnitIDCol(
+          tb = resp2.tb,
           id.unit = report.unit,
           additional.colnames = c("district"),
           remove.blanks = "ANY.MISSING",
           paste.char = "_"
         )
-        
+      
+      #Filter out district office rows
+        resp4.tb <- resp3.tb %>% filter(!grepl("district office", resp3.tb$id))
+          
       #Restrict rows 
         #Data to sample of user-defined size if doing sample print
-          RestrictDataToSample(
-            tb = resp1.tb,
+         resp5.tb <- RestrictDataToSample(
+            tb = resp4.tb,
             report.unit = report.unit,
-            group.unit = "district",
+            sample.group.unit = sample.group.unit,
             sample.size = sample.size
           )
-        
-        
-        #Filter out district office rows
-          
-        #Filter out rows with nothing in columns necessary to define report.id (district and building) 
-      
+
       #restrict columns 
         #Necessary in final data
-      
+        remove.colnames <- 
+           questions.tb %>% 
+           filter(tolower(necessary.in.final.data) == "no") %>%
+           select(var.id) %>%
+           unlist %>%
+           RemoveNA
+         
+         resp6.df <-
+           resp5.tb[ , !(names(resp5.tb) %in% remove.colnames)]
+          
       #rearrange columns
         #Response.id in first column
         #CWIS response variables to right, all others first
