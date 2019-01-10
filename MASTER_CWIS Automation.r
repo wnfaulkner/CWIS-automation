@@ -124,7 +124,7 @@
   #resp1.tb (initial responses dataset which will need extensive cleaning and organization in next sections)
 
 
-# 2-CLEANING ROUND 1 (UNBRANCHING) --------
+# 2-CLEANING --------
     
   #Source Cleaning Functions
     cleaning.source.dir <- paste(rproj.dir,"2-Cleaning/", sep = "")
@@ -145,6 +145,9 @@
     #TODO:Correct misspelling 'bucahanan' to 'buchanan'
     buildings.tb <- LowerCaseCharVars(buildings.tb)#Lower-case all content
   
+  #config.ans.opt.tb
+    config.ans.opt.tb <- LowerCaseCharVars(config.ans.opt.tb)
+    
   #RESPONSES (round 1)  
     resp1.tb <- LowerCaseNames(resp1.tb)  #Lower-case all variable names
     names(resp1.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(resp1.tb), char = ".")
@@ -204,6 +207,8 @@
       
       #Filter out district office rows
         resp4.tb <- resp3.tb %>% filter(!grepl("district office", resp3.tb$id))
+        
+      #TODO:Filter out test responses
           
       #Restrict rows 
         #Data to sample of user-defined size if doing sample print
@@ -223,18 +228,47 @@
            unlist %>%
            RemoveNA
          
-         resp6.df <-
+         resp6.tb <-
            resp5.tb[ , !(names(resp5.tb) %in% remove.colnames)]
           
-      #rearrange columns
-        #Response.id in first column
-        #CWIS response variables to right, all others first
-      
+      #Rearrange columns
+        #TODO: Function to rearrange columns according to names that meet a TRUE/FALSE condition
+        cwis.varnames.v <- #CWIS response variables to right, all others first
+          names(resp6.tb)[names(resp6.tb) %in% questions.tb$var.id[!is.na(questions.tb$module)]]
+         
+        resp7.tb <-
+          resp6.tb[ ,
+                   c(
+                     which(!(names(resp6.tb) %in% cwis.varnames.v)),
+                     which((names(resp6.tb) %in% cwis.varnames.v))
+                   )
+          ]
+        
+        resp8.tb <-  #Response.id in first column 
+          resp7.tb[ ,
+            c(
+              grep("responseid|id", names(resp7.tb)),
+              which(!grepl("responseid|id", names(resp7.tb)))
+            )
+          ]
+        
       #Unbranch columns
-      
+        resp9.tb <- 
+          Unbranch(
+            data.tb = resp8.tb,
+            data.id.varname = "responseid",
+            var.guide.tb = questions.tb,
+            current.names.colname = "var.id",
+            unbranched.names.colname = "branch.master.var.id"
+          )
+         
       #Data type conversions for CWIS vars
         #Text vars (freq & agreement): 
-          #preserve text; add numbers (e.g. "Always" becomes "1. Always")
+          #Preserve text; add numbers (e.g. "Always" becomes "1. Always")
+            recode.ansopt.varnames <-
+              apply(resp9.tb, 2, function(x){RemoveNA(unique(x))}) %>%
+              sapply(., function())
+        
           #convert to integer
           #convert to binary (move to table formation?)
           

@@ -252,4 +252,85 @@
       return(result)
     }
     
+  #TODO: Function to rearrange columns according to names that meet a TRUE/FALSE condition
+    
+  #Unbranching
+    
+    #Test Inputs
+      #data.tb <- resp8.tb
+      #data.id.varname <- "responseid"
+      #var.guide.tb <- questions.tb
+      #current.names.colname <- "var.id"
+      #unbranched.names.colname <- "branch.master.var.id"
+      
+    Unbranch <- function(data.tb, data.id.varname, var.guide.tb, current.names.colname, unbranched.names.colname){
+      
+      branch0.colnames <- #names of the current columns that don't need unbranching
+        var.guide.tb %>% 
+        filter(UQ(as.name(unbranched.names.colname)) %>% is.na) %>%
+        select(UQ(as.name(current.names.colname))) %>%
+        unlist %>% as.vector
+      
+      branch1.colnames <- #names of current columns that need unbranching
+        var.guide.tb %>% 
+        filter(UQ(as.name(unbranched.names.colname)) %>% is.na %>% not)  %>%
+        select(UQ(as.name(current.names.colname))) %>%
+        unlist %>% as.vector
+      
+      unbranched.colnames <- #names of final columns after unbranching
+        var.guide.tb %>% 
+        filter(UQ(as.name(unbranched.names.colname)) %>% is.na %>% not)  %>%
+        select(UQ(as.name(unbranched.names.colname))) %>%
+        unlist %>% unique
+      
+      branch0.tb <- data.tb[, names(data.tb) %in% c(data.id.varname,branch0.colnames)] #Columns that don't need unbranching
+      #branch1.tb <- data.tb[, names(data.tb) %in% c("responseid",branch1.colnames)] #Columns that need unbranching
+      
+      unbranched.ls <- list()
+      
+      for(i in 1:length(unbranched.colnames)){
+        unbranched.colname.i <- unbranched.colnames[i]
+        branched.colnames.i <- #current columns that will get unbranched into this final column
+          var.guide.tb %>% 
+          filter(UQ(as.name(unbranched.names.colname)) == unbranched.colname.i) %>%
+          select(UQ(as.name(current.names.colname))) %>%
+          unlist %>% as.vector
+        
+        branched.tb.i <- data.tb[, names(data.tb) %in% c(data.id.varname,branched.colnames.i)]
+        
+        #Check if any columns have values/responses in more than one column
+          #mult.values <- 
+          #  apply(branched.tb.i, 1, function(x){x %>% equals("") %>% not %>% sum %>% is_greater_than(1)}) %>% any
+          
+          #if(mult.values){
+          #  mult.entries.tb <-
+          #    branched.tb.i %>%
+          #    filter(
+          #      apply(
+          #        branched.tb.i, 1, 
+          #        function(x){x %>% equals("") %>% not %>% sum %>% is_greater_than(1)}
+          ##      )
+          #    )
+          #  stop("Rows have data in "
+          #}
+        
+        unbranched.ls[[i + 1]] <- 
+          melt(branched.tb.i, id = data.id.varname) %>% 
+          filter(value != "") %>% 
+          select(c(1,3)) %>%
+          set_names(data.id.varname, unbranched.colname.i)
+        
+      }
+      
+      unbranched.ls[[1]] <- branch0.tb
+      result <- Reduce(function(x, y) full_join( x, y, all = TRUE), unbranched.ls)
+      return(result)
+    }
+     
+    
+    
+
+      
+      
+      
     
