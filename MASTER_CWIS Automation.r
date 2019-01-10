@@ -158,10 +158,12 @@
   #questions.tb (round 1)
     questions.tb <- #Restrict to rows for questions for this year/semester that are necessary in final data
       questions.tb[ 
-        as.character(questions.tb$year) == data.year & tolower(questions.tb$semester) == data.semester
+        as.character(questions.tb$year) == data.year & #year
+        tolower(questions.tb$semester) == data.semester & #semester
+        tolower(questions.tb$necessary.in.final.data) == "yes" #necessary to final data
         ,]
     questions.tb <- LowerCaseNames(questions.tb)    #Lower-case all variable names
-    names(questions.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(questions.tb), char = ".")
+    names(questions.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(questions.tb), char = ".") #Replace any number of repeated periods with a single period
     questions.tb <- LowerCaseCharVars(questions.tb)  #Lower-case all content
    
     
@@ -253,14 +255,26 @@
           ]
         
       #Unbranch columns
-        resp9.tb <- 
-          Unbranch(
-            data.tb = resp8.tb,
-            data.id.varname = "responseid",
-            var.guide.tb = questions.tb,
-            current.names.colname = "var.id",
-            unbranched.names.colname = "branch.master.var.id"
-          )
+        
+        #Response data
+          resp9.tb <- 
+            Unbranch(
+              data.tb = resp8.tb,
+              data.id.varname = "responseid",
+              var.guide.tb = questions.tb,
+              current.names.colname = "var.id",
+              unbranched.names.colname = "branch.master.var.id"
+            ) %>% .[[1]] 
+        
+        #Questions table
+          questions.tb <- 
+            Unbranch(
+              data.tb = resp8.tb,
+              data.id.varname = "responseid",
+              var.guide.tb = questions.tb,
+              current.names.colname = "var.id",
+              unbranched.names.colname = "branch.master.var.id"
+            ) %>% .[[2]] 
          
       #Data type conversions for CWIS vars
         #Text vars (freq & agreement): 
@@ -270,6 +284,8 @@
               sapply(., function())
         
           #convert to integer
+            apply(resp8.tb)
+            
           #convert to binary (move to table formation?)
           
           #TODO: 1. use external config.ans.opt to allow adding new scales

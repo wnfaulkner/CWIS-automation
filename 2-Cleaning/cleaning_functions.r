@@ -254,7 +254,13 @@
     
   #TODO: Function to rearrange columns according to names that meet a TRUE/FALSE condition
     
-  #Unbranching
+  #Unbranching Variables based on a "Var Guide" lookup table
+    #Structure of Var Guide Table:
+      #var.guide.example <-
+      #  tibble(
+      #    current.names.colname = c("v1.1","v1.2","v2.a","v2.b","v2.c"),
+      #    unbranched.names.colname = c("v1","v1","v2","v2","v2")
+      #  )
     
     #Test Inputs
       #data.tb <- resp8.tb
@@ -263,70 +269,125 @@
       #current.names.colname <- "var.id"
       #unbranched.names.colname <- "branch.master.var.id"
       
-    Unbranch <- function(data.tb, data.id.varname, var.guide.tb, current.names.colname, unbranched.names.colname){
+    Unbranch <- function(
+      data.tb, 
+      data.id.varname, 
+      var.guide.tb, 
+      current.names.colname, 
+      unbranched.names.colname){
       
-      branch0.colnames <- #names of the current columns that don't need unbranching
-        var.guide.tb %>% 
-        filter(UQ(as.name(unbranched.names.colname)) %>% is.na) %>%
-        select(UQ(as.name(current.names.colname))) %>%
-        unlist %>% as.vector
-      
-      branch1.colnames <- #names of current columns that need unbranching
-        var.guide.tb %>% 
-        filter(UQ(as.name(unbranched.names.colname)) %>% is.na %>% not)  %>%
-        select(UQ(as.name(current.names.colname))) %>%
-        unlist %>% as.vector
-      
-      unbranched.colnames <- #names of final columns after unbranching
-        var.guide.tb %>% 
-        filter(UQ(as.name(unbranched.names.colname)) %>% is.na %>% not)  %>%
-        select(UQ(as.name(unbranched.names.colname))) %>%
-        unlist %>% unique
-      
-      branch0.tb <- data.tb[, names(data.tb) %in% c(data.id.varname,branch0.colnames)] #Columns that don't need unbranching
-      #branch1.tb <- data.tb[, names(data.tb) %in% c("responseid",branch1.colnames)] #Columns that need unbranching
-      
-      unbranched.ls <- list()
-      
-      for(i in 1:length(unbranched.colnames)){
-        unbranched.colname.i <- unbranched.colnames[i]
-        branched.colnames.i <- #current columns that will get unbranched into this final column
+      #Unbranching Data
+        branch0.colnames <- #names of the current columns that don't need unbranching
           var.guide.tb %>% 
-          filter(UQ(as.name(unbranched.names.colname)) == unbranched.colname.i) %>%
+          filter(UQ(as.name(unbranched.names.colname)) %>% is.na) %>%
           select(UQ(as.name(current.names.colname))) %>%
           unlist %>% as.vector
         
-        branched.tb.i <- data.tb[, names(data.tb) %in% c(data.id.varname,branched.colnames.i)]
+        branch1.colnames <- #names of current columns that need unbranching
+          var.guide.tb %>% 
+          filter(UQ(as.name(unbranched.names.colname)) %>% is.na %>% not)  %>%
+          select(UQ(as.name(current.names.colname))) %>%
+          unlist %>% as.vector
         
-        #Check if any columns have values/responses in more than one column
-          #mult.values <- 
-          #  apply(branched.tb.i, 1, function(x){x %>% equals("") %>% not %>% sum %>% is_greater_than(1)}) %>% any
+        unbranched.colnames <- #names of final columns after unbranching
+          var.guide.tb %>% 
+          filter(UQ(as.name(unbranched.names.colname)) %>% is.na %>% not)  %>%
+          select(UQ(as.name(unbranched.names.colname))) %>%
+          unlist %>% unique
+        
+        branch0.tb <- data.tb[, names(data.tb) %in% c(data.id.varname,branch0.colnames)] #Columns that don't need unbranching
+        #branch1.tb <- data.tb[, names(data.tb) %in% c("responseid",branch1.colnames)] #Columns that need unbranching
+        
+        unbranched.data.ls <- list(branch0.tb)
+        unbranched.var.guide.ls <- 
+          list(var.guide.tb %>% filter(UQ(as.name(unbranched.names.colname)) %>% is.na))
+        
+        for(i in 1:length(unbranched.colnames)){
+          unbranched.colname.i <- unbranched.colnames[i]
+          branched.colnames.i <- #current columns that will get unbranched into this final column
+            var.guide.tb %>% 
+            filter(UQ(as.name(unbranched.names.colname)) == unbranched.colname.i) %>%
+            select(UQ(as.name(current.names.colname))) %>%
+            unlist %>% as.vector
           
-          #if(mult.values){
-          #  mult.entries.tb <-
-          #    branched.tb.i %>%
-          #    filter(
-          #      apply(
-          #        branched.tb.i, 1, 
-          #        function(x){x %>% equals("") %>% not %>% sum %>% is_greater_than(1)}
-          ##      )
-          #    )
-          #  stop("Rows have data in "
-          #}
+          branched.tb.i <- data.tb[, names(data.tb) %in% c(data.id.varname,branched.colnames.i)]
+          
+          #Check if any columns have values/responses in more than one column
+            #mult.values <- 
+            #  apply(branched.tb.i, 1, function(x){x %>% equals("") %>% not %>% sum %>% is_greater_than(1)}) %>% any
+            
+            #if(mult.values){
+            #  mult.entries.tb <-
+            #    branched.tb.i %>%
+            #    filter(
+            #      apply(
+            #        branched.tb.i, 1, 
+            #        function(x){x %>% equals("") %>% not %>% sum %>% is_greater_than(1)}
+            ##      )
+            #    )
+            #  stop("Rows have data in "
+            #}
+          
+          #Data
+            unbranched.data.ls[[i + 1]] <- 
+              melt(branched.tb.i, id = data.id.varname) %>% 
+              filter(value != "") %>% 
+              select(c(1,3)) %>%
+              set_names(data.id.varname, unbranched.colname.i)
+          
+          #Var Guide
+            branched.var.guide.i <-
+              var.guide.tb %>% 
+              filter(UQ(as.name(unbranched.names.colname)) == unbranched.colname.i)
+            
+            #TODO: could be converted to SplitColReshape function (exact opposite operation)
+            unbranched.var.guide.ls[[i + 1]] <-
+              branched.var.guide.i[1, names(branched.var.guide.i) != current.names.colname] %>%
+              mutate(
+                original.branched.varnames = 
+                  branched.var.guide.i %>% 
+                  select(UQ(as.name(current.names.colname))) %>% 
+                  unlist %>% 
+                  paste(., collapse = ", ")
+              )
+            names(unbranched.var.guide.ls[[i +1]])[names(unbranched.var.guide.ls[[i + 1]]) == unbranched.names.colname] <-
+              current.names.colname
+        }
         
-        unbranched.ls[[i + 1]] <- 
-          melt(branched.tb.i, id = data.id.varname) %>% 
-          filter(value != "") %>% 
-          select(c(1,3)) %>%
-          set_names(data.id.varname, unbranched.colname.i)
+        unbranched.data.tb <- 
+          suppressMessages(
+            Reduce(function(x, y) full_join(x, y, all = TRUE), unbranched.data.ls)
+          )
+        unbranched.var.guide.tb <- 
+          suppressMessages(
+            Reduce(function(x, y) full_join(x, y, all = TRUE), unbranched.var.guide.ls)
+          )
         
-      }
-      
-      unbranched.ls[[1]] <- branch0.tb
-      result <- Reduce(function(x, y) full_join( x, y, all = TRUE), unbranched.ls)
-      return(result)
+      #Return Results
+        return(
+          list(
+            unbranched.data.tb = unbranched.data.tb,
+            unbranched.var.guide.tb = unbranched.var.guide.tb
+          )
+        )
     }
-     
+  
+  #Data Type Conversions
+    
+    #Recoding According to Lookup Table
+      #left_join(
+      #  resp9.tb %>% select(responseid, district, building, role, common.practices_feedback.to.targets), 
+      #  config.ans.opt.tb %>% select(ans.num, ans.text.freq),
+      #  by = c("common.practices_feedback.to.targets" = "ans.text.freq")
+      #)
+    
+    #Doing IndexMatch type function to take values and concatenate them with an extra set of labels/strings
+      #CWIS example: take CWIS vars and convert "Always" to "1. Always" and "Never" to "5. Never" according
+      #to a lookup table (in this case config.ans.opt.tb)
+      
+      #Test Inputs
+      
+      
     
     
 
