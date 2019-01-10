@@ -120,7 +120,7 @@
   #config.table.types.tb
   #config.pot.tb
   #buildings.tb
-  #questions.tb
+  #q.branched.tb
   #resp1.tb (initial responses dataset which will need extensive cleaning and organization in next sections)
 
 
@@ -155,21 +155,21 @@
     data.from.qualtrics.logical <- #Define whether data coming in through Qualtrics or SurveyGizmo
       ifelse(names(resp1.tb)[1] == "startdate", TRUE, FALSE)
     
-  #questions.tb (round 1)
-    questions.tb <- #Restrict to rows for questions for this year/semester that are necessary in final data
+  #q.branched.tb (round 1)
+    q.branched.tb <- #Restrict to rows for questions for this year/semester that are necessary in final data
       questions.tb[ 
         as.character(questions.tb$year) == data.year & #year
         tolower(questions.tb$semester) == data.semester & #semester
         tolower(questions.tb$necessary.in.final.data) == "yes" #necessary to final data
         ,]
-    questions.tb <- LowerCaseNames(questions.tb)    #Lower-case all variable names
-    names(questions.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(questions.tb), char = ".") #Replace any number of repeated periods with a single period
-    questions.tb <- LowerCaseCharVars(questions.tb)  #Lower-case all content
+    q.branched.tb <- LowerCaseNames(q.branched.tb)    #Lower-case all variable names
+    names(q.branched.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(q.branched.tb), char = ".") #Replace any number of repeated periods with a single period
+    q.branched.tb <- LowerCaseCharVars(q.branched.tb)  #Lower-case all content
    
     
     #SURVEYGIZMO-SPECIFIC
       #Set up variable 'row.1' so can replace response variable names with short names
-      questions.tb$row.1 <- SubRepeatedCharWithSingleChar(string.vector = questions.tb$row.1, char = ".")  
+      q.branched.tb$row.1 <- SubRepeatedCharWithSingleChar(string.vector = q.branched.tb$row.1, char = ".")  
     
     #QUALTRICS: add 'x' to questions so match export exactly
       #TODO: couldn't just remove it from column names? Wouldn't that be more efficient?
@@ -188,10 +188,10 @@
       #TODO:Rename important variables with names that make sense
         
     #SURVEYGIZMO-SPECIFIC: 
-      #Replace names of resp1.df with short names from questions.tb
+      #Replace names of resp1.df with short names from q.branched.tb
         names(resp2.tb) <- IndexMatchToVectorFromTibble(
           vector = names(resp2.tb),
-          lookup.tb = questions.tb,
+          lookup.tb = q.branched.tb,
           match.colname = "row.1",
           replacement.vals.colname = "var.id"
         )
@@ -224,7 +224,7 @@
       #restrict columns 
         #Necessary in final data
         remove.colnames <- 
-           questions.tb %>% 
+           q.branched.tb %>% 
            filter(tolower(necessary.in.final.data) == "no") %>%
            select(var.id) %>%
            unlist %>%
@@ -235,14 +235,14 @@
           
       #Rearrange columns
         #TODO: Function to rearrange columns according to names that meet a TRUE/FALSE condition
-        cwis.varnames.v <- #CWIS response variables to right, all others first
-          names(resp6.tb)[names(resp6.tb) %in% questions.tb$var.id[!is.na(questions.tb$module)]]
+        cwis.varnames.branched <- #CWIS response variables to right, all others first
+          names(resp6.tb)[names(resp6.tb) %in% q.branched.tb$var.id[!is.na(q.branched.tb$module)]]
          
         resp7.tb <-
           resp6.tb[ ,
                    c(
-                     which(!(names(resp6.tb) %in% cwis.varnames.v)),
-                     which((names(resp6.tb) %in% cwis.varnames.v))
+                     which(!(names(resp6.tb) %in% cwis.varnames.branched)),
+                     which((names(resp6.tb) %in% cwis.varnames.branched))
                    )
           ]
         
@@ -261,36 +261,58 @@
             Unbranch(
               data.tb = resp8.tb,
               data.id.varname = "responseid",
-              var.guide.tb = questions.tb,
+              var.guide.tb = q.branched.tb,
               current.names.colname = "var.id",
               unbranched.names.colname = "branch.master.var.id"
             ) %>% .[[1]] 
         
         #Questions table
-          questions.tb <- 
+          q.unbranched.tb <- 
             Unbranch(
               data.tb = resp8.tb,
               data.id.varname = "responseid",
-              var.guide.tb = questions.tb,
+              var.guide.tb = q.branched.tb,
               current.names.colname = "var.id",
               unbranched.names.colname = "branch.master.var.id"
             ) %>% .[[2]] 
          
+        cwis.varnames.unbranched <- 
+          q.unbranched.tb$var.id[!is.na(q.unbranched.tb$module)]
+          
       #Data type conversions for CWIS vars
         #Text vars (freq & agreement): 
           #Preserve text; add numbers (e.g. "Always" becomes "1. Always")
-            recode.ansopt.varnames <-
-              apply(resp9.tb, 2, function(x){RemoveNA(unique(x))}) %>%
-              sapply(., function())
-        
+            #TODO: Turn this into a function that applies according to a lookup table
+            recode.varnames <- 
+              q.unbranched.tb$var.id[grepl("frequency|agreement",q.unbranched.tb$scale.type)]
+            recode.addnums.tb <- 
+           
+
+            #recode.ansopt.varnames <-
+            #  apply(resp9.tb, 2, function(x){RemoveNA(unique(x))}) %>%
+            #  sapply(., function())
+            
+            
           #convert to integer
-            apply(resp8.tb)
+            recode.varnames <- 
+              q.unbranched.tb$var.id[grepl("frequency|agreement",q.unbranched.tb$scale.type)]
+            
+            recode.num.tb <- 
+              apply(
+                resp9.tb[, names(resp9.tb) %in% c("responseid", recode.varnames)], 
+                2, 
+                numeric.recode.fun
+              ) %>% unlist %>% as_tibble()
+            
+            recode.num.tb <- SetColClass(tb = recode.num.tb, colname = "responseid", to.class = "numeric")
             
           #convert to binary (move to table formation?)
-          
-          #TODO: 1. use external config.ans.opt to allow adding new scales
-          #TODO: 2. create standard mapping function to convert any number of integer choices to any standard
-            #number of allowed answer options.
+            recode.binary.tb <- 
+              
+            
+            #TODO: 1. use external config.ans.opt to allow adding new scales
+            #TODO: 2. create standard mapping function to convert any number of integer choices to any standard
+              #number of allowed answer options.
         
         #Slider vars:
           #convert to integer (based on min/max, e.g. cutoff points at 1.5, 2.5, 3.5)
@@ -306,7 +328,7 @@
       
       #Write wide table to csv
     
-    #questions.tb (round 2)
+    #q.branched.tb (round 2)
       #Re-do question table so no extraneous rows for roles that are now unbranched
     
     

@@ -354,25 +354,7 @@
         unlist %>% 
         unique
     
-#FUN  #Recode answer option variables as numeric
-      numeric.recode.fun <- 
-        function(x){
-          recode(
-            x,
-            `always` = 5,
-            `most of the time` = 4,
-            `about half the time` = 3,
-            `sometimes` = 2,
-            `never` = 1,
-            `strongly agree` = 5,
-            `agree` = 4,
-            `neutral` = 3,
-            `neither agree nor disagree` = 3,
-            `neither agree or disagree` = 3,
-            `disagree` = 2,
-            `strongly disagree` = 1
-          )
-        }
+
       
       recode.ansopt.varnames.v <- 
         which(resp3.df %>% 

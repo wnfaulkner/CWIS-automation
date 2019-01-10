@@ -374,6 +374,75 @@
   
   #Data Type Conversions
     
+    #Recode Original Answers to add numbers (e.g. "always" becomes "1. always")
+      addnums.recode.fun <- 
+        function(x){
+          recode(
+            x,
+            `always` = '5. always',
+            `most of the time` = '4. most of the time',
+            `about half the time` = '3. about half the time',
+            `sometimes` = "2. sometimes",
+            `never` = "1. never",
+            `strongly agree` = "5. strongly agree",
+            `agree` = "4. agree",
+            `neutral` = "3. neutral",
+            `neither agree nor disagree` = "3. neutral",
+            `neither agree or disagree` = "3. neutral",
+            `disagree` = "2. disagree",
+            `strongly disagree` = "1. strongly disagree"
+          )
+        }
+    
+    #TODO: Apply function to set of named variables in a data frame
+      #tb = resp9.tb
+      #varnames = cwis.varnames.unbranched
+      #function.to.apply = "numeric.recode.fun(x)"
+      
+      #ApplyToVarnamesReturnTable <- function(tb, varnames, function.to.apply){
+      #  for(i in 1:length(varnames)){
+      #    original.class.i <- tb[[i]] %>% class
+      #    tb[, names(tb) == varnames[i]] <-
+      #      apply(
+      #        tb[, names(tb) == varnames[i]], 
+      #        2, 
+      #        FUN = eval(parse(text = 
+      #             paste('f <- function(', args, ') { return(' , body , ')}', sep='')function.to.apply)))
+      #  }
+      #}
+    
+    #Recode answer option variables as numeric
+      numeric.recode.fun <- 
+        function(x){
+          recode(
+            x,
+            `always` = 5,
+            `most of the time` = 4,
+            `about half the time` = 3,
+            `sometimes` = 2,
+            `never` = 1,
+            `strongly agree` = 5,
+            `agree` = 4,
+            `neutral` = 3,
+            `neither agree nor disagree` = 3,
+            `neither agree or disagree` = 3,
+            `disagree` = 2,
+            `strongly disagree` = 1,
+            `5. always` = 5,
+            `4. most of the time` = 4,
+            `3. about half the time` = 3,
+            `2. sometimes` = 2,
+            `1. never` = 1,
+            `5. strongly agree` = 5,
+            `4. agree` = 4,
+            `3. neutral` = 3,
+            `3. neither agree nor disagree` = 3,
+            `3. neither agree or disagree` = 3,
+            `2. disagree` = 2,
+            `1. strongly disagree` = 1
+          )
+        }
+    
     #Recoding According to Lookup Table
       #left_join(
       #  resp9.tb %>% select(responseid, district, building, role, common.practices_feedback.to.targets), 

@@ -354,7 +354,31 @@
                            }
         )
         return(result)
-      }
+        }
+      
+      #Set Class of a named column
+        SetColClass <- function(
+          tb, 
+          colname, 
+          to.class = c("factor", "character", "logical", "numeric", "integer", "date")
+        ){
+          
+          if(!(colname %in% names(tb))){
+            stop(paste0("Colname '", colname, "' is not present in tb names."))
+          }
+          match.arg(to.class)
+          
+          #print(class(tb[[which(names(tb) == colname)]]) )
+          
+          if(to.class == "Factor"){tb[[which(names(tb) == colname)]] <- ConvertToFactor(tb[[which(names(tb) == colname)]])}
+          if(to.class == "Character"){tb[[which(names(tb) == colname)]] <- ConvertToCharacter(tb[[which(names(tb) == colname)]])}
+          if(to.class == "Logical"){tb[[which(names(tb) == colname)]] <- ConvertToLogical(tb[[which(names(tb) == colname)]])}
+          if(to.class == "Numeric"){tb[[which(names(tb) == colname)]] <- ConvertToNumeric(tb[[which(names(tb) == colname)]])}
+          if(to.class == "Integer"){tb[[which(names(tb) == colname)]] <- ConvertToInteger(tb[[which(names(tb) == colname)]])}
+          if(to.class == "Date"){tb[[which(names(tb) == colname)]] <- ConvertToDate(tb[[which(names(tb) == colname)]])}
+        
+          return(tb)
+        }
 
 } #END SECTION COLLAPSE BRACKET
 
