@@ -312,10 +312,7 @@
                 replacement.vals.colname = "ans.text.agreement.num",
                 na.replacement = ""
               )
-            
-            #names(recode.addnums.tb)[!(names(recode.addnums.tb) %in% "resp.id")] <-
-            #  paste(SelectNamesIn(recode.addnums.tb, "NOT.IN", "resp.id"), "_num", sep = "")
-              
+        
             recode.num.tb <- #convert to integer
               RecodeIndexMatch(
                 tb = recode.addnums.tb,
@@ -332,25 +329,6 @@
             
             names(recode.num.tb)[!(names(recode.num.tb) %in% "resp.id")] <-
               paste(SelectNamesIn(recode.num.tb, "NOT.IN", "resp.id"), "_num", sep = "")
-            
-              #apply(SelectColsIn(resp9.tb, "IN", c("resp.id", recode.varnames)), 2, 
-              #  function(x) {
-              #    IndexMatchToVectorFromTibble(
-              #      vector = x, 
-              #      lookup.tb = config.ans.opt.tb,
-              #      match.colname = "ans.text.agreement",
-              #      replacement.vals.colname = "ans.num")
-              #  }
-              #) %>% unlist %>% as_tibble() %>%
-              #apply(., 2, 
-              #      function(x) {
-              #        IndexMatchToVectorFromTibble(
-              #          vector = x, 
-              #          lookup.tb = config.ans.opt.tb,
-              #          match.colname = "ans.text.freq",
-              #          replacement.vals.colname = "ans.num")
-              #      }
-              #) %>% unlist %>% as_tibble() 
             
           
           #TODO: convert to binary - move to table formation?
@@ -443,15 +421,6 @@
     #config.global.tb
     #config.slide.types.tb
     
-# 3-CLEANING ROUND 2 (ADDING USEFUL VARIABLES) OUTPUTS ------------------------------
-  #outputs.dir: directory for all outputs. Will have "FULL PRINT" if full print, or just the system date & time if sample print
-  #resp.wide.df: wide data with all variables including numeric and binary
-  #resp.long.df: long format data frame with cwis responses
-  #config.ans.opt.tb: data frame with columns corresponding to answer numbers and answer text,
-    #including both frequency scale (e.g. 'always', 'most of the time') and agreement scale (e.g.
-    #'strongly agree', 'agree').
-
-
 # 4-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) ------------------
   
   #Load Graph & Slide Type Config Tables

@@ -526,6 +526,7 @@
         slider.binary.vars.df,
         slider.text.df
       )
+    
     resp.long.df <- 
       melt(
         data = resp.wide.df,
