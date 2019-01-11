@@ -185,7 +185,13 @@
             search.colname = names(resp1.tb)[1],
             search.char = "{"
           )
+      
       #TODO:Rename important variables with names that make sense
+      
+      #TODO:Slider vars:
+        #convert to integer (based on min/max, e.g. cutoff points at 1.5, 2.5, 3.5)
+        #convert to text 
+        #convert to binary
         
     #SURVEYGIZMO-SPECIFIC: 
       #Replace names of resp1.df with short names from q.branched.tb
@@ -249,8 +255,8 @@
         resp8.tb <-  #Response.id in first column 
           resp7.tb[ ,
             c(
-              grep("responseid|id", names(resp7.tb)),
-              which(!grepl("responseid|id", names(resp7.tb)))
+              grep("resp.id|id", names(resp7.tb)),
+              which(!grepl("resp.id|id", names(resp7.tb)))
             )
           ]
         
@@ -260,7 +266,7 @@
           resp9.tb <- 
             Unbranch(
               data.tb = resp8.tb,
-              data.id.varname = "responseid",
+              data.id.varname = "resp.id",
               var.guide.tb = q.branched.tb,
               current.names.colname = "var.id",
               unbranched.names.colname = "branch.master.var.id"
@@ -270,7 +276,7 @@
           q.unbranched.tb <- 
             Unbranch(
               data.tb = resp8.tb,
-              data.id.varname = "responseid",
+              data.id.varname = "resp.id",
               var.guide.tb = q.branched.tb,
               current.names.colname = "var.id",
               unbranched.names.colname = "branch.master.var.id"
@@ -282,48 +288,70 @@
       #Data type conversions for CWIS vars
         #Text vars (freq & agreement): 
           #Preserve text; add numbers (e.g. "Always" becomes "1. Always")
-            #TODO: Turn this into a function that applies according to a lookup table
+            #TODO: Turn this into a function that applies a concatenation according to a lookup table
             recode.varnames <- 
               q.unbranched.tb$var.id[grepl("frequency|agreement",q.unbranched.tb$scale.type)]
-            recode.addnums.tb <- 
-           
-
-            #recode.ansopt.varnames <-
-            #  apply(resp9.tb, 2, function(x){RemoveNA(unique(x))}) %>%
-            #  sapply(., function())
             
+            #recode.addnums.tb <- 
+            #  apply(
+            #    SelectColsIn(resp9.tb, "IN", c("resp.id", recode.varnames)), 
+             #   2, 
+                #mgsub(
+                #  pattern = config.ans.opt.tb[,grepl("text",names(config.ans.opt.tb))] %>% unlist %>% as.vector %>% RemoveNA
+                #  replacement = 
+                #)
+             # ) %>% unlist %>% as_tibble()
+            
+            recode.addnums.tb <- SetColClass(tb = recode.addnums.tb, colname = "resp.id", to.class = "numeric")
             
           #convert to integer
             recode.varnames <- 
               q.unbranched.tb$var.id[grepl("frequency|agreement",q.unbranched.tb$scale.type)]
             
-            recode.num.tb <- 
-              apply(
-                resp9.tb[, names(resp9.tb) %in% c("responseid", recode.varnames)], 
-                2, 
-                numeric.recode.fun
-              ) %>% unlist %>% as_tibble()
+            #recode.num.tb <- 
+              #apply(SelectColsIn(resp9.tb, "IN", c("resp.id", recode.varnames)), 2, 
+              #  function(x) {
+              #    IndexMatchToVectorFromTibble(
+              #      vector = x, 
+              #      lookup.tb = config.ans.opt.tb,
+              #      match.colname = "ans.text.agreement",
+              #      replacement.vals.colname = "ans.num")
+              #  }
+              #) %>% unlist %>% as_tibble() %>%
+              #apply(., 2, 
+              #      function(x) {
+              #        IndexMatchToVectorFromTibble(
+              #          vector = x, 
+              #          lookup.tb = config.ans.opt.tb,
+              #          match.colname = "ans.text.freq",
+              #          replacement.vals.colname = "ans.num")
+              #      }
+              #) %>% unlist %>% as_tibble() 
             
-            recode.num.tb <- SetColClass(tb = recode.num.tb, colname = "responseid", to.class = "numeric")
+            names(recode.num.tb)[!(names(recode.num.tb) %in% "resp.id")] <-
+              paste(SelectNamesIn(recode.num.tb, "NOT.IN", "resp.id"), "_num", sep = "")
             
-          #convert to binary (move to table formation?)
-            recode.binary.tb <- 
-              
+            recode.num.tb <- SetColClass(tb = recode.num.tb, colname = "resp.id", to.class = "numeric")
             
-            #TODO: 1. use external config.ans.opt to allow adding new scales
-            #TODO: 2. create standard mapping function to convert any number of integer choices to any standard
+          #TODO: convert to binary - move to table formation?
+            #recode.binary.tb <- 
+
+          #TODO: 1. use external config.ans.opt to allow adding new scales
+          #TODO: 2. create standard mapping function to convert any number of integer choices to any standard
               #number of allowed answer options.
-        
-        #Slider vars:
-          #convert to integer (based on min/max, e.g. cutoff points at 1.5, 2.5, 3.5)
-          #convert to text 
-          #convert to binary
       
       #Create useful objects
         #Vectors for selecting CWIS answer variables
       
       #Synthesize final response data tables 
-        #Wide table 
+        #Wide table
+          resp.wide.tb <- 
+            left_join(
+              SelectColsIn(resp9.tb, "NOT.IN", recode.varnames), #resp9.tb[,SelectNamesIn(resp9.tb, "NOT.IN", recode.varnames)],
+              recode.addnums.tb,
+              by = "resp.id"
+            )
+            
         #Long table
       
       #Write wide table to csv

@@ -116,20 +116,27 @@
       #replacement <- questions.sem.df$q.changename[!is.na(questions.sem.df$q.changename)]
       #x <- names(resp1.df)
     
-    mgsub <- function(pattern, replacement, x, ...) {
+    mgsub <- function(pattern, replacement, x, print.replacements = c(TRUE,FALSE)) {
       n = length(pattern)
       if (n != length(replacement)) {
-        stop("pattern and replacement do not have the same length.")
+        print(pattern)
+        print(replacement)
+        stop("Pattern and replacement do not have the same length.")
       }
       
       result = x
       num.replacements <- vector()
       
       for (i in 1:n) {
-        result[grep(pattern[i], x, ...)] = replacement[i]
+        result[grep(pattern[i], x)] <- replacement[i]
         num.replacements[i] <- length(grep(pattern[i], x))
       }
-      print(cbind(pattern,replacement,num.replacements))
+      
+      if(!missing(print.replacements)){
+        print.replacements <- match.arg(print.replacements)
+        if(print.replacements){print(cbind(pattern,replacement,num.replacements))}
+      }
+      
       return(result)
     }
   
@@ -308,7 +315,7 @@
         }
         
         if(class(x) %in% c("character")){
-          if(as.numeric(x) %>% unique %>% is.na){print("Warning: Converting character to number resulted in all NA.")}
+          if(as.numeric(x) %>% unique %>% is.na %>% any){print("Warning: Converting character to number resulted in all NA.")}
           result <- as.numeric(x)
         }
         return(result)
@@ -370,12 +377,12 @@
           
           #print(class(tb[[which(names(tb) == colname)]]) )
           
-          if(to.class == "Factor"){tb[[which(names(tb) == colname)]] <- ConvertToFactor(tb[[which(names(tb) == colname)]])}
-          if(to.class == "Character"){tb[[which(names(tb) == colname)]] <- ConvertToCharacter(tb[[which(names(tb) == colname)]])}
-          if(to.class == "Logical"){tb[[which(names(tb) == colname)]] <- ConvertToLogical(tb[[which(names(tb) == colname)]])}
-          if(to.class == "Numeric"){tb[[which(names(tb) == colname)]] <- ConvertToNumeric(tb[[which(names(tb) == colname)]])}
-          if(to.class == "Integer"){tb[[which(names(tb) == colname)]] <- ConvertToInteger(tb[[which(names(tb) == colname)]])}
-          if(to.class == "Date"){tb[[which(names(tb) == colname)]] <- ConvertToDate(tb[[which(names(tb) == colname)]])}
+          if(to.class == "factor"){tb[[which(names(tb) == colname)]] <- ConvertToFactor(tb[[which(names(tb) == colname)]])}
+          if(to.class == "character"){tb[[which(names(tb) == colname)]] <- ConvertToCharacter(tb[[which(names(tb) == colname)]])}
+          if(to.class == "logical"){tb[[which(names(tb) == colname)]] <- ConvertToLogical(tb[[which(names(tb) == colname)]])}
+          if(to.class == "numeric"){tb[[which(names(tb) == colname)]] <- ConvertToNumeric(tb[[which(names(tb) == colname)]])}
+          if(to.class == "integer"){tb[[which(names(tb) == colname)]] <- ConvertToInteger(tb[[which(names(tb) == colname)]])}
+          if(to.class == "date"){tb[[which(names(tb) == colname)]] <- ConvertToDate(tb[[which(names(tb) == colname)]])}
         
           return(tb)
         }
@@ -475,6 +482,21 @@
       names(df)[names(df) %in% current.names] <- new.names
       return(df)
     }
+  
+  #Select names based on in/not in string vector
+    SelectNamesIn <- function(tb, condition = c("IN","NOT.IN"), char.vector){
+      condition <- match.arg(condition)
+      if(condition == "IN"){return(names(tb)[names(tb) %in% char.vector])}
+      if(condition == "NOT.IN"){return(names(tb)[!(names(tb) %in% char.vector)])}
+    }
+  
+  #Select columns based on in/not in string vector
+    SelectColsIn <- function(tb, condition = c("IN","NOT.IN"), char.vector){
+      condition <- match.arg(condition)
+      if(condition == "IN"){return(tb[,names(tb) %in% char.vector])}
+      if(condition == "NOT.IN"){return(tb[,!(names(tb) %in% char.vector)])}
+    }
+    
     
   #Left Join & Replace NAs
     left.join.NA <- function(.x, .y, .by, na.replacement) {
