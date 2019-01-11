@@ -85,7 +85,7 @@
     TibbleToCharObjects(config.global.tb)
     sample.print <- #Convert sample.print to TRUE/FALSE
       ifelse(
-        sample.print == "TRUE",
+        sample.print == "true",
         TRUE,
         FALSE
       )
@@ -198,7 +198,8 @@
           vector = names(resp2.tb),
           lookup.tb = q.branched.tb,
           match.colname = "row.1",
-          replacement.vals.colname = "var.id"
+          replacement.vals.colname = "var.id",
+          mult.replacements.per.cell = FALSE
         )
 
     #BOTH DATA SOURCES
@@ -292,22 +293,46 @@
             recode.varnames <- 
               q.unbranched.tb$var.id[grepl("frequency|agreement",q.unbranched.tb$scale.type)]
             
-            recode.addnums.tb <- 
-              IndexMatchRecode(
+            
+        #Recode for CWIS 
+            #1. add numbers to text > store; 2. convert text to integers > store; 3. compile non-cwis, cwis text, & cwis integer vars into one tibble
+            #TODO: turn into custom CWIS function
+            recode.addnums.tb <- #add numbers to text variables
+              RecodeIndexMatch(
                 tb = SelectColsIn(resp9.tb, "IN", c("resp.id", recode.varnames)),
                 lookup.tb = config.ans.opt.tb,
                 match.colname = "ans.text.freq",
-                replacement.vals.colname = "ans.text.freq.num"
+                replacement.vals.colname = "ans.text.freq.num",
+                na.replacement = ""
+              ) %>%
+              RecodeIndexMatch(
+                tb = .,
+                lookup.tb = config.ans.opt.tb,
+                match.colname = "ans.text.agreement",
+                replacement.vals.colname = "ans.text.agreement.num",
+                na.replacement = ""
               )
-           
-            recode.addnums.tb <- SetColClass(tb = recode.addnums.tb, colname = "resp.id", to.class = "numeric")
             
-          #convert to integer
+            #names(recode.addnums.tb)[!(names(recode.addnums.tb) %in% "resp.id")] <-
+            #  paste(SelectNamesIn(recode.addnums.tb, "NOT.IN", "resp.id"), "_num", sep = "")
+              
+            recode.num.tb <- #convert to integer
+              RecodeIndexMatch(
+                tb = recode.addnums.tb,
+                lookup.tb = config.ans.opt.tb,
+                match.colname = "ans.text.freq.num",
+                replacement.vals.colname = "ans.num"
+              ) %>%
+              RecodeIndexMatch(
+                tb = .,
+                lookup.tb = config.ans.opt.tb,
+                match.colname = "ans.text.agreement.num",
+                replacement.vals.colname = "ans.num"
+              ) 
             
-            recode.num.tb <- 
-              
-              
-              
+            names(recode.num.tb)[!(names(recode.num.tb) %in% "resp.id")] <-
+              paste(SelectNamesIn(recode.num.tb, "NOT.IN", "resp.id"), "_num", sep = "")
+            
               #apply(SelectColsIn(resp9.tb, "IN", c("resp.id", recode.varnames)), 2, 
               #  function(x) {
               #    IndexMatchToVectorFromTibble(
@@ -327,11 +352,7 @@
               #      }
               #) %>% unlist %>% as_tibble() 
             
-            names(recode.num.tb)[!(names(recode.num.tb) %in% "resp.id")] <-
-              paste(SelectNamesIn(recode.num.tb, "NOT.IN", "resp.id"), "_num", sep = "")
-            
-            recode.num.tb <- SetColClass(tb = recode.num.tb, colname = "resp.id", to.class = "numeric")
-            
+          
           #TODO: convert to binary - move to table formation?
             #recode.binary.tb <- 
 
@@ -343,18 +364,74 @@
         #Vectors for selecting CWIS answer variables
       
       #Synthesize final response data tables 
-        #Wide table
+        #Wide table for export
           resp.wide.tb <- 
             left_join(
-              SelectColsIn(resp9.tb, "NOT.IN", recode.varnames), #resp9.tb[,SelectNamesIn(resp9.tb, "NOT.IN", recode.varnames)],
+              SelectColsIn(resp9.tb, "NOT.IN", cwis.varnames.unbranched),
               recode.addnums.tb,
               by = "resp.id"
+            ) %>%
+            left_join(
+              ., 
+              recode.num.tb,
+              by = "resp.id"
             )
-            
+        
         #Long table
+          report.data.varnames <- q.unbranched.tb$var.id[q.unbranched.tb$necessary.for.reports == "yes"]
+          resp.wide.report.tb <- resp.wide.tb[, names(resp.wide.tb) %in% report.data.varnames]
+          resp.long.tb <- 
+            melt(
+              data = resp.wide.report.tb,
+              id.vars = SelectNamesIn(resp.wide.report.tb,"NOT.IN", cwis.varnames.unbranched),
+              variable.name = "question",
+              value.name = "answer",
+              stringsAsFactors = FALSE,
+              na.rm = TRUE
+            ) %>% as_tibble()
       
-      #Write wide table to csv
-    
+        #Establish Outputs Directory
+          if(sample.print){
+            outputs.dir <- 
+              paste(
+                working.dir,
+                "5_outputs/",
+                gsub(":",".",Sys.time()), 
+                sep = ""
+              )
+          }else{
+            outputs.dir <- 
+              paste(
+                working.dir,
+                "5_outputs/",
+                gsub(":",".",Sys.time()),
+                "_FULL PRINT",
+                sep = ""
+              )
+          }
+          
+          dir.create(
+            outputs.dir,
+            recursive = TRUE
+          )
+          
+          setwd(outputs.dir)
+          
+        #Write Unbranched Data to Excel File
+          unbranched.file.name <- 
+            paste( 
+              "widedata_",
+              gsub(":",".",Sys.time()),
+              ".csv", 
+              sep=""
+            )
+          
+          write.csv(
+            resp.wide.tb,
+            file = unbranched.file.name,
+            row.names = FALSE
+          )
+          
     #q.branched.tb (round 2)
       #Re-do question table so no extraneous rows for roles that are now unbranched
     

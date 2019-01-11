@@ -82,7 +82,14 @@
     }
 
   #Index-match equivalent for replacing values of a vector with values from a tibble given column names
-    vector <- tb[[i]]
+    #Test Inputs
+      #vector = resp9.tb$pd_coaching.instruction
+      #lookup.tb = config.ans.opt.tb
+      #match.colname = "ans.text.agreement"
+      #replacement.vals.colname = "ans.text.agreement.num"
+      #mult.replacements.per.cell = TRUE
+      #mult.replacements.separator.char = ","
+      #print.matches = TRUE
     
     IndexMatchToVectorFromTibble <- 
       function(
@@ -90,8 +97,21 @@
         lookup.tb, 
         match.colname, 
         replacement.vals.colname,
+        mult.replacements.per.cell = c(FALSE,TRUE),
+        mult.replacements.separator.char = NULL,
         print.matches = c(TRUE,FALSE)
       ){
+       
+        if(mult.replacements.per.cell){
+          lookup.tb <- 
+            SplitColReshape.ToLong(
+              df = lookup.tb,
+              id.varname = replacement.vals.colname,
+              split.varname = match.colname, 
+              split.char = ","
+            ) #strsplit(match.col, mult.replacements.separator.char) %>% unlist %>% as.vector
+        }
+        
         match.col <- lookup.tb %>% select(match.colname) %>% unlist %>% as.vector
         replacement.col <- lookup.tb %>% select(replacement.vals.colname) %>% unlist %>% as.vector
         matched.vals.ls <- list()
@@ -394,41 +414,56 @@
     }
   
   #Data Type Conversions
-      
-   
-    #TODO:Recoding According to Lookup Table
-      #(applies a concatenation according to a lookup table)
-      
-      #left_join(
-      #  resp9.tb %>% select(responseid, district, building, role, common.practices_feedback.to.targets), 
-      #  config.ans.opt.tb %>% select(ans.num, ans.text.freq),
-      #  by = c("common.practices_feedback.to.targets" = "ans.text.freq")
-      #)
     
     #Doing IndexMatch type function to take values and concatenate them with an extra set of labels/strings
       #CWIS example: take CWIS vars and convert "Always" to "1. Always" and "Never" to "5. Never" according
       #to a lookup table (in this case config.ans.opt.tb)
       
       #Test Inputs
-        tb = SelectColsIn(resp9.tb, "IN", c("resp.id", recode.varnames))
-        lookup.tb = config.ans.opt.tb
-        match.colname = "ans.text.freq"
-        replacement.vals.colname = "ans.num"
+        #tb =  RecodeIndexMatch(
+        #  tb = recode.addnums.tb,
+        ##  lookup.tb = lookup.tb,
+        #  match.colname = "ans.text.freq.num",
+        #  replacement.vals.colname = "ans.num"
+        #)
+        #lookup.tb = config.ans.opt.tb
+        #match.colname = "ans.text.agreement.num"
+        #replacement.vals.colname = "ans.num"
+        #na.replacement = NULL
       
-      IndexMatchRecode <- function(tb, lookup.tb, match.colname, replacement.vals.colname){
+      RecodeIndexMatch <- function(tb, lookup.tb, match.colname, replacement.vals.colname, na.replacement = NULL){
         for(i in 1:ncol(tb)){
+          
+          replacement.vals <- lookup.tb %>% select(UQ(as.name(match.colname))) %>% unlist %>% as.vector %>% unique
+          if((tb[[i]] %>% unique) %in% replacement.vals %>% any %>% not){next()}
+          
           tb[,i] <- 
             IndexMatchToVectorFromTibble(
               vector = tb[[i]],
               lookup.tb = lookup.tb,
               match.colname = match.colname,
               replacement.vals.colname = replacement.vals.colname,
+              mult.replacements.per.cell = TRUE,
+              mult.replacements.separator.char = ",",
               print.matches = FALSE
+            ) 
+          
+          if(!is.null(na.replacement)){
+            tb[[i]] <- SubNA(tb[[i]], na.replacement = na.replacement)
+          }
+          
+          tb <- 
+            SetColClass(
+              tb = tb, 
+              colname = names(tb)[i], 
+              to.class = class(lookup.tb[[which(names(lookup.tb)==replacement.vals.colname)]])
             )
         }
         return(tb)
       }
-  
+    
+   
+      
     #TODO: Apply function to set of named variables in a data frame
       #tb = resp9.tb
       #varnames = cwis.varnames.unbranched
