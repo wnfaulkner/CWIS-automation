@@ -82,19 +82,41 @@
     }
 
   #Index-match equivalent for replacing values of a vector with values from a tibble given column names
-    IndexMatchToVectorFromTibble <- function(vector, lookup.tb, match.colname, replacement.vals.colname){
-      match.col <- lookup.tb %>% select(match.colname) %>% unlist %>% as.vector
-      replacement.col <- lookup.tb %>% select(replacement.vals.colname) %>% unlist %>% as.vector
-      for(i in 1:length(vector)){
-        if(!any(match.col == vector[i])){
-          warning(
-            paste("No match for '", vector[i], "' found in column '", match.colname, "'.", sep = "")
-          )
-        }else{
-          vector[i] <- replacement.col %>% unlist %>% .[match.col == vector[i]]
+    vector <- tb[[i]]
+    
+    IndexMatchToVectorFromTibble <- 
+      function(
+        vector, 
+        lookup.tb, 
+        match.colname, 
+        replacement.vals.colname,
+        print.matches = c(TRUE,FALSE)
+      ){
+        match.col <- lookup.tb %>% select(match.colname) %>% unlist %>% as.vector
+        replacement.col <- lookup.tb %>% select(replacement.vals.colname) %>% unlist %>% as.vector
+        matched.vals.ls <- list()
+        unmatched.vals.ls <- list()
+        
+        for(i in 1:length(vector)){
+          if(is.na(vector[i])){next()} #Skips NAs
+          if(!any(match.col == vector[i])){
+            unmatched.vals.ls[[i]] <- vector[i]
+            warning(
+              paste("No match for '", vector[i], "' found in column '", match.colname, "'.", sep = "")
+            )
+          }else{
+            matched.vals.ls <- vector[i]
+            vector[i] <- replacement.col %>% unlist %>% .[match.col == vector[i]]
+          }
         }
-      }
-      return(vector)
+        
+        if(!missing(print.matches) && print.matches){
+          matched.vals.ls %>% unlist %>% as.vector %>% RemoveNA %>% paste(., collapse = ", ") %>%
+            paste0("Values replaced: ",.) %>% print
+          unmatched.vals.ls %>% unlist %>% as.vector %>% RemoveNA %>% paste(., collapse = ", ") %>%
+            paste0("Values not replaced: ",.) %>% print
+        }
+        return(vector)
     }
     
   #Create ID Column by concatenating two columns
@@ -372,78 +394,8 @@
     }
   
   #Data Type Conversions
-    
-    #Recode Original Answers to add numbers (e.g. "always" becomes "1. always")
-      #addnums.recode.fun <- 
-        #function(x){
-          
-          
-          #recode(
-          #  x,
-          #  `always` = '5. always',
-          #  `most of the time` = '4. most of the time',
-          #  `about half the time` = '3. about half the time',
-          #  `sometimes` = "2. sometimes",
-          #  `never` = "1. never",
-          #  `strongly agree` = "5. strongly agree",
-          #  `agree` = "4. agree",
-          #  `neutral` = "3. neutral",
-          #  `neither agree nor disagree` = "3. neutral",
-          #  `neither agree or disagree` = "3. neutral",
-          #  `disagree` = "2. disagree",
-          #  `strongly disagree` = "1. strongly disagree",
-          #)
-        #}
-    
-    #Recode answer option variables as numeric
-      #numeric.recode.fun <- 
-       # function(x){
-        #  recode(
-         #   x,
-          #  `always` = 5,
-           # `most of the time` = 4,
-            #`about half the time` = 3,
-            #`sometimes` = 2,
-            #`never` = 1,
-            #`strongly agree` = 5,
-            #`agree` = 4,
-            #`neutral` = 3,
-            #`neither agree nor disagree` = 3,
-            #`neither agree or disagree` = 3,
-            #`disagree` = 2,
-            #`strongly disagree` = 1,
-            #`5. always` = 5,
-            #`4. most of the time` = 4,
-            #`3. about half the time` = 3,
-            #`2. sometimes` = 2,
-            #`1. never` = 1,
-            #`5. strongly agree` = 5,
-            #`4. agree` = 4,
-            #`3. neutral` = 3,
-            #`3. neither agree nor disagree` = 3,
-            #`3. neither agree or disagree` = 3,
-            #`2. disagree` = 2,
-            #`1. strongly disagree` = 1
-          #)
-        #}
       
-    #TODO: Apply function to set of named variables in a data frame
-      #tb = resp9.tb
-      #varnames = cwis.varnames.unbranched
-      #function.to.apply = "numeric.recode.fun(x)"
-      
-    #ApplyToVarnamesReturnTable <- function(tb, varnames, function.to.apply){
-      #  for(i in 1:length(varnames)){
-      #    original.class.i <- tb[[i]] %>% class
-      #    tb[, names(tb) == varnames[i]] <-
-      #      apply(
-      #        tb[, names(tb) == varnames[i]], 
-      #        2, 
-      #        FUN = eval(parse(text = 
-      #             paste('f <- function(', args, ') { return(' , body , ')}', sep='')function.to.apply)))
-      #  }
-      #}
-    
+   
     #TODO:Recoding According to Lookup Table
       #(applies a concatenation according to a lookup table)
       
@@ -458,21 +410,39 @@
       #to a lookup table (in this case config.ans.opt.tb)
       
       #Test Inputs
-        #tb = SelectColsIn(resp9.tb, "IN", c("resp.id", recode.varnames))
-        #lookup.tb = config.ans.opt.tb
-        #match.colname = "ans.text.freq"
-        #replacement.vals.colname = "ans.num"
+        tb = SelectColsIn(resp9.tb, "IN", c("resp.id", recode.varnames))
+        lookup.tb = config.ans.opt.tb
+        match.colname = "ans.text.freq"
+        replacement.vals.colname = "ans.num"
       
-      #IndexMatchRecode <- function(tb, lookup.tb, match.colname, replacement.vals.colname){
-      #  for(i in 1:ncol(tb)){
-      #    #if(tb[,i])
-      #    tb[,i] <- 
-      #      IndexMatchToVectorFromTibble(
-      #        vector = tb[[i]],
-      #        lookup.tb = lookup.tb,
-      #        match.colname = match.colname,
-      #        replacement.vals.colname = replacement.vals.colname
-      #      ) 
-      #  }  
+      IndexMatchRecode <- function(tb, lookup.tb, match.colname, replacement.vals.colname){
+        for(i in 1:ncol(tb)){
+          tb[,i] <- 
+            IndexMatchToVectorFromTibble(
+              vector = tb[[i]],
+              lookup.tb = lookup.tb,
+              match.colname = match.colname,
+              replacement.vals.colname = replacement.vals.colname,
+              print.matches = FALSE
+            )
+        }
+        return(tb)
+      }
+  
+    #TODO: Apply function to set of named variables in a data frame
+      #tb = resp9.tb
+      #varnames = cwis.varnames.unbranched
+      #function.to.apply = "numeric.recode.fun(x)"
+    
+    #ApplyToVarnamesReturnTable <- function(tb, varnames, function.to.apply){
+      #  for(i in 1:length(varnames)){
+      #    original.class.i <- tb[[i]] %>% class
+      #    tb[, names(tb) == varnames[i]] <-
+      #      apply(
+      #        tb[, names(tb) == varnames[i]], 
+      #        2, 
+      #        FUN = eval(parse(text = 
+      #             paste('f <- function(', args, ') { return(' , body , ')}', sep='')function.to.apply)))
+      #  }
       #}
-        
+    

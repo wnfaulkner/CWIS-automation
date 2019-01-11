@@ -156,11 +156,10 @@
       ifelse(names(resp1.tb)[1] == "startdate", TRUE, FALSE)
     
   #q.branched.tb (round 1)
-    q.branched.tb <- #Restrict to rows for questions for this year/semester that are necessary in final data
+    q.branched.tb <- #Restrict to rows for questions for this year/semester 
       questions.tb[ 
         as.character(questions.tb$year) == data.year & #year
-        tolower(questions.tb$semester) == data.semester & #semester
-        tolower(questions.tb$necessary.in.final.data) == "yes" #necessary to final data
+        tolower(questions.tb$semester) == data.semester #semester
         ,]
     q.branched.tb <- LowerCaseNames(q.branched.tb)    #Lower-case all variable names
     names(q.branched.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(q.branched.tb), char = ".") #Replace any number of repeated periods with a single period
@@ -229,18 +228,18 @@
 
       #restrict columns 
         #Necessary in final data
-        remove.colnames <- 
+        necessary.colnames <- 
            q.branched.tb %>% 
-           filter(tolower(necessary.in.final.data) == "no") %>%
+           filter(tolower(necessary.in.final.data) == "yes") %>%
            select(var.id) %>%
            unlist %>%
            RemoveNA
          
          resp6.tb <-
-           resp5.tb[ , !(names(resp5.tb) %in% remove.colnames)]
+           SelectColsIn(resp5.tb, "IN", necessary.colnames)
           
       #Rearrange columns
-        #TODO: Function to rearrange columns according to names that meet a TRUE/FALSE condition
+        #TODO: Use 'SelectColIn' Function to rearrange columns according to names that meet a TRUE/FALSE condition
         cwis.varnames.branched <- #CWIS response variables to right, all others first
           names(resp6.tb)[names(resp6.tb) %in% q.branched.tb$var.id[!is.na(q.branched.tb$module)]]
          
@@ -280,8 +279,9 @@
               var.guide.tb = q.branched.tb,
               current.names.colname = "var.id",
               unbranched.names.colname = "branch.master.var.id"
-            ) %>% .[[2]] 
-         
+            ) %>% .[[2]] %>%
+            filter(., necessary.in.final.data == "yes") #filter to questions necessary to final data
+
         cwis.varnames.unbranched <- 
           q.unbranched.tb$var.id[!is.na(q.unbranched.tb$module)]
           
@@ -292,23 +292,22 @@
             recode.varnames <- 
               q.unbranched.tb$var.id[grepl("frequency|agreement",q.unbranched.tb$scale.type)]
             
-            #recode.addnums.tb <- 
-            #  apply(
-            #    SelectColsIn(resp9.tb, "IN", c("resp.id", recode.varnames)), 
-             #   2, 
-                #mgsub(
-                #  pattern = config.ans.opt.tb[,grepl("text",names(config.ans.opt.tb))] %>% unlist %>% as.vector %>% RemoveNA
-                #  replacement = 
-                #)
-             # ) %>% unlist %>% as_tibble()
-            
+            recode.addnums.tb <- 
+              IndexMatchRecode(
+                tb = SelectColsIn(resp9.tb, "IN", c("resp.id", recode.varnames)),
+                lookup.tb = config.ans.opt.tb,
+                match.colname = "ans.text.freq",
+                replacement.vals.colname = "ans.text.freq.num"
+              )
+           
             recode.addnums.tb <- SetColClass(tb = recode.addnums.tb, colname = "resp.id", to.class = "numeric")
             
           #convert to integer
-            recode.varnames <- 
-              q.unbranched.tb$var.id[grepl("frequency|agreement",q.unbranched.tb$scale.type)]
             
-            #recode.num.tb <- 
+            recode.num.tb <- 
+              
+              
+              
               #apply(SelectColsIn(resp9.tb, "IN", c("resp.id", recode.varnames)), 2, 
               #  function(x) {
               #    IndexMatchToVectorFromTibble(
