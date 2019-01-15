@@ -143,7 +143,7 @@
     
   #buildings.tb
     #TODO:Correct misspelling 'bucahanan' to 'buchanan'
-    buildings.tb <- LowerCaseCharVars(buildings.tb)#Lower-case all content
+    buildings.tb <- LowerCaseCharVars(buildings.tb) #Lower-case all content 
   
   #config.ans.opt.tb
     config.ans.opt.tb <- LowerCaseCharVars(config.ans.opt.tb)
