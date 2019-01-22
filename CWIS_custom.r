@@ -390,7 +390,7 @@ source("utils_wnf.r")
   
 #Data Summarize - participation vs. implementation vs. performance 
   #Test inputs
-  config.input <- config.tables.df.d
+  #config.input <- config.tables.df.d
   #data.input <-  resp.long.df.c %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
   
   #TODO:
