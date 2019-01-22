@@ -57,6 +57,29 @@
     library(extrafont)
     extrafont::loadfonts(device="win")
     
+    #Special for ReporteRs package because it has been archived (https://stackoverflow.com/questions/24194409/how-do-i-install-a-package-that-has-been-archived-from-cran)
+    
+      #Download archived package
+        url <- "https://cran.r-project.org/src/contrib/Archive/ReporteRs/"
+        pkgFile <- "ReporteRs_0.8.10.tar.gz"
+        download.file(url = url, destfile = pkgFile)
+    
+      #Install Dependencies
+        if( !require( rJava ) ) install.packages("rJava")
+        if( !require( ggplot2 ) ) install.packages("ggplot2")
+        if( !require( base64 ) ) install.packages("base64")
+        if( !require( highlight ) ) install.packages("highlight")
+        if( !require( devtools ) ) install.packages("devtools")
+        #devtools::install_github('ReporteRsjars', 'davidgohel')
+        #devtools::install_github('ReporteRs', 'davidgohel')
+      
+      # Install package
+        install.packages(pkgs=pkgFile, type="source", repos=NULL)
+        
+      # Delete package tarball
+        unlink(pkgFile) 
+    
+    
 # 0-SETUP OUTPUTS -----------------------------------------------------------
   #start_time: sys.time for code
   #working.dir: working directory - Google Drive folder "2018-08 Green Reports"
