@@ -58,13 +58,7 @@
     extrafont::loadfonts(device="win")
     
     #Special for ReporteRs package because it has been archived (https://stackoverflow.com/questions/24194409/how-do-i-install-a-package-that-has-been-archived-from-cran)
-      setwd(paste0(rproj.dir, "0-Setup"))
       
-      #Download archived package
-        #url <- "https://cran.r-project.org/src/contrib/Archive/ReporteRs/"
-        #pkgFile <- "ReporteRs_0.8.10.tar.gz"
-        #download.file(url = url, destfile = pkgFile)
-    
       #Install Dependencies
         if( !require( rJava ) ) install.packages("rJava")
         if( !require( ggplot2 ) ) install.packages("ggplot2")
@@ -78,18 +72,11 @@
         if( !require( ReporteRsjars ) ) install.packages("ReporteRsjars")
         if( !require( jsonlite ) ) install.packages("jsonlite")
         if( !require( rlang ) ) install.packages("rlang")
-        
+      
+      #Install Archived Packages: ReporteRsjars & ReporteRs  
         if( !require( ReporteRsjars ) ) devtools::install_github("davidgohel/ReporteRsjars")
         if( !require( ReporteRs ) ) devtools::install_github("davidgohel/ReporteRs")
-      
-      # Install package
-        #https://github.com/cran/ReporteRsjars.git  
-        #install.packages(pkgs="ReporteRs_0.8.10.tar", type="source", repos=NULL)
-        
-      # Delete package tarball
-        #unlink(pkgFile) 
-    
-    
+
 # 0-SETUP OUTPUTS -----------------------------------------------------------
   #start_time: sys.time for code
   #working.dir: working directory - Google Drive folder "2018-08 Green Reports"
@@ -175,7 +162,6 @@
     config.pot.types.tb$color <- config.pot.types.tb$color %>% gsub("x","",.)  #Removing 'x' from colors
     
   #buildings.tb
-    #TODO:Correct misspelling 'bucahanan' to 'buchanan'
     buildings.tb <- LowerCaseCharVars(buildings.tb) #Lower-case all content 
   
   #config.ans.opt.tb
@@ -237,7 +223,9 @@
 
     #BOTH DATA SOURCES
       #Add id column which is either unique district name or unique building_district combo &
-      #Filter out rows with nothing in columns necessary to define report.id (e.g. district and building) 
+        #filter out rows with nothing in columns necessary to define report.id 
+        #(e.g. district and building)
+        
         resp3.tb <- CreateUnitIDCol(
           tb = resp2.tb,
           id.unit = report.unit,
@@ -263,11 +251,13 @@
       #restrict columns 
         #Necessary in final data
         necessary.colnames <- 
-           q.branched.tb %>% 
-           filter(tolower(necessary.in.final.data) == "yes") %>%
-           select(var.id) %>%
-           unlist %>%
-           RemoveNA
+          q.branched.tb %>% 
+          filter(tolower(necessary.in.final.data) == "yes") %>%
+          select(var.id) %>%
+          unlist %>%
+          RemoveNA %>% 
+          c(., "id")
+        
          
          resp6.tb <-
            SelectColsIn(resp5.tb, "IN", necessary.colnames)
@@ -299,7 +289,7 @@
           resp9.tb <- 
             Unbranch(
               data.tb = resp8.tb,
-              data.id.varname = "resp.id",
+              #data.id.varname = "id",
               var.guide.tb = q.branched.tb,
               current.names.colname = "var.id",
               unbranched.names.colname = "branch.master.var.id"
@@ -466,6 +456,9 @@
 # ### LOOP "b" BY REPORT.UNIT  ###
   ###                          ###
   
+  #Loop Inputs
+    report.ids.sample <- 
+    
   #Loop Outputs 
     config.graphs.ls.b <- list()
     config.tables.ls.b <- list()
