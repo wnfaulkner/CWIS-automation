@@ -58,11 +58,12 @@
     extrafont::loadfonts(device="win")
     
     #Special for ReporteRs package because it has been archived (https://stackoverflow.com/questions/24194409/how-do-i-install-a-package-that-has-been-archived-from-cran)
-    
+      setwd(paste0(rproj.dir, "0-Setup"))
+      
       #Download archived package
-        url <- "https://cran.r-project.org/src/contrib/Archive/ReporteRs/"
-        pkgFile <- "ReporteRs_0.8.10.tar.gz"
-        download.file(url = url, destfile = pkgFile)
+        #url <- "https://cran.r-project.org/src/contrib/Archive/ReporteRs/"
+        #pkgFile <- "ReporteRs_0.8.10.tar.gz"
+        #download.file(url = url, destfile = pkgFile)
     
       #Install Dependencies
         if( !require( rJava ) ) install.packages("rJava")
@@ -70,14 +71,23 @@
         if( !require( base64 ) ) install.packages("base64")
         if( !require( highlight ) ) install.packages("highlight")
         if( !require( devtools ) ) install.packages("devtools")
-        #devtools::install_github('ReporteRsjars', 'davidgohel')
-        #devtools::install_github('ReporteRs', 'davidgohel')
+        if( !require( rvg ) ) install.packages("rvg")
+        if( !require( gdtools ) ) install.packages("gdtools")
+        if( !require( png ) ) install.packages("png")
+        if( !require( R.Utils ) ) install.packages("R.utils")
+        if( !require( ReporteRsjars ) ) install.packages("ReporteRsjars")
+        if( !require( jsonlite ) ) install.packages("jsonlite")
+        if( !require( rlang ) ) install.packages("rlang")
+        
+        if( !require( ReporteRsjars ) ) devtools::install_github("davidgohel/ReporteRsjars")
+        if( !require( ReporteRs ) ) devtools::install_github("davidgohel/ReporteRs")
       
       # Install package
-        install.packages(pkgs=pkgFile, type="source", repos=NULL)
+        #https://github.com/cran/ReporteRsjars.git  
+        #install.packages(pkgs="ReporteRs_0.8.10.tar", type="source", repos=NULL)
         
       # Delete package tarball
-        unlink(pkgFile) 
+        #unlink(pkgFile) 
     
     
 # 0-SETUP OUTPUTS -----------------------------------------------------------
