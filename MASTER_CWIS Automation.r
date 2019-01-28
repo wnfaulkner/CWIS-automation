@@ -379,7 +379,9 @@
             )
         
         #Long table
-          report.data.varnames <- q.unbranched.tb$var.id[q.unbranched.tb$necessary.for.reports == "yes"]
+          report.data.varnames <- 
+            q.unbranched.tb$var.id[q.unbranched.tb$necessary.for.reports == "yes"] %>%
+            c(., "unit.id")
           resp.wide.report.tb <- resp.wide.tb[, names(resp.wide.tb) %in% report.data.varnames]
           resp.long.tb <- 
             melt(
@@ -482,18 +484,23 @@
   #for(b in c(1,2)){   #LOOP TESTER
   for(b in 1:length(report.ids.sample)){   #START OF LOOP BY REPORT UNIT
   
-    #print(b)
     loop.start.time.b <- Sys.time()
-    
-    if(b == 1){print("FORMING SLIDE, GRAPH, AND TABLE CONFIG TABLES...")}
-    #print(c(b,100*b/length(report.ids.sample)))
     
     #Create report.id.b (for this iteration) and skip if report for district office
       report.id.b <- report.ids.sample[b]
     
+    #Print loop messages
+      if(b == 1){print("FORMING SLIDE, GRAPH, AND TABLE CONFIG TABLES...")}
+      print(
+        paste(
+          "Loop num: ", b,", Report id: ",report.id.b,
+          ", Pct. complete:", 100*b/length(report.ids.sample), "%"
+        )
+      )
+    
     #Create data frames for this loop - restrict to district id i  
-      resp.long.df.b <- 
-        resp.long.df %>% filter(report.id == report.id.b)
+      resp.long.tb.b <- 
+        resp.long.tb %>% filter(unit.id == report.id.b)
     
     #Graphs config table for this report unit
       config.graphs.df <- 
@@ -501,7 +508,7 @@
           configs = config.graph.types.tb, 
           loop.varname = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
           collate.varname = "slide.section.1",
-          source.data = resp.long.df.b
+          source.data = resp.long.tb.b
         )
       
       config.graphs.ls.b[[b]] <- remove.district.office.fun(config.graphs.df)
@@ -512,7 +519,7 @@
           configs =  config.table.types.tb, 
           loop.varname = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
           collate.varname = "slide.section.1",
-          source.data = resp.long.df.b
+          source.data = resp.long.tb.b
         )
       
       config.tables.ls.b[[b]] <- remove.district.office.fun(config.tables.df)
@@ -523,7 +530,7 @@
           configs = config.slide.types.tb,
           loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"),
           collate.varname = "slide.section.1",
-          source.data = resp.long.df.b  
+          source.data = resp.long.tb.b  
         )
     
       config.slides.ls.b[[b]] <- remove.district.office.fun(config.slides.df)
@@ -535,7 +542,7 @@
   close(progress.bar.b)
 
 # 4-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) OUTPUTS ------------------
-  #report.ids.sample: vector with all report unit names in resp.long.df (length = 19 for baseline data)
+  #report.ids.sample: vector with all report unit names in resp.long.tb (length = 19 for baseline data)
   #config.slides.ls.b
     #[[report.unit]]
       #data frame where each line represents a slide
@@ -573,15 +580,15 @@
     
     #Loop Inputs (both graphs and tables)
     report.id.c <- report.ids.sample[c]
-    district.c <- resp.long.df %>% filter(report.id == report.id.c) %>% select(district) %>% unique %>% unlist %>% RemoveNA()
+    district.c <- resp.long.tb %>% filter(report.id == report.id.c) %>% select(district) %>% unique %>% unlist %>% RemoveNA()
     
-    resp.long.df.c <- 
-      resp.long.df %>%
+    resp.long.tb.c <- 
+      resp.long.tb %>%
       filter(report.id == report.id.c)
        
-      #select(names(resp.long.df)[names(resp.long.df) == report.id.colname]) %>% 
+      #select(names(resp.long.tb)[names(resp.long.tb) == report.id.colname]) %>% 
       #equals(report.id.c) %>% 
-      #resp.long.df[.,]
+      #resp.long.tb[.,]
     
     ###                    ###
 #   ### LOOP "d" BY GRAPH  ###
@@ -604,7 +611,7 @@
       graph.varnames.d <- 
         GraphVarnamesInData(
           config.input = config.graphs.df.d,
-          data.input = resp.long.df
+          data.input = resp.long.tb
         )
       
       #TODO: still needs work to make sure this forms the correct list with all possible x-axis categories
@@ -612,24 +619,24 @@
       all.cats.ls.d <- 
         unique.variable.values.fun(
           varnames = graph.varnames.d, 
-          tb = resp.long.df
+          tb = resp.long.tb
         )
       
       #Create data frame "all.cats.df.d" of all possible answers for x-axis (role, module, data.year, answer)
         #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
         if(!is.na(config.graphs.df.d$x.varname.1) && config.graphs.df.d$x.varname.1 == "practice"){
           all.cats.input1.d <- 
-            resp.long.df %>% 
+            resp.long.tb %>% 
             filter(grepl(config.graphs.df.d$module,module))
         }else{
           all.cats.input1.d <- 
-            resp.long.df #%>%
+            resp.long.tb #%>%
         }
         
         all.cats.input2.d <-
           all.cats.input1.d %>%
           filter(impbinary == 0) %>%
-          .[,names(resp.long.df) == config.graphs.df.d$x.varname.1] %>% 
+          .[,names(resp.long.tb) == config.graphs.df.d$x.varname.1] %>% 
           unique %>%
           strsplit(., ",") %>% 
           unlist %>%
@@ -645,7 +652,7 @@
         
       #Form final data frame (no averages)
         graphdata.df.d <-  
-          resp.long.df.c %>%
+          resp.long.tb.c %>%
           graph.data.restriction.fun %>%
           group_by(!!! syms(group_by.d)) %>%
           summarize.graph.fun(config.input = config.graphs.df.d, data.input = .) %>%
@@ -656,7 +663,7 @@
 
       #Add average variable to final data frame
         graph.avg.df.d <- 
-          resp.long.df %>%
+          resp.long.tb %>%
           avg.data.restriction.fun(.) %>%
           group_by(!!! syms(group_by.d)) %>%
           summarize.avg.fun(.)
@@ -712,7 +719,7 @@
       
       #Form final data frame (no averages)
         tabledata.df.d <-  
-          resp.long.df.c %>%
+          resp.long.tb.c %>%
           table.data.filter.fun(data.input = ., config.input = config.tables.df.d) %>%
           group_by(!!! syms(config.tables.df.d$summary.var)) %>%
           summarize.table.fun(config.input = config.tables.df.d, data.input = .) %>%
