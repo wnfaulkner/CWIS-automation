@@ -392,6 +392,17 @@
               stringsAsFactors = FALSE,
               na.rm = TRUE
             ) %>% as_tibble()
+          
+          #Add module variable for looping 
+            #TODO: need to abstract? Just for module variable or are there others?
+            
+            resp.long.tb <-
+              left_join(
+                resp.long.tb,
+                questions.tb %>% select(var.id, module),
+                by = c("question" = "var.id")
+              ) #%>% ReplaceNames(., current.names = names(.), new.names)
+            
       
         #Establish Outputs Directory
           if(sample.print){

@@ -415,10 +415,10 @@
   
     #Loop Expander for creating full config tables
       #Test Inputs
-        #configs = config.slidetypes.tb
-        #loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3")
-        #collate.varname = "slide.section.1"
-        #source.data = resp.long.df.b  
+        configs = config.graph.types.tb
+        loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3")
+        collate.varname = "slide.section.1"
+        source.data = resp.long.tb.b  
       
       loop.expander.fun <- function(
         configs, 
@@ -451,7 +451,7 @@
           }
           
           output.ls[[c]] <- 
-            UniqueCombnFromColnames(resp.long.df.b,loop.varnames.c) %>%
+            UniqueCombnFromColnames(resp.long.tb.b,loop.varnames.c) %>%
             cbind(configs.c,.)
           
         } ### END OF LOOP "C" BY ROW OF CONFIG INPUT ###

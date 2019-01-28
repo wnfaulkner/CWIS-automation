@@ -145,7 +145,23 @@
     #df <- resp.long.df.b
     #varnames <- loop.varnames.c
     
-    UniqueValsFromColnames <- function(df, varnames){  
+    UniqueValsFromColnames <- function(df, varnames){
+      
+      if(!(varnames %in% names(df))){
+        stop(
+          paste0(
+            c(
+              "Varnames: '",
+              varnames,
+              "' do not exist in table names. Table names: '", 
+              paste0(names(df), collapse = ", "),
+              "'."
+            ),
+            collapse = ""
+          )
+        )
+      }
+      
       result <- 
         df[,names(df) %in% varnames] %>%
         as.data.frame %>%
@@ -159,7 +175,22 @@
     }
     
   #All combinations of unique values of variables in a data frame
-    UniqueCombnFromColnames <- function(df, varnames){
+    UniqueCombnFromColname <- function(df, varnames){
+      if(!(varnames %in% names(df))){
+        stop(
+          paste0(
+            c(
+              "Varnames: '",
+              varnames,
+              "' do not exist in table names. Table names: '", 
+              paste0(names(df), collapse = ", "),
+              "'."
+            ),
+            collapse = ""
+          )
+        )
+      }
+      
       result <- 
         UniqueValsFromColnames(df, varnames) %>%
         expand.grid(., stringsAsFactors = FALSE) %>%
