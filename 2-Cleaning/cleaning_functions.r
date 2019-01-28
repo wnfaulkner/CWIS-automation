@@ -149,8 +149,8 @@
       
     CreateUnitIDCol <- 
       function(
-        tb, 
-        id.unit, 
+        tb, #data frame
+        id.unit, #district or building for now, taken directly from configs
         additional.colnames = NULL, 
         remove.blanks = c("NONE", "ALL.MISSING",  "ANY.MISSING"),
         paste.char
@@ -219,7 +219,7 @@
           tb <- 
             tb %>% 
               mutate(
-                id = tb %>% 
+                unit.id = tb %>% 
                   select(additional.colnames) %>% 
                   apply(., 1, function(x){paste(x, collapse = paste.char)}) %>%
                   cbind(., tb %>% select(id.unit)) %>%
@@ -322,7 +322,8 @@
           var.guide.tb %>% 
           filter(UQ(as.name(unbranched.names.colname)) %>% is.na) %>%
           select(UQ(as.name(current.names.colname))) %>%
-          unlist %>% as.vector
+          unlist %>% as.vector %>% 
+          c("unit.id",.)
         
         branch1.colnames <- #names of current columns that need unbranching
           var.guide.tb %>% 
@@ -337,8 +338,7 @@
           unlist %>% unique
         
         branch0.tb <- data.tb[, names(data.tb) %in% c(data.id.varname,branch0.colnames)] #Columns that don't need unbranching
-        #branch1.tb <- data.tb[, names(data.tb) %in% c("responseid",branch1.colnames)] #Columns that need unbranching
-        
+
         unbranched.data.ls <- list(branch0.tb)
         unbranched.var.guide.ls <- 
           list(var.guide.tb %>% filter(UQ(as.name(unbranched.names.colname)) %>% is.na))

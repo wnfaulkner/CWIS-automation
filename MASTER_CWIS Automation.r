@@ -235,7 +235,7 @@
         )
       
       #Filter out district office rows
-        resp4.tb <- resp3.tb %>% filter(!grepl("district office", resp3.tb$id))
+        resp4.tb <- resp3.tb %>% filter(!grepl("district office", resp3.tb$unit.id))
         
       #TODO:Filter out test responses
           
@@ -256,7 +256,7 @@
           select(var.id) %>%
           unlist %>%
           RemoveNA %>% 
-          c(., "id")
+          c(., "unit.id")
         
          
          resp6.tb <-
@@ -275,11 +275,11 @@
                    )
           ]
         
-        resp8.tb <-  #Response.id in first column 
+        resp8.tb <-  #'resp.id' and 'id' in first column 
           resp7.tb[ ,
             c(
-              grep("resp.id|id", names(resp7.tb)),
-              which(!grepl("resp.id|id", names(resp7.tb)))
+              grep("resp.id|unit.id", names(resp7.tb)),
+              which(!grepl("resp.id|unit.id", names(resp7.tb)))
             )
           ]
         
@@ -289,7 +289,7 @@
           resp9.tb <- 
             Unbranch(
               data.tb = resp8.tb,
-              #data.id.varname = "id",
+              data.id.varname = "resp.id",
               var.guide.tb = q.branched.tb,
               current.names.colname = "var.id",
               unbranched.names.colname = "branch.master.var.id"
@@ -435,16 +435,26 @@
           
     #q.branched.tb (round 2)
       #Re-do question table so no extraneous rows for roles that are now unbranched
-    
-    
-
 
   #NO CHANGES  
     #config.ans.opt.tb
     #config.global.tb
     #config.slide.types.tb
+    #config.graph.types.tb
+    #config.table.types.tb
+    #config.pot.tb
+    #config.ans.opt.tb
+    #buildings.tb
+    #resp.wide.tb
+    #resp.long.tb
     
-# 4-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) ------------------
+
+# 2-CLEANING OUTPUTS ------------------          
+  #config.ans.opt.tb
+  #config.global.tb
+  #config.slide.types.tb
+    
+# 3-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) ------------------
   
   #Load Graph & Slide Type Config Tables
   
@@ -457,7 +467,7 @@
   ###                          ###
   
   #Loop Inputs
-    report.ids.sample <- 
+    report.ids.sample <- resp.wide.tb$unit.id %>% unique 
     
   #Loop Outputs 
     config.graphs.ls.b <- list()
@@ -480,10 +490,6 @@
     
     #Create report.id.b (for this iteration) and skip if report for district office
       report.id.b <- report.ids.sample[b]
-    
-      #if(report.unit != "district" & grepl("district office", report.id.b)){
-      #  next()
-      #}
     
     #Create data frames for this loop - restrict to district id i  
       resp.long.df.b <- 
