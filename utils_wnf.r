@@ -175,7 +175,7 @@
     }
     
   #All combinations of unique values of variables in a data frame
-    UniqueCombnFromColname <- function(df, varnames){
+    UniqueCombnFromColnames <- function(df, varnames){
       if(!(varnames %in% names(df))){
         stop(
           paste0(

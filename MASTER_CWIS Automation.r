@@ -353,16 +353,10 @@
             names(recode.num.tb)[!(names(recode.num.tb) %in% "resp.id")] <-
               paste(SelectNamesIn(recode.num.tb, "NOT.IN", "resp.id"), "_num", sep = "")
             
-          
           #TODO: convert to binary - move to table formation?
-            #recode.binary.tb <- 
-
           #TODO: 1. use external config.ans.opt to allow adding new scales
           #TODO: 2. create standard mapping function to convert any number of integer choices to any standard
               #number of allowed answer options.
-      
-      #Create useful objects
-        #Vectors for selecting CWIS answer variables
       
       #Synthesize final response data tables 
         #Wide table for export
@@ -379,30 +373,55 @@
             )
         
         #Long table
-          report.data.varnames <- 
-            q.unbranched.tb$var.id[q.unbranched.tb$necessary.for.reports == "yes"] %>%
-            c(., "unit.id")
-          resp.wide.report.tb <- resp.wide.tb[, names(resp.wide.tb) %in% report.data.varnames]
+         
+          #report.data.varnames <- 
+          #  q.unbranched.tb$var.id[q.unbranched.tb$necessary.for.reports == "yes"] %>%
+          #  c(., "unit.id")
+          
+          #resp.wide.report.tb <- resp.wide.tb[, names(resp.wide.tb) %in% report.data.varnames]
+          
           resp.long.tb <- 
             melt(
-              data = resp.wide.report.tb,
-              id.vars = SelectNamesIn(resp.wide.report.tb,"NOT.IN", cwis.varnames.unbranched),
+              data = resp.wide.tb,
+              id.vars = 
+                SelectNamesIn(
+                  resp.wide.tb,
+                  "NOT.IN", 
+                  c(cwis.varnames.unbranched, paste0(cwis.varnames.unbranched, "_num"))
+                ),
               variable.name = "question",
               value.name = "answer",
               stringsAsFactors = FALSE,
               na.rm = TRUE
-            ) %>% as_tibble()
+            ) %>% names()
+            select(names(.) %in% 
+              c(
+                "question",
+                "answer", 
+                q.unbranched.tb %>% 
+                  filter(q.unbranched.tb$necessary.for.reports == "yes") %>% select(var.id) %>% unlist
+              )
+            ) %>%
+            as_tibble()
           
           #Add module variable for looping 
             #TODO: need to abstract? Just for module variable or are there others?
             
+            #Questions: split column reshape on module variable
+              q.splitcol.tb <- 
+                SplitColReshape.ToLong(
+                  df = q.unbranched.tb,
+                  id.varname = "var.id",
+                  split.varname = "module",
+                  split.char = ","
+                )
+          
             resp.long.tb <-
               left_join(
                 resp.long.tb,
-                questions.tb %>% select(var.id, module),
+                q.splitcol.tb %>% select(var.id, module),
                 by = c("question" = "var.id")
               ) #%>% ReplaceNames(., current.names = names(.), new.names)
-            
       
         #Establish Outputs Directory
           if(sample.print){
@@ -469,9 +488,9 @@
     
 # 3-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) ------------------
   
-  #Load Graph & Slide Type Config Tables
-  
-    #setwd(source.inputs.dir)
+  #Load Configs Functions
+    setwd(rproj.dir)
+    source("3-configs_functions.r")
    
   #Expand Config Tables for each district according to looping variables
   
@@ -491,9 +510,9 @@
     progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.b <- length(report.ids.sample)
   
-  #b <- 1 #LOOP TESTER (19 = "Raytown C-2")
+  b <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
-  for(b in 1:length(report.ids.sample)){   #START OF LOOP BY REPORT UNIT
+  #for(b in 1:length(report.ids.sample)){   #START OF LOOP BY REPORT UNIT
   
     loop.start.time.b <- Sys.time()
     
@@ -545,7 +564,6 @@
         )
     
       config.slides.ls.b[[b]] <- remove.district.office.fun(config.slides.df)
-    
     
     setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
     
