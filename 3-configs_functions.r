@@ -1,8 +1,26 @@
 #############################################################
-#####       CWIS AUTOMATION CONFIG FUNCTIONS            #####
+#####       3-configs_functions				            #####
 #############################################################
 
 source("utils_wnf.r")
+
+#School-level slides should not include an iteration for the District Office 
+  remove.district.office.fun <- function(x){
+    if(report.unit != "district" & !grepl("district office", report.id.b)){
+      #print("Report unit is 'building' and the report.id for this loop does not contain 'district office.' Returning input with no changes.")
+      return(x)
+    }
+    
+    if(report.unit != "district" & grepl("district office", report.id.b)){
+      #print("Report unit is 'building' and the report.id for this loop contains 'district office.' Skipping to next loop")
+      return(x)
+    }
+    
+    if(report.unit == "district"){
+      x[!(grepl("school", x$slide.loop.var) & (x$school %>% SubNA(.,"")) == "District Office"),] %>% 
+        return(.)
+    }
+  }
 
 #Loop Expander for creating full config tables
   #Test Inputs

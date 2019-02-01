@@ -36,7 +36,7 @@
       
     setwd(rproj.dir)
     source("utils_wnf.r")
-    source("CWIS_custom.r")
+    #source("CWIS_custom.r")
     
   # LOAD LIBRARIES/PACKAGES
     
@@ -87,9 +87,9 @@
 # 1-IMPORT -----------------------------------------
   
   #Source Import Functions
-    import.source.dir <- paste(rproj.dir,"1-Import/", sep = "")
-    setwd(import.source.dir)
-    source("import_functions.r")
+    #import.source.dir <- paste(rproj.dir,"1-Import/", sep = "")
+    setwd(rproj.dir)
+    source("1-import_functions.r")
   
   #Import Config Tables
     configs.ss <- gs_key("1ku_OC9W87ut6W1qrdpFeYBlWlPN5X4fGHJ3h1k0HrOA",verbose = TRUE) 
@@ -570,7 +570,7 @@
   } # END OF LOOP 'b' BY REPORT.UNIT
   close(progress.bar.b)
 
-# 4-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) OUTPUTS ------------------
+# 3-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) OUTPUTS ------------------
   #report.ids.sample: vector with all report unit names in resp.long.tb (length = 19 for baseline data)
   #config.slides.ls.b
     #[[report.unit]]
@@ -583,8 +583,12 @@
       #data frame where each line represents a graph
 
 
-# 5-SOURCE DATA TABLES --------------------------------------------
-
+# 4-SOURCE DATA TABLES --------------------------------------------
+  
+  #Load Configs Functions
+    setwd(rproj.dir)
+    source("4-source data tables functions.r")
+  
   ###                          ###    
   ### LOOP "c" BY REPORT UNIT  ###
   ###                          ###
@@ -768,7 +772,7 @@
   } ### END OF LOOP "c" BY REPORT UNIT     
   close(progress.bar.c)  
 
-# 5-SOURCE DATA TABLES OUTPUTS --------------------------------------------
+# 4-SOURCE DATA TABLES OUTPUTS --------------------------------------------
   #tabledata.ls.c
     #[[report.unit]]
     #data frame where each line represents a table
@@ -778,8 +782,13 @@
 
 
 
-# 6-OBJECT CREATION (GRAPHS & TABLES) ------------------------------------
+# 5-OBJECT CREATION (GRAPHS & TABLES) ------------------------------------
 
+  #Load Configs Functions
+    setwd(rproj.dir)
+    source("5-object creation functions.r")
+  
+  
   ###                       ###    
 # ### LOOP "f" BY DISTRICT  ###
   ###                       ###
@@ -1183,7 +1192,7 @@
   } ### END OF LOOP "f" BY REPORT.UNIT
   close(progress.bar.f)
 
-# 6-OBJECT CREATION (GRAPHS & TABLES) OUTPUTS ------------------------------------
+# 5-OBJECT CREATION (GRAPHS & TABLES) OUTPUTS ------------------------------------
   
   #graphs.ls.f
     #[[report.unit]]
@@ -1193,7 +1202,12 @@
       #FlexTable object
 
 
-# 7-POWERPOINTS & EXPORT -----------------------------------------------
+# 6-POWERPOINTS & EXPORT -----------------------------------------------
+  
+  #Load Configs Functions
+    setwd(rproj.dir)
+    source("6-powerpoints export functions.r")
+  
   
   # POWERPOINT GLOBAL CONFIGURATIONS
   
