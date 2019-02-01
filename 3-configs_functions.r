@@ -24,10 +24,10 @@ source("utils_wnf.r")
 
 #Loop Expander for creating full config tables
   #Test Inputs
-    configs = config.slide.types.tb
-    loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3")
-    collate.varname = "slide.section.1"
-    source.data = resp.long.tb.b  
+    #configs = config.slide.types.tb
+    #loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3")
+    #collate.varname = "slide.section.1"
+    #source.data = resp.long.tb.b  
 
   loop.expander.fun <- function(
     configs, 

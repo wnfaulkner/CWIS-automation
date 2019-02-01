@@ -240,56 +240,65 @@
       #sample.group.unit = sample.group.unit
       #sample.size = sample.size
       
-    RestrictDataToSample <- function(tb, report.unit, sample.group.unit, sample.size){
+    RestrictDataToSample <- function(tb, report.unit, sample.print, sample.group.unit, sample.size){
       
-      sample.size <- as.numeric(sample.size)
-      
-      if(nrow(tb) < sample.size){
-        stop(
-          paste0("Dataset has fewer rows (", nrow(tb), ") than requested for sample (", sample.size, ").")
-        )
-      }
-      
-      num.reports <- 0
-      
-      report.unit.counts.tb <-
-        tb %>% 
-        group_by(!!sym(sample.group.unit)) %>%
-        dplyr::summarize(count = n_distinct(!!sym(report.unit))) %>%
-        set_names(c("group","count"))
-      
-      sample.groups.tb <- tibble()
-      
-      #While loop to define random sample of group unit that will give correct number of report units equal to sample size
-        while(num.reports != sample.size){
-         
-          sample.groups.tb <- 
-            rbind(
-              sample.groups.tb,
-              sample_n(report.unit.counts.tb, size = 1, replace = FALSE)
+      #If doing a sample print (restricting)
+        if(sample.print){
+        
+          sample.size <- as.numeric(sample.size)
+          
+          if(nrow(tb) < sample.size){
+            stop(
+              paste0("Dataset has fewer rows (", nrow(tb), ") than requested for sample (", sample.size, ").")
             )
-          
-          num.reports <- sum(sample.groups.tb$count)
-          report.unit.counts.tb <- report.unit.counts.tb %>% filter(!(group %in% sample.groups.tb$count))
-          
-          #print(sample.groups.tb)
-          #print(num.reports)
-          
-          if(num.reports > sample.size){
-            num.reports <- 0
-            sample.groups.tb  <- tibble()
-            report.unit.counts.tb <-
-              tb %>% 
-              group_by(!!sym(sample.group.unit)) %>%
-              dplyr::summarize(count = n_distinct(!!sym(report.unit))) %>%
-              set_names(c("group","count"))
           }
+          
+          num.reports <- 0
+          
+          report.unit.counts.tb <-
+            tb %>% 
+            group_by(!!sym(sample.group.unit)) %>%
+            dplyr::summarize(count = n_distinct(!!sym(report.unit))) %>%
+            set_names(c("group","count"))
+          
+          sample.groups.tb <- tibble()
+          
+          #While loop to define random sample of group unit that will give correct number of report units equal to sample size
+            while(num.reports != sample.size){
+             
+              sample.groups.tb <- 
+                rbind(
+                  sample.groups.tb,
+                  sample_n(report.unit.counts.tb, size = 1, replace = FALSE)
+                )
+              
+              num.reports <- sum(sample.groups.tb$count)
+              report.unit.counts.tb <- report.unit.counts.tb %>% filter(!(group %in% sample.groups.tb$count))
+              
+              #print(sample.groups.tb)
+              #print(num.reports)
+              
+              if(num.reports > sample.size){
+                num.reports <- 0
+                sample.groups.tb  <- tibble()
+                report.unit.counts.tb <-
+                  tb %>% 
+                  group_by(!!sym(sample.group.unit)) %>%
+                  dplyr::summarize(count = n_distinct(!!sym(report.unit))) %>%
+                  set_names(c("group","count"))
+              }
+            }
+        
+          #Restricting data to group units as defined in while loop
+            result <-
+              tb %>% filter(!!sym(sample.group.unit) %in% sample.groups.tb$group)
         }
       
-      #Restricting data to group units as defined in while loop
-        result <-
-          tb %>% filter(!!sym(sample.group.unit) %in% sample.groups.tb$group)
-      
+      #If NOT doing a sample print (use full dataset)
+        if(!sample.print){
+          result <- tb
+        }
+
       return(result)
     }
     

@@ -148,8 +148,8 @@
     
   #Source Cleaning Functions
     cleaning.source.dir <- paste(rproj.dir,"2-Cleaning/", sep = "")
-    setwd(cleaning.source.dir)
-    source("cleaning_functions.r")
+    setwd(rproj.dir)
+    source("2-cleaning_functions.r")
   
   #config.graph.types.tb
     config.graph.types.tb <- AddSlideTypeCols(config.graph.types.tb) #Add slide.type columns via inner-join
@@ -244,12 +244,12 @@
          resp5.tb <- RestrictDataToSample(
             tb = resp4.tb,
             report.unit = report.unit,
+            sample.print = sample.print,
             sample.group.unit = sample.group.unit,
             sample.size = sample.size
           )
 
-      #restrict columns 
-        #Necessary in final data
+      #Restrict columns to those necessary in final data
         necessary.colnames <- 
           q.branched.tb %>% 
           filter(tolower(necessary.in.final.data) == "yes") %>%
@@ -257,13 +257,11 @@
           unlist %>%
           RemoveNA %>% 
           c(., "unit.id")
-        
          
          resp6.tb <-
            SelectColsIn(resp5.tb, "IN", necessary.colnames)
           
       #Rearrange columns
-        #TODO: Use 'SelectColIn' Function to rearrange columns according to names that meet a TRUE/FALSE condition
         cwis.varnames.branched <- #CWIS response variables to right, all others first
           names(resp6.tb)[names(resp6.tb) %in% q.branched.tb$var.id[!is.na(q.branched.tb$module)]]
          
@@ -313,45 +311,48 @@
         #Text vars (freq & agreement): 
           #Preserve text; add numbers (e.g. "Always" becomes "1. Always")
             #TODO: Turn this into a function that applies a concatenation according to a lookup table
-            recode.varnames <- 
-              q.unbranched.tb$var.id[grepl("frequency|agreement",q.unbranched.tb$scale.type)]
+            #recode.varnames <- 
+            #  q.unbranched.tb$var.id[grepl("frequency|agreement",q.unbranched.tb$scale.type)]
             
             
         #Recode for CWIS 
-            #1. add numbers to text > store; 2. convert text to integers > store; 3. compile non-cwis, cwis text, & cwis integer vars into one tibble
-            #TODO: turn into custom CWIS function
-            recode.addnums.tb <- #add numbers to text variables
-              RecodeIndexMatch(
-                tb = SelectColsIn(resp9.tb, "IN", c("resp.id", recode.varnames)),
-                lookup.tb = config.ans.opt.tb,
-                match.colname = "ans.text.freq",
-                replacement.vals.colname = "ans.text.freq.num",
-                na.replacement = ""
-              ) %>%
-              RecodeIndexMatch(
-                tb = .,
-                lookup.tb = config.ans.opt.tb,
-                match.colname = "ans.text.agreement",
-                replacement.vals.colname = "ans.text.agreement.num",
-                na.replacement = ""
-              )
-        
-            recode.num.tb <- #convert to integer
-              RecodeIndexMatch(
-                tb = recode.addnums.tb,
-                lookup.tb = config.ans.opt.tb,
-                match.colname = "ans.text.freq.num",
-                replacement.vals.colname = "ans.num"
-              ) %>%
-              RecodeIndexMatch(
-                tb = .,
-                lookup.tb = config.ans.opt.tb,
-                match.colname = "ans.text.agreement.num",
-                replacement.vals.colname = "ans.num"
-              ) 
+          #1. add numbers to text > store; 
+          #2. convert text to integers > store; 
+          #3. compile non-cwis, cwis text, & cwis integer vars into one tibble
+          #TODO: turn into custom CWIS function
             
-            names(recode.num.tb)[!(names(recode.num.tb) %in% "resp.id")] <-
-              paste(SelectNamesIn(recode.num.tb, "NOT.IN", "resp.id"), "_num", sep = "")
+          recode.addnums.tb <- #add numbers to text variables
+            RecodeIndexMatch(
+              tb = SelectColsIn(resp9.tb, "IN", c("resp.id", cwis.varnames.unbranched)),
+              lookup.tb = config.ans.opt.tb,
+              match.colname = "ans.text.freq",
+              replacement.vals.colname = "ans.text.freq.num",
+              na.replacement = ""
+            ) %>%
+            RecodeIndexMatch(
+              tb = .,
+              lookup.tb = config.ans.opt.tb,
+              match.colname = "ans.text.agreement",
+              replacement.vals.colname = "ans.text.agreement.num",
+              na.replacement = ""
+            )
+      
+          recode.num.tb <- #convert to integer
+            RecodeIndexMatch(
+              tb = recode.addnums.tb,
+              lookup.tb = config.ans.opt.tb,
+              match.colname = "ans.text.freq.num",
+              replacement.vals.colname = "ans.num"
+            ) %>%
+            RecodeIndexMatch(
+              tb = .,
+              lookup.tb = config.ans.opt.tb,
+              match.colname = "ans.text.agreement.num",
+              replacement.vals.colname = "ans.num"
+            ) 
+          
+          names(recode.num.tb)[!(names(recode.num.tb) %in% "resp.id")] <-
+            paste(SelectNamesIn(recode.num.tb, "NOT.IN", "resp.id"), "_num", sep = "")
             
           #TODO: convert to binary - move to table formation?
           #TODO: 1. use external config.ans.opt to allow adding new scales
@@ -380,8 +381,8 @@
           
           #resp.wide.report.tb <- resp.wide.tb[, names(resp.wide.tb) %in% report.data.varnames]
           
-          resp.long.tb <- 
-            melt(
+          resp.long1.tb <- 
+            melt( #reshape cwis vars (numeric and text) from wide to long
               data = resp.wide.tb,
               id.vars = 
                 SelectNamesIn(
@@ -393,15 +394,18 @@
               value.name = "answer",
               stringsAsFactors = FALSE,
               na.rm = TRUE
-            ) %>% names()
-            select(names(.) %in% 
+            ) %>%
+            .[,names(.) %in% #filter out columns unnecessary for analysis 
               c(
                 "question",
-                "answer", 
+                "answer",
+                "unit.id",
                 q.unbranched.tb %>% 
                   filter(q.unbranched.tb$necessary.for.reports == "yes") %>% select(var.id) %>% unlist
-              )
-            ) %>%
+              )] %>%
+            #DON'T ACTUALLY WANT TO DO THIS - WANT TO PRINT REPORTS FOR BUILDINGS THAT RESPONDED TO SURVEY 
+            #BUT DIDN'T ANSWER ANY CWIS QUESTIONS.
+            #filter(answer != "") %>% #filter out rows with blank answers
             as_tibble()
           
           #Add module variable for looping 
@@ -418,10 +422,10 @@
           
             resp.long.tb <-
               left_join(
-                resp.long.tb,
+                resp.long1.tb,
                 q.splitcol.tb %>% select(var.id, module),
                 by = c("question" = "var.id")
-              ) #%>% ReplaceNames(., current.names = names(.), new.names)
+              ) 
       
         #Establish Outputs Directory
           if(sample.print){
@@ -510,9 +514,9 @@
     progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.b <- length(report.ids.sample)
   
-  b <- 1 #LOOP TESTER (19 = "Raytown C-2")
+  #b <- 11 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
-  #for(b in 1:length(report.ids.sample)){   #START OF LOOP BY REPORT UNIT
+  for(b in 1:length(report.ids.sample)){   #START OF LOOP BY REPORT UNIT
   
     loop.start.time.b <- Sys.time()
     
@@ -524,7 +528,7 @@
       print(
         paste(
           "Loop num: ", b,", Report id: ",report.id.b,
-          ", Pct. complete:", 100*b/length(report.ids.sample), "%"
+          ", Pct. complete:", round(100*b/length(report.ids.sample), 2), "%"
         )
       )
     
