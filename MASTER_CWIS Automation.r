@@ -176,9 +176,9 @@
     
   #q.branched.tb (round 1)
     q.branched.tb <- #Restrict to rows for questions for this year/semester 
-      q.tb[ 
-        as.character(q.tb$year) == data.year & #year
-        tolower(q.tb$semester) == data.semester #semester
+      questions.tb[ 
+        as.character(questions.tb$year) == data.year & #year
+        tolower(questions.tb$semester) == data.semester #semester
         ,]
     q.branched.tb <- LowerCaseNames(q.branched.tb)    #Lower-case all variable names
     names(q.branched.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(q.branched.tb), char = ".") #Replace any number of repeated periods with a single period
@@ -293,7 +293,7 @@
               unbranched.names.colname = "branch.master.var.id"
             ) %>% .[[1]] 
         
-        #Questions table
+        #Unbranched Questions table
           q.unbranched.tb <- 
             Unbranch(
               data.tb = resp8.tb,
@@ -303,9 +303,16 @@
               unbranched.names.colname = "branch.master.var.id"
             ) %>% .[[2]] %>%
             filter(., necessary.in.final.data == "yes") #filter to questions necessary to final data
-
-        cwis.varnames.unbranched <- 
-          q.unbranched.tb$var.id[!is.na(q.unbranched.tb$module)]
+          
+          cwis.varnames.unbranched <- 
+            q.unbranched.tb$var.id[!is.na(q.unbranched.tb$module)]
+        
+        #Complete Questions Table for Long Data (adding "_num" vars)
+          q.long1.tb <- q.unbranched.tb
+          q.long1.tb$var.id <- paste0(q.long1.tb$var.id, "_num")
+          q.long.tb <- rbind(q.unbranched.tb, q.long1.tb) %>% as_tibble()
+          
+        
           
       #Data type conversions for CWIS vars
         #Text vars (freq & agreement): 
@@ -420,12 +427,21 @@
               #    split.char = ","
               #  )
           
-            resp.long.tb <-
+            resp.long2.tb <-
               left_join(
                 resp.long1.tb,
-                q.tb %>% select(var.id, module),
+                q.unbranched.tb %>% select(var.id, module),
                 by = c("question" = "var.id")
-              ) 
+              )
+            
+            resp.long.tb <-
+              left_join(
+                resp.long2.tb,
+                q.unbranched.tb %>% mutate(var.id.num = paste0(var.id, "_num")) %>% select(var.id.num, module),
+                by = c("question" = "var.id.num")
+              )
+            
+            resp.long.tb %>% filter(answer ==1)
       
         #Establish Outputs Directory
           if(sample.print){
@@ -683,11 +699,16 @@
             resp.long.tb #%>%
         }
         
+        #TODO: Ripe place to shorten code - all we're doing is getting unique values of variable from
+          #larger dataset, taking into account that when the graph is by module, there's the "etlp,lead"
+          #value for some questions.
+      
         all.cats.input2.d <-
           all.cats.input1.d %>%
-          #filter(impbinary == 0) %>%
+          #filter(impbinary == 0) %>% #no more impbinary variables created in cleaning. Deal with during analysis.
           .[,names(resp.long.tb) == config.graphs.df.d$x.varname.1] %>% 
           unique %>%
+          unlist %>%
           strsplit(., ",") %>% 
           unlist %>%
           unique %>%
@@ -703,7 +724,7 @@
       #Form final data frame (no averages)
         graphdata.df.d <-  
           resp.long.tb.c %>%
-          graph.data.restriction.fun %>%
+          GraphDataRestriction(.) %>%
           group_by(!!! syms(group_by.d)) %>%
           summarize.graph.fun(config.input = config.graphs.df.d, data.input = .) %>%
           left_join(all.cats.df.d, ., by = c(group_by.d))

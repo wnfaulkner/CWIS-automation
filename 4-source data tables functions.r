@@ -4,32 +4,34 @@
 
 source("utils_wnf.r")
 
-#Data restriction - district vs. report.id
+#Data restriction - district vs. unit.id
   
   #TODO:NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND GRAPH DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
-  #report.id AND DATA.LEVEL IS DISTRICT.
+  #unit.id AND DATA.LEVEL IS DISTRICT.
   
-  graph.data.restriction.fun <- function(x){
+  GraphDataRestriction <- function(tb){
     
     if(config.graphs.df.d$data.level == "district"){
-      y <- x
+      y <- tb
     }
     
     if(config.graphs.df.d$data.level == "building"){
       y <- 
-        x %>% 
-        filter(report.id == report.id.c) 
+        tb %>% 
+        filter(unit.id == unit.id.c) 
     }
     
+    z <- y[grep("_num", y$question),]
+    
     if(is.na(config.graphs.df.d$data.restriction)){
-      result <- y
+      result <- z
     }
     
     if(!is.na(config.graphs.df.d$data.restriction)){
       result <- 
-        y %>% 
+        z %>% 
         filter(
-          y[,names(y) == config.graphs.df.d$data.restriction] == 
+          z[,names(z) == config.graphs.df.d$data.restriction] == 
             config.graphs.df.d[,names(config.graphs.df.d) == config.graphs.df.d$data.restriction]
         )
     }
@@ -43,7 +45,7 @@ source("utils_wnf.r")
   #   HAVE NOT MADE THOSE CHANGES HERE YET. PROBABLY COULD ROLL UP INTO ONE OR TWO FUNCTIONS.
   
   #Test Inputs
-  #x <- resp.long.df
+  #x <- resp.long.tb
   
   avg.data.restriction.fun <- function(x){
     
@@ -54,7 +56,7 @@ source("utils_wnf.r")
     if(config.graphs.df.d$data.level == "building"){
       y <- 
         x %>% 
-        filter(district == unique(resp.long.df$district[resp.long.df$report.id == report.id.c])) 
+        filter(district == unique(resp.long.tb$district[resp.long.tb$unit.id == unit.id.c])) 
     }
     
     z <- y %>% filter(!is.na(y[,names(y)==group_by.d])) #TODO:Might want to make flexible - i.e. add a parameter which allows user to include NA
@@ -78,7 +80,7 @@ source("utils_wnf.r")
   
 #Summary Function for Graph Averages
   #Test Inputs
-  #x<-resp.long.df %>% avg.data.restriction.fun(.) %>% group_by(!!! syms(group_by.d))
+  #x<-resp.long.tb %>% avg.data.restriction.fun(.) %>% group_by(!!! syms(group_by.d))
   
   summarize.avg.fun <- function(x){
     
@@ -135,7 +137,7 @@ source("utils_wnf.r")
       }
       
       if(config.input$filter == "building"){
-        result <- y %>% filter(report.id == report.id.c)
+        result <- y %>% filter(unit.id == unit.id.c)
       }
       
       if(config.input$filter == "district"){
@@ -150,7 +152,7 @@ source("utils_wnf.r")
 #Selecting variable names that will be used in graph/table calculations
   #TEST INPUTS
     #config.input <- config.graphs.df.d
-    #data.input <- resp.long.df
+    #data.input <- resp.long.tb
     
   GraphVarnamesInData <- function(config.input, data.input) {
     varname.i <- config.input %>% select(x.varname.1)
@@ -209,7 +211,7 @@ source("utils_wnf.r")
 #Data Summarize - participation vs. implementation vs. performance 
   #Test inputs
   #config.input <- config.graphs.df.d
-  #data.input <-  resp.long.df.c %>% graph.data.restriction.fun %>% group_by(!!! syms(group_by.d))
+  #data.input <-  resp.long.tb.c %>% GraphDataRestriction %>% group_by(!!! syms(group_by.d))
   
   summarize.graph.fun <- function(config.input, data.input){
     if(config.input$data.measure == "participation"){
@@ -244,7 +246,7 @@ source("utils_wnf.r")
 #Data Summarize - participation vs. implementation vs. performance 
   #Test inputs
   #config.input <- config.tables.df.d
-  #data.input <-  resp.long.df.c %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
+  #data.input <-  resp.long.tb.c %>% table.data.filter.fun %>% group_by(!!! syms(config.tables.df.d$summary.var))
   
   #TODO:
   #1. EVENTUALLY WILL NEED TO GENERALIZE THIS FUNCTION SO CAN TAKE AN ARBITRARY NUMBER OF CATEGORIES AS INPUT
@@ -263,7 +265,7 @@ source("utils_wnf.r")
       result <-
         reshape2::dcast(
           data = result.1,
-          formula = role ~ report.id,
+          formula = role ~ unit.id,
           value.var = "responseid",
           fun.aggregate = function(x){length(unique(x))}
         ) %>%
@@ -277,7 +279,7 @@ source("utils_wnf.r")
         #.[c(1,2,3,4,6,7,8,5),] %>%
         ReplaceNames(
           df = .,
-          current.names = report.id.c,
+          current.names = unit.id.c,
           new.names = "num. responses"
         ) %>%
         ReplaceNames(
