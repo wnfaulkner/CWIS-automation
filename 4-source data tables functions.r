@@ -4,10 +4,87 @@
 
 source("utils_wnf.r")
 
+#Define names of categories that will go along bottom of graph
+  DefineAxisCategories <- function(
+    
+  ){
+  UniqueVariableValues(
+    varnames = group_by.d, 
+    tb = q.long.tb
+  ) %>%
+    strsplit(., ",") %>%
+    unlist %>%
+    unique %>%
+    RemoveNA(.) %>%
+    .[order(.)] 
+  }
+
+#Selecting variable names that will be used in graph/table calculations
+  #TEST INPUTS
+  #config.input <- config.graphs.df.d
+  #data.input <- resp.long.tb
+  
+  #TODO: add parameters for questions table (which one to use), names of variables in there to select
+  GraphVarnamesInData <- function(config.input, data.input){
+    
+    varname.i <- config.input %>% select(x.varname.1)
+    
+    if(is.na(varname.i)){
+      all.cats.ls[[i]] <- ""
+      next()
+    }
+    
+    if(varname.i == "answer"){
+      module.varnames <- 
+        q.long.tb %>% 
+        filter(module == config.input$module) %>% 
+        select(var.id) %>% 
+        unlist %>% 
+        setdiff(., names(slider.vars.df))
+      
+      result <- 
+        data.input$question %in% module.varnames %>% 
+        data.input$answer[.] %>% 
+        unique %>%
+        .[.!=""] %>%
+        RemoveNA() %>%
+        .[.!=""]
+    }
+    
+    if(varname.i == "module"){
+      result <- "module"
+    }
+    
+    if(varname.i == "practice"){
+      result <- 
+        q.long.tb %>% 
+        filter(module == config.input$module) %>% 
+        select(var.id) %>% 
+        unique %>% 
+        unlist %>%
+        RemoveNA() %>%
+        .[.!=""]
+    }
+    
+    if(varname.i == "role"){
+      result <- 
+        data.input %>%
+        select(varname.i) %>%
+        unique %>% 
+        unlist %>%
+        RemoveNA() %>%
+        .[.!=""]
+    }
+    
+    #all.cats.ls[[i]] <- result %>% as.data.frame %>% ReplaceNames(df = ., current.names = ".", new.names = "all.cats")
+    return(result)
+  }  
+
+
 #Data restriction - district vs. unit.id
   
-  #TODO:NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND GRAPH DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
-  #unit.id AND DATA.LEVEL IS DISTRICT.
+  #TODO:NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND GRAPH DATA.LEVEL IS DISTRICT, THIS WORKS, 
+    #BUT NOT IF REPORT.UNIT IS unit.id AND DATA.LEVEL IS DISTRICT.
   
   GraphDataRestriction <- function(tb){
     
@@ -148,66 +225,6 @@ source("utils_wnf.r")
     return(result)
   }
 
-  
-#Selecting variable names that will be used in graph/table calculations
-  #TEST INPUTS
-    #config.input <- config.graphs.df.d
-    #data.input <- resp.long.tb
-    
-  GraphVarnamesInData <- function(config.input, data.input) {
-    varname.i <- config.input %>% select(x.varname.1)
-    
-    if(is.na(varname.i)){
-      all.cats.ls[[i]] <- ""
-      next()
-    }
-    
-    if(varname.i == "answer"){
-      module.varnames <- 
-        q.unbranched.df %>% 
-        filter(module == config.input$module) %>% 
-        select(row.1) %>% 
-        unlist %>% 
-        setdiff(., names(slider.vars.df))
-      
-      result <- 
-        data.input$question %in% module.varnames %>% 
-        data.input$answer[.] %>% 
-        unique %>%
-        .[.!=""] %>%
-        RemoveNA() %>%
-        .[.!=""]
-    }
-    
-    if(varname.i == "module"){
-      result <- "module"
-    }
-    
-    if(varname.i == "practice"){
-      result <- 
-        q.unbranched.df %>% 
-        filter(module == config.input$module) %>% 
-        select(row.1) %>% 
-        unique %>% 
-        unlist %>%
-        RemoveNA() %>%
-        .[.!=""]
-    }
-    
-    if(varname.i == "role"){
-      result <- 
-        data.input %>%
-        select(varname.i) %>%
-        unique %>% 
-        unlist %>%
-        RemoveNA() %>%
-        .[.!=""]
-    }
-    
-    #all.cats.ls[[i]] <- result %>% as.data.frame %>% ReplaceNames(df = ., current.names = ".", new.names = "all.cats")
-    return(result)
-  }  
-    
 #Data Summarize - participation vs. implementation vs. performance 
   #Test inputs
   #config.input <- config.graphs.df.d

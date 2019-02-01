@@ -306,13 +306,6 @@
           
           cwis.varnames.unbranched <- 
             q.unbranched.tb$var.id[!is.na(q.unbranched.tb$module)]
-        
-        #Complete Questions Table for Long Data (adding "_num" vars)
-          q.long1.tb <- q.unbranched.tb
-          q.long1.tb$var.id <- paste0(q.long1.tb$var.id, "_num")
-          q.long.tb <- rbind(q.unbranched.tb, q.long1.tb) %>% as_tibble()
-          
-        
           
       #Data type conversions for CWIS vars
         #Text vars (freq & agreement): 
@@ -365,8 +358,14 @@
           #TODO: 1. use external config.ans.opt to allow adding new scales
           #TODO: 2. create standard mapping function to convert any number of integer choices to any standard
               #number of allowed answer options.
-      
+          
+        #Complete Questions Table for Long Data (adding "_num" vars)
+          q.long1.tb <- q.unbranched.tb[q.unbranched.tb$var.id %in% cwis.varnames.unbranched,]
+          q.long1.tb$var.id <- paste0(q.long1.tb$var.id, "_num")
+          q.long.tb <- rbind(q.unbranched.tb, q.long1.tb) %>% as_tibble()
+          
       #Synthesize final response data tables 
+        
         #Wide table for export
           resp.wide.tb <- 
             left_join(
@@ -381,13 +380,6 @@
             )
         
         #Long table
-         
-          #report.data.varnames <- 
-          #  q.unbranched.tb$var.id[q.unbranched.tb$necessary.for.reports == "yes"] %>%
-          #  c(., "unit.id")
-          
-          #resp.wide.report.tb <- resp.wide.tb[, names(resp.wide.tb) %in% report.data.varnames]
-          
           resp.long1.tb <- 
             melt( #reshape cwis vars (numeric and text) from wide to long
               data = resp.wide.tb,
@@ -427,21 +419,12 @@
               #    split.char = ","
               #  )
           
-            resp.long2.tb <-
-              left_join(
-                resp.long1.tb,
-                q.unbranched.tb %>% select(var.id, module),
-                by = c("question" = "var.id")
-              )
-            
             resp.long.tb <-
               left_join(
-                resp.long2.tb,
-                q.unbranched.tb %>% mutate(var.id.num = paste0(var.id, "_num")) %>% select(var.id.num, module),
-                by = c("question" = "var.id.num")
+                resp.long1.tb,
+                q.long.tb %>% select(var.id, module),
+                by = c("question" = "var.id")
               )
-            
-            resp.long.tb %>% filter(answer ==1)
       
         #Establish Outputs Directory
           if(sample.print){
@@ -654,7 +637,7 @@
     config.graphs.df.c <- config.graphs.ls.b[[c]]
     graphdata.ls.d <- list()
     
-    d <- 1
+    d <- 2
     #for(d in 1:2){ #LOOP TESTER
     #for(d in 1:dim(config.graphs.df.c)[1]){
       
@@ -672,31 +655,44 @@
         strsplit(., ",") %>% 
         unlist
       
-      graph.varnames.d <- 
-        GraphVarnamesInData(
-          config.input = config.graphs.df.d,
-          data.input = resp.long.tb
-        )
-      
+      #Define category names that will go along axis of bar graph - module, practice
+        #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to 
+        #filter down to practices relevant to the specific module.
+        #TODO: expand to allow year, role, answer option, etc.
+        
+        axis.vals <- 
+          UniqueVariableValues(
+            varnames = group_by.d, 
+            tb = q.long.tb
+          ) %>%
+          strsplit(., ",") %>%
+          unlist %>%
+          unique %>%
+          RemoveNA(.) %>%
+          .[order(.)] 
+        
+        #axis.vals.df <- 
+        #  axis.vals1.ls[!grepl("_num", names(axis.vals1.ls))] %>% 
+        #  unlist %>% unique %>% .[.!=""] %>% .[order(.)] %>% as.data.frame() %>%
+        
       #TODO: still needs work to make sure this forms the correct list with all possible x-axis categories
         #Then it gets used by the summarize.table.fun to form the final table data. Currently not working.
-      all.cats.ls.d <- 
-        UniqueVariableValues(
-          varnames = graph.varnames.d, 
-          tb = resp.long.tb
-        )
+      #all.cats.ls.d <- 
+      #  UniqueVariableValues(
+      #    varnames = graph.varnames.d, 
+      #    tb = resp.wide.tb
+      #  )
       
       #Create data frame "all.cats.df.d" of all possible answers for x-axis (role, module, data.year, answer)
         #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to 
         #filter down to practices relevant to the specific module
         
         if(!is.na(config.graphs.df.d$x.varname.1) && config.graphs.df.d$x.varname.1 == "practice"){
-          all.cats.input1.d <- 
+          all.cats1.tb <- 
             resp.long.tb %>% 
             filter(grepl(config.graphs.df.d$module,module))
         }else{
-          all.cats.input1.d <- 
-            resp.long.tb #%>%
+          all.cats1.tb <- resp.long.tb 
         }
         
         #TODO: Ripe place to shorten code - all we're doing is getting unique values of variable from
@@ -704,7 +700,7 @@
           #value for some questions.
       
         all.cats.input2.d <-
-          all.cats.input1.d %>%
+          all.cats1.tb %>%
           #filter(impbinary == 0) %>% #no more impbinary variables created in cleaning. Deal with during analysis.
           .[,names(resp.long.tb) == config.graphs.df.d$x.varname.1] %>% 
           unique %>%
@@ -720,6 +716,15 @@
         
         names(all.cats.df.d) <- group_by.d
         #print(all.cats.df.d)
+      
+        
+      #Variable names in wide data (values in 'questions' column of long data) 
+        #that will be used to calculate final values
+        graph.varnames.d <- 
+          GraphVarnamesInData(
+            config.input = config.graphs.df.d,
+            data.input = resp.long.tb
+          )
         
       #Form final data frame (no averages)
         graphdata.df.d <-  
