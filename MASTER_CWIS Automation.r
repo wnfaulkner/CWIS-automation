@@ -176,9 +176,9 @@
     
   #q.branched.tb (round 1)
     q.branched.tb <- #Restrict to rows for questions for this year/semester 
-      questions.tb[ 
-        as.character(questions.tb$year) == data.year & #year
-        tolower(questions.tb$semester) == data.semester #semester
+      q.tb[ 
+        as.character(q.tb$year) == data.year & #year
+        tolower(q.tb$semester) == data.semester #semester
         ,]
     q.branched.tb <- LowerCaseNames(q.branched.tb)    #Lower-case all variable names
     names(q.branched.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(q.branched.tb), char = ".") #Replace any number of repeated periods with a single period
@@ -223,7 +223,7 @@
 
     #BOTH DATA SOURCES
       #Add id column which is either unique district name or unique building_district combo &
-        #filter out rows with nothing in columns necessary to define report.id 
+        #filter out rows with nothing in columns necessary to define unit.id 
         #(e.g. district and building)
         
         resp3.tb <- CreateUnitIDCol(
@@ -412,18 +412,18 @@
             #TODO: need to abstract? Just for module variable or are there others?
             
             #Questions: split column reshape on module variable
-              q.splitcol.tb <- 
-                SplitColReshape.ToLong(
-                  df = q.unbranched.tb,
-                  id.varname = "var.id",
-                  split.varname = "module",
-                  split.char = ","
-                )
+              #q.splitcol.tb <- 
+              #  SplitColReshape.ToLong(
+              #    df = q.unbranched.tb,
+              #    id.varname = "var.id",
+              #    split.varname = "module",
+              #    split.char = ","
+              #  )
           
             resp.long.tb <-
               left_join(
                 resp.long1.tb,
-                q.splitcol.tb %>% select(var.id, module),
+                q.tb %>% select(var.id, module),
                 by = c("question" = "var.id")
               ) 
       
@@ -503,7 +503,7 @@
   ###                          ###
   
   #Loop Inputs
-    report.ids.sample <- resp.wide.tb$unit.id %>% unique 
+    unit.ids.sample <- resp.wide.tb$unit.id %>% unique 
     
   #Loop Outputs 
     config.graphs.ls.b <- list()
@@ -512,32 +512,32 @@
   
   #Progress bar for loop
     progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
-    maxrow.b <- length(report.ids.sample)
+    maxrow.b <- length(unit.ids.sample)
   
   #b <- 11 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
-  for(b in 1:length(report.ids.sample)){   #START OF LOOP BY REPORT UNIT
+  for(b in 1:length(unit.ids.sample)){   #START OF LOOP BY REPORT UNIT
   
     loop.start.time.b <- Sys.time()
     
-    #Create report.id.b (for this iteration) and skip if report for district office
-      report.id.b <- report.ids.sample[b]
+    #Create unit.id.b (for this iteration) and skip if report for district office
+      unit.id.b <- unit.ids.sample[b]
     
     #Print loop messages
       if(b == 1){print("FORMING SLIDE, GRAPH, AND TABLE CONFIG TABLES...")}
       print(
         paste(
-          "Loop num: ", b,", Report id: ",report.id.b,
-          ", Pct. complete:", round(100*b/length(report.ids.sample), 2), "%"
+          "Loop num: ", b,", Report id: ",unit.id.b,
+          ", Pct. complete:", round(100*b/length(unit.ids.sample), 2), "%"
         )
       )
     
     #Create data frames for this loop - restrict to district id i  
       resp.long.tb.b <- 
-        resp.long.tb %>% filter(unit.id == report.id.b)
+        resp.long.tb %>% filter(unit.id == unit.id.b)
     
     #Graphs config table for this report unit
-      config.graphs.df <- 
+      config.graphs.ls.b[[b]] <- 
         loop.expander.fun(
           configs = config.graph.types.tb, 
           loop.varname = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
@@ -545,10 +545,10 @@
           source.data = resp.long.tb.b
         )
       
-      config.graphs.ls.b[[b]] <- remove.district.office.fun(config.graphs.df)
+      #config.graphs.ls.b[[b]] <- remove.district.office.fun(config.graphs.df)
     
     #Tables config table for this report unit
-      config.tables.df <-
+      config.tables.ls.b[[b]] <-
         loop.expander.fun(
           configs =  config.table.types.tb, 
           loop.varname = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
@@ -556,10 +556,10 @@
           source.data = resp.long.tb.b
         )
       
-      config.tables.ls.b[[b]] <- remove.district.office.fun(config.tables.df)
+      #config.tables.ls.b[[b]] <- remove.district.office.fun(config.tables.df)
     
     #Slide config table for this report unit
-      config.slides.df <- 
+      config.slides.ls.b[[b]] <- 
         loop.expander.fun(
           configs = config.slide.types.tb,
           loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"),
@@ -567,7 +567,7 @@
           source.data = resp.long.tb.b  
         )
     
-      config.slides.ls.b[[b]] <- remove.district.office.fun(config.slides.df)
+      #config.slides.ls.b[[b]] <- remove.district.office.fun(config.slides.df)
     
     setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
     
@@ -575,7 +575,7 @@
   close(progress.bar.b)
 
 # 3-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) OUTPUTS ------------------
-  #report.ids.sample: vector with all report unit names in resp.long.tb (length = 19 for baseline data)
+  #unit.ids.sample: vector with all report unit names in resp.long.tb (length = 19 for baseline data)
   #config.slides.ls.b
     #[[report.unit]]
       #data frame where each line represents a slide
@@ -606,26 +606,29 @@
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     
-    slider.report.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
-                              report.ids.sample)
+    slider.unit.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
+                              unit.ids.sample)
   
-  #c <- 1 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
-  #for(c in slider.report.ids.sample){   #LOOP TESTER
-  for(c in 1:length(report.ids.sample)){   #START OF LOOP BY DISTRICT
-    
-    if(c == 1){print("Forming input data tables for graphs...")}
+  c <- 1 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
+  #for(c in slider.unit.ids.sample){   #LOOP TESTER
+  #for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
     
     #Loop Inputs (both graphs and tables)
-    report.id.c <- report.ids.sample[c]
-    district.c <- resp.long.tb %>% filter(report.id == report.id.c) %>% select(district) %>% unique %>% unlist %>% RemoveNA()
+      unit.id.c <- unit.ids.sample[c]
+      district.c <- resp.long.tb %>% filter(unit.id == unit.id.c) %>% select(district) %>% unique %>% unlist %>% RemoveNA()
+      
+      resp.long.tb.c <- 
+        resp.long.tb %>%
+        filter(unit.id == unit.id.c)
     
-    resp.long.tb.c <- 
-      resp.long.tb %>%
-      filter(report.id == report.id.c)
-       
-      #select(names(resp.long.tb)[names(resp.long.tb) == report.id.colname]) %>% 
-      #equals(report.id.c) %>% 
-      #resp.long.tb[.,]
+    #Print loop messages
+      if(c == 1){print("Forming input data tables for graphs...")}
+      print(
+        paste(
+          "LOOP 'C' -- Loop num: ", c,", Report id: ",unit.id.c,
+          ", Pct. complete:", round(100*c/length(unit.ids.sample), 2), "%"
+        )
+      )
     
     ###                    ###
 #   ### LOOP "d" BY GRAPH  ###
@@ -635,9 +638,17 @@
     config.graphs.df.c <- config.graphs.ls.b[[c]]
     graphdata.ls.d <- list()
     
-    #d <- 1
+    d <- 1
     #for(d in 1:2){ #LOOP TESTER
-    for(d in 1:dim(config.graphs.df.c)[1]){
+    #for(d in 1:dim(config.graphs.df.c)[1]){
+      
+      #Print loop messages
+        print(
+          paste(
+            "LOOP 'D' -- Loop num: ", d,
+            ", Pct. complete:", round(100*d/dim(config.graphs.df.c)[1], 2), "%"
+          )
+        )
       
       config.graphs.df.d <- config.graphs.df.c[d,]
       
@@ -654,13 +665,15 @@
       #TODO: still needs work to make sure this forms the correct list with all possible x-axis categories
         #Then it gets used by the summarize.table.fun to form the final table data. Currently not working.
       all.cats.ls.d <- 
-        unique.variable.values.fun(
+        UniqueVariableValues(
           varnames = graph.varnames.d, 
           tb = resp.long.tb
         )
       
       #Create data frame "all.cats.df.d" of all possible answers for x-axis (role, module, data.year, answer)
-        #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to filter down to practices relevant to the specific module
+        #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to 
+        #filter down to practices relevant to the specific module
+        
         if(!is.na(config.graphs.df.d$x.varname.1) && config.graphs.df.d$x.varname.1 == "practice"){
           all.cats.input1.d <- 
             resp.long.tb %>% 
@@ -672,7 +685,7 @@
         
         all.cats.input2.d <-
           all.cats.input1.d %>%
-          filter(impbinary == 0) %>%
+          #filter(impbinary == 0) %>%
           .[,names(resp.long.tb) == config.graphs.df.d$x.varname.1] %>% 
           unique %>%
           strsplit(., ",") %>% 
@@ -748,7 +761,7 @@
       #all.cats.varnames.v.d <- c(config.tables.df.d$x.varnamename, config.tables.df.d$y.varname)
       
       #all.cats.ls.d <- 
-      #  unique.variable.values.fun(
+      #  UniqueVariableValues(
       #    varnames = c(config.tables.df.d$x.varname, config.tables.df.d$y.varname), 
       #    tb = resp.wide.df %>% as_tibble()
       #  )
@@ -805,10 +818,10 @@
   
   #f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  for(f in 1:length(report.ids.sample)){
+  for(f in 1:length(unit.ids.sample)){
     
     if(f == 1){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
-    school.id.f <- report.ids.sample[f]
+    school.id.f <- unit.ids.sample[f]
     config.graphs.df.f <- config.graphs.ls.b[[f]]
     
     ###                       ###    
@@ -1252,7 +1265,7 @@
     #Reading 'Cadre' so it can be added to file name
       cadre.h <- 
         buildings.tb %>% 
-        filter(report.id == report.ids.sample[h]) %>% 
+        filter(unit.id == unit.ids.sample[h]) %>% 
         select(cadre) %>% 
         unlist %>% 
         FirstLetterCap_OneElement()
@@ -1268,7 +1281,7 @@
             "_",
             h,
             "_",
-            report.ids.sample[h],
+            unit.ids.sample[h],
             "_",
             gsub(":",".",Sys.time()) %>% substr(., 15,19),
             ".pptx", 
@@ -1279,7 +1292,7 @@
           paste(
             cadre.h,
             "_",
-            report.ids.sample[h],
+            unit.ids.sample[h],
             sep = ""
           )
       }
@@ -1304,9 +1317,9 @@
       config.tables.df.h <- config.tables.ls.b[[h]]
       
       #TODO:Will need to generalize below for different report units (i.e. Repeated Measures vs. Green Reports)
-      report.id.h <- report.ids.sample[h]
-      district.h <- strsplit(report.id.h, "_") %>% unlist %>% .[1] %>% toupper()
-      school.h <- strsplit(report.id.h, "_") %>% unlist %>% .[2] %>% toupper()
+      unit.id.h <- unit.ids.sample[h]
+      district.h <- strsplit(unit.id.h, "_") %>% unlist %>% .[1] %>% toupper()
+      school.h <- strsplit(unit.id.h, "_") %>% unlist %>% .[2] %>% toupper()
       config.slides.df.h <- config.slides.ls.b[[h]]
       
       graphs.ls.h <- graphs.ls.f[[h]]
@@ -1475,14 +1488,14 @@
       
       #writeDoc(ppt.h, file = target.path.h) #test Slide 1 build
       #rm(ppt.h)
-      setTxtProgressBar(progress.bar.h, 100*h/length(report.ids.sample))
+      setTxtProgressBar(progress.bar.h, 100*h/length(unit.ids.sample))
       
     } #END OF LOOP "i" BY SLIDE
     
     writeDoc(ppt.h, file = target.path.h) #Write complete pptx object to file
     
     print(h)
-    printed.reports.ls[[h]] <- report.ids.sample[h]
+    printed.reports.ls[[h]] <- unit.ids.sample[h]
   } # END OF LOOP "h" BY REPORT.UNIT      
   close(progress.bar.h)      
 

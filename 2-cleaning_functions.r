@@ -315,7 +315,7 @@
     #Test Inputs
       #data.tb <- resp8.tb
       #data.id.varname <- "responseid"
-      #var.guide.tb <- questions.tb
+      #var.guide.tb <- q.tb
       #current.names.colname <- "var.id"
       #unbranched.names.colname <- "branch.master.var.id"
       

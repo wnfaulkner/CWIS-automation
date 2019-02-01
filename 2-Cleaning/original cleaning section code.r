@@ -18,7 +18,7 @@
       
       #Questions Configs Table (imported as list)
       questions.ls <- 	gs_read(configs.ss, ws = "questions", range = NULL, literal = TRUE) %>% as.list() %>% lapply(., tolower)
-      questions.tb <- do.call(cbind, questions.ls) %>% as.data.frame(., stringsAsFactors = FALSE)
+      q.tb <- do.call(cbind, questions.ls) %>% as.data.frame(., stringsAsFactors = FALSE)
       
       #Buildings Config Table  
       buildings.tb <- 	
@@ -33,10 +33,10 @@
     
 
  
-    #Restrict questions.tb to only rows for this data.year/data.semester
+    #Restrict q.tb to only rows for this data.year/data.semester
       questions.sem.df <- 
-        questions.tb[
-          questions.tb$data.year == data.year & questions.tb$data.semester == data.semester,
+        q.tb[
+          q.tb$data.year == data.year & q.tb$data.semester == data.semester,
         ]
       
     #Add "x" to questions.sem.df$row.1 so they match exactly with Qualtrics export as imported by R
@@ -162,7 +162,7 @@
       
     #Remove extraneous variables
       remove.colnames <- 
-        questions.tb %>% 
+        q.tb %>% 
         filter(tolower(necessary.in.final.data) == "no") %>%
         filter(data.year == data.year) %>%
         filter(data.semester == data.semester) %>%

@@ -6,13 +6,13 @@ source("utils_wnf.r")
 
 #School-level slides should not include an iteration for the District Office 
   remove.district.office.fun <- function(x){
-    if(report.unit != "district" & !grepl("district office", report.id.b)){
-      #print("Report unit is 'building' and the report.id for this loop does not contain 'district office.' Returning input with no changes.")
+    if(report.unit != "district" & !grepl("district office", unit.id.b)){
+      #print("Report unit is 'building' and the unit.id for this loop does not contain 'district office.' Returning input with no changes.")
       return(x)
     }
     
-    if(report.unit != "district" & grepl("district office", report.id.b)){
-      #print("Report unit is 'building' and the report.id for this loop contains 'district office.' Skipping to next loop")
+    if(report.unit != "district" & grepl("district office", unit.id.b)){
+      #print("Report unit is 'building' and the unit.id for this loop contains 'district office.' Skipping to next loop")
       return(x)
     }
     

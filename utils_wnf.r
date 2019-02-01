@@ -2,7 +2,8 @@
 #####       STANDARD UTIL FUNCTIONS FOR R SCRIPTS       #####
 #############################################################
 
-#FUNCTIONS FOR ERROR HANDLING
+
+#FUNCTIONS FOR ERROR HANDLING --------------------
   #Return TRUE/FALSE if expression throws an error
     IsError <- function(.expr){
       result <-
@@ -17,9 +18,7 @@
       return(result)
     }
 
-#FUNCTIONS FOR INITIAL CODE SETUP & LOADING DATA
-
-{ #SECTION COLLAPSE BRACKET
+#FUNCTIONS FOR INITIAL CODE SETUP & LOADING DATA --------------------
   
   #Install commonly used packages
     InstallCommonPackages <- function(){
@@ -77,11 +76,9 @@
       return(most.recent.match.file)
     }
     
-} #END SECTION COLLAPSE BRACKET
+
     
-#FUNCTIONS FOR MANIPULATING VECTORS & COLUMNS    
-  
-{ #SECTION COLLAPSE BRACKET
+#FUNCTIONS FOR MANIPULATING VECTORS & COLUMNS --------------------
   
   #Filter Vector based on condition
     FilterVector <- function(condition,vector.input){
@@ -253,7 +250,7 @@
     }
 
 
-  #FUNCTIONS FOR CONVERTING VECTORS/VARIABLES TO DIFFERENT CLASSES 
+  #FUNCTIONS FOR CONVERTING VECTORS/VARIABLES TO DIFFERENT CLASSES -------------------- 
       
       #TESTING OBJECTS
       #x2 <- data.frame(
@@ -418,11 +415,7 @@
           return(tb)
         }
 
-} #END SECTION COLLAPSE BRACKET
-
-#FUNCTIONS FOR MANIPULATING DATA FRAMES & TABLES
-
-{#SECTION COLLAPSE BRACKET
+#FUNCTIONS FOR MANIPULATING DATA FRAMES & TABLES --------------------
   
   #Output variable names in data frame which can be converted to numeric       
     NumericVarnames <- function(df) {
@@ -543,12 +536,12 @@
     
     #Test Inputs
     #varnames <- graph.varnames.d
-    #tb <- resp.long.df %>% as_tibble()
+    #tb <- resp.long.tb %>% as_tibble()
     
-    unique.variable.values.fun <- function( .data, .varnames){
+    UniqueVariableValues <- function( tb, varnames){
       
-      varnames <- as.character(.varnames)
-      tb <- as_tibble(.data)
+      varnames <- as.character(varnames)
+      tb <- as_tibble(tb)
       #all.cats.ls <- list()
       
       result <- apply(tb %>% select(varnames), 2, function(x) RemoveNA(unique(x)))
@@ -720,7 +713,7 @@
     }
     
     #ColClassConvert(x)
-} #END SECTION COLLAPSE BRACKET 
+ 
    
 
       
