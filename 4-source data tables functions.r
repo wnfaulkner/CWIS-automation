@@ -5,18 +5,34 @@
 source("utils_wnf.r")
 
 #Define names of categories that will go along bottom of graph
-  DefineAxisCategories <- function(
+  #Test inputs
+    source.table <- q.long.tb
+    config.table <- config.graphs.df.d
+    config.varname <- "x.varname.1"
     
+  DefineAxisCategories <- function(
+    source.table,
+    config.table,
+    config.varname
   ){
-  UniqueVariableValues(
-    varnames = group_by.d, 
-    tb = q.long.tb
-  ) %>%
-    strsplit(., ",") %>%
-    unlist %>%
-    unique %>%
-    RemoveNA(.) %>%
-    .[order(.)] 
+    cat.colname <- config.table %>% select(config.varname) %>% unlist %>% as.character
+    
+    if(cat.colname == "practice"){
+      source.table <- source.table %>% filter(module == config.table$module)
+    }
+    
+    result <-
+      UniqueVariableValues(
+        varnames = cat.colname, 
+        tb = source.table
+      ) %>%
+      strsplit(., ",") %>%
+      unlist %>%
+      unique %>%
+      RemoveNA(.) %>%
+      .[order(.)]
+    
+    return(result)
   }
 
 #Selecting variable names that will be used in graph/table calculations
@@ -100,6 +116,12 @@ source("utils_wnf.r")
     
     z <- y[grep("_num", y$question),]
     
+    if(!is.na(config.graphs.df.d$slide.loop.var.1)){
+      if(config.graphs.df.d$slide.loop.var.1 == "module"){
+        z <- z %>% filter(module == config.graphs.df.d$module)
+      }
+    }
+    
     if(is.na(config.graphs.df.d$data.restriction)){
       result <- z
     }
@@ -122,35 +144,35 @@ source("utils_wnf.r")
   #   HAVE NOT MADE THOSE CHANGES HERE YET. PROBABLY COULD ROLL UP INTO ONE OR TWO FUNCTIONS.
   
   #Test Inputs
-  #x <- resp.long.tb
+  x <- resp.long.tb
   
   avg.data.restriction.fun <- function(x){
     
-    if(config.graphs.df.d$data.level == "district"){
-      y <- x
+    if(avg.level == "district"){
+      result <- x %>% filter(district == district.c)
     }
     
-    if(config.graphs.df.d$data.level == "building"){
-      y <- 
-        x %>% 
-        filter(district == unique(resp.long.tb$district[resp.long.tb$unit.id == unit.id.c])) 
-    }
+    #if(avg.level == "building"){
+    #  y <- 
+    #    x %>% 
+    #    filter(district == unique(resp.long.tb$district[resp.long.tb$unit.id == unit.id.c])) 
+    #}
     
-    z <- y %>% filter(!is.na(y[,names(y)==group_by.d])) #TODO:Might want to make flexible - i.e. add a parameter which allows user to include NA
+    #z <- y %>% filter(!is.na(y[,names(y)==group_by.d])) #TODO:Might want to make flexible - i.e. add a parameter which allows user to include NA
     
-    if(!config.graphs.df.d$data.restriction=="module" | is.na(config.graphs.df.d$data.restriction)){ 
+    #if(!config.graphs.df.d$data.restriction=="module" | is.na(config.graphs.df.d$data.restriction)){ 
       #TODO:Should look into a better way to deal with this restriction, think about input tables
-      result <- z
-    }
+    #  result <- z
+    #}
     
-    if(config.graphs.df.d$data.restriction=="module" & !is.na(config.graphs.df.d$data.restriction)){
-      result <- 
-        z %>%
-        filter(
-          z[,names(z)==config.graphs.df.d$data.restriction] == 
-            config.graphs.df.d[,names(config.graphs.df.d)==config.graphs.df.d$data.restriction]
-        )
-    }
+    #if(config.graphs.df.d$data.restriction=="module" & !is.na(config.graphs.df.d$data.restriction)){
+    #  result <- 
+    #    z %>%
+    #    filter(
+    #      z[,names(z)==config.graphs.df.d$data.restriction] == 
+    #        config.graphs.df.d[,names(config.graphs.df.d)==config.graphs.df.d$data.restriction]
+    #    )
+    #}
     
     return(result)
   }
@@ -227,10 +249,13 @@ source("utils_wnf.r")
 
 #Data Summarize - participation vs. implementation vs. performance 
   #Test inputs
-  #config.input <- config.graphs.df.d
-  #data.input <-  resp.long.tb.c %>% GraphDataRestriction %>% group_by(!!! syms(group_by.d))
+  config.input <- config.graphs.df.d
+  data.input <-  resp.long.tb.c %>% GraphDataRestriction %>% group_by(!!! syms(group_by.d))
   
   summarize.graph.fun <- function(config.input, data.input){
+    
+    data.input <- data.input[grep("_num", data.input$question),]
+    
     if(config.input$data.measure == "participation"){
       result <- 
         dplyr::summarize(data.input, measure.var =  length(unique(responseid)))
@@ -239,14 +264,12 @@ source("utils_wnf.r")
     if(config.input$data.measure == "implementation"){
       result <- 
         data.input %>% 
-        filter(impbinary == 1) %>%
         dplyr::summarize(measure.var = mean(as.numeric(answer), na.rm = TRUE)) %>%
         as.data.frame(., stringsAsFactors = FALSE)
     }
     
     if(config.input$data.measure == "performance"){
       result <- data.input %>%
-        filter(impbinary == 0, !is.na(answer)) %>%
         dplyr::summarize(measure.var = as.character(length(unique(responseid))))
     }
     

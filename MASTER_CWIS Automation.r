@@ -407,22 +407,13 @@
             #filter(answer != "") %>% #filter out rows with blank answers
             as_tibble()
           
-          #Add module variable for looping 
+          #Add module and practice variables for looping 
             #TODO: need to abstract? Just for module variable or are there others?
             
-            #Questions: split column reshape on module variable
-              #q.splitcol.tb <- 
-              #  SplitColReshape.ToLong(
-              #    df = q.unbranched.tb,
-              #    id.varname = "var.id",
-              #    split.varname = "module",
-              #    split.char = ","
-              #  )
-          
             resp.long.tb <-
               left_join(
                 resp.long1.tb,
-                q.long.tb %>% select(var.id, module),
+                q.long.tb %>% select(var.id, module, practice),
                 by = c("question" = "var.id")
               )
       
@@ -637,7 +628,7 @@
     config.graphs.df.c <- config.graphs.ls.b[[c]]
     graphdata.ls.d <- list()
     
-    d <- 2
+    d <- 3
     #for(d in 1:2){ #LOOP TESTER
     #for(d in 1:dim(config.graphs.df.c)[1]){
       
@@ -660,16 +651,14 @@
         #filter down to practices relevant to the specific module.
         #TODO: expand to allow year, role, answer option, etc.
         
-        axis.vals <- 
-          UniqueVariableValues(
-            varnames = group_by.d, 
-            tb = q.long.tb
-          ) %>%
-          strsplit(., ",") %>%
-          unlist %>%
-          unique %>%
-          RemoveNA(.) %>%
-          .[order(.)] 
+        axis.cat.labels <- 
+          DefineAxisCategories(
+            source.table = q.long.tb,
+            config.table = config.graphs.df.d,
+            config.varname = "x.varname.1"
+          ) %>% 
+          as.data.frame() %>% 
+          ReplaceNames(., current.names = ".", new.names = group_by.d)
         
         #axis.vals.df <- 
         #  axis.vals1.ls[!grepl("_num", names(axis.vals1.ls))] %>% 
@@ -687,44 +676,44 @@
         #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to 
         #filter down to practices relevant to the specific module
         
-        if(!is.na(config.graphs.df.d$x.varname.1) && config.graphs.df.d$x.varname.1 == "practice"){
-          all.cats1.tb <- 
-            resp.long.tb %>% 
-            filter(grepl(config.graphs.df.d$module,module))
-        }else{
-          all.cats1.tb <- resp.long.tb 
-        }
+        #if(!is.na(config.graphs.df.d$x.varname.1) && config.graphs.df.d$x.varname.1 == "practice"){
+        #  all.cats1.tb <- 
+        #    resp.long.tb %>% 
+        #    filter(grepl(config.graphs.df.d$module,module))
+        #}else{
+        #  all.cats1.tb <- resp.long.tb 
+        #}
         
         #TODO: Ripe place to shorten code - all we're doing is getting unique values of variable from
           #larger dataset, taking into account that when the graph is by module, there's the "etlp,lead"
           #value for some questions.
       
-        all.cats.input2.d <-
-          all.cats1.tb %>%
-          #filter(impbinary == 0) %>% #no more impbinary variables created in cleaning. Deal with during analysis.
-          .[,names(resp.long.tb) == config.graphs.df.d$x.varname.1] %>% 
-          unique %>%
-          unlist %>%
-          strsplit(., ",") %>% 
-          unlist %>%
-          unique %>%
-          RemoveNA(.)
+        #all.cats.input2.d <-
+        #  all.cats1.tb %>%
+        #  #filter(impbinary == 0) %>% #no more impbinary variables created in cleaning. Deal with during analysis.
+        #  .[,names(resp.long.tb) == config.graphs.df.d$x.varname.1] %>% 
+        #  unique %>%
+        #  unlist %>%
+        #  strsplit(., ",") %>% 
+        #  unlist %>%
+        #  unique %>%
+        #  RemoveNA(.)
         
-        all.cats.df.d <- 
-          all.cats.input2.d[order(all.cats.input2.d)] %>%
-          as.data.frame(., stringsAsFactors = FALSE)
+        #all.cats.df.d <- 
+        #  all.cats.input2.d[order(all.cats.input2.d)] %>%
+        #  as.data.frame(., stringsAsFactors = FALSE)
         
-        names(all.cats.df.d) <- group_by.d
+        #names(all.cats.df.d) <- group_by.d
         #print(all.cats.df.d)
       
         
       #Variable names in wide data (values in 'questions' column of long data) 
         #that will be used to calculate final values
-        graph.varnames.d <- 
-          GraphVarnamesInData(
-            config.input = config.graphs.df.d,
-            data.input = resp.long.tb
-          )
+        #graph.varnames.d <- 
+        #  GraphVarnamesInData(
+        #    config.input = config.graphs.df.d,
+        #    data.input = resp.long.tb
+        #  )
         
       #Form final data frame (no averages)
         graphdata.df.d <-  
@@ -732,31 +721,41 @@
           GraphDataRestriction(.) %>%
           group_by(!!! syms(group_by.d)) %>%
           summarize.graph.fun(config.input = config.graphs.df.d, data.input = .) %>%
-          left_join(all.cats.df.d, ., by = c(group_by.d))
+          left_join(axis.cat.labels, ., by = c(group_by.d))
 
       #print(graphdata.df.d)
       
 
       #Add average variable to final data frame
-        graph.avg.df.d <- 
-          resp.long.tb %>%
-          avg.data.restriction.fun(.) %>%
-          group_by(!!! syms(group_by.d)) %>%
-          summarize.avg.fun(.)
-
-      
-        graphdata.df.d <- 
-          left.join.NA(
-            .x = graphdata.df.d, 
-            .y = graph.avg.df.d, 
-            .by = c(group_by.d),
-            na.replacement = 0
-          ) %>%
-          ReplaceNames(
-            df = .,
-            current.names = c(names(.)),
-            new.names = c(config.graphs.df.d$x.varname.1,"measure.var","measure.var.avg")
-          )
+        avg.level <- config.graphs.df.d$avg.level
+        
+        if(is.na(avg.level)){
+          
+          graphdata.df.d <- graphdata.df.d %>%
+            mutate(measure.var.avg = NA)
+          
+        }else{
+        
+          graph.avg.df.d <- 
+            resp.long.tb %>%
+            avg.data.restriction.fun(.) %>%
+            group_by(!!! syms(group_by.d)) %>%
+            summarize.avg.fun(.)
+  
+        
+          graphdata.df.d <- 
+            left_join(
+              x = graphdata.df.d, 
+              y = graph.avg.df.d, 
+              by = c(group_by.d)
+              #na.replacement = 0
+            ) %>%
+            ReplaceNames(
+              df = .,
+              current.names = c(names(.)),
+              new.names = c(config.graphs.df.d$x.varname.1,"measure.var","measure.var.avg")
+            )
+        }
       
       graphdata.ls.d[[d]] <- graphdata.df.d
       setTxtProgressBar(
