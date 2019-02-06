@@ -24,21 +24,26 @@ source("utils_wnf.r")
 
 #Loop Expander for creating full config tables
   #Test Inputs
-    #configs = config.slide.types.tb
-    #loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3")
-    #collate.varname = "slide.section.1"
-    #source.data = resp.long.tb.b  
+    configs = config.slide.types.tb
+    loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3") 
+    manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3")
+    collate.varnames = c("slide.section.1","slide.section.2","slide.section.3")
+    source.data = resp.long.tb.b  
 
+  
+  #TODO: make so can handle recursive loops, sections, ordering
+  
   loop.expander.fun <- function(
     configs, 
     loop.varnames, 
-    collate.varname, 
+    manual.order.varnames,
+    collate.varnames, 
     source.data
   ){
     
     output.ls <- list()
     
-    #c = 4 #LOOP TESTER: NO LOOPS
+    #c = 2 #LOOP TESTER: NO LOOPS
     #c = 3 #LOOP TESTER: ONE LOOP VAR
     #c = 4 #LOOP TESTER: TWO LOOP VARS
     #for(c in 2:3){
@@ -59,17 +64,80 @@ source("utils_wnf.r")
           next()
         }
         
-        output.ls[[c]] <- 
-          UniqueCombnFromColnames(resp.long.tb.b,loop.varnames.c) %>%
+        output.c <- #initial output data frame
+          UniqueCombnFromColnames(source.data,loop.varnames.c) %>%
           cbind(configs.c,.)
-      
+        
+        #output.c <- output1.c[order(match(order.c, output1.c$module)),] 
+          
+        output.ls[[c]] <- output.c #store loop output
+        
     } ### END OF LOOP "C" BY ROW OF CONFIG INPUT ###
     
-    output.df <- rbind.fill(output.ls)
+    output1.df <- rbind.fill(output.ls)
     
-    #Collate Report Sub-Sections
+    manual.order.varname.to.modify <- 
+      output.df %>% 
+      select(slide.loop.var.1) %>% 
+      unique %>% 
+      unlist %>% 
+      RemoveNA %>%
+      as.vector()
+    order.1 <- configs$slide.order.1 %>% unique %>% unlist %>% RemoveNA %>% strsplit(., ",") %>% unlist #ordering by slide.order.1
+    order.1.df <- 
+      order.1 %>% 
+      as.data.frame %>% 
+      mutate(num.var = paste(1:length(order.1), order.1,sep=".")) %>%
+      ReplaceNames(
+        df = ., 
+        current.names = names(.), 
+        new.names = c(manual.order.varname.to.modify,paste0(manual.order.varname.to.modify,".num"))
+      )
+    
+    output2.df <-
+      left_join(
+        output1.df,
+        order.1.df,
+        by = manual.order.varname.to.modify
+      )
+    
+    output.df <- output2.df[order(output2.df$slide.section.1, output2.df$module.num, output2.df$slide.section.2),]  
+    
+    
+    
+    
+    
+    #Collate Report Sections
+    
+    output.df[order(output.df$slide.section.1,output.df$module, output.df$slide.section.2),]
+    
+    
+    
+    
+    
+    
+    
+      #Test inputs
+        tb = output.df
+        loop.varnames = loop.varnames
+        manual.order.varnames = manual.order.varnames
+        collate.varnames = collate.varnames
+    
+      CollateSections <- function(
+        tb,
+        loop.varnames, 
+        manual.order.varnames,
+        collate.varnames
+      ){
+        loop.var <- tb
+      }
+      
+      
+    
+      output.df[order(match(CollateVector(output.df$slide.section.2), output.df$slide.section.2)),]
+      
       manual.order.1 <- 
-        output.df$slide.order.1 %>% 
+        configs$slide.order.1 %>% 
         unique %>% 
         RemoveNA() %>% 
         strsplit(.,",") %>% 
