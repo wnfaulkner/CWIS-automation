@@ -518,9 +518,9 @@
     progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.b <- length(unit.ids.sample)
   
-  #b <- 2 #LOOP TESTER (19 = "Raytown C-2")
+  b <- 2 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
-  for(b in 1:length(unit.ids.sample)){   #START OF LOOP BY REPORT UNIT
+  #for(b in 1:length(unit.ids.sample)){   #START OF LOOP BY REPORT UNIT
   
     loop.start.time.b <- Sys.time()
     
@@ -607,14 +607,13 @@
   #Loop outputs
     graphdata.ls.c <- list()
     tabledata.ls.c <- list()
-    #graphs.ls.c <- list()
   
   #Progress bar for loop
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     
-    slider.unit.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
-                              unit.ids.sample)
+    #slider.unit.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
+    #                          unit.ids.sample)
   
   c <- 2 #LOOP TESTER 
   #for(c in slider.unit.ids.sample){   #LOOP TESTER
@@ -652,7 +651,7 @@
       #Print loop messages
         print(
           paste(
-            "LOOP 'D' -- Loop num: ", d,
+            "LOOP 'D' GRAPH -- Loop num: ", d,
             ", Pct. complete:", round(100*d/dim(config.graphs.df.c)[1], 2), "%"
           )
         )
@@ -684,9 +683,6 @@
           group_by(!!! syms(group_by.d)) %>%
           summarize.graph.fun(config.input = config.graphs.df.d, data.input = .) %>%
           left_join(axis.cat.labels, ., by = c(group_by.d))
-
-      #print(graphdata.df.d)
-      
 
       #Add average variable to final data frame
         avg.level <- config.graphs.df.d$avg.level
@@ -737,21 +733,29 @@
     config.tables.df.c <- config.tables.ls.b[[c]]
     tabledata.ls.d <- list()
     
-    #d <- 1
+    d <- 1
     #for(d in 1:2){ #LOOP TESTER
-    for(d in 1:dim(config.tables.df.c)[1]){
+    #for(d in 1:dim(config.tables.df.c)[1]){
+      
+      #Print loop messages
+        print(
+          paste(
+            "LOOP 'D' TABLE -- Loop num: ", d,
+            ", Pct. complete:", round(100*d/dim(config.tables.df.c)[1], 2), "%"
+          )
+        )
       
       config.tables.df.d <- config.tables.df.c[d,]
       
       #Define all possible category values from table
 
-      #all.cats.varnames.v.d <- c(config.tables.df.d$x.varnamename, config.tables.df.d$y.varname)
-      
-      #all.cats.ls.d <- 
-      #  UniqueVariableValues(
-      #    varnames = c(config.tables.df.d$x.varname, config.tables.df.d$y.varname), 
-      #    tb = resp.wide.df %>% as_tibble()
-      #  )
+        #all.cats.varnames.v.d <- c(config.tables.df.d$x.varnamename, config.tables.df.d$y.varname)
+        
+        #all.cats.ls.d <- 
+        #  UniqueVariableValues(
+        #    varnames = c(config.tables.df.d$x.varname, config.tables.df.d$y.varname), 
+        #    tb = resp.wide.df %>% as_tibble()
+        #  )
       
       
       #Form final data frame (no averages)
@@ -759,7 +763,7 @@
           resp.long.tb.c %>%
           table.data.filter.fun(data.input = ., config.input = config.tables.df.d) %>%
           group_by(!!! syms(config.tables.df.d$summary.var)) %>%
-          summarize.table.fun(config.input = config.tables.df.d, data.input = .) %>%
+          summarize.table.fun(data.input = ., config.input = config.tables.df.d) %>%
           mutate_all(funs(replace(., is.na(.), 0)))
         tabledata.df.d[,1] <- FirstLetterCap_MultElements(tabledata.df.d[,1])
       

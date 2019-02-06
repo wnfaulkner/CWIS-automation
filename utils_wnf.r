@@ -476,6 +476,46 @@
       return(result)
     }
   
+  #Manually order a table's rows using a character vector which contains all values in a names variable in the table
+    #Test Inputs
+      #tb = output1.df
+      #tb.order.varname = manual.order.varname
+      #ordering.vector = configs$slide.order.1 %>% unique %>% unlist %>% RemoveNA %>% strsplit(., ",") %>% unlist
+    
+    ManualOrderTableByVectorWithValuesCorrespondingToVariableInTable <- function(
+      tb, #table to order
+      tb.order.varname, #name of variable in table with values corresponding to vector
+      ordering.vector, #character vector with ordered values
+      ...
+    ){
+      if(!(tb.order.varname %in% names(tb))){
+        stop(paste0("No variable named '", tb.order.varname, "' in data table."))
+      }
+      
+      result1.df <- 
+        ordering.vector %>% 
+        as.data.frame(., stringsAsFactors = FALSE) %>% 
+        mutate(num.var = paste(1:length(ordering.vector), ordering.vector,sep=".")) %>%
+        ReplaceNames(
+          df = ., 
+          current.names = names(.), 
+          new.names = c(tb.order.varname,paste0(tb.order.varname,".num"))
+        )
+      
+      result2.df <-
+        left_join(
+          tb,
+          result1.df,
+          by = tb.order.varname
+        ) 
+      
+      result <- 
+        result2.df[order(result2.df$slide.section.1, result2.df$module.num, result2.df$slide.section.2),] %>%
+        select(SelectNamesIn(tb = ., condition = "NOT.IN", paste0(tb.order.varname,".num")))
+      
+      return(result)
+    }  
+    
   #Replace names in a data frame
     ReplaceNames <- function(df,current.names, new.names) {
       
@@ -559,10 +599,9 @@
     #TODO: Generalize to graph code as well? So treat like a pivot table with arbitrary number of x.vars and y.vars, a summary var and a summary function.
     #TODO: Maybe would make it so could use a single config table?
     #TODO: Should generalize so that can handle arbitrary number of nested variables on both axes like pivot
-    
     #Test Inputs
-    #varnames <- graph.varnames.d
-    #tb <- resp.long.tb %>% as_tibble()
+      #varnames <- graph.varnames.d
+      #tb <- resp.long.tb %>% as_tibble()
     
     UniqueVariableValues <- function( tb, varnames){
       
@@ -660,14 +699,10 @@
     
 
   #Convert data frame column classess according to user input
-    
+    #TODO: 1. MAKE SO CAN DESIGNATE ALL COLUMNS THE SAME; 2. MAKE SO CAN DESIGNATE ONLY CERTAIN COLUMNS WANT TO CHANGE (E.G. "end")
     #2. Prompt for classes of each column; have option to just say 'as-is' (already in correct format)
     #3. As each column is entered, bind and display with column names
     #4. Once all entered, convert to 
-  
-  
-    ##########
-    #! 1. MAKE SO CAN DESIGNATE ALL COLUMNS THE SAME; 2. MAKE SO CAN DESIGNATE ONLY CERTAIN COLUMNS WANT TO CHANGE (E.G. "end")
     ColClassConvert <- function(x){
       library(magrittr)
       if(!is.data.frame(x)){stop("Input not a data frame.")}
@@ -738,7 +773,7 @@
       return(x)
     }
     
-    #ColClassConvert(x)
+
  
    
 

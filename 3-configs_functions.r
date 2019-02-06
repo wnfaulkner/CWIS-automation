@@ -24,11 +24,11 @@ source("utils_wnf.r")
 
 #Loop Expander for creating full config tables
   #Test Inputs
-    #configs = config.slide.types.tb
+    #configs = config.graph.types.tb
     #loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3") 
     #manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3")
     #collate.varnames = c("slide.section.1","slide.section.2","slide.section.3")
-    #source.data = resp.long.tb.b  
+    #source.data = resp.long.tb  
 
   
   #TODO: make so can handle recursive loops, sections, ordering
@@ -76,36 +76,35 @@ source("utils_wnf.r")
     
     output1.df <- rbind.fill(output.ls)
     
-    manual.order.varname.to.modify <- 
-      output1.df %>% 
-      select(slide.loop.var.1) %>% 
-      unique %>% 
-      unlist %>% 
-      RemoveNA %>%
-      as.vector()
-    order.1 <- configs$slide.order.1 %>% unique %>% unlist %>% RemoveNA %>% strsplit(., ",") %>% unlist #ordering by slide.order.1
-    order.1.df <- 
-      order.1 %>% 
-      as.data.frame %>% 
-      mutate(num.var = paste(1:length(order.1), order.1,sep=".")) %>%
-      ReplaceNames(
-        df = ., 
-        current.names = names(.), 
-        new.names = c(manual.order.varname.to.modify,paste0(manual.order.varname.to.modify,".num"))
-      )
+    #Manually Ordering Result (if necessary)
+      if(is.na(configs %>% select(manual.order.varnames[1]) %>% unique) %>% all){
+        result <- output1.df
+      }else{
+        manual.order.varname <- #TODO: Put in config table?
+          UniqueValsFromColnames(
+            df = output1.df,
+            varnames = "slide.loop.var.1"
+          ) %>% unlist %>% as.vector
+        
+        ordering.vector <- 
+          configs %>% 
+          select(manual.order.varnames[1]) %>% 
+          unique %>% 
+          unlist %>% 
+          RemoveNA %>% 
+          strsplit(., ",") %>% 
+          unlist
+        
+        result <- 
+          ManualOrderTableByVectorWithValuesCorrespondingToVariableInTable(
+            tb = output1.df,
+            tb.order.varname = manual.order.varname,
+            ordering.vector = ordering.vector,
+            suppressWarnings()
+          )
+      }
     
-    output2.df <-
-      left_join(
-        output1.df,
-        order.1.df,
-        by = manual.order.varname.to.modify
-      ) 
-    
-    output.df <- 
-      output2.df[order(output2.df$slide.section.1, output2.df$module.num, output2.df$slide.section.2),] %>%
-      select(SelectNamesIn(tb = ., condition = "NOT.IN", paste0(manual.order.varname.to.modify,".num")))
-    
-    return(output.df)
+    return(result)
     
   } #END OF LOOP EXPANDER FUNCTION
   
