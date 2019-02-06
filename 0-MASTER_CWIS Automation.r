@@ -640,8 +640,8 @@
     ###                    ###
     
     #Loop Inputs
-    config.graphs.df.c <- config.graphs.ls.b[[c]]
-    graphdata.ls.d <- list()
+      config.graphs.df.c <- config.graphs.ls.b[[c]]
+      graphdata.ls.d <- list()
     
     #d <- 3
     #for(d in 1:2){ #LOOP TESTER
@@ -674,61 +674,6 @@
           ) %>% 
           as.data.frame() %>% 
           ReplaceNames(., current.names = ".", new.names = group_by.d)
-        
-        #axis.vals.df <- 
-        #  axis.vals1.ls[!grepl("_num", names(axis.vals1.ls))] %>% 
-        #  unlist %>% unique %>% .[.!=""] %>% .[order(.)] %>% as.data.frame() %>%
-        
-      #TODO: still needs work to make sure this forms the correct list with all possible x-axis categories
-        #Then it gets used by the summarize.table.fun to form the final table data. Currently not working.
-      #all.cats.ls.d <- 
-      #  UniqueVariableValues(
-      #    varnames = graph.varnames.d, 
-      #    tb = resp.wide.tb
-      #  )
-      
-      #Create data frame "all.cats.df.d" of all possible answers for x-axis (role, module, data.year, answer)
-        #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to 
-        #filter down to practices relevant to the specific module
-        
-        #if(!is.na(config.graphs.df.d$x.varname.1) && config.graphs.df.d$x.varname.1 == "practice"){
-        #  all.cats1.tb <- 
-        #    resp.long.tb %>% 
-        #    filter(grepl(config.graphs.df.d$module,module))
-        #}else{
-        #  all.cats1.tb <- resp.long.tb 
-        #}
-        
-        #TODO: Ripe place to shorten code - all we're doing is getting unique values of variable from
-          #larger dataset, taking into account that when the graph is by module, there's the "etlp,lead"
-          #value for some questions.
-      
-        #all.cats.input2.d <-
-        #  all.cats1.tb %>%
-        #  #filter(impbinary == 0) %>% #no more impbinary variables created in cleaning. Deal with during analysis.
-        #  .[,names(resp.long.tb) == config.graphs.df.d$x.varname.1] %>% 
-        #  unique %>%
-        #  unlist %>%
-        #  strsplit(., ",") %>% 
-        #  unlist %>%
-        #  unique %>%
-        #  RemoveNA(.)
-        
-        #all.cats.df.d <- 
-        #  all.cats.input2.d[order(all.cats.input2.d)] %>%
-        #  as.data.frame(., stringsAsFactors = FALSE)
-        
-        #names(all.cats.df.d) <- group_by.d
-        #print(all.cats.df.d)
-      
-        
-      #Variable names in wide data (values in 'questions' column of long data) 
-        #that will be used to calculate final values
-        #graph.varnames.d <- 
-        #  GraphVarnamesInData(
-        #    config.input = config.graphs.df.d,
-        #    data.input = resp.long.tb
-        #  )
         
       #Form final data frame (no averages)
         graphdata.df.d <-  
