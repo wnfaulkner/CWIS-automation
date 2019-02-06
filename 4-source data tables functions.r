@@ -6,9 +6,9 @@ source("utils_wnf.r")
 
 #Define names of categories that will go along bottom of graph
   #Test inputs
-    source.table <- q.long.tb
-    config.table <- config.graphs.df.d
-    config.varname <- "x.varname.1"
+    #source.table <- q.long.tb
+    #config.table <- config.graphs.df.d
+    #config.varname <- "x.varname.1"
     
   DefineAxisCategories <- function(
     source.table,
@@ -18,7 +18,7 @@ source("utils_wnf.r")
     cat.colname <- config.table %>% select(config.varname) %>% unlist %>% as.character
     
     if(cat.colname == "practice"){
-      source.table <- source.table %>% filter(module == config.table$module)
+      source.table <- source.table[grep(config.table$module, source.table$module),]
     }
     
     result <-

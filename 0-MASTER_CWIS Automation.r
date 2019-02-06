@@ -444,8 +444,8 @@
           
           setwd(outputs.dir)
           
-        #Write Unbranched Data to Excel File
-          unbranched.file.name <- 
+        #Write Wide Data to CSV File
+          widedata.file.name <- 
             paste( 
               "widedata_",
               gsub(":",".",Sys.time()),
@@ -455,7 +455,22 @@
           
           write.csv(
             resp.wide.tb,
-            file = unbranched.file.name,
+            file = widedata.file.name,
+            row.names = FALSE
+          )
+          
+        #Write Wide Data to CSV File
+          longdata.file.name <- 
+            paste( 
+              "longdata_",
+              gsub(":",".",Sys.time()),
+              ".csv", 
+              sep=""
+            )
+          
+          write.csv(
+            resp.long.tb,
+            file = longdata.file.name,
             row.names = FALSE
           )
           
@@ -599,7 +614,7 @@
     slider.unit.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
                               unit.ids.sample)
   
-  c <- 1 #LOOP TESTER (19 = "Raytown C-2", 244 = "waynesville middle")
+  c <- 2 #LOOP TESTER 
   #for(c in slider.unit.ids.sample){   #LOOP TESTER
   #for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
     
@@ -628,9 +643,9 @@
     config.graphs.df.c <- config.graphs.ls.b[[c]]
     graphdata.ls.d <- list()
     
-    d <- 3
+    #d <- 3
     #for(d in 1:2){ #LOOP TESTER
-    #for(d in 1:dim(config.graphs.df.c)[1]){
+    for(d in 1:dim(config.graphs.df.c)[1]){
       
       #Print loop messages
         print(
