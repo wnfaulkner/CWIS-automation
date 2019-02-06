@@ -314,8 +314,8 @@
     
     #Test Inputs
       #data.tb <- resp8.tb
-      #data.id.varname <- "responseid"
-      #var.guide.tb <- q.tb
+      #data.id.varname <- "resp.id"
+      #var.guide.tb <- questions.tb
       #current.names.colname <- "var.id"
       #unbranched.names.colname <- "branch.master.var.id"
       
@@ -353,6 +353,7 @@
           list(var.guide.tb %>% filter(UQ(as.name(unbranched.names.colname)) %>% is.na))
         
         for(i in 1:length(unbranched.colnames)){
+          
           unbranched.colname.i <- unbranched.colnames[i]
           branched.colnames.i <- #current columns that will get unbranched into this final column
             var.guide.tb %>% 
