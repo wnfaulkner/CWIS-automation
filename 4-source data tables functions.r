@@ -249,8 +249,8 @@ source("utils_wnf.r")
 
 #Data Summarize - participation vs. implementation vs. performance 
   #Test inputs
-  config.input <- config.graphs.df.d
-  data.input <-  resp.long.tb.c %>% GraphDataRestriction %>% group_by(!!! syms(group_by.d))
+    #config.input <- config.graphs.df.d
+    #data.input <-  resp.long.tb.c %>% GraphDataRestriction %>% group_by(!!! syms(group_by.d))
   
   summarize.graph.fun <- function(config.input, data.input){
     

@@ -477,23 +477,22 @@
     #q.branched.tb (round 2)
       #Re-do question table so no extraneous rows for roles that are now unbranched
 
-  #NO CHANGES  
-    #config.ans.opt.tb
-    #config.global.tb
-    #config.slide.types.tb
-    #config.graph.types.tb
-    #config.table.types.tb
-    #config.pot.tb
-    #config.ans.opt.tb
-    #buildings.tb
-    #resp.wide.tb
-    #resp.long.tb
-    
-
 # 2-CLEANING OUTPUTS ------------------          
   #config.ans.opt.tb
   #config.global.tb
   #config.slide.types.tb
+  #config.graph.types.tb
+  #config.table.types.tb
+  #config.pot.tb
+  #config.ans.opt.tb
+  #buildings.tb
+  #resp.wide.tb
+  #resp.long.tb
+  
+  #NO CHANGES
+    #config.ans.opt.tb
+    #config.global.tb
+    #config.slide.types.tb
     
 # 3-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) ------------------
   
@@ -519,7 +518,7 @@
     progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.b <- length(unit.ids.sample)
   
-  #b <- 11 #LOOP TESTER (19 = "Raytown C-2")
+  #b <- 2 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
   for(b in 1:length(unit.ids.sample)){   #START OF LOOP BY REPORT UNIT
   
@@ -545,9 +544,10 @@
       config.graphs.ls.b[[b]] <- 
         loop.expander.fun(
           configs = config.graph.types.tb, 
-          loop.varname = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
-          collate.varname = "slide.section.1",
-          source.data = resp.long.tb.b
+          loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
+          manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3"),
+          collate.varnames = c("slide.section.1","slide.section.2","slide.section.3"),
+          source.data = resp.long.tb
         )
       
       #config.graphs.ls.b[[b]] <- remove.district.office.fun(config.graphs.df)
@@ -556,9 +556,10 @@
       config.tables.ls.b[[b]] <-
         loop.expander.fun(
           configs =  config.table.types.tb, 
-          loop.varname = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
-          collate.varname = "slide.section.1",
-          source.data = resp.long.tb.b
+          loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
+          manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3"),
+          collate.varnames = c("slide.section.1","slide.section.2","slide.section.3"),
+          source.data = resp.long.tb
         )
       
       #config.tables.ls.b[[b]] <- remove.district.office.fun(config.tables.df)
@@ -567,9 +568,10 @@
       config.slides.ls.b[[b]] <- 
         loop.expander.fun(
           configs = config.slide.types.tb,
-          loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"),
-          collate.varname = "slide.section.1",
-          source.data = resp.long.tb.b  
+          loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
+          manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3"),
+          collate.varnames = c("slide.section.1","slide.section.2","slide.section.3"),
+          source.data = resp.long.tb
         )
     
       #config.slides.ls.b[[b]] <- remove.district.office.fun(config.slides.df)

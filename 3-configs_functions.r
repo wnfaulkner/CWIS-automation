@@ -24,11 +24,11 @@ source("utils_wnf.r")
 
 #Loop Expander for creating full config tables
   #Test Inputs
-    configs = config.slide.types.tb
-    loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3") 
-    manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3")
-    collate.varnames = c("slide.section.1","slide.section.2","slide.section.3")
-    source.data = resp.long.tb.b  
+    #configs = config.slide.types.tb
+    #loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3") 
+    #manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3")
+    #collate.varnames = c("slide.section.1","slide.section.2","slide.section.3")
+    #source.data = resp.long.tb.b  
 
   
   #TODO: make so can handle recursive loops, sections, ordering
@@ -77,7 +77,7 @@ source("utils_wnf.r")
     output1.df <- rbind.fill(output.ls)
     
     manual.order.varname.to.modify <- 
-      output.df %>% 
+      output1.df %>% 
       select(slide.loop.var.1) %>% 
       unique %>% 
       unlist %>% 
@@ -99,62 +99,11 @@ source("utils_wnf.r")
         output1.df,
         order.1.df,
         by = manual.order.varname.to.modify
-      )
+      ) 
     
-    output.df <- output2.df[order(output2.df$slide.section.1, output2.df$module.num, output2.df$slide.section.2),]  
-    
-    
-    
-    
-    
-    #Collate Report Sections
-    
-    output.df[order(output.df$slide.section.1,output.df$module, output.df$slide.section.2),]
-    
-    
-    
-    
-    
-    
-    
-      #Test inputs
-        tb = output.df
-        loop.varnames = loop.varnames
-        manual.order.varnames = manual.order.varnames
-        collate.varnames = collate.varnames
-    
-      CollateSections <- function(
-        tb,
-        loop.varnames, 
-        manual.order.varnames,
-        collate.varnames
-      ){
-        loop.var <- tb
-      }
-      
-      
-    
-      output.df[order(match(CollateVector(output.df$slide.section.2), output.df$slide.section.2)),]
-      
-      manual.order.1 <- 
-        configs$slide.order.1 %>% 
-        unique %>% 
-        RemoveNA() %>% 
-        strsplit(.,",") %>% 
-        unlist %>%
-        as.data.frame(.) %>%
-        ReplaceNames(
-          ., 
-          current.names = names(.), 
-          new.names = "module" #TODO: Not abstracted
-        )
-      
-      output.df <- full_join(manual.order.1, output.df)
-      output.df <- 
-        output.df[
-          order(output.df$slide.section.1),
-          c(2:length(names(output.df)),1)
-          ]
+    output.df <- 
+      output2.df[order(output2.df$slide.section.1, output2.df$module.num, output2.df$slide.section.2),] %>%
+      select(SelectNamesIn(tb = ., condition = "NOT.IN", paste0(manual.order.varname.to.modify,".num")))
     
     return(output.df)
     

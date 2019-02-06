@@ -234,7 +234,33 @@
       
       return(result)
     }
+  
+  #Collate a vector (e.g. "1, 1, 2, 2, 3, 3," -> "1, 2, 3, 1, 2, 3, 1, 2, 3")
+    #vector <- output.df$slide.section.2
     
+    CollateVector <- function(vector){
+      collated.values <- 
+        vector %>% 
+        unique %>%
+        .[order(.)] %>%
+        RemoveNA %>% 
+        rep(., length(vector %>% RemoveNA)/length(.))
+      
+      for(i in 1:length(vector)){
+        
+        if(i == 1){
+          select.collated.value.num <- 1
+        }
+        
+        if(!is.na(vector[i])){
+          vector[i] <- collated.values[select.collated.value.num]
+          select.collated.value.num <- select.collated.value.num + 1
+        }
+      }
+      
+      return(vector)  
+    }  
+ 
   #Capitalize the first letter of each word in a substring
     FirstLetterCap_OneElement <- function(x){
       if(class(x) != "character"){print(paste("Warning: Input is of class ",toupper(class(x)),". Coercing to character vector.",sep = ""))}
@@ -250,7 +276,7 @@
     }
 
 
-  #FUNCTIONS FOR CONVERTING VECTORS/VARIABLES TO DIFFERENT CLASSES -------------------- 
+#FUNCTIONS FOR CONVERTING VECTORS/VARIABLES TO DIFFERENT CLASSES -------------------- 
       
       #TESTING OBJECTS
       #x2 <- data.frame(
