@@ -868,7 +868,7 @@
             )
           print(graphdata.df.g)
         
-        #Cleaning data & configs
+        #CLEANING DATA & CONFIGS
           
           #Capitalize headers in graphdata.df.g, all-caps for module, upper-case first letter for everything else
           
@@ -879,7 +879,10 @@
               graphdata.df.g[,1] <- graphdata.df.g[,1] %>% FirstLetterCap_MultElements()
             }
            
-          #Making new [shortened] objects that will get a lot of use in graph formation
+          #Making new [shortened] objects that will get a lot of use in graph formation; 
+            #headers.varname <- names(graphdata.df.g)[!grepl("measure", names(graphdata.df.g))] #name of variable in input data for graph designating column/bar header labels
+            #headers <- graphdata.df.g[,names(graphdata.df.g) == x.headers.varname] #vector of column/bar headers
+            
             if(is.na(config.graphs.df.g$graph.group.by.var) || is.null(config.graphs.df.g$data.group.by.var)){
               graph.group.by.varname <- NULL
               graph.group.by.var <- NULL
@@ -889,8 +892,6 @@
             }
           
           #Inserting corrected scale for graphs that have Answer Options along the bottom
-            #names(config.graphs.df.g) <- gsub("configs.","",names(config.graphs.df.g))
-          
             if(!is.null(graph.group.by.varname) && graph.group.by.varname == "answer"){
               graphdata.df.g <- left_join(graphdata.df.g,config.ans.opt.tb, by = c("answer" = "ans.num"))#graphdata.df.g[order(graphdata.df.g[,2]),]
               
@@ -907,7 +908,10 @@
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
         
           #Base Graph
-            graph.g <- FormBaseGraphObject.DataAndTheme( data.input = graphdata.df.g )
+            graph.1 <- 
+              FormBaseGraphObject.DataAndTheme( 
+                data.input = graphdata.df.g 
+              )
        
             #windows()
             #graph.g
@@ -915,71 +919,35 @@
           #Adding Columns (Clustered or Non-Clustered)
             #Define Fill values
               graph.fill.g <- pander::evals(config.graphs.df.g$graph.fill)[[1]][['result']]
-        
-        if(is.null(graph.group.by.varname)){
-          graph.g <-
-            graph.g +
             
-            geom_bar(
-              aes(x = graphdata.df.g[[graph.cat.varname]], 
-                  y = measure.var %>% as.numeric
-                  #fill = factor(graphdata.df.g[,1])
-              ),
-              fill = graph.fill.g,
-              alpha = 1,
-              position = "dodge", 
-              stat = "identity",
-              show.legend = FALSE
-            )
-        }else{
-          graph.g <-
-            graph.g +
-            
-            geom_bar(
-              aes(x = graphdata.df.g[[graph.cat.varname]], 
-                  y = measure.var %>% as.numeric,
-                  group = graph.group.by.var, 
-                  fill = factor(graph.group.by.var)
-                  #alpha = I(0.1)
-              ),
-              alpha = 1,
-              position = "dodge", 
-              stat = "identity"
-            )
-        }
-        #windows()
-        #graph.g
+            #Add columns
+              graph.2 <- 
+                AddColsToGraph(
+                  base.graph.input = graph.1,
+                  data.input = graphdata.df.g,
+                  graph.headers.varname = names(graphdata.df.g)[!grepl("measure", names(graphdata.df.g))],
+                  graph.group.by.var = graph.group.by.var,
+                  graph.fill = graph.fill.g,
+                  print.graph = FALSE
+                )
         
-      #GRAPH DATA LABELS 
-        
-        #Graph label data frame
-          graph.labels.df <- 
-            create.graph.labels.fun(
-              df = graphdata.df.g, 
-              measure.var = "measure.var", 
-              height.ratio.threshold = 8.2
-            )
-        
-        #Add Data labels to graph
-        graph.g <- 
-          graph.g +
-          geom_text( 
-            aes(                                                          
-              y = graph.labels.df$graph.labels.heights, 
-              x = graphdata.df.g[[graph.cat.varname]],
-              label = graph.labels.df$graph.labels.text,
-              #alpha = graph.labels.df$graph.labels.alpha.v,
-              group = graphdata.df.g[,1]
-            ),
-            alpha = graph.labels.df$graph.labels.alpha.v,
-            color = graph.labels.df$graph.labels.color,
-            size = 4,
-            fontface = "bold",
-            position = position_dodge(width = 1),
-            show.legend = FALSE
-          )
-        #windows()
-        #graph.g
+          #Add data labels 
+          
+            #Graph label data frame
+              graph.labels.df <- 
+                create.graph.labels.fun(
+                  dat = graphdata.df.g, 
+                  measure.var = "measure.var", 
+                  height.ratio.threshold = 8.2
+                )
+          
+            #Add Data labels to graph
+              AddGraphDataLabels(
+                base.graph.input = graph.2,
+                data.labels.dat = graph.labels.df,
+                label.font.size = 4,
+                print.graph = TRUE
+              )  
         
         #GRAPH AVERAGES
           #TODO: Need to make so can group on arbitrary variable with arbitrary number of groups and sub-groups. Right now can only two groups of 2 (e.g. data.year in Repeated Measures)
