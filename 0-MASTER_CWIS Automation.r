@@ -830,7 +830,10 @@
 
 
 # 5-OBJECT CREATION (GRAPHS & TABLES) ------------------------------------
-
+  
+  #Code Clocking
+    section5.starttime <- Sys.time()
+    
   #Load Configs Functions
     setwd(rproj.dir)
     source("5-object creation functions.r")
@@ -848,9 +851,9 @@
     graphs.ls.f <- list()
     tables.ls.f <- list()
   
-  f <- 1 #LOOP TESTER
+  #f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  #for(f in 1:length(unit.ids.sample)){
+  for(f in 1:length(unit.ids.sample)){
     
     #Loop units  
       unit.id.f <- unit.ids.sample[f]
@@ -873,9 +876,9 @@
     #Loop output object(s)
     graphs.ls.g <- list()
     
-    g <- 1 #LOOP TESTER
+    #g <- 1 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    #for(g in 1:length(graphdata.ls.f))
+    for(g in 1:length(graphdata.ls.f))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         
         #Redefine necessary objects in local environment
@@ -893,7 +896,7 @@
             print(
               paste0(
                 "LOOP 'g' -- Loop num: ", g,
-                ", Pct. complete:", round(100*f/length(graphdata.ls.f), 2), "%"
+                ", Pct. complete:", round(100*g/length(graphdata.ls.f), 2), "%"
               )
             )
             print(graphdata.df.g)
@@ -1014,7 +1017,7 @@
                 print.graph = FALSE
               )
               
-        graphs.ls.g[[g]] <<- print(graph.g)
+        graphs.ls.g[[g]] <<- graph.g
         setTxtProgressBar(progress.bar.f, 100*(g + graphdata.ls.c[1:(f-1)] %>% lengths %>% sum)/maxrow.f)
         
       })  ### END OF LOOP "g" BY GRAPH ###
@@ -1028,59 +1031,75 @@
     #Loop output object(s)
       tables.ls.g <- list()
     
-    #g <- 4 #LOOP TESTER
+    #g <- 1 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(tabledata.ls.c[[f]])){
       
-      if(dim(tabledata.ls.c[[f]][[g]])[1] == 0){
-        tabledata.ls.c[[f]][[g]][1,] <- rep(0, dim(tabledata.ls.c[[f]][[g]])[2]) 
-      }
-      
-      ft.g <- FlexTable(
-        data = tabledata.ls.c[[f]][[g]],
-        header.columns = TRUE,
-        add.rownames = FALSE,
+      #Prep Loop Inputs
+        if(dim(tabledata.ls.c[[f]][[g]])[1] == 0){
+          tabledata.ls.c[[f]][[g]][1,] <- rep(0, dim(tabledata.ls.c[[f]][[g]])[2]) 
+        }
         
-        header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #TODO:Should put into configs instead of specifying in code
-        header.text.props = textProperties(
-          color = "white", 
-          font.size = 15,
-          font.family = "Century Gothic",
-          font.weight = "bold"),
-        header.par.props = parProperties(text.align = "center"),
-        body.cell.props = cellProperties(background.color = "white", border.style = "none"),
-        body.text.props = textProperties(
-          color = "#515151",
-          font.size = 15,
-          font.family = "Century Gothic"
+        tabledata.df.g <- tabledata.ls.c[[f]][[g]]
+        config.tables.df.g <- config.tables.df.c[g,]
+    
+      #Print loop messages for bug checking
+        print(
+          paste0(
+            "LOOP 'g' -- Loop num: ", g,
+            ", Pct. complete:", round(100*g/length(tabledata.ls.c[[f]]), 2), "%"
+          )
         )
-      )
-      
-      if(g == 1){
-        ft.g[dim(tabledata.ls.c[[f]][[g]])[1],] <- 
-          chprop(
-            textProperties(
-              font.weight = "bold",
-              font.size = 18,
-              font.family = "Century Gothic"
-            )
-          ) #Bold text on last line (totals)
-        ft.g[,1] <- chprop(parProperties(text.align = "center"))
-        #ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(6,dim(tabledata.ls.c[[f]][[g]])[2]-1)))      
+        print(tabledata.df.g)
+        print(config.tables.df.g)
         
-      }
-      
-      if(g != 1){
-        ft.g[,1] <- chprop(parProperties(text.align = "right"))
-      }
-      
-      #ft.g[1,1] <-  chprop(parProperties(text.align = "left")) 
-      ft.g[1:dim(tabledata.ls.c[[f]][[g]])[1],2:dim(tabledata.ls.c[[f]][[g]])[2]] <- #Center align numbers in all but first column
-        chprop(parProperties(text.align = "center")) 
-      ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
-      
-      tables.ls.g[[g]] <- ft.g
-      
+      #TODO: 
+      #Create FlexTable Object
+        ft.g <- FlexTable(
+          data = tabledata.df.g,
+          header.columns = TRUE,
+          add.rownames = FALSE,
+          
+          header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #TODO:Should put into configs instead of specifying in code
+          header.text.props = textProperties(
+            color = "white", 
+            font.size = 15,
+            font.family = "Century Gothic",
+            font.weight = "bold"),
+          header.par.props = parProperties(text.align = "center"),
+          body.cell.props = cellProperties(background.color = "white", border.style = "none"),
+          body.text.props = textProperties(
+            color = "#515151",
+            font.size = 15,
+            font.family = "Century Gothic"
+          )
+        )
+        
+        if(g == 1){
+          ft.g[dim(tabledata.df.g)[1],] <- 
+            chprop(
+              textProperties(
+                font.weight = "bold",
+                font.size = 18,
+                font.family = "Century Gothic"
+              )
+            ) #Bold text on last line (totals)
+          ft.g[,1] <- chprop(parProperties(text.align = "center"))
+          #ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(6,dim(tabledata.df.g)[2]-1)))      
+          
+        }
+        
+        if(g != 1){
+          ft.g[,1] <- chprop(parProperties(text.align = "right"))
+        }
+        
+        #ft.g[1,1] <-  chprop(parProperties(text.align = "left")) 
+        ft.g[1:dim(tabledata.df.g)[1],2:dim(tabledata.df.g)[2]] <- #Center align numbers in all but first column
+          chprop(parProperties(text.align = "center")) 
+        ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
+        
+        tables.ls.g[[g]] <- ft.g
+        
     } ### END OF LOOP "g" BY TABLE ###
   
     names(tables.ls.g) <- c("role","etlp","cfa","dbdm","pd","lead") #TODO:WAS CAUSING PROBLEMS WITH ORDERING OF TABLES ON SLIDES BECAUSE HAD NOT BEEN UPDATED TO NEW ORDER OF MODULES
@@ -1145,14 +1164,14 @@
     maxrow.h <- sapply(config.slides.ls.b, dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     printed.reports.ls <- list()
   
-  #h <- 50 #LOOP TESTER
+  h <- 1 #LOOP TESTER
   #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
-  for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
+  #for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
     
     #Reading 'Cadre' so it can be added to file name
       cadre.h <- 
         buildings.tb %>% 
-        filter(unit.id == unit.ids.sample[h]) %>% 
+        filter(report.id == unit.ids.sample[h]) %>% 
         select(cadre) %>% 
         unlist %>% 
         FirstLetterCap_OneElement()

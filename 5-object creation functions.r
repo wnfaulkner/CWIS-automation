@@ -250,7 +250,7 @@ source("utils_wnf.r")
             x = headers,
             label = dat.labels$graph.labels.text,
             #alpha = dat.labels$graph.labels.alpha.v,
-            group = graphdata.df.g[,1]
+            group = dat[,1]
           ),
           alpha = dat.labels$graph.labels.alpha.v,
           color = dat.labels$graph.labels.color,
@@ -272,7 +272,6 @@ source("utils_wnf.r")
   #Test Inputs
     #base.graph.input = graph.3
     #dat = graphdata.df.g
-    #graph.headers = headers
     #avg.bar.color = config.graphs.df.g$avg.bar.color
     #dat.configs = config.graphs.df.g
     #print.graph = TRUE
@@ -280,21 +279,21 @@ source("utils_wnf.r")
   AddGraphAverages <- function(
     base.graph.input,
     dat,
-    #graph.headers,
     avg.bar.color,
     dat.configs,
     print.graph = FALSE
   ){
-    #Average bar opacity (alpha)
-      dat$avg.alpha <- 
-        ifelse(
-          is.na(dat.configs$graph.group.by.vars)||is.null(dat.configs$graph.group.by.vars),
-          1,
-          rep(c(0.8,0.0),nrow(dat))
-        )
      #Produce Inputs for Final Results
         headers.varname <- names(dat)[!grepl("measure", names(dat))]
-        headers <- dat[,names(dat) == headers.varname] 
+        headers <- dat[,names(dat) == headers.varname]
+        
+        #Average bar opacity (alpha)
+          dat$avg.alpha <- 
+            ifelse(
+              is.na(dat.configs$graph.group.by.vars)||is.null(dat.configs$graph.group.by.vars),
+              1,
+              rep(c(0.8,0.0),nrow(dat))
+            )
      
       #Produce Final Results
         graph.w.averages <- 
@@ -384,7 +383,7 @@ source("utils_wnf.r")
             axis.text.x = element_blank(),
             axis.text.y = element_text(
               size = 20, 
-              family = "Century Gothic",
+              #family = "Century Gothic",
               color = "#5a6b63",
               hjust = 1)
           )
