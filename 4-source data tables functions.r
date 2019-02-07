@@ -269,7 +269,7 @@ source("utils_wnf.r")
   
   table.data.filter.fun <- function(data.input, config.input){
 
-    #y <- y %>% filter(table.q == 1) 
+    #data.input <- data.input[grep("_num", data.input$question),] 
     
     #Restrict data according to 'filter' variable in configs
       if(is.na(config.input$filter)){ #
@@ -300,8 +300,8 @@ source("utils_wnf.r")
     
 #Define table x and y headers from table
   #Test Inputs
-    configs = config.tables.df.d
-    configs.header.varname = "x.varname"
+    #configs = config.tables.df.d
+    #configs.header.varname = "x.varname"
     #y.varname = "y.varname"
     
   DefineHeaders <- function(
@@ -311,68 +311,39 @@ source("utils_wnf.r")
     
     varname <- configs %>% select(configs.header.varname) %>% unlist %>% as.vector
     
-    varname.in.resp.wide.names <- varname %in% names(resp.wide.tb)
+    if(is.na(varname)){
+      headers <- NA
+      warning("Varname is NA; returning NA for headers.")
+    }else{
     
-    if(varname.in.resp.wide.names){
-      headers <- 
-        resp.wide.tb %>%
-        select(varname) %>%
-        unlist %>%
-        as.vector %>%
-        unique %>%
-        RemoveNA %>%
-        .[. != ""]
-    }
-    
-    if(!varname.in.resp.wide.names){
-      headers <- 
-        resp.long.tb %>%
-        .[!grepl("_num", resp.long.tb$question),] %>%
-        filter(module == configs$module) %>%
-        select(varname) %>%
-        unique %>%
-        unlist %>%
-        as.vector %>%
-        RemoveNA %>%
-        .[. !=""]
+      varname.in.resp.wide.names <- varname %in% names(resp.wide.tb)
+      
+      if(varname.in.resp.wide.names){
+        headers <- 
+          resp.wide.tb %>%
+          select(varname) %>%
+          unlist %>%
+          as.vector %>%
+          unique %>%
+          RemoveNA %>%
+          .[. != ""]
+      }
+      
+      if(!varname.in.resp.wide.names){
+        headers <- 
+          resp.long.tb %>%
+          .[!grepl("_num", resp.long.tb$question),] %>%
+          filter(module == configs$module) %>%
+          select(varname) %>%
+          unique %>%
+          unlist %>%
+          as.vector %>%
+          RemoveNA %>%
+          .[. !=""]
+      }
     }
     
     return(headers)
-  }
-  
-  
-  
-  
-  x.headers <- DefineHeaders( configs = config.tables.df.d, configs.header.varname = "x.varname")
-  y.headers <- DefineHeaders( configs = config.tables.df.d, configs.header.varname = "y.varname")
-    
-  )
-    DefineAxisCategories(
-      source.table = resp.long.tb,
-      config.table = config.tables.df.d,
-      config.varname = "x.varname"
-    ) %>% 
-    as.data.frame(., stringsAsFactors = FALSE) %>% 
-    ReplaceNames(., current.names = names(.), new.names = config.tables.df.d$x.varname)
-  
-  if(config.tables.df.d %>% select("y.varname") %>% unlist %>% as.vector == "answer"){
-    y.headers <- 
-      resp.long.tb[!grepl("_num", resp.long.tb$question),] %>% 
-      select(answer) %>%
-      unique
-  }else{
-    y.headers <- 
-      DefineAxisCategories(
-        source.table = resp.long.tb,
-        config.table = config.tables.df.d,
-        config.varname = "y.varname"
-      ) %>% 
-      as.data.frame(., stringsAsFactors = FALSE) %>% 
-      ReplaceNames(., current.names = names(.), new.names = config.tables.df.d$y.varname) #%>%
-  }  
-  
-  if(is.na(x.headers) && is.na(y.headers)){
-    stop("X and Y headers are NA. Check config.table.")
   }
 
 #Data Summarize TABLES - participation vs. implementation vs. performance 
@@ -387,54 +358,110 @@ source("utils_wnf.r")
     config.input <- config.tables.df.d
     data.input <-  
       resp.long.tb.c %>% 
-      table.data.filter.fun(data.input = ., config.input = config.tables.df.d) #%>% 
-      #group_by(!!! syms(config.tables.df.d$summary.var))
+      table.data.filter.fun(data.input = ., config.input = config.tables.df.d)
     
-  summarize.table.fun <- function(config.input, data.input){
+  summarize.table.fun <- function(
+    config.input, 
+    data.input
+  ){
+    #Define all possible headers for both axes
+      x.headers <- 
+        DefineHeaders( configs = config.input, configs.header.varname = "x.varname") %>% 
+        as.data.frame %>%
+        ReplaceNames(
+          .,
+          names(.),
+          config.input %>% select(x.varname) %>% unlist %>% as.character
+        )
+      
+      y.headers <- 
+        DefineHeaders( configs = config.input, configs.header.varname = "y.varname") %>% 
+        as.data.frame %>%
+        ReplaceNames(
+          .,
+          names(.),
+          config.input %>% select(y.varname) %>% unlist %>% as.character
+        )
+      
+      if(is.na(x.headers) && is.na(y.headers)){
+        stop("X and Y headers are NA. Check config.table.")
+      }
     
-    result.1 <- 
-      #data.input[grepl("_num",data.input$question),] %>% 
-      melt(data.input, id.vars = names(data.input)) 
-    
-    if(is.na(config.input$x.varname)){ #TODO: finalize modifications (see line 1001 of MASTER file)
-      result <-
-        reshape2::dcast(
-          data = result.1,
-          formula = answer ~ practice, 
-            #unlist(result.1 %>% select(config.input$y.varname)) ~ 
-            #unlist(result.1 %>% select(config.input$x.varname),  #role ~ unit.id,
+    #Build table with data and all x/y headers
+      dcast.formula <- paste0(names(y.headers),"~",names(x.headers))
+      
+      tb1 <- #table with all data and all y headers
+        #data.input[!grepl("_num", data.input$question),] %>%
+        melt(data.input, id.vars = names(data.input)) %>% #melt
+        reshape2::dcast( #case
+          data = .,
+          formula = as.formula(dcast.formula), 
           value.var = "resp.id",
           fun.aggregate = function(x){length(unique(x))}
         ) %>%
-        right_join(
+        right_join( #add in all possible y categories
           ., 
           y.headers, 
-          by = config.table %>% select(y.varname) %>% unlist %>% as.character
-        ) %>%
-        ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable(
-          tb = result, 
-          tb.order.varnames = names(result)[names(result) == names(y.headers)] ,
-          ordering.vectors.list = list(config.input$y.varname.order %>% strsplit(., ",") %>% unlist)
-        ) %>%
-        ReplaceNames(
-          df = .,
-          current.names = unit.id.c,
-          new.names = "num. responses"
-        ) %>%
-        ReplaceNames(
-          df = .,
-          current.names = names(.),
-          new.names = FirstLetterCap_MultElements(names(.))
-        ) %>%
-        rbind(
-          .,
-          c("Total",sum(select(., "Num. Responses"), na.rm = TRUE))
+          by = config.input %>% select(y.varname) %>% unlist %>% as.character
         )
-      result[is.na(result)] <- 0
       
-      filter(role != "District Administrator") %>%
+      #Add missing x headers, if any
+        x.headers.v <- x.headers %>% unlist %>% as.vector
+        extra.x.cols <- x.headers.v[!(x.headers.v %in% names(tb1))]
+        
+        if(length(extra.x.cols) > 0){
+          tb2 <- 
+            matrix(0, nrow = nrow(tb1), ncol = length(extra.x.cols)) %>%
+            as.data.frame() %>%
+            ReplaceNames(
+              ., 
+              names(.),
+              extra.x.cols
+            )
+          tb3 <- cbind(tb1, tb2)
+        }else{
+          tb3 <- tb1
+        }
       
-      return(result)
+      #Order X headers      
+        #TODO: Generalize
+        #tb4 <-
+        #  tb3[,order(names)]
+        
+      #Order Y headers  
+        tb4 <- 
+          ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable( #reorder y headers
+            tb = tb3, 
+            tb.order.varnames = names(tb3)[names(tb3) == names(y.headers)] ,
+            ordering.vectors.list = list(config.input$y.varname.order %>% strsplit(., ",") %>% trimws %>% unlist)
+          )
+      
+      #Capitalize first letter of x headers
+        tb5 <-
+          ReplaceNames( #Capitalize x headers
+            df = tb4,
+            current.names = names(tb4),
+            new.names = FirstLetterCap_MultElements(names(tb4))
+          )
+        
+      #Capitalize first letter of y headers      
+        tb5[,1] <- 
+          FirstLetterCap_MultElements(tb5[,1])
+      
+      #Replace NA with 0
+        tb5[is.na(tb5)] <- 0
+      
+      #First Table Only
+      #Add totals row (only first table) 
+        #TODO: make into parameter in configs tables
+        #rbind( 
+        #  .,
+        #  c("Total",sum(select(., names(.)[2:length(names(.))]), na.rm = TRUE))
+        #)
+        
+        #filter(role != "District Administrator") %>%
+      
+      return(tb5)
       
     }else{
       

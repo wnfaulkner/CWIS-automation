@@ -478,13 +478,9 @@
   
   #Manually order a table's rows using a character vector which contains all values in a names variable in the table
     #Test Inputs
-      #tb = output1.df
-      #tb.order.varnames = c("slide.section.1", manual.order.varname)
-      #ordering.vectors.list = 
-      #  list(
-      #    output1.df$slide.section.1[order(output1.df$slide.section.1)] %>% unique,
-      #    configs$slide.order.1 %>% unique %>% unlist %>% RemoveNA %>% strsplit(., ",") %>% unlist
-      #  )
+      #tb = result 
+      #tb.order.varnames = names(result)[names(result) == names(y.headers)] 
+      #ordering.vectors.list = list(config.input$y.varname.order %>% strsplit(., ",") %>% unlist)
     
     ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable <- function(
       tb, #table to order
