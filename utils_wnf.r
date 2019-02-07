@@ -479,40 +479,68 @@
   #Manually order a table's rows using a character vector which contains all values in a names variable in the table
     #Test Inputs
       #tb = output1.df
-      #tb.order.varname = manual.order.varname
-      #ordering.vector = configs$slide.order.1 %>% unique %>% unlist %>% RemoveNA %>% strsplit(., ",") %>% unlist
+      #tb.order.varnames = c("slide.section.1", manual.order.varname)
+      #ordering.vectors.list = 
+      #  list(
+      #    output1.df$slide.section.1[order(output1.df$slide.section.1)] %>% unique,
+      #    configs$slide.order.1 %>% unique %>% unlist %>% RemoveNA %>% strsplit(., ",") %>% unlist
+      #  )
     
-    ManualOrderTableByVectorWithValuesCorrespondingToVariableInTable <- function(
+    ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable <- function(
       tb, #table to order
-      tb.order.varname, #name of variable in table with values corresponding to vector
-      ordering.vector, #character vector with ordered values
+      tb.order.varnames, #names of variable in table with values corresponding to vector 
+      ordering.vectors.list, #vectors with ordered values
       ...
     ){
-      if(!(tb.order.varname %in% names(tb))){
+      if(c(tb.order.varnames) %in% names(tb) %>% all %>% not){
         stop(paste0("No variable named '", tb.order.varname, "' in data table."))
       }
       
-      result1.df <- 
-        ordering.vector %>% 
-        as.data.frame(., stringsAsFactors = FALSE) %>% 
-        mutate(num.var = paste(1:length(ordering.vector), ordering.vector,sep=".")) %>%
-        ReplaceNames(
-          df = ., 
-          current.names = names(.), 
-          new.names = c(tb.order.varname,paste0(tb.order.varname,".num"))
+      if(length(tb.order.varnames) != length(ordering.vectors.list)){
+        stop(
+          paste0(
+            "Number of tb.order.varnames (", 
+            length(tb.order.varnames),
+            ") does not match number of ordering vectors in the list (",
+            length(ordering.vectors.list),")."
+          )
         )
+      }
       
-      result2.df <-
-        left_join(
-          tb,
-          result1.df,
-          by = tb.order.varname
-        ) 
+      tb.ls <- list()
       
+      for(i in 1:length(tb.order.varnames)){  
+        
+        if(i != 1){tb <- tb.ls[[i-1]]} #cumulatively build final table
+        tb.order.varname.i <- tb.order.varnames[i]
+        ordering.vector.i <- ordering.vectors.list[[i]]
+        
+        order.tb.i <- #one-column data frame with correctly ordered values
+          ordering.vector.i %>% 
+          as.data.frame(., stringsAsFactors = FALSE) %>% 
+          mutate(num.var = paste(1:length(ordering.vector.i), ordering.vector.i,sep=".")) %>%
+          ReplaceNames(
+            df = ., 
+            current.names = names(.), 
+            new.names = c(tb.order.varname.i,paste0(tb.order.varname.i,".num"))
+          )
+        
+        tb.ls[[i]] <- #same adding a column with those values and numbers in front
+          left_join(
+            tb,
+            order.tb.i,
+            by = tb.order.varname.i
+          ) 
+      }
+      
+      
+      order.formula <- paste0("result.tb$", tb.order.varnames, ".num") %>% paste(., collapse = ",") %>% paste0("order(",.,")")
+      
+      result.tb <- tb.ls[[i]]
       result <- 
-        result2.df[order(result2.df$slide.section.1, result2.df$module.num, result2.df$slide.section.2),] %>%
-        select(SelectNamesIn(tb = ., condition = "NOT.IN", paste0(tb.order.varname,".num")))
-      
+        result.tb[eval(expr = parse(text = order.formula)),] %>%
+        select(SelectNamesIn(tb = ., condition = "NOT.IN", paste0(tb.order.varnames,".num")))
+        
       return(result)
     }  
     

@@ -8,9 +8,9 @@ source("utils_wnf.r")
 
   #Define names of categories that will go along bottom of graph
     #Test Inputs
-      #source.table = resp.long.tb.c
-      #config.table = config.tables.df.d
-      #config.varname = "x.varname"
+      source.table = resp.long.tb
+      config.table = config.tables.df.d
+      config.varname = "x.varname"
       
     DefineAxisCategories <- function(
       source.table,
@@ -310,23 +310,41 @@ source("utils_wnf.r")
     #   OTHER MODULES (E.G. IF THERE WAS A MODULE 'CFAM' AND 'CFA' THEN THE FUNCTION WOULD PICK UP BOTH WHEN LOOKING FOR JUST 'CFA').
     
   #Test inputs
-    #config.input <- config.tables.df.d
-    #data.input <-  
-    #  resp.long.tb.c %>% 
-    #  table.data.filter.fun(data.input = ., config.input = config.tables.df.d) %>% 
-    #  group_by(!!! syms(config.tables.df.d$summary.var))
+    config.input <- config.tables.df.d
+    data.input <-  
+      resp.long.tb.c %>% 
+      table.data.filter.fun(data.input = ., config.input = config.tables.df.d) #%>% 
+      #group_by(!!! syms(config.tables.df.d$summary.var))
     
   summarize.table.fun <- function(config.input, data.input){
     
-    #Define all possible category values from table
-      
-      DefineAxisCategories(
-        source.table = resp.long.tb,
-        config.table = config.tables.df.d,
-        config.varname = "y.varname"
-        
-      )
+    #Define table x and y headers from table
+      x.headers <- 
+        DefineAxisCategories(
+          source.table = resp.long.tb,
+          config.table = config.tables.df.d,
+          config.varname = "x.varname"
+        ) %>% 
+        as.data.frame(., stringsAsFactors = FALSE) %>% 
+        ReplaceNames(., current.names = names(.), new.names = config.tables.df.d$x.varname)
     
+      y.headers <- 
+        DefineAxisCategories(
+          source.table = resp.long.tb,
+          config.table = config.tables.df.d,
+          config.varname = "y.varname"
+        ) %>% 
+        as.data.frame(., stringsAsFactors = FALSE) %>% 
+        ReplaceNames(., current.names = names(.), new.names = config.tables.df.d$y.varname) #%>%
+      #ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable(
+      #  tb = ., 
+      #  tb.order.varnames = names(.),
+      #  ordering.vectors.list = list(config.input$y.varname.order)
+      #)
+    
+    if(is.na(x.headers) && is.na(y.headers)){
+      stop("X and Y headers are NA. Check config.table.")
+    }
     
     result.1 <- melt(data.input, id.vars = names(data.input)) 
     
@@ -363,6 +381,39 @@ source("utils_wnf.r")
       result[is.na(result)] <- 0
       
       return(result)
+      
+      #PARTIALLY COMPLETED ATTEMPT TO DO THINGS WITH LOOPING INSTEAD OF RESHAPING.
+      #Make Final Table
+      #tb1 <- #data frame with correct headers but no data yet 
+      #  matrix( nrow = nrow(y.headers), ncol = nrow(x.headers)) %>% 
+      #  as.data.frame() %>%
+      #  mutate(row.names = y.headers %>% unlist) %>%
+      #  .[, c(SelectNamesIn(., "IN", "row.names"),SelectNamesIn(., "NOT.IN", "row.names"))] %>%
+      #  ReplaceNames(., names(.), c(names(y.headers),x.headers %>% unlist))
+      
+      #if(config.input$summary.function == "count"){
+      #  summary.function <- parse(text = "length(x)")
+      #} #TODO: add other functions (average, etc.)
+      
+      #for(i in 1:nrow(tb1)){
+      #  for(j in 2:ncol(tb1)){
+      #    
+      #    #Print Loop Notifications
+      #      print( paste0("row (i): ", i, " of ", nrow(tb1), "; column(j): ", j-1, " of ", ncol(tb1)-1) )
+      #      print( paste0("row header: ", tb1[i,1], " , column header: ", names(tb1)[j]))
+      #    
+      #    #Fill table cell according to formula
+      #    if(names(y.headers) %in% names(data.input)){
+      #      tb1[i,j] <- 
+      #        data.input %>%
+      #        
+      #      
+      #    }
+      #     
+      #      
+      #  }
+      
+      
     }else{
       
       #Draft table (have to merge with all.cats to make sure have every column and row represented)
