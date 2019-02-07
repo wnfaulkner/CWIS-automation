@@ -873,14 +873,13 @@
     #Loop output object(s)
     graphs.ls.g <- list()
     
-    #g <- 2 #LOOP TESTER
+    g <- 1 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    for(g in 1:length(graphdata.ls.f))
+    #for(g in 1:length(graphdata.ls.f))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         
         #Redefine necessary objects in local environment
           g<-g #same as above
-          config.graphs.df.g <- config.graphs.df.g #same as above
         
         ### GRAPH INPUTS FOR GGPLOT ###
         
@@ -897,7 +896,8 @@
                 ", Pct. complete:", round(100*f/length(graphdata.ls.f), 2), "%"
               )
             )
-          print(graphdata.df.g)
+            print(graphdata.df.g)
+            print(config.graphs.df.g)
         
         #CLEANING DATA & CONFIGS
           
@@ -958,8 +958,8 @@
               graph.2 <- 
                 AddColsToGraph(
                   base.graph.input = graph.1,
-                  data.input = graphdata.df.g,
-                  graph.headers = headers,
+                  dat = graphdata.df.g,
+                  #graph.headers = headers,
                   graph.group.by.var = graph.group.by.var,
                   graph.fill = graph.fill.g,
                   print.graph = FALSE
@@ -971,15 +971,17 @@
               graph.labels.df <- 
                 create.graph.labels.fun(
                   dat = graphdata.df.g, 
-                  measure.var = "measure.var", 
-                  height.ratio.threshold = 8.2
+                  dat.measure.varname = "measure.var", 
+                  height.ratio.threshold = 8.2,
+                  dat.configs = config.graphs.df.g
                 )
           
             #Add Data labels to graph
               graph.3 <-
                 AddGraphDataLabels(
                   base.graph.input = graph.2,
-                  graph.headers = headers,
+                  #graph.headers = headers,
+                  dat = graphdata.df.g,
                   dat.labels = graph.labels.df,
                   label.font.size = 4,
                   print.graph = FALSE
@@ -990,11 +992,12 @@
             if(config.graphs.df.g$graph.average == "yes"){
               graph.4 <-
                 AddGraphAverages(
-                   base.graph.input = graph.3,
-                   dat.graph = graphdata.df.g,
-                   graph.headers = headers,
-                   avg.bar.color = config.graphs.df.g$avg.bar.color,
-                   print.graph = FALSE 
+                  base.graph.input = graph.3,
+                  dat = graphdata.df.g,
+                  #graph.headers = headers,
+                  avg.bar.color = config.graphs.df.g$avg.bar.color,
+                  dat.configs = config.graphs.df.g,
+                  print.graph = FALSE 
                 )
             }else{
               graph.4 <- graph.3
@@ -1005,11 +1008,13 @@
             graph.g <- 
               FinalGraphFormatting(
                 base.graph.input = graph.4,
-                graph.headers = headers,
+                #graph.headers = headers,
+                dat = graphdata.df.g,
+                dat.configs = config.graphs.df.g,
                 print.graph = FALSE
               )
               
-        graphs.ls.g[[g]] <<- graph.g
+        graphs.ls.g[[g]] <<- print(graph.g)
         setTxtProgressBar(progress.bar.f, 100*(g + graphdata.ls.c[1:(f-1)] %>% lengths %>% sum)/maxrow.f)
         
       })  ### END OF LOOP "g" BY GRAPH ###

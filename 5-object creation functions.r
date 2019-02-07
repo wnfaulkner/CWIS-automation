@@ -45,21 +45,21 @@ source("utils_wnf.r")
   
   AddColsToGraph <- function(
     base.graph.input, #a base graph ggplot object with data and alpha defined (e.g. resulting from function above)
-    data.input, #the graph data frame with x-axis labels in column 1 and bar heights in a column named 'measure.var'
-    graph.headers, #name of variable in data.input that will form graph headers
+    dat, #the graph data frame with x-axis labels in column 1 and bar heights in a column named 'measure.var'
+    #graph.headers, #name of variable in dat that will form graph headers
     graph.group.by.var, #[for stacked graphs only] a data frame of the grouping variable extracted from input data earlier in code
-    graph.fill, #a vector of hex color values with same length as nrow(data.input)
+    graph.fill, #a vector of hex color values with same length as nrow(dat)
     print.graph = FALSE #TRUE/FALSE: if true, prints graph in new window. FALSE = default.
   ){
     #Checking Parameter Inputs
-      if(nrow(data.input) != length(graph.fill)){
+      if(nrow(dat) != length(graph.fill)){
         print(graph.fill)
         stop(
           paste0(
             "Length of graph.fill (", 
             length(graph.fill), 
-            ") is different from number of rows in data.input (",
-            nrow(data.input),
+            ") is different from number of rows in dat (",
+            nrow(dat),
             ")."
           )
         )
@@ -74,6 +74,10 @@ source("utils_wnf.r")
           )
         )
       }
+    
+    #Produce Inputs for Final Results
+      headers.varname <- names(dat)[!grepl("measure", names(dat))]
+      headers <- dat[,names(dat) == headers.varname] 
     
     #Produce Final Result  
       if(is.null(graph.group.by.var)){
@@ -95,7 +99,7 @@ source("utils_wnf.r")
           base.graph.input +
           
           geom_bar(
-            aes(x = graph.headers, 
+            aes(x = headers, 
                 y = measure.var %>% as.numeric,
                 group = graph.group.by.var, 
                 fill = graph.fill
@@ -117,22 +121,31 @@ source("utils_wnf.r")
   }
   
 #Graph Label Heights (defined based on ratio of tallest to shortest columns)
+  #TODO: STANDARDIZE ALL FUNCTIONS SO DATA TABLE INPUT (WHETHER TIBBLE OR DATA FRAME) PARAMETER IS "dat"
+  
+  #NOTE: WHEN WITHIN local() COMMAND AND USING A FUNCTION SOURCED FROM ANOTHER FILE, CANNOT USE OBJECTS
+    #NOT DEFINED IN FUNCTION PARAMETERS. THIS FUNCTION USES THE CONFIG TABLE BUT DOES NOT HAVE IT AS A
+    #PARAMETER, SO THROWS AN ERROR: 
+      #"Error in create.graph.labels.fun(dat = graphdata.df.g, measure.var = "measure.var",  : 
+      #object 'config.graphs.df.g' not found"
+  
   #Test Inputs
     #dat = graphdata.df.g
     #measure.var = "measure.var"
     #height.ratio.threshold = 8.2
-  #TODO: STANDARDIZE ALL FUNCTIONS SO DATA TABLE INPUT (WHETHER TIBBLE OR DATA FRAME) PARAMETER IS "dat"
-
+    #dat.configs = configs.graphs.df.g
+  
   create.graph.labels.fun <- function(
     dat, 
-    measure.var, 
-    height.ratio.threshold
+    dat.measure.varname, 
+    height.ratio.threshold,
+    dat.configs
   ){
     
     if(!is.data.frame(as.data.frame(dat))){stop("Input cannot be coerced into data frame.")}
     
     dat <- as.data.frame(dat)
-    var <- dat[,names(dat) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric")
+    var <- dat[,names(dat) == dat.measure.varname] %>% as.matrix %>% as.vector(.,mode = "numeric")
     
     #Label Heights
     
@@ -161,12 +174,12 @@ source("utils_wnf.r")
     
     #Label Text
       
-      if(config.graphs.df.g$data.measure == "implementation"){
+      if(dat.configs$data.measure == "implementation"){
         graph.labels.text.v <- as.character(100*var %>% round(., 2)) %>% paste(.,"%",sep="")
       }else{
         graph.labels.text.v <- var %>% as.numeric %>% round( ., 1) %>% sprintf("%.1f",.) %>% trimws(., which = "both") 
       }
-      graph.labels.text.v[dat[,names(dat) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric") %>% is.na(.)] <- "No Responses"
+      graph.labels.text.v[dat[,names(dat) == dat.measure.varname] %>% as.matrix %>% as.vector(.,mode = "numeric") %>% is.na(.)] <- "No Responses"
     
     #Label visibility
       
@@ -174,7 +187,7 @@ source("utils_wnf.r")
     
     #Label color for graph.type.e
       
-      if(config.graphs.df.g$graph.type.id == "e"){
+      if(dat.configs$graph.type.id == "e"){
         graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(dat[,1])/2) %>% rev
       }else{
         graph.labels.color.v <- rep("#FFFFFF",100)[1:length(dat[,1])]
@@ -199,12 +212,14 @@ source("utils_wnf.r")
   #Test Inputs
     #base.graph.input = graph.2
     #graph.headers = headers
+    #dat = graphdata.df.g
     #dat.labels = graph.labels.df
     #label.font.size = 4
     
   AddGraphDataLabels <- function(
     base.graph.input,
-    graph.headers,
+    #graph.headers,
+    dat,
     dat.labels,
     label.font.size,
     print.graph = FALSE
@@ -221,14 +236,18 @@ source("utils_wnf.r")
       }
     
       label.font.size <- as.numeric(label.font.size)
-    
+     
+    #Produce Inputs for Final Results
+      headers.varname <- names(dat)[!grepl("measure", names(dat))]
+      headers <- dat[,names(dat) == headers.varname] 
+   
     #Produce Final Result  
       graph.w.datalabels <- 
         base.graph.input +
         geom_text( 
           aes(                                                          
             y = dat.labels$graph.labels.heights, 
-            x = graph.headers,
+            x = headers,
             label = dat.labels$graph.labels.text,
             #alpha = dat.labels$graph.labels.alpha.v,
             group = graphdata.df.g[,1]
@@ -252,37 +271,43 @@ source("utils_wnf.r")
 #Add Graph Averages (as error bars)
   #Test Inputs
     #base.graph.input = graph.3
-    #dat.graph = graphdata.df.g
+    #dat = graphdata.df.g
     #graph.headers = headers
     #avg.bar.color = config.graphs.df.g$avg.bar.color
+    #dat.configs = config.graphs.df.g
     #print.graph = TRUE
     
   AddGraphAverages <- function(
     base.graph.input,
-    dat.graph,
-    graph.headers,
+    dat,
+    #graph.headers,
     avg.bar.color,
+    dat.configs,
     print.graph = FALSE
   ){
     #Average bar opacity (alpha)
-      dat.graph$avg.alpha <- 
+      dat$avg.alpha <- 
         ifelse(
-          is.na(config.graphs.df.g$graph.group.by.vars)||is.null(config.graphs.df.g$graph.group.by.vars),
+          is.na(dat.configs$graph.group.by.vars)||is.null(dat.configs$graph.group.by.vars),
           1,
-          rep(c(0.8,0.0),nrow(dat.graph))
+          rep(c(0.8,0.0),nrow(dat))
         )
-      
+     #Produce Inputs for Final Results
+        headers.varname <- names(dat)[!grepl("measure", names(dat))]
+        headers <- dat[,names(dat) == headers.varname] 
+     
+      #Produce Final Results
         graph.w.averages <- 
           
           base.graph.input +
         
           geom_errorbar(
             aes(
-              x = graph.headers,
-              #group = dat.graph[[graph.cat.varname]],
-              ymin = dat.graph$measure.var.avg, 
-              ymax = dat.graph$measure.var.avg,
-              alpha = dat.graph$avg.alpha
+              x = headers,
+              #group = dat[[graph.cat.varname]],
+              ymin = dat$measure.var.avg, 
+              ymax = dat$measure.var.avg,
+              alpha = dat$avg.alpha
             ), 
             position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
             color = avg.bar.color, 
@@ -307,11 +332,15 @@ source("utils_wnf.r")
   #Test Inputs
     #base.graph.input = graph.4
     #graph.headers = headers
+    #dat = graphdata.df.g 
+    #dat.configs = config.graphs.df.g
     #print.graph = TRUE
   
   FinalGraphFormatting <- function(
     base.graph.input,
-    graph.headers,
+    #graph.headers,
+    dat,
+    dat.configs,
     print.graph = FALSE
     
   ){
@@ -328,14 +357,18 @@ source("utils_wnf.r")
       #    practice = if("practice" %in% names(graphdata.df.g)){graphdata.df.g$practice}else{""} #TODO:When moving this out of loop, will need to generalize for all module practices
       #  )
         
-    #Factor vector with levels in order they will need to be to get column/bar ordering right
-      #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() 
-      #command does a mirror image
-      if(config.graphs.df.g$graph.type.orientation == "bar"){
-        graph.order.g <- graph.headers %>% factor(., levels = graph.headers %>% rev)
-      }else{
-        graph.order.g <- graph.headers %>% factor(., levels = graph.headers %>% rev)        
-      }
+    #Produce Inputs for Final Results
+      headers.varname <- names(dat)[!grepl("measure", names(dat))]
+      headers <- dat[,names(dat) == headers.varname] 
+      
+      #Factor vector with levels in order they will need to be to get column/bar ordering right
+        #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() 
+        #command does a mirror image
+        if(dat.configs$graph.type.orientation == "bar"){
+          graph.order.g <- headers %>% factor(., levels = headers %>% rev)
+        }else{
+          graph.order.g <- headers %>% factor(., levels = headers %>% rev)        
+        }
     
     #Graph category axis ordering
       graph.w.orderedaxis <- 
@@ -343,7 +376,7 @@ source("utils_wnf.r")
         scale_x_discrete(limits=levels(graph.order.g))
     
     #GRAPH ORIENTATION
-      if(config.graphs.df.g$graph.type.orientation == "bar"){
+      if(dat.configs$graph.type.orientation == "bar"){
         graph.final <- 
           graph.w.orderedaxis +
           coord_flip() +
@@ -368,8 +401,14 @@ source("utils_wnf.r")
       return(graph.final)
   }
   
-  
-  
-  
-  
+#GRAPH CREATION FUNCTION: uses all functions above
+  #Test Inputs
+    #dat = graphdata.df.g
+    
+  CreateGraph <- function(
+    dat
+  ){
+   
+  }
+    
   
