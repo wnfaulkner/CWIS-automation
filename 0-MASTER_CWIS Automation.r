@@ -52,6 +52,7 @@
     #install.packages('miniUI')
     
     LoadCommonPackages()
+    library(pander)
     library(proftools)
     library(jsonlite)
     library(rlang)
@@ -905,37 +906,15 @@
         
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
         
-        graph.g <- 
-          ggplot(
-            data = graphdata.df.g,
-            alpha = alpha
-          ) + 
-          
-          theme(
-            panel.background = element_blank(),
-            panel.grid.major.y = element_blank(),
-            panel.grid.major.x = element_blank(),
-            axis.text.x = element_text(size = 20, color = "#5a6b63"),
-            axis.text.y = element_blank(),
-            axis.ticks = element_blank(),
-            axis.title = element_blank(),
-            legend.position = "top",
-            legend.title = element_blank(),
-            legend.text = element_text(size = 12)
-          )
-        #windows()
-        #graph.g
+          #Base Graph
+            graph.g <- FormBaseGraphObject.DataAndTheme( data.input = graphdata.df.g )
+       
+            #windows()
+            #graph.g
         
-        #Adding Columns (Clustered or Non-Clustered)
-          #Fill values
-          #TODO:Currently set manually - need to make it so fill happens within aes when have groups, within geom_bar() when setting manually
-          #TODO:Would be nice to be able to set fill manually from config file as well.
-        
-        if(config.graphs.df.g$graph.type.id == "a"){
-          graph.fill.g <- c(rep("#5F3356",4),"#91AC3E")
-        }else{
-          graph.fill.g <- rep("#91AC3E",nrow(graphdata.df.g))
-        }
+          #Adding Columns (Clustered or Non-Clustered)
+            #Define Fill values
+              graph.fill.g <- pander::evals(config.graphs.df.g$graph.fill)[[1]][['result']]
         
         if(is.null(graph.group.by.varname)){
           graph.g <-
