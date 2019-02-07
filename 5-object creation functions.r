@@ -4,6 +4,32 @@
 
 source("utils_wnf.r")
 
+#Graph Base Formation: forms graph object with data, alpha, and theme
+  FormBaseGraphObject.DataAndTheme <- function(data.input){
+    
+    graph.base <- 
+      
+      ggplot( 
+        data = data.input,
+        alpha = alpha
+      ) + 
+      
+      theme(
+        panel.background = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.major.x = element_blank(),
+        axis.text.x = element_text(size = 20, color = "#5a6b63"),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title = element_blank(),
+        legend.position = "top",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 12)
+      )
+    
+    return(graph.base)
+  }
+
 #Graph Label Heights (defined based on ratio of tallest to shortest columns)
   #Test Inputs
     #df = graphdata.df.g

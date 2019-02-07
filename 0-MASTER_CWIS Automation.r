@@ -11,7 +11,8 @@
     
     
     #Record code start time for processing time calculations
-      start_time <- Sys.time()
+      sections.all.starttime <- Sys.time()
+      section0.startime <- sections.all.starttime
   
   # ESTABLISH BASE DIRECTORIES
   
@@ -76,6 +77,9 @@
       #Install Archived Packages: ReporteRsjars & ReporteRs  
         if( !require( ReporteRsjars ) ) devtools::install_github("davidgohel/ReporteRsjars")
         if( !require( ReporteRs ) ) devtools::install_github("davidgohel/ReporteRs")
+    
+    #Section Clocking
+      section0.duration <- Sys.time() - section0.startime
 
 # 0-SETUP OUTPUTS -----------------------------------------------------------
   #start_time: sys.time for code
@@ -496,6 +500,9 @@
     
 # 3-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) ------------------
   
+  #Section Clocking
+    section3.startime <- Sys.time()
+          
   #Load Configs Functions
     setwd(rproj.dir)
     source("3-configs_functions.r")
@@ -514,9 +521,10 @@
     config.tables.ls.b <- list()
     config.slides.ls.b <- list()
   
-  #Progress bar for loop
+  #Loop Measurement - progress bar & timing
     progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.b <- length(unit.ids.sample)
+    b.loop.startime <- Sys.time()
   
   #b <- 2 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
@@ -579,7 +587,15 @@
     setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
     
   } # END OF LOOP 'b' BY REPORT.UNIT
-  close(progress.bar.b)
+  
+  #Loop Measurement - progress bar & timing
+    b.loop.duration <- Sys.time() - b.loop.startime
+    close(progress.bar.b)
+    b.loop.duration
+    
+  #Section Clocking
+    section3.duration <- Sys.time() - section3.startime
+    section3.duration
 
 # 3-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) OUTPUTS ------------------
   #unit.ids.sample: vector with all report unit names in resp.long.tb (length = 19 for baseline data)
@@ -596,6 +612,9 @@
 
 # 4-SOURCE DATA TABLES --------------------------------------------
   
+  #Section Clocking
+    section4.starttime <- Sys.time()
+    
   #Load Configs Functions
     setwd(rproj.dir)
     source("4-source data tables functions.r")
@@ -608,13 +627,11 @@
     graphdata.ls.c <- list()
     tabledata.ls.c <- list()
   
-  #Progress bar for loop
+  #Loop Measurement - progress bar & timing
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
+    c.loop.startime <- Sys.time()
     
-    #slider.unit.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
-    #                          unit.ids.sample)
-  
   #c <- 2 #LOOP TESTER 
   #for(c in slider.unit.ids.sample){   #LOOP TESTER
   for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
@@ -762,7 +779,16 @@
     tabledata.ls.c[[c]] <- tabledata.ls.d   
     print(c)
   } ### END OF LOOP "c" BY REPORT UNIT     
-  close(progress.bar.c)  
+  
+  #Loop Measurement - progress bar & timing
+    c.loop.duration <- Sys.time() - c.loop.startime
+    close(progress.bar.c)  
+    c.loop.duration
+      
+  #Section Clocking
+    section4.duration <- Sys.time() - section4.starttime
+    section4.duration
+
 
 # 4-SOURCE DATA TABLES OUTPUTS --------------------------------------------
   #tabledata.ls.c
@@ -785,19 +811,31 @@
 # ### LOOP "f" BY DISTRICT  ###
   ###                       ###
   
-  graphs.ls.f <- list()
-  tables.ls.f <- list()
-  progress.bar.f <- txtProgressBar(min = 0, max = 100, style = 3)
-  maxrow.f <- graphdata.ls.c %>% lengths %>% sum
+  #Loop Progress Tracking
+    progress.bar.f <- txtProgressBar(min = 0, max = 100, style = 3)
+    maxrow.f <- graphdata.ls.c %>% lengths %>% sum
   
+  #Loop Outputs
+    graphs.ls.f <- list()
+    tables.ls.f <- list()
   
-  #f <- 1 #LOOP TESTER
+  f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  for(f in 1:length(unit.ids.sample)){
+  #for(f in 1:length(unit.ids.sample)){
     
-    if(f == 1){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
-    school.id.f <- unit.ids.sample[f]
-    config.graphs.df.f <- config.graphs.ls.b[[f]]
+    #Loop units  
+      unit.id.f <- unit.ids.sample[f]
+      config.graphs.df.f <- config.graphs.ls.b[[f]]
+      graphdata.ls.f <- graphdata.ls.c[[f]]
+    
+    #Print loop messages
+      if(f == 1){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
+      print(
+        paste(
+          "LOOP 'F' -- Loop num: ", f,", Loop id: ",unit.id.f,
+          ", Pct. complete:", round(100*f/length(unit.ids.sample), 2), "%"
+        )
+      )
     
     ###                       ###    
 #   ### LOOP "g" BY GRAPH     ###
@@ -806,48 +844,64 @@
     #Loop output object(s)
     graphs.ls.g <- list()
     
-    #g <- 1 #LOOP TESTER
+    g <- 1 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    for(g in 1:length(graphdata.ls.c[[f]]))
-      local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
+    #for(g in 1:length(graphdata.ls.f))
+      #local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         g<-g #same as above
         
         ### GRAPH INPUTS FOR GGPLOT ###
         
         #GRAPH DATA & CONFIGS DATA FRAMES
-          graphdata.df.g <- graphdata.ls.c[[f]][[g]] %>% as.data.frame()
-          names(graphdata.df.g) <- gsub("graphdata.","",names(graphdata.df.g))
           
-          if(names(graphdata.df.g)[!grepl("measure",names(graphdata.df.g))] %>% grepl("module",.)){
-            graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] <- graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] %>% toupper()
-          }else{
-            graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] <- graphdata.df.g[,!grepl("measure",names(graphdata.df.g))] %>% FirstLetterCap_MultElements()
-          }
+          #Select tables from lists produced in previous sections
+            graphdata.df.g <- graphdata.ls.f[[g]] %>% as.data.frame()
+            config.graphs.df.g <- config.graphs.df.f[g,] %>% as.data.frame()
           
-          config.graphs.df.g <- config.graphs.df.f[g,] %>% as.data.frame()
-          names(config.graphs.df.g) <- gsub("configs.","",names(config.graphs.df.g))
+          #Print loop messages for bug checking
+            print(
+              paste0(
+                "LOOP 'g' -- Loop num: ", g,
+                ", Pct. complete:", round(100*f/length(graphdata.ls.f), 2), "%"
+              )
+            )
+          print(graphdata.df.g)
+        
+        #Cleaning data & configs
           
-          graph.cat.varname <- config.graphs.df.g$data.group.by.var  
+          #Capitalize headers in graphdata.df.g, all-caps for module, upper-case first letter for everything else
           
-          if(config.graphs.df.g$data.group.by.var == "answer"){
-            graphdata.df.g <- left_join(graphdata.df.g,config.ans.opt.tb, by = c("answer" = "ans.num"))#graphdata.df.g[order(graphdata.df.g[,2]),]
-            
-            if(config.graphs.df.g$module %in% c("LEAD","PD")){
-              graphdata.df.g <- graphdata.df.g %>% select(data.year, ans.text.agreement, measure.var, avg)
-              graph.cat.varname <- "ans.text.agreement"
+            #names(graphdata.df.g) <- gsub("graphdata.","",names(graphdata.df.g)) #eliminate "graphdata." from names
+            if(names(graphdata.df.g)[1] %>% grepl("module",.)){
+              graphdata.df.g[,1] <- graphdata.df.g[,1] %>% toupper()
             }else{
-              graphdata.df.g <- graphdata.df.g %>% select(data.year, ans.text.freq, measure.var, avg)
-              graph.cat.varname <- "ans.text.freq"
+              graphdata.df.g[,1] <- graphdata.df.g[,1] %>% FirstLetterCap_MultElements()
             }
-          }else{}
+           
+          #Making new [shortened] objects that will get a lot of use in graph formation
+            if(is.na(config.graphs.df.g$graph.group.by.var) || is.null(config.graphs.df.g$data.group.by.var)){
+              graph.group.by.varname <- NULL
+              graph.group.by.var <- NULL
+            }else{
+              graph.group.by.varname <- config.graphs.df.g$graph.group.by.var
+              graph.group.by.var <- graphdata.df.g[,names(graphdata.df.g) == graph.group.by.varname] 
+            }
           
-          if(is.na(config.graphs.df.g$graph.group.by.var)){
-            graph.group.by.varname <- NULL
-            graph.group.by.var <- NULL
-          }else{
-            graph.group.by.varname <- config.graphs.df.g$graph.group.by.var
-            graph.group.by.var <- graphdata.df.g[,names(graphdata.df.g) == graph.group.by.varname] 
-          }
+          #Inserting corrected scale for graphs that have Answer Options along the bottom
+            #names(config.graphs.df.g) <- gsub("configs.","",names(config.graphs.df.g))
+          
+            if(!is.null(graph.group.by.varname) && graph.group.by.varname == "answer"){
+              graphdata.df.g <- left_join(graphdata.df.g,config.ans.opt.tb, by = c("answer" = "ans.num"))#graphdata.df.g[order(graphdata.df.g[,2]),]
+              
+              if(config.graphs.df.g$module %in% c("LEAD","PD")){
+                graphdata.df.g <- graphdata.df.g %>% select(data.year, ans.text.agreement, measure.var, avg)
+                graph.cat.varname <- "ans.text.agreement"
+              }else{
+                graphdata.df.g <- graphdata.df.g %>% select(data.year, ans.text.freq, measure.var, avg)
+                graph.cat.varname <- "ans.text.freq"
+              }
+            }
+         
         
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
         
@@ -873,9 +927,9 @@
         #graph.g
         
         #Adding Columns (Clustered or Non-Clustered)
-        #Fill values
-        #TODO:Currently set manually - need to make it so fill happens within aes when have groups, within geom_bar() when setting manually
-        #TODO:Would be nice to be able to set fill manually from config file as well.
+          #Fill values
+          #TODO:Currently set manually - need to make it so fill happens within aes when have groups, within geom_bar() when setting manually
+          #TODO:Would be nice to be able to set fill manually from config file as well.
         
         if(config.graphs.df.g$graph.type.id == "a"){
           graph.fill.g <- c(rep("#5F3356",4),"#91AC3E")
@@ -1028,69 +1082,69 @@
       })  ### END OF LOOP "g" BY GRAPH ###
 
       graphs.ls.f[[f]] <- graphs.ls.g
-      
-      ###                       ###    
-  #   ### LOOP "g" BY TABLE     ###
-      ###                       ###
-      
-      #Loop output object(s)
-        tables.ls.g <- list()
-      
-      #g <- 4 #LOOP TESTER
-      #for(g in 1:2) #LOOP TESTER
-      for(g in 1:length(tabledata.ls.c[[f]])){
-        
-        if(dim(tabledata.ls.c[[f]][[g]])[1] == 0){
-          tabledata.ls.c[[f]][[g]][1,] <- rep(0, dim(tabledata.ls.c[[f]][[g]])[2]) 
-        }
-        
-        ft.g <- FlexTable(
-          data = tabledata.ls.c[[f]][[g]],
-          header.columns = TRUE,
-          add.rownames = FALSE,
-          
-          header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #TODO:Should put into configs instead of specifying in code
-          header.text.props = textProperties(
-            color = "white", 
-            font.size = 15,
-            font.family = "Century Gothic",
-            font.weight = "bold"),
-          header.par.props = parProperties(text.align = "center"),
-          body.cell.props = cellProperties(background.color = "white", border.style = "none"),
-          body.text.props = textProperties(
-            color = "#515151",
-            font.size = 15,
-            font.family = "Century Gothic"
-          )
-        )
-        
-        if(g == 1){
-          ft.g[dim(tabledata.ls.c[[f]][[g]])[1],] <- 
-            chprop(
-              textProperties(
-                font.weight = "bold",
-                font.size = 18,
-                font.family = "Century Gothic"
-              )
-            ) #Bold text on last line (totals)
-          ft.g[,1] <- chprop(parProperties(text.align = "center"))
-          #ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(6,dim(tabledata.ls.c[[f]][[g]])[2]-1)))      
-          
-        }
-        
-        if(g != 1){
-          ft.g[,1] <- chprop(parProperties(text.align = "right"))
-        }
-        
-        #ft.g[1,1] <-  chprop(parProperties(text.align = "left")) 
-        ft.g[1:dim(tabledata.ls.c[[f]][[g]])[1],2:dim(tabledata.ls.c[[f]][[g]])[2]] <- #Center align numbers in all but first column
-          chprop(parProperties(text.align = "center")) 
-        ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
-        
-        tables.ls.g[[g]] <- ft.g
-        
-      } ### END OF LOOP "g" BY TABLE ###
     
+    ###                       ###    
+#   ### LOOP "g" BY TABLE     ###
+    ###                       ###
+    
+    #Loop output object(s)
+      tables.ls.g <- list()
+    
+    #g <- 4 #LOOP TESTER
+    #for(g in 1:2) #LOOP TESTER
+    for(g in 1:length(tabledata.ls.c[[f]])){
+      
+      if(dim(tabledata.ls.c[[f]][[g]])[1] == 0){
+        tabledata.ls.c[[f]][[g]][1,] <- rep(0, dim(tabledata.ls.c[[f]][[g]])[2]) 
+      }
+      
+      ft.g <- FlexTable(
+        data = tabledata.ls.c[[f]][[g]],
+        header.columns = TRUE,
+        add.rownames = FALSE,
+        
+        header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #TODO:Should put into configs instead of specifying in code
+        header.text.props = textProperties(
+          color = "white", 
+          font.size = 15,
+          font.family = "Century Gothic",
+          font.weight = "bold"),
+        header.par.props = parProperties(text.align = "center"),
+        body.cell.props = cellProperties(background.color = "white", border.style = "none"),
+        body.text.props = textProperties(
+          color = "#515151",
+          font.size = 15,
+          font.family = "Century Gothic"
+        )
+      )
+      
+      if(g == 1){
+        ft.g[dim(tabledata.ls.c[[f]][[g]])[1],] <- 
+          chprop(
+            textProperties(
+              font.weight = "bold",
+              font.size = 18,
+              font.family = "Century Gothic"
+            )
+          ) #Bold text on last line (totals)
+        ft.g[,1] <- chprop(parProperties(text.align = "center"))
+        #ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(6,dim(tabledata.ls.c[[f]][[g]])[2]-1)))      
+        
+      }
+      
+      if(g != 1){
+        ft.g[,1] <- chprop(parProperties(text.align = "right"))
+      }
+      
+      #ft.g[1,1] <-  chprop(parProperties(text.align = "left")) 
+      ft.g[1:dim(tabledata.ls.c[[f]][[g]])[1],2:dim(tabledata.ls.c[[f]][[g]])[2]] <- #Center align numbers in all but first column
+        chprop(parProperties(text.align = "center")) 
+      ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
+      
+      tables.ls.g[[g]] <- ft.g
+      
+    } ### END OF LOOP "g" BY TABLE ###
+  
     names(tables.ls.g) <- c("role","etlp","cfa","dbdm","pd","lead") #TODO:WAS CAUSING PROBLEMS WITH ORDERING OF TABLES ON SLIDES BECAUSE HAD NOT BEEN UPDATED TO NEW ORDER OF MODULES
     tables.ls.f[[f]] <- tables.ls.g
     

@@ -17,7 +17,16 @@
         )
       return(result)
     }
-
+    
+  #Print standard loop messages
+    PrintLoopMessages <- function(loop.index){ #loop.index = object which defines loop number (e.g. 'i' in most common cases)
+      print(
+        paste0(
+          "LOOP '",loop.index, "' -- Loop num: ", eval(parse(text = loop.index))
+        )
+      )
+    }
+    
 #FUNCTIONS FOR INITIAL CODE SETUP & LOADING DATA --------------------
   
   #Install commonly used packages

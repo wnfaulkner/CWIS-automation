@@ -264,8 +264,8 @@ source("utils_wnf.r")
   #BUILDING AND DATA.LEVEL IS DISTRICT.
   
   #Test Inputs
-    data.input = resp.long.tb.c
-    config.input = config.tables.df.d
+    #data.input = resp.long.tb.c
+    #config.input = config.tables.df.d
   
   table.data.filter.fun <- function(data.input, config.input){
 
@@ -471,8 +471,8 @@ source("utils_wnf.r")
   
 #Operations for first table only
   #Test inputs
-    tb = tb5
-    iterations = c(1)
+    #tb = tb5
+    #iterations = c(1)
   
   FirstTableOperations <- function(tb, iterations){
     if(d %in% iterations){
