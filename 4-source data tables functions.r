@@ -264,8 +264,8 @@ source("utils_wnf.r")
   #BUILDING AND DATA.LEVEL IS DISTRICT.
   
   #Test Inputs
-    #data.input = resp.long.tb.c
-    #config.input = config.tables.df.d
+    data.input = resp.long.tb.c
+    config.input = config.tables.df.d
   
   table.data.filter.fun <- function(data.input, config.input){
 
@@ -355,10 +355,10 @@ source("utils_wnf.r")
     #   OTHER MODULES (E.G. IF THERE WAS A MODULE 'CFAM' AND 'CFA' THEN THE FUNCTION WOULD PICK UP BOTH WHEN LOOKING FOR JUST 'CFA').
     
   #Test inputs
-    config.input <- config.tables.df.d
-    data.input <-  
-      resp.long.tb.c %>% 
-      table.data.filter.fun(data.input = ., config.input = config.tables.df.d)
+    #config.input <- config.tables.df.d
+    #data.input <-  
+    #  resp.long.tb.c %>% 
+    #  table.data.filter.fun(data.input = ., config.input = config.tables.df.d)
     
   summarize.table.fun <- function(
     config.input, 
@@ -374,6 +374,8 @@ source("utils_wnf.r")
           config.input %>% select(x.varname) %>% unlist %>% as.character
         )
       
+      x.headers.v <- x.headers %>% unlist %>% as.vector %>% RemoveNA
+      
       y.headers <- 
         DefineHeaders( configs = config.input, configs.header.varname = "y.varname") %>% 
         as.data.frame %>%
@@ -388,39 +390,52 @@ source("utils_wnf.r")
       }
     
     #Build table with data and all x/y headers
-      dcast.formula <- paste0(names(y.headers),"~",names(x.headers))
+      if(dim(data.input)[1] == 0){
+        tb1 <-
+          data.frame(matrix(0, nrow = nrow(y.headers), ncol = nrow(x.headers))) %>%
+          cbind(y.headers, .) %>%
+          ReplaceNames(
+            .,
+            names(.),
+            c(names(.)[1],x.headers.v)
+          )
+      }else{
+        dcast.formula <- paste0(names(y.headers),"~",names(x.headers))
+        
+        tb1 <- #table with all data and all y headers
+          #data.input[!grepl("_num", data.input$question),] %>%
+          melt(data.input, id.vars = names(data.input)) %>% #melt
+          reshape2::dcast( #case
+            data = .,
+            formula = as.formula(dcast.formula), 
+            value.var = "resp.id",
+            fun.aggregate = function(x){length(unique(x))}
+          )
+      }
       
-      tb1 <- #table with all data and all y headers
-        #data.input[!grepl("_num", data.input$question),] %>%
-        melt(data.input, id.vars = names(data.input)) %>% #melt
-        reshape2::dcast( #case
-          data = .,
-          formula = as.formula(dcast.formula), 
-          value.var = "resp.id",
-          fun.aggregate = function(x){length(unique(x))}
-        ) %>%
-        right_join( #add in all possible y categories
-          ., 
-          y.headers, 
-          by = config.input %>% select(y.varname) %>% unlist %>% as.character
-        )
+      #Add missing y headers, if any
+        tb2 <- 
+          right_join( #add in all possible y categories
+            tb1, 
+            y.headers, 
+            by = config.input %>% select(y.varname) %>% unlist %>% as.character
+          )
       
       #Add missing x headers, if any
-        x.headers.v <- x.headers %>% unlist %>% as.vector
         extra.x.cols <- x.headers.v[!(x.headers.v %in% names(tb1))]
         
         if(length(extra.x.cols) > 0){
-          tb2 <- 
-            matrix(0, nrow = nrow(tb1), ncol = length(extra.x.cols)) %>%
+          tb3 <- 
+            matrix(0, nrow = nrow(tb2), ncol = length(extra.x.cols)) %>%
             as.data.frame() %>%
             ReplaceNames(
               ., 
               names(.),
               extra.x.cols
             )
-          tb3 <- cbind(tb1, tb2)
+          tb4 <- cbind(tb2, tb3)
         }else{
-          tb3 <- tb1
+          tb4 <- tb2
         }
       
       #Order X headers      
@@ -429,92 +444,61 @@ source("utils_wnf.r")
         #  tb3[,order(names)]
         
       #Order Y headers  
-        tb4 <- 
+        tb5 <- 
           ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable( #reorder y headers
-            tb = tb3, 
-            tb.order.varnames = names(tb3)[names(tb3) == names(y.headers)] ,
-            ordering.vectors.list = list(config.input$y.varname.order %>% strsplit(., ",") %>% trimws %>% unlist)
+            tb = tb4, 
+            tb.order.varnames = names(tb4)[names(tb4) %in% names(y.headers)],
+            ordering.vectors.list = list(config.input$y.varname.order %>% strsplit(., ",") %>% unlist)
           )
       
       #Capitalize first letter of x headers
-        tb5 <-
+        tb6 <-
           ReplaceNames( #Capitalize x headers
-            df = tb4,
-            current.names = names(tb4),
-            new.names = FirstLetterCap_MultElements(names(tb4))
+            df = tb5,
+            current.names = names(tb5),
+            new.names = FirstLetterCap_MultElements(names(tb5))
           )
         
       #Capitalize first letter of y headers      
-        tb5[,1] <- 
-          FirstLetterCap_MultElements(tb5[,1])
+        tb6[,1] <- 
+          FirstLetterCap_MultElements(tb6[,1])
       
       #Replace NA with 0
-        tb5[is.na(tb5)] <- 0
+        tb6[is.na(tb6)] <- 0
       
-      #First Table Only
+      return(tb6)
+  }    
+  
+#Operations for first table only
+  #Test inputs
+    tb = tb5
+    iterations = c(1)
+  
+  FirstTableOperations <- function(tb, iterations){
+    if(d %in% iterations){
+      
+      #Filter out district admin
+        tb1 <- tb %>% filter(Role != "District Administrator")
+      
       #Add totals row (only first table) 
         #TODO: make into parameter in configs tables
-        #rbind( 
-        #  .,
-        #  c("Total",sum(select(., names(.)[2:length(names(.))]), na.rm = TRUE))
-        #)
+        tb2 <-
+          rbind( 
+            tb1,
+            c("Total",sum(select(tb1, names(tb1)[2:length(names(tb1))])))
+          )
+      
+      #Replace second column name with "Num. Responses"
+        names(tb2)[2] <- "Num. Responses"
+    
+      return(tb2) 
         
-        #filter(role != "District Administrator") %>%
-      
-      return(tb5)
-      
     }else{
       
-      #Draft table (have to merge with all.cats to make sure have every column and row represented)
-      result.2 <- 
-        reshape2::dcast(
-          data = result.1, 
-          formula = 
-            unlist(data.input[names(data.input) == config.input$y.varname]) ~ 
-            unlist(data.input[names(data.input) == config.input$x.varname]),#syms(paste(config.input$x.var,"~",config.input$y.var,sep="")), 
-          value.var ="resp.id",
-          fun.aggregate = length
-        ) %>% 
-        ReplaceNames(
-          df = .,
-          current.names = "unlist(data.input[names(data.input) == config.tables.df.d$y.varname])",
-          new.names = "all.cats"
-        ) 
+      return(tb)
       
-      #Add all.cats to rows (y axis) 
-      result.3 <- 
-        right_join(
-          result.2, 
-          all.cats.ls.d$y, 
-          by = "all.cats"
-        )
-      
-      ##Add all.cats to columns (x axis)
-      missing.cats <- unlist(all.cats.ls.d$x)[!unlist(all.cats.ls.d$x) %in% names(result.3)] %>% as.character
-      
-      result.4 <- 
-        matrix(
-          ncol = length(missing.cats),
-          nrow = dim(result.3)[1]
-        ) %>%
-        as_tibble() %>%
-        ReplaceNames(
-          df = .,
-          current.names = names(.),
-          new.names = missing.cats
-        ) %>%
-        cbind(result.3, .) %>%
-        OrderDfByVar(
-          df = .,
-          order.by.varname = "all.cats",
-          rev = TRUE
-        ) %>%
-        ReplaceNames(
-          df = .,
-          current.names = "all.cats",
-          new.names = FirstLetterCap_OneElement(config.input$y.varname)
-        )
-      
-      return(result.4)
     }
-  }    
+  }
+  
+  
+  

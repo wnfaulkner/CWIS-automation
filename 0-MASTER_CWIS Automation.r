@@ -518,9 +518,9 @@
     progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
     maxrow.b <- length(unit.ids.sample)
   
-  b <- 2 #LOOP TESTER (19 = "Raytown C-2")
+  #b <- 2 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
-  #for(b in 1:length(unit.ids.sample)){   #START OF LOOP BY REPORT UNIT
+  for(b in 1:length(unit.ids.sample)){   #START OF LOOP BY REPORT UNIT
   
     loop.start.time.b <- Sys.time()
     
@@ -615,9 +615,9 @@
     #slider.unit.ids <- grep("waynesville middle|warrensburg high|perry co. middle|veterans elem.|hannibal middle|trojan intermediate|sunrise elem.|salem sr. high|eugene field elem.|potosi elem.|mark twain elem.|lonedell elem.",
     #                          unit.ids.sample)
   
-  c <- 2 #LOOP TESTER 
+  #c <- 2 #LOOP TESTER 
   #for(c in slider.unit.ids.sample){   #LOOP TESTER
-  #for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
+  for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
     
     #Loop Inputs (both graphs and tables)
       unit.id.c <- unit.ids.sample[c]
@@ -733,9 +733,9 @@
     config.tables.df.c <- config.tables.ls.b[[c]]
     tabledata.ls.d <- list()
     
-    d <- 1
+    #d <- 2
     #for(d in 1:2){ #LOOP TESTER
-    #for(d in 1:dim(config.tables.df.c)[1]){
+    for(d in 1:dim(config.tables.df.c)[1]){
       
       #Print loop messages
         print(
@@ -747,30 +747,14 @@
       
       config.tables.df.d <- config.tables.df.c[d,]
       
-      #Define all possible category values from table
-
-        #all.cats.varnames.v.d <- c(config.tables.df.d$x.varnamename, config.tables.df.d$y.varname)
-        
-        #all.cats.ls.d <- 
-        #  UniqueVariableValues(
-        #    varnames = c(config.tables.df.d$x.varname, config.tables.df.d$y.varname), 
-        #    tb = resp.wide.df %>% as_tibble()
-        #  )
-      
-      
-      #Form final data frame (no averages)
+      #Form final data frame
         tabledata.df.d <-  
           resp.long.tb.c %>%
           table.data.filter.fun(data.input = ., config.input = config.tables.df.d) %>%
-          group_by(!!! syms(config.tables.df.d$summary.var)) %>%
           summarize.table.fun(data.input = ., config.input = config.tables.df.d) %>%
-          mutate_all(funs(replace(., is.na(.), 0)))
-        tabledata.df.d[,1] <- FirstLetterCap_MultElements(tabledata.df.d[,1])
+          FirstTableOperations(tb = ., iterations = c(1))
       
-      #storage.ls.index <- length(tabledata.ls.d) + 1
       tabledata.ls.d[[d]] <- tabledata.df.d
-      
-      #setTxtProgressBar(progress.bar.c, 100*(d + config.tables.ls.b[1:(c-1)] %>% sapply(., dim) %>% .[1,] %>% sum)/maxrow.c)
       
     } ### END OF LOOP "d" BY TABLE ###
     
@@ -827,78 +811,6 @@
     for(g in 1:length(graphdata.ls.c[[f]]))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         g<-g #same as above
-        
-        #Graph Label Heights (defined based on ratio of tallest to shortest columns)
-        #Test Inputs
-        #df = graphdata.df.g
-        #measure.var = "measure.var"
-        #height.ratio.threshold = 8.2
-        
-        create.graph.labels.fun <- function(df, measure.var, height.ratio.threshold){
-          
-          if(!is.data.frame(as.data.frame(df))){stop("Input cannot be coerced into data frame.")}
-          
-          df <- as.data.frame(df)
-          
-          var <- df[,names(df) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric")
-          
-          #Label Heights
-          min <- min(var, na.rm = TRUE)
-          max <- max(var, na.rm = TRUE)
-          height.ratio.threshold <- height.ratio.threshold
-          height.ratio <- ifelse(max == 0, 0, max/min)
-          
-          #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
-          
-          if(height.ratio < height.ratio.threshold){ 
-            graph.labels.heights.v <- rep(min/2, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
-            above.label.vectorposition <- max/var > height.ratio.threshold
-          }
-          
-          if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
-            graph.labels.heights.v <- vector(length = length(var))
-            above.label.vectorposition <- max/var > height.ratio.threshold
-            above.label.vectorposition[is.na(above.label.vectorposition)] <- TRUE
-            var[is.na(var)] <- 0
-            graph.labels.heights.v[above.label.vectorposition] <-   #labels for columns below threshold, position is height of bar plus 1/10 of max bar height 
-              var[above.label.vectorposition] + max/10
-            graph.labels.heights.v[graph.labels.heights.v == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
-              min(var[!above.label.vectorposition])/2
-          }
-          
-          #Label Text
-          if(config.graphs.df.g$data.measure == "implementation"){
-            graph.labels.text.v <- as.character(100*var %>% round(., 2)) %>% paste(.,"%",sep="")
-          }else{
-            graph.labels.text.v <- var %>% as.numeric %>% round( ., 1) %>% sprintf("%.1f",.) %>% trimws(., which = "both") 
-          }
-          graph.labels.text.v[df[,names(df) == measure.var] %>% as.matrix %>% as.vector(.,mode = "numeric") %>% is.na(.)] <- "No Responses"
-          
-          #Label visibility
-          graph.labels.alpha.v <- 1 #ifelse(var != 0, 1, 0)  
-          
-          #Label color for graph.type.e
-          if(config.graphs.df.g$graph.type.id == "e"){
-            graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(df[,1])/2) %>% rev
-          }else{
-            graph.labels.color.v <- rep("#FFFFFF",100)[1:length(df[,1])]
-          }
-          graph.labels.color.v[var==0] <- "#000000"
-          graph.labels.color.v[above.label.vectorposition] <- "#000000"
-          graph.labels.color.v <- graph.labels.color.v %>% rev
-          
-          result <- data.frame(
-            graph.labels.text = graph.labels.text.v,
-            graph.labels.heights = graph.labels.heights.v,
-            graph.labels.alpha.v = graph.labels.alpha.v,
-            graph.labels.color = graph.labels.color.v,
-            stringsAsFactors = FALSE
-          )
-          
-          #print(paste("Graph Label Heights: ",paste(graph.labels.heights.v, collapse = ", "),sep=""))
-          return(result)
-        }
-        
         
         ### GRAPH INPUTS FOR GGPLOT ###
         
@@ -1049,21 +961,6 @@
             graph.g <- 
               
               graph.g +
-              
-              #geom_errorbar( #error bar shadow
-              #  aes(
-              #    x = graphdata.df.g[[graph.cat.varname]],
-              #    #group = graphdata.df.g[[graph.cat.varname]], #TODO:removed group for Green Reports because didn't need it, but will have ot add back in and generalize
-              #    ymin = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/450, 
-              #    ymax = graphdata.df.g$measure.var.avg-max(graphdata.df.g$measure.var.avg)/450,
-              #    alpha = graphdata.df.g$avg.alpha
-              #  ), 
-              #  position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-              #  color = "black", 
-              #  width = 1,
-              #  size = 2,
-              #  show.legend = FALSE
-              #) #+
             
               geom_errorbar(
                 aes(
