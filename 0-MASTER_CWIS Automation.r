@@ -10,9 +10,16 @@
     options(java.parameters = "- Xmx8g") #helps r not to fail when importing large xlsx files with xlsx package
     
     
-    #Record code start time for processing time calculations
+    #Section & Code Clocking
+      #TODO: MAKE UTILS FUNCTIONS THAT 
+        #(A) DESIGNATE SYS.TIME() 'BOOKMARKS' OR 'WAYPOINTS'
+        #(B) PRINT A TABLE OF WAYPOINTS IN ROWS AND COLUMNS REPRESENTING
+          #(1) TIME SINCE MOST RECENT WAYPOINT
+          #(2) CUMULATIVE TIME SINCE FIRST WAYPOINT
+          #(3) TIME SINCE MOST RECENT WAYPOINT/TIME SINCE FIRST WAYPOINT (PERCENTAGE)
+    
       sections.all.starttime <- Sys.time()
-      section0.startime <- sections.all.starttime
+      section0.starttime <- sections.all.starttime
   
   # ESTABLISH BASE DIRECTORIES
   
@@ -80,7 +87,8 @@
         if( !require( ReporteRs ) ) devtools::install_github("davidgohel/ReporteRs")
     
     #Section Clocking
-      section0.duration <- Sys.time() - section0.startime
+      section0.duration <- Sys.time() - section0.starttime
+      section0.duration
 
 # 0-SETUP OUTPUTS -----------------------------------------------------------
   #start_time: sys.time for code
@@ -91,6 +99,9 @@
 
 # 1-IMPORT -----------------------------------------
   
+  #Section Clocking
+    section1.starttime <- Sys.time()
+      
   #Source Import Functions
     #import.source.dir <- paste(rproj.dir,"1-Import/", sep = "")
     setwd(rproj.dir)
@@ -129,6 +140,11 @@
       stringsAsFactors = FALSE,
       header = TRUE
     ) %>% as_tibble(.)
+    
+  #Section Clocking
+    section1.duration <- Sys.time - section1.starttime
+    section1.duration
+    Sys.time() - sections.all.starttime
 
 # 1-IMPORT OUTPUTS -----------------------------------------
   #config.global.tb
@@ -150,6 +166,9 @@
 
 
 # 2-CLEANING --------
+  
+  #Section Clocking
+    section2.starttime <- Sys.time()
     
   #Source Cleaning Functions
     cleaning.source.dir <- paste(rproj.dir,"2-Cleaning/", sep = "")
@@ -479,8 +498,10 @@
             row.names = FALSE
           )
           
-    #q.branched.tb (round 2)
-      #Re-do question table so no extraneous rows for roles that are now unbranched
+  #Section Clocking
+    section2.duration <- Sys.time() - section2.starttime
+    section2.duration
+    Sys.time() - sections.all.starttime
 
 # 2-CLEANING OUTPUTS ------------------          
   #config.ans.opt.tb
@@ -592,11 +613,12 @@
   #Loop Measurement - progress bar & timing
     b.loop.duration <- Sys.time() - b.loop.startime
     close(progress.bar.b)
-    b.loop.duration
+    #b.loop.duration
     
   #Section Clocking
     section3.duration <- Sys.time() - section3.startime
     section3.duration
+    Sys.time() - sections.all.starttime
 
 # 3-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) OUTPUTS ------------------
   #unit.ids.sample: vector with all report unit names in resp.long.tb (length = 19 for baseline data)
@@ -662,7 +684,7 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    #d <- 5
+    #d <- 1
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:dim(config.graphs.df.c)[1]){
       
@@ -700,7 +722,12 @@
           GraphDataRestriction(.) %>%
           group_by(!!! syms(group_by.d)) %>%
           summarize.graph.fun(config.input = config.graphs.df.d, data.input = .) %>%
-          left_join(axis.cat.labels, ., by = c(group_by.d))
+          left_join(axis.cat.labels, ., by = c(group_by.d)) %>%
+          ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable(
+            tb = ., 
+            tb.order.varnames = names(.)[!grepl("measure",names(.))],
+            ordering.vectors.list = config.graphs.df.d$x.var.order.1 %>% strsplit(., ",")
+          )
 
       #Add average variable to final data frame
         avg.level <- config.graphs.df.d$avg.level
@@ -784,11 +811,12 @@
   #Loop Measurement - progress bar & timing
     c.loop.duration <- Sys.time() - c.loop.startime
     close(progress.bar.c)  
-    c.loop.duration
+    #c.loop.duration
       
   #Section Clocking
     section4.duration <- Sys.time() - section4.starttime
     section4.duration
+    Sys.time() - sections.all.starttime
 
 
 # 4-SOURCE DATA TABLES OUTPUTS --------------------------------------------
@@ -845,11 +873,14 @@
     #Loop output object(s)
     graphs.ls.g <- list()
     
-    g <- 1 #LOOP TESTER
+    #g <- 2 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    #for(g in 1:length(graphdata.ls.f))
-      #local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
-        g<-g #same as above
+    for(g in 1:length(graphdata.ls.f))
+      local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
+        
+        #Redefine necessary objects in local environment
+          g<-g #same as above
+          config.graphs.df.g <- config.graphs.df.g #same as above
         
         ### GRAPH INPUTS FOR GGPLOT ###
         
@@ -880,8 +911,8 @@
             }
            
           #Making new [shortened] objects that will get a lot of use in graph formation; 
-            #headers.varname <- names(graphdata.df.g)[!grepl("measure", names(graphdata.df.g))] #name of variable in input data for graph designating column/bar header labels
-            #headers <- graphdata.df.g[,names(graphdata.df.g) == x.headers.varname] #vector of column/bar headers
+            headers.varname <- names(graphdata.df.g)[!grepl("measure", names(graphdata.df.g))] #name of variable in input data for graph designating column/bar header labels
+            headers <- graphdata.df.g[,names(graphdata.df.g) == headers.varname] #vector of column/bar headers
             
             if(is.na(config.graphs.df.g$graph.group.by.var) || is.null(config.graphs.df.g$data.group.by.var)){
               graph.group.by.varname <- NULL
@@ -912,20 +943,23 @@
               FormBaseGraphObject.DataAndTheme( 
                 data.input = graphdata.df.g 
               )
-       
-            #windows()
-            #graph.g
-        
+
           #Adding Columns (Clustered or Non-Clustered)
-            #Define Fill values
-              graph.fill.g <- pander::evals(config.graphs.df.g$graph.fill)[[1]][['result']]
-            
+            #Define Fill Values
+              if(
+                strsplit(config.graphs.df.g$graph.fill, ",") %>% unlist %>% trimws %>% length %>% equals(1)
+              ){
+                graph.fill.g <- config.graphs.df.g$graph.fill %>% rep(., nrow(graphdata.df.g))
+              }else{
+                graph.fill.g <- strsplit(config.graphs.df.g$graph.fill, ",") %>% unlist %>% trimws
+              }
+
             #Add columns
               graph.2 <- 
                 AddColsToGraph(
                   base.graph.input = graph.1,
                   data.input = graphdata.df.g,
-                  graph.headers.varname = names(graphdata.df.g)[!grepl("measure", names(graphdata.df.g))],
+                  graph.headers = headers,
                   graph.group.by.var = graph.group.by.var,
                   graph.fill = graph.fill.g,
                   print.graph = FALSE
@@ -942,87 +976,39 @@
                 )
           
             #Add Data labels to graph
-              AddGraphDataLabels(
-                base.graph.input = graph.2,
-                data.labels.dat = graph.labels.df,
-                label.font.size = 4,
-                print.graph = TRUE
-              )  
-        
-        #GRAPH AVERAGES
-          #TODO: Need to make so can group on arbitrary variable with arbitrary number of groups and sub-groups. Right now can only two groups of 2 (e.g. data.year in Repeated Measures)
-          graphdata.df.g$avg.alpha <- 
-            ifelse(
-              is.na(config.graphs.df.g$graph.group.by.vars),# != "Baseline" & graphdata.df.g$measure.var.avg != 0,
-              1,
-              rep(c(0.8,0.0),nrow(graphdata.df.g))
-            )
+              graph.3 <-
+                AddGraphDataLabels(
+                  base.graph.input = graph.2,
+                  graph.headers = headers,
+                  dat.labels = graph.labels.df,
+                  label.font.size = 4,
+                  print.graph = FALSE
+                )  
+            
+          #Add Graph Averages (as error bar)
+            #NOTE: does not depend on config.graphs.df.g - taken care of with if statement outside function
+            if(config.graphs.df.g$graph.average == "yes"){
+              graph.4 <-
+                AddGraphAverages(
+                   base.graph.input = graph.3,
+                   dat.graph = graphdata.df.g,
+                   graph.headers = headers,
+                   avg.bar.color = config.graphs.df.g$avg.bar.color,
+                   print.graph = FALSE 
+                )
+            }else{
+              graph.4 <- graph.3
+            }
           
-          if(config.graphs.df.g$graph.average == "yes"){
+          #Final graph formatting & edits: correct category order, finalize orientation as column or bar
+            #NOTE: depends on config.graphs.df.g (used within function to decide whether to flip to bar)
             graph.g <- 
+              FinalGraphFormatting(
+                base.graph.input = graph.4,
+                graph.headers = headers,
+                print.graph = FALSE
+              )
               
-              graph.g +
-            
-              geom_errorbar(
-                aes(
-                  x = graphdata.df.g[[graph.cat.varname]],
-                  #group = graphdata.df.g[[graph.cat.varname]],
-                  ymin = graphdata.df.g$measure.var.avg, 
-                  ymax = graphdata.df.g$measure.var.avg,
-                  alpha = graphdata.df.g$avg.alpha
-                ), 
-                position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-                color = "yellow", 
-                width = 1,
-                size = 2,
-                alpha = 1,
-                show.legend = FALSE
-              )
-            
-        }else{}
-        
-        #GRAPH CATEGORY NAMES, CORRECTING CATEGORY AXIS ORDERING
-          #TODO:potential function 
-          #TODO: if can make first character of all categories into numeric vector, then just order by that
-        
-        graph.cat.order.ls <-
-          list(
-            data.year = c("Baseline","2017-18"),
-            school.level = c("Elem.","Middle","High","Mult.","Other"),
-            role = c("Special Educator","Classroom Teacher","Instructional Coach","School Counselor","School Social Worker","Building Administrator","Other"),
-            module = c("ETLP", "CFA","DBDM","LEAD","PD"),
-            ans.text.freq = c("Always","Most of the time","About half the time","Sometimes","Never"),
-            ans.text.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree"),
-            practice = if("practice" %in% names(graphdata.df.g)){graphdata.df.g$practice}else{""} #TODO:When moving this out of loop, will need to generalize for all module practices
-          )
-        
-        #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() command does a mirror image
-          if(config.graphs.df.g$graph.type.orientation == "bar"){
-            graph.order.g <- graph.cat.order.ls[graph.cat.varname] %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist %>% rev)
-          }else{
-            graph.order.g <- graph.cat.order.ls[graph.cat.varname]  %>% unlist %>% factor(., levels = graph.cat.order.ls[graph.cat.varname] %>% unlist)        
-          }
-        
-        #Graph category axis ordering
-          graph.g <- 
-            graph.g + 
-            scale_x_discrete(limits=levels(graph.order.g))
-        
-        #GRAPH ORIENTATION
-          if(config.graphs.df.g$graph.type.orientation == "bar"){
-            graph.g <- 
-              graph.g +
-              coord_flip() +
-              theme(
-                axis.text.x = element_blank(),
-                axis.text.y = element_text(
-                  size = 20, 
-                  family = "Century Gothic",
-                  color = "#5a6b63",
-                  hjust = 1)
-              )
-          }
-        
         graphs.ls.g[[g]] <<- graph.g
         setTxtProgressBar(progress.bar.f, 100*(g + graphdata.ls.c[1:(f-1)] %>% lengths %>% sum)/maxrow.f)
         
@@ -1097,6 +1083,13 @@
     
   } ### END OF LOOP "f" BY REPORT.UNIT
   close(progress.bar.f)
+  
+   #Section Clocking
+    section5.duration <- Sys.time() - section5.starttime
+    section5.duration
+    Sys.time() - sections.all.starttime
+
+
 
 # 5-OBJECT CREATION (GRAPHS & TABLES) OUTPUTS ------------------------------------
   
