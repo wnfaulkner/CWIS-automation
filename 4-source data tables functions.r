@@ -6,49 +6,47 @@ source("utils_wnf.r")
 
 
 
-  #Define names of categories that will go along bottom of graph
-    #Test Inputs
-      source.table = resp.long.tb
-      config.table = config.tables.df.d
-      config.varname = "x.varname"
-      
-    DefineAxisCategories <- function(
-      source.table,
-      config.table,
-      config.varname
-    ){
-      cat.colname <- config.table %>% select(config.varname) %>% unlist %>% as.character
-      
-      if(is.na(cat.colname)){
-        result <- NA
-        warning(paste0("Config table column '", config.varname, "' is NA."))
-      }
-      
-      if(!is.na(cat.colname)){
-        
-        if(cat.colname %in% "practice"){
-          source.table <- source.table[grep(config.table$module, source.table$module),]
-        }
-        
-        result <-
-          UniqueVariableValues(
-            varnames = cat.colname, 
-            tb = source.table
-          ) %>%
-          strsplit(., ",") %>%
-          unlist %>%
-          unique %>%
-          RemoveNA(.) %>%
-          .[order(.)]
-      }
-      
-      return(result)
-    }
-
-    
 # GRAPHS --------------------------  
 
+#Define names of categories that will go along bottom of graph
+  #Test Inputs
+    #source.table = resp.long.tb
+    #config.table = config.tables.df.d
+    #config.varname = "x.varname"
+  
+  DefineAxisCategories <- function(
+    source.table,
+    config.table,
+    config.varname
+  ){
+    cat.colname <- config.table %>% select(config.varname) %>% unlist %>% as.character
     
+    if(is.na(cat.colname)){
+      result <- NA
+      warning(paste0("Config table column '", config.varname, "' is NA."))
+    }
+    
+    if(!is.na(cat.colname)){
+      
+      if(cat.colname %in% "practice"){
+        source.table <- source.table[grep(config.table$module, source.table$module),]
+      }
+      
+      result <-
+        UniqueVariableValues(
+          varnames = cat.colname, 
+          tb = source.table
+        ) %>%
+        strsplit(., ",") %>%
+        unlist %>%
+        unique %>%
+        RemoveNA(.) %>%
+        .[order(.)]
+    }
+    
+    return(result)
+  }
+
 #Selecting variable names that will be used in graph/table calculations
     #TODO: add parameters for questions table (which one to use), names of variables in there to select
     #Test Inputs
@@ -260,10 +258,9 @@ source("utils_wnf.r")
     }
 
 # TABLES --------------------------
-    
 
 #Filtering Table Data 
-  #TODO:NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND table DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
+  #TODO: NEED TO GENERALIZE: IF REPORT.UNIT IS DISTRICT AND table DATA.LEVEL IS DISTRICT, THIS WORKS, BUT NOT IF REPORT.UNIT IS 
   #BUILDING AND DATA.LEVEL IS DISTRICT.
   
   #Test Inputs
@@ -300,6 +297,83 @@ source("utils_wnf.r")
     
     return(result)
   }
+    
+#Define table x and y headers from table
+  #Test Inputs
+    configs = config.tables.df.d
+    configs.header.varname = "x.varname"
+    #y.varname = "y.varname"
+    
+  DefineHeaders <- function(
+    configs,
+    configs.header.varname
+  ){
+    
+    varname <- configs %>% select(configs.header.varname) %>% unlist %>% as.vector
+    
+    varname.in.resp.wide.names <- varname %in% names(resp.wide.tb)
+    
+    if(varname.in.resp.wide.names){
+      headers <- 
+        resp.wide.tb %>%
+        select(varname) %>%
+        unlist %>%
+        as.vector %>%
+        unique %>%
+        RemoveNA %>%
+        .[. != ""]
+    }
+    
+    if(!varname.in.resp.wide.names){
+      headers <- 
+        resp.long.tb %>%
+        .[!grepl("_num", resp.long.tb$question),] %>%
+        filter(module == configs$module) %>%
+        select(varname) %>%
+        unique %>%
+        unlist %>%
+        as.vector %>%
+        RemoveNA %>%
+        .[. !=""]
+    }
+    
+    return(headers)
+  }
+  
+  
+  
+  
+  x.headers <- DefineHeaders( configs = config.tables.df.d, configs.header.varname = "x.varname")
+  y.headers <- DefineHeaders( configs = config.tables.df.d, configs.header.varname = "y.varname")
+    
+  )
+    DefineAxisCategories(
+      source.table = resp.long.tb,
+      config.table = config.tables.df.d,
+      config.varname = "x.varname"
+    ) %>% 
+    as.data.frame(., stringsAsFactors = FALSE) %>% 
+    ReplaceNames(., current.names = names(.), new.names = config.tables.df.d$x.varname)
+  
+  if(config.tables.df.d %>% select("y.varname") %>% unlist %>% as.vector == "answer"){
+    y.headers <- 
+      resp.long.tb[!grepl("_num", resp.long.tb$question),] %>% 
+      select(answer) %>%
+      unique
+  }else{
+    y.headers <- 
+      DefineAxisCategories(
+        source.table = resp.long.tb,
+        config.table = config.tables.df.d,
+        config.varname = "y.varname"
+      ) %>% 
+      as.data.frame(., stringsAsFactors = FALSE) %>% 
+      ReplaceNames(., current.names = names(.), new.names = config.tables.df.d$y.varname) #%>%
+  }  
+  
+  if(is.na(x.headers) && is.na(y.headers)){
+    stop("X and Y headers are NA. Check config.table.")
+  }
 
 #Data Summarize TABLES - participation vs. implementation vs. performance 
   #TODO:
@@ -318,52 +392,30 @@ source("utils_wnf.r")
     
   summarize.table.fun <- function(config.input, data.input){
     
-    #Define table x and y headers from table
-      x.headers <- 
-        DefineAxisCategories(
-          source.table = resp.long.tb,
-          config.table = config.tables.df.d,
-          config.varname = "x.varname"
-        ) %>% 
-        as.data.frame(., stringsAsFactors = FALSE) %>% 
-        ReplaceNames(., current.names = names(.), new.names = config.tables.df.d$x.varname)
-    
-      y.headers <- 
-        DefineAxisCategories(
-          source.table = resp.long.tb,
-          config.table = config.tables.df.d,
-          config.varname = "y.varname"
-        ) %>% 
-        as.data.frame(., stringsAsFactors = FALSE) %>% 
-        ReplaceNames(., current.names = names(.), new.names = config.tables.df.d$y.varname) #%>%
-      #ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable(
-      #  tb = ., 
-      #  tb.order.varnames = names(.),
-      #  ordering.vectors.list = list(config.input$y.varname.order)
-      #)
-    
-    if(is.na(x.headers) && is.na(y.headers)){
-      stop("X and Y headers are NA. Check config.table.")
-    }
-    
-    result.1 <- melt(data.input, id.vars = names(data.input)) 
+    result.1 <- 
+      #data.input[grepl("_num",data.input$question),] %>% 
+      melt(data.input, id.vars = names(data.input)) 
     
     if(is.na(config.input$x.varname)){ #TODO: finalize modifications (see line 1001 of MASTER file)
       result <-
         reshape2::dcast(
           data = result.1,
-          formula = role ~ unit.id,
+          formula = answer ~ practice, 
+            #unlist(result.1 %>% select(config.input$y.varname)) ~ 
+            #unlist(result.1 %>% select(config.input$x.varname),  #role ~ unit.id,
           value.var = "resp.id",
           fun.aggregate = function(x){length(unique(x))}
         ) %>%
         right_join(
           ., 
-          all.cats.ls.d$y, 
-          by = c("role" = "all.cats")
+          y.headers, 
+          by = config.table %>% select(y.varname) %>% unlist %>% as.character
         ) %>%
-        filter(role != "District Administrator") %>%
-        .[c(2,3,5,6,7,4,8,1),] %>%
-        #.[c(1,2,3,4,6,7,8,5),] %>%
+        ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable(
+          tb = result, 
+          tb.order.varnames = names(result)[names(result) == names(y.headers)] ,
+          ordering.vectors.list = list(config.input$y.varname.order %>% strsplit(., ",") %>% unlist)
+        ) %>%
         ReplaceNames(
           df = .,
           current.names = unit.id.c,
@@ -380,39 +432,9 @@ source("utils_wnf.r")
         )
       result[is.na(result)] <- 0
       
+      filter(role != "District Administrator") %>%
+      
       return(result)
-      
-      #PARTIALLY COMPLETED ATTEMPT TO DO THINGS WITH LOOPING INSTEAD OF RESHAPING.
-      #Make Final Table
-      #tb1 <- #data frame with correct headers but no data yet 
-      #  matrix( nrow = nrow(y.headers), ncol = nrow(x.headers)) %>% 
-      #  as.data.frame() %>%
-      #  mutate(row.names = y.headers %>% unlist) %>%
-      #  .[, c(SelectNamesIn(., "IN", "row.names"),SelectNamesIn(., "NOT.IN", "row.names"))] %>%
-      #  ReplaceNames(., names(.), c(names(y.headers),x.headers %>% unlist))
-      
-      #if(config.input$summary.function == "count"){
-      #  summary.function <- parse(text = "length(x)")
-      #} #TODO: add other functions (average, etc.)
-      
-      #for(i in 1:nrow(tb1)){
-      #  for(j in 2:ncol(tb1)){
-      #    
-      #    #Print Loop Notifications
-      #      print( paste0("row (i): ", i, " of ", nrow(tb1), "; column(j): ", j-1, " of ", ncol(tb1)-1) )
-      #      print( paste0("row header: ", tb1[i,1], " , column header: ", names(tb1)[j]))
-      #    
-      #    #Fill table cell according to formula
-      #    if(names(y.headers) %in% names(data.input)){
-      #      tb1[i,j] <- 
-      #        data.input %>%
-      #        
-      #      
-      #    }
-      #     
-      #      
-      #  }
-      
       
     }else{
       
