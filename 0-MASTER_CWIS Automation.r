@@ -1199,8 +1199,8 @@
       }else{
         file.name.h <- 
           paste(
-            cadre.h,
-            "_",
+            #cadre.h,
+            #"_",
             unit.ids.sample[h],
             sep = ""
           )
