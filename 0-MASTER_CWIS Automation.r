@@ -669,12 +669,12 @@
     
     #Print loop messages
       if(c == 1){print("Forming input data tables for graphs...")}
-      print(
-        paste(
-          "LOOP 'C' -- Loop num: ", c,", Report id: ",unit.id.c,
-          ", Pct. complete:", round(100*c/length(unit.ids.sample), 2), "%"
-        )
-      )
+      #print(
+      #  paste(
+      #    "LOOP 'C' -- Loop num: ", c,", Report id: ",unit.id.c,
+      #    ", Pct. complete:", round(100*c/length(unit.ids.sample), 2), "%"
+      #  )
+      #)
     
     ###                    ###
 #   ### LOOP "d" BY GRAPH  ###
@@ -684,17 +684,17 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    #d <- 3
+    #d <- 1
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:dim(config.graphs.df.c)[1]){
       
       #Print loop messages
-        print(
-          paste(
-            "LOOP 'D' GRAPH -- Loop num: ", d,
-            ", Pct. complete:", round(100*d/dim(config.graphs.df.c)[1], 2), "%"
-          )
-        )
+        #print(
+        #  paste(
+        #    "LOOP 'D' GRAPH -- Loop num: ", d,
+        #    ", Pct. complete:", round(100*d/dim(config.graphs.df.c)[1], 2), "%"
+        #  )
+        #)
       
       config.graphs.df.d <- config.graphs.df.c[d,]
       
@@ -709,7 +709,7 @@
         
         axis.cat.labels <- 
           DefineAxisCategories(
-            source.table = q.long.tb,
+            tb = q.long.tb,
             config.table = config.graphs.df.d,
             config.varname = "x.varname.1"
           ) %>% 
@@ -741,11 +741,18 @@
         
           graph.avg.df.d <- 
             resp.long.tb %>%
+            SplitColReshape.ToLong(
+              df = .,
+              id.varname = "resp.id",
+              split.varname = "module",
+              split.char = ","
+            ) %>%
             avg.data.restriction.fun(.) %>%
             group_by(!!! syms(group_by.d)) %>%
             summarize.avg.fun(.)
-  
-        
+          
+          #print(graph.avg.df.d)
+          
           graphdata.df.d <- 
             left_join(
               x = graphdata.df.d, 
@@ -783,12 +790,12 @@
     for(d in 1:dim(config.tables.df.c)[1]){
       
       #Print loop messages
-        print(
-          paste(
-            "LOOP 'D' TABLE -- Loop num: ", d,
-            ", Pct. complete:", round(100*d/dim(config.tables.df.c)[1], 2), "%"
-          )
-        )
+        #print(
+        #  paste(
+        #    "LOOP 'D' TABLE -- Loop num: ", d,
+        #    ", Pct. complete:", round(100*d/dim(config.tables.df.c)[1], 2), "%"
+        #  )
+        #)
       
       config.tables.df.d <- config.tables.df.c[d,]
       
@@ -851,7 +858,7 @@
     graphs.ls.f <- list()
     tables.ls.f <- list()
   
-  #f <- 1 #LOOP TESTER
+  #f <- 4 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
   for(f in 1:length(unit.ids.sample)){
     
@@ -862,12 +869,12 @@
     
     #Print loop messages
       if(f == 1){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
-      print(
-        paste(
-          "LOOP 'F' -- Loop num: ", f,", Loop id: ",unit.id.f,
-          ", Pct. complete:", round(100*f/length(unit.ids.sample), 2), "%"
-        )
-      )
+      #print(
+      #  paste(
+      #    "LOOP 'F' -- Loop num: ", f,", Loop id: ",unit.id.f,
+      #    ", Pct. complete:", round(100*f/length(unit.ids.sample), 2), "%"
+      #  )
+      #)
     
     ###                       ###    
 #   ### LOOP "g" BY GRAPH     ###
@@ -893,14 +900,14 @@
             config.graphs.df.g <- config.graphs.df.f[g,] %>% as.data.frame()
           
           #Print loop messages for bug checking
-            print(
-              paste0(
-                "LOOP 'g' -- Loop num: ", g,
-                ", Pct. complete:", round(100*g/length(graphdata.ls.f), 2), "%"
-              )
-            )
-            print(graphdata.df.g)
-            print(config.graphs.df.g)
+            #print(
+            #  paste0(
+            #    "LOOP 'g' -- Loop num: ", g,
+            #    ", Pct. complete:", round(100*g/length(graphdata.ls.f), 2), "%"
+            #  )
+            #)
+            #cprint(graphdata.df.g)
+            #print(config.graphs.df.g)
         
         #CLEANING DATA & CONFIGS
           

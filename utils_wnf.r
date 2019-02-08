@@ -52,7 +52,7 @@
       install.packages('reshape2')
       install.packages('ggplot2')
       install.packages('xlsx')
-      install.packages('styler')
+      #install.packages('styler')
     }
   
   #Install commonly used packages
@@ -70,7 +70,7 @@
       library(reshape2)
       library(ggplot2)
       library(xlsx)
-      library(styler)
+      #library(styler)
     }
 
   #Select right 'n' characters of string

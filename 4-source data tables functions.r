@@ -13,7 +13,7 @@ source("utils_wnf.r")
     #config.varname = "x.varname"
   
   DefineAxisCategories <- function(
-    source.table,
+    tb,
     config.table,
     config.varname
   ){
@@ -27,13 +27,13 @@ source("utils_wnf.r")
     if(!is.na(cat.colname)){
       
       if(cat.colname %in% "practice"){
-        source.table <- source.table[grep(config.table$module, source.table$module),]
+        tb <- tb[grep(config.table$module, tb$module),]
       }
       
       result <-
         UniqueVariableValues(
           varnames = cat.colname, 
-          tb = source.table
+          tb = tb
         ) %>%
         strsplit(., ",") %>%
         unlist %>%
@@ -127,7 +127,7 @@ source("utils_wnf.r")
       
       if(!is.na(config.graphs.df.d$slide.loop.var.1)){
         if(config.graphs.df.d$slide.loop.var.1 == "module"){
-          z <- z %>% filter(module == config.graphs.df.d$module)
+          z <- z %>% filter(grepl(config.graphs.df.d$module, module))
         }
       }
       
@@ -292,7 +292,7 @@ source("utils_wnf.r")
       if(is.na(config.input$module)){
         result <- result1
       }else{
-        result <- result1 %>% filter(module == config.input$module)
+        result <- result1 %>% filter(grepl(config.input$module, module))
       }
     
     return(result)
@@ -302,8 +302,7 @@ source("utils_wnf.r")
   #Test Inputs
     #configs = config.tables.df.d
     #configs.header.varname = "x.varname"
-    #y.varname = "y.varname"
-    
+
   DefineHeaders <- function(
     configs,
     configs.header.varname
@@ -333,7 +332,7 @@ source("utils_wnf.r")
         headers <- 
           resp.long.tb %>%
           .[!grepl("_num", resp.long.tb$question),] %>%
-          filter(module == configs$module) %>%
+          filter(grepl(configs$module, module)) %>%
           select(varname) %>%
           unique %>%
           unlist %>%
@@ -403,7 +402,6 @@ source("utils_wnf.r")
         dcast.formula <- paste0(names(y.headers),"~",names(x.headers))
         
         tb1 <- #table with all data and all y headers
-          #dat[!grepl("_num", dat$question),] %>%
           melt(dat, id.vars = names(dat)) %>% #melt
           reshape2::dcast( #case
             data = .,
@@ -444,11 +442,18 @@ source("utils_wnf.r")
         #  tb3[,order(names)]
         
       #Order Y headers  
+        #TODO: Figure out a better way to do this with separate config table for answer options
+        if(config.input$module %in% c("pd","lead")){
+          ordering.vector.list <- list(c("5. strongly agree","4. agree","3. neutral","2. disagree","1. strongly disagree"))
+        }else{
+          ordering.vector.list <- list(config.input$y.varname.order %>% strsplit(., ",") %>% unlist)
+        }
+          
         tb5 <- 
           ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable( #reorder y headers
             tb = tb4, 
             tb.order.varnames = names(tb4)[names(tb4) %in% names(y.headers)],
-            ordering.vectors.list = list(config.input$y.varname.order %>% strsplit(., ",") %>% unlist)
+            ordering.vectors.list = ordering.vector.list
           )
       
       #Capitalize first letter of x headers
