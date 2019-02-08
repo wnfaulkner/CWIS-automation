@@ -5,12 +5,12 @@
 source("utils_wnf.r")
 
 #Graph Base Formation: forms graph object with data, alpha, and theme
-  FormBaseGraphObject.DataAndTheme <- function(data.input){
+  FormBaseGraphObject.DataAndTheme <- function(dat){
     
     graph.base <- 
       
       ggplot( 
-        data = data.input,
+        data = dat,
         alpha = alpha
       ) + 
       
@@ -37,7 +37,7 @@ source("utils_wnf.r")
   #Transparency (alpha) automatically set to 0 - fully opaque
   #Test Inputs
     #base.graph.input = graph.1
-    #data.input = graphdata.df.g
+    #dat = graphdata.df.g
     #graph.group.by.var = graph.group.by.var
     #graph.fill = graph.fill.g
     #print.graph = TRUE
@@ -128,10 +128,10 @@ source("utils_wnf.r")
       #object 'config.graphs.df.g' not found"
   
   #Test Inputs
-    dat = graphdata.df.g
-    dat.measure.varname = "measure.var"
-    height.ratio.threshold = 8.2
-    dat.configs = config.graphs.df.g
+    #dat = graphdata.df.g
+    #dat.measure.varname = "measure.var"
+    #height.ratio.threshold = 8.2
+    #dat.configs = config.graphs.df.g
   
   create.graph.labels.fun <- function(
     dat, 

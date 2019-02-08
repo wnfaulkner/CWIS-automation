@@ -4,8 +4,6 @@
 
 source("utils_wnf.r")
 
-
-
 # GRAPHS --------------------------  
 
 #Define names of categories that will go along bottom of graph
@@ -51,9 +49,9 @@ source("utils_wnf.r")
     #TODO: add parameters for questions table (which one to use), names of variables in there to select
     #Test Inputs
       #config.input <- config.graphs.df.d
-      #data.input <- resp.long.tb
+      #dat <- resp.long.tb
     
-    GraphVarnamesInData <- function(config.input, data.input){
+    GraphVarnamesInData <- function(config.input, dat){
       
       varname.i <- config.input %>% select(x.varname.1)
       
@@ -71,8 +69,8 @@ source("utils_wnf.r")
           setdiff(., names(slider.vars.df))
         
         result <- 
-          data.input$question %in% module.varnames %>% 
-          data.input$answer[.] %>% 
+          dat$question %in% module.varnames %>% 
+          dat$answer[.] %>% 
           unique %>%
           .[.!=""] %>%
           RemoveNA() %>%
@@ -96,7 +94,7 @@ source("utils_wnf.r")
       
       if(varname.i == "role"){
         result <- 
-          data.input %>%
+          dat %>%
           select(varname.i) %>%
           unique %>% 
           unlist %>%
@@ -151,33 +149,35 @@ source("utils_wnf.r")
   
   #Data Summarize GRAPHS - participation vs. implementation vs. performance 
     #Test inputs
-    #config.input <- config.graphs.df.d
-    #data.input <-  resp.long.tb.c %>% GraphDataRestriction %>% group_by(!!! syms(group_by.d))
+      #config.input <- config.graphs.df.d
+      #dat <-  resp.long.tb.c %>% GraphDataRestriction %>% group_by(!!! syms(group_by.d))
     
-    summarize.graph.fun <- function(config.input, data.input){
+    summarize.graph.fun <- function(config.input, dat){
       
-      data.input <- data.input[grep("_num", data.input$question),]
+      dat <- dat[grep("_num", dat$question),]
       
       if(config.input$data.measure == "participation"){
         result <- 
-          dplyr::summarize(data.input, measure.var =  length(unique(resp.id)))
+          dplyr::summarize(dat, measure.var =  length(unique(resp.id)))
       }
       
       if(config.input$data.measure == "implementation"){
+        dat$impbinary <- ifelse(as.numeric(dat$answer) > 3, 1, 0)
+          
         result <- 
-          data.input %>% 
-          dplyr::summarize(measure.var = mean(as.numeric(answer), na.rm = TRUE)) %>%
+          dat %>% 
+          dplyr::summarize(measure.var = mean(as.numeric(impbinary), na.rm = TRUE)) %>%
           as.data.frame(., stringsAsFactors = FALSE)
       }
       
       if(config.input$data.measure == "performance"){
-        result <- data.input %>%
+        result <- dat %>%
           dplyr::summarize(measure.var = as.character(length(unique(resp.id))))
       }
       
       if(config.input$data.measure == "average performance"){
         result <- 
-          data.input %>%
+          dat %>%
           filter(grepl("_num",question)) %>%
           dplyr::summarize(., measure.var =  mean(as.numeric(answer), na.rm = TRUE))
       }
@@ -264,16 +264,16 @@ source("utils_wnf.r")
   #BUILDING AND DATA.LEVEL IS DISTRICT.
   
   #Test Inputs
-    #data.input = resp.long.tb.c
+    #dat = resp.long.tb.c
     #config.input = config.tables.df.d
   
-  table.data.filter.fun <- function(data.input, config.input){
+  table.data.filter.fun <- function(dat, config.input){
 
-    #data.input <- data.input[grep("_num", data.input$question),] 
+    #dat <- dat[grep("_num", dat$question),] 
     
     #Restrict data according to 'filter' variable in configs
       if(is.na(config.input$filter)){ #
-        result1 <- data.input
+        result1 <- dat
       }
         
       if(!config.input$filter %in% c("building","district")){
@@ -281,7 +281,7 @@ source("utils_wnf.r")
       }
       
       if(config.input$filter == "building"){
-        result1 <- data.input %>% filter(unit.id == unit.id.c)
+        result1 <- dat %>% filter(unit.id == unit.id.c)
       }
       
       if(config.input$filter == "district"){
@@ -356,13 +356,13 @@ source("utils_wnf.r")
     
   #Test inputs
     #config.input <- config.tables.df.d
-    #data.input <-  
+    #dat <-  
     #  resp.long.tb.c %>% 
-    #  table.data.filter.fun(data.input = ., config.input = config.tables.df.d)
+    #  table.data.filter.fun(dat = ., config.input = config.tables.df.d)
     
   summarize.table.fun <- function(
     config.input, 
-    data.input
+    dat
   ){
     #Define all possible headers for both axes
       x.headers <- 
@@ -390,7 +390,7 @@ source("utils_wnf.r")
       }
     
     #Build table with data and all x/y headers
-      if(dim(data.input)[1] == 0){
+      if(dim(dat)[1] == 0){
         tb1 <-
           data.frame(matrix(0, nrow = nrow(y.headers), ncol = nrow(x.headers))) %>%
           cbind(y.headers, .) %>%
@@ -403,8 +403,8 @@ source("utils_wnf.r")
         dcast.formula <- paste0(names(y.headers),"~",names(x.headers))
         
         tb1 <- #table with all data and all y headers
-          #data.input[!grepl("_num", data.input$question),] %>%
-          melt(data.input, id.vars = names(data.input)) %>% #melt
+          #dat[!grepl("_num", dat$question),] %>%
+          melt(dat, id.vars = names(dat)) %>% #melt
           reshape2::dcast( #case
             data = .,
             formula = as.formula(dcast.formula), 

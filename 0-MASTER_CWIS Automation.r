@@ -684,7 +684,7 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    #d <- 1
+    #d <- 3
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:dim(config.graphs.df.c)[1]){
       
@@ -721,7 +721,7 @@
           resp.long.tb.c %>%
           GraphDataRestriction(.) %>%
           group_by(!!! syms(group_by.d)) %>%
-          summarize.graph.fun(config.input = config.graphs.df.d, data.input = .) %>%
+          summarize.graph.fun(config.input = config.graphs.df.d, dat = .) %>%
           left_join(axis.cat.labels, ., by = c(group_by.d)) %>%
           ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable(
             tb = ., 
@@ -795,8 +795,8 @@
       #Form final data frame
         tabledata.df.d <-  
           resp.long.tb.c %>%
-          table.data.filter.fun(data.input = ., config.input = config.tables.df.d) %>%
-          summarize.table.fun(data.input = ., config.input = config.tables.df.d) %>%
+          table.data.filter.fun(dat = ., config.input = config.tables.df.d) %>%
+          summarize.table.fun(dat = ., config.input = config.tables.df.d) %>%
           FirstTableOperations(tb = ., iterations = c(1))
       
       tabledata.ls.d[[d]] <- tabledata.df.d
@@ -876,7 +876,7 @@
     #Loop output object(s)
     graphs.ls.g <- list()
     
-    #g <- 1 #LOOP TESTER
+    #g <- 2 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.f))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -914,8 +914,8 @@
             }
            
           #Making new [shortened] objects that will get a lot of use in graph formation; 
-            headers.varname <- names(graphdata.df.g)[!grepl("measure", names(graphdata.df.g))] #name of variable in input data for graph designating column/bar header labels
-            headers <- graphdata.df.g[,names(graphdata.df.g) == headers.varname] #vector of column/bar headers
+            #headers.varname <- names(graphdata.df.g)[!grepl("measure", names(graphdata.df.g))] #name of variable in input data for graph designating column/bar header labels
+            #headers <- graphdata.df.g[,names(graphdata.df.g) == headers.varname] #vector of column/bar headers
             
             if(is.na(config.graphs.df.g$graph.group.by.var) || is.null(config.graphs.df.g$data.group.by.var)){
               graph.group.by.varname <- NULL
@@ -944,7 +944,7 @@
           #Base Graph
             graph.1 <- 
               FormBaseGraphObject.DataAndTheme( 
-                data.input = graphdata.df.g 
+                dat = graphdata.df.g 
               )
 
           #Adding Columns (Clustered or Non-Clustered)
@@ -954,7 +954,7 @@
               ){
                 graph.fill.g <- config.graphs.df.g$graph.fill %>% rep(., nrow(graphdata.df.g))
               }else{
-                graph.fill.g <- strsplit(config.graphs.df.g$graph.fill, ",") %>% unlist %>% trimws
+                graph.fill.g <- strsplit(config.graphs.df.g$graph.fill, ",") %>% unlist %>% trimws %>% rev
               }
 
             #Add columns
