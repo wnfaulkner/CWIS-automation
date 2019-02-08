@@ -38,7 +38,6 @@ source("utils_wnf.r")
   #Test Inputs
     #base.graph.input = graph.1
     #data.input = graphdata.df.g
-    #graph.headers.varname = names(graphdata.df.g)[!grepl("measure", names(graphdata.df.g))]
     #graph.group.by.var = graph.group.by.var
     #graph.fill = graph.fill.g
     #print.graph = TRUE
@@ -46,7 +45,6 @@ source("utils_wnf.r")
   AddColsToGraph <- function(
     base.graph.input, #a base graph ggplot object with data and alpha defined (e.g. resulting from function above)
     dat, #the graph data frame with x-axis labels in column 1 and bar heights in a column named 'measure.var'
-    #graph.headers, #name of variable in dat that will form graph headers
     graph.group.by.var, #[for stacked graphs only] a data frame of the grouping variable extracted from input data earlier in code
     graph.fill, #a vector of hex color values with same length as nrow(dat)
     print.graph = FALSE #TRUE/FALSE: if true, prints graph in new window. FALSE = default.
@@ -130,10 +128,10 @@ source("utils_wnf.r")
       #object 'config.graphs.df.g' not found"
   
   #Test Inputs
-    #dat = graphdata.df.g
-    #measure.var = "measure.var"
-    #height.ratio.threshold = 8.2
-    #dat.configs = configs.graphs.df.g
+    dat = graphdata.df.g
+    dat.measure.varname = "measure.var"
+    height.ratio.threshold = 8.2
+    dat.configs = config.graphs.df.g
   
   create.graph.labels.fun <- function(
     dat, 
@@ -146,6 +144,12 @@ source("utils_wnf.r")
     
     dat <- as.data.frame(dat)
     var <- dat[,names(dat) == dat.measure.varname] %>% as.matrix %>% as.vector(.,mode = "numeric")
+    
+    if(var %>% unique %>% is.na){
+      graph.labels.heights.v <- rep(1, length(var)) #Label Heights
+      graph.labels.text.v <- rep("No data", length(var)) #Label Text
+      above.label.vectorposition <- rep(TRUE, length(var)) #Defines color to make label
+    }else{
     
     #Label Heights
     
@@ -181,6 +185,8 @@ source("utils_wnf.r")
       }
       graph.labels.text.v[dat[,names(dat) == dat.measure.varname] %>% as.matrix %>% as.vector(.,mode = "numeric") %>% is.na(.)] <- "No Responses"
     
+    }
+  
     #Label visibility
       
       graph.labels.alpha.v <- 1 #ifelse(var != 0, 1, 0)  

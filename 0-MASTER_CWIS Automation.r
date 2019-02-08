@@ -509,7 +509,7 @@
   #config.slide.types.tb
   #config.graph.types.tb
   #config.table.types.tb
-  #config.pot.tb
+  #config.pot.types.tb
   #config.ans.opt.tb
   #buildings.tb
   #resp.wide.tb
@@ -1127,6 +1127,9 @@
 
 # 6-POWERPOINTS & EXPORT -----------------------------------------------
   
+  #Code Clocking
+    section6.starttime <- Sys.time()
+    
   #Load Configs Functions
     setwd(rproj.dir)
     source("6-powerpoints export functions.r")
@@ -1164,9 +1167,9 @@
     maxrow.h <- sapply(config.slides.ls.b, dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     printed.reports.ls <- list()
   
-  h <- 1 #LOOP TESTER
+  #h <- 1 #LOOP TESTER
   #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
-  #for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
+  for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
     
     #Reading 'Cadre' so it can be added to file name
       cadre.h <- 
@@ -1183,8 +1186,8 @@
       if(sample.print){
         file.name.h <- 
           paste(
-            cadre.h,
-            "_",
+            #cadre.h,
+            #"_",
             h,
             "_",
             unit.ids.sample[h],
@@ -1235,7 +1238,7 @@
 #   ### LOOP "i" BY SLIDE   ###
     ###                     ###
     
-    #i <- 5 #LOOP TESTER
+    #i <- 1 #LOOP TESTER
     #for(i in 1:4){ #LOOP TESTER
     for(i in 1:dim(config.slides.ls.b[[h]])[1]){
       
@@ -1326,7 +1329,7 @@
 #       ### LOOP "j" BY POT OBJECT  ###
         ###                         ###
         
-        config.pot.i <- config.pot.tb[config.pot.tb$slide.type.id == slide.type.id.i,]
+        config.pot.i <- config.pot.types.tb[config.pot.types.tb$slide.type.id == slide.type.id.i,]
         
         if(any(!is.na(config.pot.i$module))){
           config.pot.i <- filter(config.pot.i, grepl(as.character(config.slide.df.i$module), config.pot.i$module))
@@ -1402,12 +1405,15 @@
     
     print(h)
     printed.reports.ls[[h]] <- unit.ids.sample[h]
+  
   } # END OF LOOP "h" BY REPORT.UNIT      
+  
   close(progress.bar.h)      
 
-end_time <- Sys.time()
-code_runtime <- end_time - start_time
-print(code_runtime)
+ #Section Clocking
+    section6.duration <- Sys.time() - section6.starttime
+    section6.duration
+    Sys.time() - sections.all.starttime
 
 windows()        
 
