@@ -231,7 +231,6 @@ source("utils_wnf.r")
     
   AddGraphDataLabels <- function(
     base.graph.input,
-    #graph.headers,
     dat,
     dat.labels,
     label.font.size,
@@ -309,26 +308,30 @@ source("utils_wnf.r")
             )
      
       #Produce Final Results
-        graph.w.averages <- 
+        if(dat$measure.var.avg %>% is.na %>% all){
+          graph.w.averages <- base.graph.input
+        }else{
+          graph.w.averages <- 
           
-          base.graph.input +
-        
-          geom_errorbar(
-            aes(
-              x = headers,
-              #group = dat[[graph.cat.varname]],
-              ymin = dat$measure.var.avg, 
-              ymax = dat$measure.var.avg,
-              alpha = dat$avg.alpha
-            ), 
-            position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-            color = avg.bar.color, 
-            width = 1,
-            size = 2,
-            #alpha = 1,
-            show.legend = FALSE
-          )
-        
+            base.graph.input +
+          
+            geom_errorbar(
+              aes(
+                x = headers,
+                #group = dat[[graph.cat.varname]],
+                ymin = dat$measure.var.avg, 
+                ymax = dat$measure.var.avg,
+                alpha = dat$avg.alpha
+              ), 
+              position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+              color = avg.bar.color, 
+              width = 1,
+              size = 2,
+              #alpha = 1,
+              show.legend = FALSE
+            )
+        }
+          
     #Return/Print Results  
       if(print.graph){
         windows()

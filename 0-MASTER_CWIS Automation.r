@@ -559,12 +559,12 @@
     
     #Print loop messages
       if(b == 1){print("FORMING SLIDE, GRAPH, AND TABLE CONFIG TABLES...")}
-      print(
-        paste(
-          "Loop num: ", b,", Report id: ",unit.id.b,
-          ", Pct. complete:", round(100*b/length(unit.ids.sample), 2), "%"
-        )
-      )
+      #print(
+      #  paste(
+      #    "Loop num: ", b,", Report id: ",unit.id.b,
+      #    ", Pct. complete:", round(100*b/length(unit.ids.sample), 2), "%"
+      #  )
+      #)
     
     #Create data frames for this loop - restrict to district id i  
       resp.long.tb.b <- 
@@ -812,7 +812,7 @@
     
     names(tabledata.ls.d) <- config.tables.df.c$module %>% RemoveNA() %>% as.character %>% c("role",.)
     tabledata.ls.c[[c]] <- tabledata.ls.d   
-    print(c)
+
   } ### END OF LOOP "c" BY REPORT UNIT     
   
   #Loop Measurement - progress bar & timing
@@ -858,7 +858,7 @@
     graphs.ls.f <- list()
     tables.ls.f <- list()
   
-  #f <- 4 #LOOP TESTER
+  #f <- 111 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
   for(f in 1:length(unit.ids.sample)){
     
@@ -883,7 +883,7 @@
     #Loop output object(s)
     graphs.ls.g <- list()
     
-    #g <- 2 #LOOP TESTER
+    #g <- 1 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.f))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -913,7 +913,6 @@
           
           #Capitalize headers in graphdata.df.g, all-caps for module, upper-case first letter for everything else
           
-            #names(graphdata.df.g) <- gsub("graphdata.","",names(graphdata.df.g)) #eliminate "graphdata." from names
             if(names(graphdata.df.g)[1] %>% grepl("module",.)){
               graphdata.df.g[,1] <- graphdata.df.g[,1] %>% toupper()
             }else{
@@ -944,7 +943,6 @@
                 graph.cat.varname <- "ans.text.freq"
               }
             }
-         
         
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
         
@@ -1051,14 +1049,14 @@
         config.tables.df.g <- config.tables.df.c[g,]
     
       #Print loop messages for bug checking
-        print(
-          paste0(
-            "LOOP 'g' -- Loop num: ", g,
-            ", Pct. complete:", round(100*g/length(tabledata.ls.c[[f]]), 2), "%"
-          )
-        )
-        print(tabledata.df.g)
-        print(config.tables.df.g)
+        #print(
+        #  paste0(
+        #    "LOOP 'g' -- Loop num: ", g,
+        #    ", Pct. complete:", round(100*g/length(tabledata.ls.c[[f]]), 2), "%"
+        #  )
+        #)
+        #print(tabledata.df.g)
+        #print(config.tables.df.g)
         
       #TODO: 
       #Create FlexTable Object
@@ -1174,7 +1172,7 @@
     maxrow.h <- sapply(config.slides.ls.b, dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     printed.reports.ls <- list()
   
-  #h <- 1 #LOOP TESTER
+  #h <- 111 #LOOP TESTER
   #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
   for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
     
@@ -1245,7 +1243,7 @@
 #   ### LOOP "i" BY SLIDE   ###
     ###                     ###
     
-    #i <- 1 #LOOP TESTER
+    #i <- 3 #LOOP TESTER
     #for(i in 1:4){ #LOOP TESTER
     for(i in 1:dim(config.slides.ls.b[[h]])[1]){
       
