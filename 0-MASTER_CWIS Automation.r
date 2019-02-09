@@ -655,7 +655,7 @@
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     c.loop.startime <- Sys.time()
     
-  #c <- 2 #LOOP TESTER 
+  #c <- 1 #LOOP TESTER 
   #for(c in slider.unit.ids.sample){   #LOOP TESTER
   for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
     
@@ -719,7 +719,16 @@
       #Form final data frame (no averages)
         graphdata.df.d <-  
           resp.long.tb.c %>%
-          GraphDataRestriction(.) %>%
+          GraphDataRestriction(
+            dat = .,
+            dat.config = config.graphs.df.d
+          ) %>%
+          SplitColReshape.ToLong(
+            df = .,
+            id.varname = "resp.id",
+            split.varname = "module",
+            split.char = ","
+          ) %>%
           group_by(!!! syms(group_by.d)) %>%
           summarize.graph.fun(config.input = config.graphs.df.d, dat = .) %>%
           left_join(axis.cat.labels, ., by = c(group_by.d)) %>%

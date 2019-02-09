@@ -8,7 +8,7 @@ source("utils_wnf.r")
 
 #Define names of categories that will go along bottom of graph
   #Test Inputs
-    #source.table = resp.long.tb
+    #tb = resp.long.tb
     #config.table = config.tables.df.d
     #config.varname = "x.varname"
   
@@ -63,7 +63,7 @@ source("utils_wnf.r")
       if(varname.i == "answer"){
         module.varnames <- 
           q.long.tb %>% 
-          filter(module == config.input$module) %>% 
+          filter(grepl(config.input$module, module)) %>% 
           select(var.id) %>% 
           unlist %>% 
           setdiff(., names(slider.vars.df))
@@ -84,7 +84,7 @@ source("utils_wnf.r")
       if(varname.i == "practice"){
         result <- 
           q.long.tb %>% 
-          filter(module == config.input$module) %>% 
+          filter(grepl(config.input$module, module)) %>% 
           select(var.id) %>% 
           unique %>% 
           unlist %>%
@@ -111,36 +111,43 @@ source("utils_wnf.r")
     #TODO:NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND GRAPH DATA.LEVEL IS DISTRICT, THIS WORKS, 
       #BUT NOT IF REPORT.UNIT IS unit.id AND DATA.LEVEL IS DISTRICT.
     
-    GraphDataRestriction <- function(tb){
+    #Test Inputs
+      #dat <- resp.long.tb.c
+      #dat.config <- config.graphs.df.d
       
-      if(config.graphs.df.d$data.level == "district"){
-        y <- tb
+    GraphDataRestriction <- function(
+      dat,
+      dat.config
+    ){
+      
+      if(dat.config$data.level == "district"){
+        y <- dat
       }
       
-      if(config.graphs.df.d$data.level == "building"){
+      if(dat.config$data.level == "building"){
         y <- 
-          tb %>% 
+          dat %>% 
           filter(unit.id == unit.id.c) 
       }
       
       z <- y[grep("_num", y$question),]
       
-      if(!is.na(config.graphs.df.d$slide.loop.var.1)){
-        if(config.graphs.df.d$slide.loop.var.1 == "module"){
-          z <- z %>% filter(grepl(config.graphs.df.d$module, module))
+      if(!is.na(dat.config$slide.loop.var.1)){
+        if(dat.config$slide.loop.var.1 == "module"){
+          z <- z %>% filter(grepl(dat.config$module, module))
         }
       }
       
-      if(is.na(config.graphs.df.d$data.restriction)){
+      if(is.na(dat.config$data.restriction)){
         result <- z
       }
       
-      if(!is.na(config.graphs.df.d$data.restriction)){
+      if(!is.na(dat.config$data.restriction)){
         result <- 
           z %>% 
           filter(
-            z[,names(z) == config.graphs.df.d$data.restriction] == 
-              config.graphs.df.d[,names(config.graphs.df.d) == config.graphs.df.d$data.restriction]
+            z[,names(z) == dat.config$data.restriction] == 
+              dat.config[,names(dat.config) == dat.config$data.restriction]
           )
       }
       
