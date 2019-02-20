@@ -679,9 +679,9 @@
   
   #Reshaping data into long format based on splitting a column on a character
     #Test inputs
-      #library(magrittr)
-      #id.varname = "slide.type.id"
-      #split.varname = "slide.order.1"
+      #df =  resp.long.tb.c %>% GraphDataRestriction( dat = ., dat.config = config.graphs.df.d ) 
+      #id.varname = "resp.id"
+      #split.varname = "module"
       #split.char = ","
   
     SplitColReshape.ToLong <- function(df, id.varname, split.varname, split.char){ 
@@ -700,31 +700,34 @@
         split.char <- readline(prompt = "Enter the character(s) you would like to split your variable on: ")
       }
       
-      id.var <- df[,names(df)==id.varname]
-      split.var <- df[,names(df)==split.varname]
+      if(dim(df)[1] == 0){
+        result <- df
+      }else{
+        id.var <- df[,names(df)==id.varname]
+        split.var <- df[,names(df)==split.varname]
+        
+        result <- 
+          df %>% 
+          mutate(new.split.var =
+            #df[,names(df)==split.varname] = strsplit(df[,names(df)==split.varname],",")
+              sapply(
+                split.var, function(x){strsplit(x,split.char)}
+              )
+          ) %>% 
+          unnest(new.split.var, .drop = FALSE) %>% 
+          .[,names(.)[names(.) != split.varname]] %>%
+          OrderDfByVar(
+            df = ., 
+            order.by.varname = id.varname,
+            rev = FALSE
+          ) %>%
+          ReplaceNames(
+            df = .,
+            current.names = "new.split.var",
+            new.names = split.varname
+          )
+      }  
       
-      result <- 
-        df %>% 
-        mutate(new.split.var =
-          #df[,names(df)==split.varname] = strsplit(df[,names(df)==split.varname],",")
-            sapply(
-              split.var, function(x){strsplit(x,split.char)}
-            )
-        ) %>% 
-        unnest(new.split.var, .drop = FALSE) %>% 
-        .[,names(.)[names(.) != split.varname]] %>%
-        OrderDfByVar(
-          df = ., 
-          order.by.varname = id.varname,
-          rev = FALSE
-        ) %>%
-        ReplaceNames(
-          df = .,
-          current.names = "new.split.var",
-          new.names = split.varname
-        )
-      #names(result)[names(result)=="id.var"] <- id.varname
-      #names(result)[names(result)=="split.var"] <- split.varname
       return(result)
     }
 

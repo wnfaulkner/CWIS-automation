@@ -145,7 +145,7 @@ source("utils_wnf.r")
     dat <- as.data.frame(dat)
     var <- dat[,names(dat) == dat.measure.varname] %>% as.matrix %>% as.vector(.,mode = "numeric")
     
-    if(var %>% unique %>% is.na){
+    if(var %>% is.na %>% all){
       graph.labels.heights.v <- rep(1, length(var)) #Label Heights
       graph.labels.text.v <- rep("No data", length(var)) #Label Text
       above.label.vectorposition <- rep(TRUE, length(var)) #Defines color to make label
@@ -166,14 +166,15 @@ source("utils_wnf.r")
     }
     
     if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
-      graph.labels.heights.v <- vector(length = length(var))
+      graph.labels.heights.v <- vector(length = length(var), mode = "numeric")
       above.label.vectorposition <- max/var > height.ratio.threshold
       above.label.vectorposition[is.na(above.label.vectorposition)] <- TRUE
-      var[is.na(var)] <- 0
       graph.labels.heights.v[above.label.vectorposition] <-   #labels for columns below threshold, position is height of bar plus 1/10 of max bar height 
         var[above.label.vectorposition] + max/10
       graph.labels.heights.v[graph.labels.heights.v == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
         min(var[!above.label.vectorposition])/2
+      graph.labels.heights.v[which(is.na(var))] <- max/3  #"No Responses" labels at max/3 height
+      
     }
     
     #Label Text
@@ -181,9 +182,15 @@ source("utils_wnf.r")
       if(dat.configs$data.measure == "implementation"){
         graph.labels.text.v <- as.character(100*var %>% round(., 2)) %>% paste(.,"%",sep="")
       }else{
-        graph.labels.text.v <- var %>% as.numeric %>% round( ., 1) %>% sprintf("%.1f",.) %>% trimws(., which = "both") 
+        graph.labels.text.v <- 
+          var %>% 
+          as.numeric %>% 
+          round( ., 1) %>% 
+          sprintf("%.1f",.) %>% 
+          trimws(., which = "both") 
       }
-      graph.labels.text.v[dat[,names(dat) == dat.measure.varname] %>% as.matrix %>% as.vector(.,mode = "numeric") %>% is.na(.)] <- "No Responses"
+      graph.labels.text.v[dat[,names(dat) == dat.measure.varname] %>% as.matrix %>% as.vector(.,mode = "numeric") %>% is.na(.) %>% which] <- 
+        "No Responses"
     
     }
   
@@ -198,8 +205,8 @@ source("utils_wnf.r")
       }else{
         graph.labels.color.v <- rep("#FFFFFF",100)[1:length(dat[,1])]
       }
-      graph.labels.color.v[var==0] <- "#000000"
-      graph.labels.color.v[above.label.vectorposition] <- "#000000"
+      graph.labels.color.v[which(graph.labels.text.v %in% c("0%", "No Responses"))] <- "#000000"
+      graph.labels.color.v[which(above.label.vectorposition)] <- "#000000"
       graph.labels.color.v <- graph.labels.color.v %>% rev
       
       result <- data.frame(
@@ -224,7 +231,6 @@ source("utils_wnf.r")
     
   AddGraphDataLabels <- function(
     base.graph.input,
-    #graph.headers,
     dat,
     dat.labels,
     label.font.size,
@@ -302,26 +308,30 @@ source("utils_wnf.r")
             )
      
       #Produce Final Results
-        graph.w.averages <- 
+        if(dat$measure.var.avg %>% is.na %>% all){
+          graph.w.averages <- base.graph.input
+        }else{
+          graph.w.averages <- 
           
-          base.graph.input +
-        
-          geom_errorbar(
-            aes(
-              x = headers,
-              #group = dat[[graph.cat.varname]],
-              ymin = dat$measure.var.avg, 
-              ymax = dat$measure.var.avg,
-              alpha = dat$avg.alpha
-            ), 
-            position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-            color = avg.bar.color, 
-            width = 1,
-            size = 2,
-            #alpha = 1,
-            show.legend = FALSE
-          )
-        
+            base.graph.input +
+          
+            geom_errorbar(
+              aes(
+                x = headers,
+                #group = dat[[graph.cat.varname]],
+                ymin = dat$measure.var.avg, 
+                ymax = dat$measure.var.avg,
+                alpha = dat$avg.alpha
+              ), 
+              position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+              color = avg.bar.color, 
+              width = 1,
+              size = 2,
+              #alpha = 1,
+              show.legend = FALSE
+            )
+        }
+          
     #Return/Print Results  
       if(print.graph){
         windows()

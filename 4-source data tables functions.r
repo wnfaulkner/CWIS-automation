@@ -8,12 +8,12 @@ source("utils_wnf.r")
 
 #Define names of categories that will go along bottom of graph
   #Test Inputs
-    #source.table = resp.long.tb
+    #tb = resp.long.tb
     #config.table = config.tables.df.d
     #config.varname = "x.varname"
   
   DefineAxisCategories <- function(
-    source.table,
+    tb,
     config.table,
     config.varname
   ){
@@ -27,13 +27,13 @@ source("utils_wnf.r")
     if(!is.na(cat.colname)){
       
       if(cat.colname %in% "practice"){
-        source.table <- source.table[grep(config.table$module, source.table$module),]
+        tb <- tb[grep(config.table$module, tb$module),]
       }
       
       result <-
         UniqueVariableValues(
           varnames = cat.colname, 
-          tb = source.table
+          tb = tb
         ) %>%
         strsplit(., ",") %>%
         unlist %>%
@@ -63,7 +63,7 @@ source("utils_wnf.r")
       if(varname.i == "answer"){
         module.varnames <- 
           q.long.tb %>% 
-          filter(module == config.input$module) %>% 
+          filter(grepl(config.input$module, module)) %>% 
           select(var.id) %>% 
           unlist %>% 
           setdiff(., names(slider.vars.df))
@@ -84,7 +84,7 @@ source("utils_wnf.r")
       if(varname.i == "practice"){
         result <- 
           q.long.tb %>% 
-          filter(module == config.input$module) %>% 
+          filter(grepl(config.input$module, module)) %>% 
           select(var.id) %>% 
           unique %>% 
           unlist %>%
@@ -111,36 +111,43 @@ source("utils_wnf.r")
     #TODO:NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND GRAPH DATA.LEVEL IS DISTRICT, THIS WORKS, 
       #BUT NOT IF REPORT.UNIT IS unit.id AND DATA.LEVEL IS DISTRICT.
     
-    GraphDataRestriction <- function(tb){
+    #Test Inputs
+      #dat <- resp.long.tb.c
+      #dat.config <- config.graphs.df.d
       
-      if(config.graphs.df.d$data.level == "district"){
-        y <- tb
+    GraphDataRestriction <- function(
+      dat,
+      dat.config
+    ){
+      
+      if(dat.config$data.level == "district"){
+        y <- dat
       }
       
-      if(config.graphs.df.d$data.level == "building"){
+      if(dat.config$data.level == "building"){
         y <- 
-          tb %>% 
+          dat %>% 
           filter(unit.id == unit.id.c) 
       }
       
       z <- y[grep("_num", y$question),]
       
-      if(!is.na(config.graphs.df.d$slide.loop.var.1)){
-        if(config.graphs.df.d$slide.loop.var.1 == "module"){
-          z <- z %>% filter(module == config.graphs.df.d$module)
+      if(!is.na(dat.config$slide.loop.var.1)){
+        if(dat.config$slide.loop.var.1 == "module"){
+          z <- z %>% filter(grepl(dat.config$module, module))
         }
       }
       
-      if(is.na(config.graphs.df.d$data.restriction)){
+      if(is.na(dat.config$data.restriction)){
         result <- z
       }
       
-      if(!is.na(config.graphs.df.d$data.restriction)){
+      if(!is.na(dat.config$data.restriction)){
         result <- 
           z %>% 
           filter(
-            z[,names(z) == config.graphs.df.d$data.restriction] == 
-              config.graphs.df.d[,names(config.graphs.df.d) == config.graphs.df.d$data.restriction]
+            z[,names(z) == dat.config$data.restriction] == 
+              dat.config[,names(dat.config) == dat.config$data.restriction]
           )
       }
       
@@ -292,7 +299,7 @@ source("utils_wnf.r")
       if(is.na(config.input$module)){
         result <- result1
       }else{
-        result <- result1 %>% filter(module == config.input$module)
+        result <- result1 %>% filter(grepl(config.input$module, module))
       }
     
     return(result)
@@ -302,8 +309,7 @@ source("utils_wnf.r")
   #Test Inputs
     #configs = config.tables.df.d
     #configs.header.varname = "x.varname"
-    #y.varname = "y.varname"
-    
+
   DefineHeaders <- function(
     configs,
     configs.header.varname
@@ -333,7 +339,7 @@ source("utils_wnf.r")
         headers <- 
           resp.long.tb %>%
           .[!grepl("_num", resp.long.tb$question),] %>%
-          filter(module == configs$module) %>%
+          filter(grepl(configs$module, module)) %>%
           select(varname) %>%
           unique %>%
           unlist %>%
@@ -403,7 +409,6 @@ source("utils_wnf.r")
         dcast.formula <- paste0(names(y.headers),"~",names(x.headers))
         
         tb1 <- #table with all data and all y headers
-          #dat[!grepl("_num", dat$question),] %>%
           melt(dat, id.vars = names(dat)) %>% #melt
           reshape2::dcast( #case
             data = .,
@@ -444,11 +449,18 @@ source("utils_wnf.r")
         #  tb3[,order(names)]
         
       #Order Y headers  
+        #TODO: Figure out a better way to do this with separate config table for answer options
+        if(config.input$module %in% c("pd","lead")){
+          ordering.vector.list <- list(c("5. strongly agree","4. agree","3. neutral","2. disagree","1. strongly disagree"))
+        }else{
+          ordering.vector.list <- list(config.input$y.varname.order %>% strsplit(., ",") %>% unlist)
+        }
+          
         tb5 <- 
           ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable( #reorder y headers
             tb = tb4, 
             tb.order.varnames = names(tb4)[names(tb4) %in% names(y.headers)],
-            ordering.vectors.list = list(config.input$y.varname.order %>% strsplit(., ",") %>% unlist)
+            ordering.vectors.list = ordering.vector.list
           )
       
       #Capitalize first letter of x headers

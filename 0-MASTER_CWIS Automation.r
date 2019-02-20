@@ -560,12 +560,12 @@
     
     #Print loop messages
       if(b == 1){print("FORMING SLIDE, GRAPH, AND TABLE CONFIG TABLES...")}
-      print(
-        paste(
-          "Loop num: ", b,", Report id: ",unit.id.b,
-          ", Pct. complete:", round(100*b/length(unit.ids.sample), 2), "%"
-        )
-      )
+      #print(
+      #  paste(
+      #    "Loop num: ", b,", Report id: ",unit.id.b,
+      #    ", Pct. complete:", round(100*b/length(unit.ids.sample), 2), "%"
+      #  )
+      #)
     
     #Create data frames for this loop - restrict to district id i  
       resp.long.tb.b <- 
@@ -656,7 +656,7 @@
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     c.loop.startime <- Sys.time()
     
-  #c <- 2 #LOOP TESTER 
+  #c <- 1 #LOOP TESTER 
   #for(c in slider.unit.ids.sample){   #LOOP TESTER
   for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
     
@@ -670,12 +670,12 @@
     
     #Print loop messages
       if(c == 1){print("Forming input data tables for graphs...")}
-      print(
-        paste(
-          "LOOP 'C' -- Loop num: ", c,", Report id: ",unit.id.c,
-          ", Pct. complete:", round(100*c/length(unit.ids.sample), 2), "%"
-        )
-      )
+      #print(
+      #  paste(
+      #    "LOOP 'C' -- Loop num: ", c,", Report id: ",unit.id.c,
+      #    ", Pct. complete:", round(100*c/length(unit.ids.sample), 2), "%"
+      #  )
+      #)
     
     ###                    ###
 #   ### LOOP "d" BY GRAPH  ###
@@ -685,17 +685,17 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    #d <- 3
+    #d <- 1
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:dim(config.graphs.df.c)[1]){
       
       #Print loop messages
-        print(
-          paste(
-            "LOOP 'D' GRAPH -- Loop num: ", d,
-            ", Pct. complete:", round(100*d/dim(config.graphs.df.c)[1], 2), "%"
-          )
-        )
+        #print(
+        #  paste(
+        #    "LOOP 'D' GRAPH -- Loop num: ", d,
+        #    ", Pct. complete:", round(100*d/dim(config.graphs.df.c)[1], 2), "%"
+        #  )
+        #)
       
       config.graphs.df.d <- config.graphs.df.c[d,]
       
@@ -710,7 +710,7 @@
         
         axis.cat.labels <- 
           DefineAxisCategories(
-            source.table = q.long.tb,
+            tb = q.long.tb,
             config.table = config.graphs.df.d,
             config.varname = "x.varname.1"
           ) %>% 
@@ -720,7 +720,16 @@
       #Form final data frame (no averages)
         graphdata.df.d <-  
           resp.long.tb.c %>%
-          GraphDataRestriction(.) %>%
+          GraphDataRestriction(
+            dat = .,
+            dat.config = config.graphs.df.d
+          ) %>%
+          SplitColReshape.ToLong(
+            df = .,
+            id.varname = "resp.id",
+            split.varname = "module",
+            split.char = ","
+          ) %>%
           group_by(!!! syms(group_by.d)) %>%
           summarize.graph.fun(config.input = config.graphs.df.d, dat = .) %>%
           left_join(axis.cat.labels, ., by = c(group_by.d)) %>%
@@ -742,11 +751,18 @@
         
           graph.avg.df.d <- 
             resp.long.tb %>%
+            SplitColReshape.ToLong(
+              df = .,
+              id.varname = "resp.id",
+              split.varname = "module",
+              split.char = ","
+            ) %>%
             avg.data.restriction.fun(.) %>%
             group_by(!!! syms(group_by.d)) %>%
             summarize.avg.fun(.)
-  
-        
+          
+          #print(graph.avg.df.d)
+          
           graphdata.df.d <- 
             left_join(
               x = graphdata.df.d, 
@@ -784,12 +800,12 @@
     for(d in 1:dim(config.tables.df.c)[1]){
       
       #Print loop messages
-        print(
-          paste(
-            "LOOP 'D' TABLE -- Loop num: ", d,
-            ", Pct. complete:", round(100*d/dim(config.tables.df.c)[1], 2), "%"
-          )
-        )
+        #print(
+        #  paste(
+        #    "LOOP 'D' TABLE -- Loop num: ", d,
+        #    ", Pct. complete:", round(100*d/dim(config.tables.df.c)[1], 2), "%"
+        #  )
+        #)
       
       config.tables.df.d <- config.tables.df.c[d,]
       
@@ -806,7 +822,7 @@
     
     names(tabledata.ls.d) <- config.tables.df.c$module %>% RemoveNA() %>% as.character %>% c("role",.)
     tabledata.ls.c[[c]] <- tabledata.ls.d   
-    print(c)
+
   } ### END OF LOOP "c" BY REPORT UNIT     
   
   #Loop Measurement - progress bar & timing
@@ -852,7 +868,7 @@
     graphs.ls.f <- list()
     tables.ls.f <- list()
   
-  #f <- 1 #LOOP TESTER
+  #f <- 111 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
   for(f in 1:length(unit.ids.sample)){
     
@@ -863,12 +879,12 @@
     
     #Print loop messages
       if(f == 1){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
-      print(
-        paste(
-          "LOOP 'F' -- Loop num: ", f,", Loop id: ",unit.id.f,
-          ", Pct. complete:", round(100*f/length(unit.ids.sample), 2), "%"
-        )
-      )
+      #print(
+      #  paste(
+      #    "LOOP 'F' -- Loop num: ", f,", Loop id: ",unit.id.f,
+      #    ", Pct. complete:", round(100*f/length(unit.ids.sample), 2), "%"
+      #  )
+      #)
     
     ###                       ###    
 #   ### LOOP "g" BY GRAPH     ###
@@ -877,7 +893,7 @@
     #Loop output object(s)
     graphs.ls.g <- list()
     
-    #g <- 2 #LOOP TESTER
+    #g <- 1 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.f))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -894,20 +910,19 @@
             config.graphs.df.g <- config.graphs.df.f[g,] %>% as.data.frame()
           
           #Print loop messages for bug checking
-            print(
-              paste0(
-                "LOOP 'g' -- Loop num: ", g,
-                ", Pct. complete:", round(100*g/length(graphdata.ls.f), 2), "%"
-              )
-            )
-            print(graphdata.df.g)
-            print(config.graphs.df.g)
+            #print(
+            #  paste0(
+            #    "LOOP 'g' -- Loop num: ", g,
+            #    ", Pct. complete:", round(100*g/length(graphdata.ls.f), 2), "%"
+            #  )
+            #)
+            #cprint(graphdata.df.g)
+            #print(config.graphs.df.g)
         
         #CLEANING DATA & CONFIGS
           
           #Capitalize headers in graphdata.df.g, all-caps for module, upper-case first letter for everything else
           
-            #names(graphdata.df.g) <- gsub("graphdata.","",names(graphdata.df.g)) #eliminate "graphdata." from names
             if(names(graphdata.df.g)[1] %>% grepl("module",.)){
               graphdata.df.g[,1] <- graphdata.df.g[,1] %>% toupper()
             }else{
@@ -938,7 +953,6 @@
                 graph.cat.varname <- "ans.text.freq"
               }
             }
-         
         
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
         
@@ -1045,14 +1059,14 @@
         config.tables.df.g <- config.tables.df.c[g,]
     
       #Print loop messages for bug checking
-        print(
-          paste0(
-            "LOOP 'g' -- Loop num: ", g,
-            ", Pct. complete:", round(100*g/length(tabledata.ls.c[[f]]), 2), "%"
-          )
-        )
-        print(tabledata.df.g)
-        print(config.tables.df.g)
+        #print(
+        #  paste0(
+        #    "LOOP 'g' -- Loop num: ", g,
+        #    ", Pct. complete:", round(100*g/length(tabledata.ls.c[[f]]), 2), "%"
+        #  )
+        #)
+        #print(tabledata.df.g)
+        #print(config.tables.df.g)
         
       #TODO: 
       #Create FlexTable Object
@@ -1168,7 +1182,7 @@
     maxrow.h <- sapply(config.slides.ls.b, dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     printed.reports.ls <- list()
   
-  #h <- 1 #LOOP TESTER
+  #h <- 111 #LOOP TESTER
   #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
   for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
     
@@ -1200,8 +1214,8 @@
       }else{
         file.name.h <- 
           paste(
-            cadre.h,
-            "_",
+            #cadre.h,
+            #"_",
             unit.ids.sample[h],
             sep = ""
           )
@@ -1239,7 +1253,7 @@
 #   ### LOOP "i" BY SLIDE   ###
     ###                     ###
     
-    #i <- 1 #LOOP TESTER
+    #i <- 3 #LOOP TESTER
     #for(i in 1:4){ #LOOP TESTER
     for(i in 1:dim(config.slides.ls.b[[h]])[1]){
       
