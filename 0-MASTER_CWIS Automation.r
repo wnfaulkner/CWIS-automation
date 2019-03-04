@@ -32,17 +32,17 @@
       #rproj.dir <- "C:/Users/willi/Documents/GIT PROJECTS/CWIS-automation/"
       
     #Thinkpad T470
-      working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
-      rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
+      working.dir <- "G:\\My Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\2. MO GDRIVE\\8. CWIS\\2019-03 CWIS Auto Phase 7"
+      rproj.dir <- "C:\\Users\\WNF\\Documents\\GIT PROJECTS\\CWIS-automation"
     
     #Source Code Directory
       rproj.dir <- rproj.dir  #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
     
     #Source Resources Director (raw data)
-      source.resources.dir <- paste(working.dir,"3_source_resources/", sep = "")
+      source.resources.dir <- paste(working.dir,"\\3_source_tables\\", sep = "")
     
     #Source Inputs (configs)
-      source.inputs.dir <- paste(working.dir,"4_source_inputs/",sep="")
+      source.inputs.dir <- paste(working.dir,"\\3_source_tables\\",sep="")
   
   # LOAD SOURCE CODE
       
@@ -111,7 +111,7 @@
     source("1-import_functions.r")
   
   #Import Config Tables
-    configs.ss <- gs_key("1ku_OC9W87ut6W1qrdpFeYBlWlPN5X4fGHJ3h1k0HrOA",verbose = TRUE) 
+    configs.ss <- gs_key("188to81eW5DRDK9VxjYkfzTolFLR4YnlBp-XBDTDI44o",verbose = TRUE) 
     
     #Import all tables from config google sheet as tibbles
       all.configs.ls <- GoogleSheetLoadAllWorksheets(configs.ss)
@@ -447,7 +447,7 @@
             outputs.dir <- 
               paste(
                 working.dir,
-                "5_outputs/",
+                "\\4_outputs\\",
                 gsub(":",".",Sys.time()), 
                 sep = ""
               )
@@ -455,7 +455,7 @@
             outputs.dir <- 
               paste(
                 working.dir,
-                "5_outputs/",
+                "\\4_outputs\\",
                 gsub(":",".",Sys.time()),
                 "_FULL PRINT",
                 sep = ""
