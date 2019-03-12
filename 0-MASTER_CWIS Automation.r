@@ -24,8 +24,8 @@
   # ESTABLISH BASE DIRECTORIES
   
     #M900
-      working.dir <- "C:/Users/willi/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
-      rproj.dir <- "C:/Users/willi/Documents/GIT PROJECTS/CWIS-automation/"
+      working.dir <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-03 CWIS Auto Phase 7"
+      rproj.dir <- "C:\\Users\\willi\\Documents\\GIT PROJECTS\\CWIS-automation"
       
     #Thinkpad T470
       #working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
@@ -34,17 +34,13 @@
     #Source Code Directory
       rproj.dir <- rproj.dir #paste(rproj.dir,"2_source_code/",sep="") #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
     
-    #Source Resources Director (raw data)
-      source.resources.dir <- paste(working.dir,"3_source_resources/", sep = "")
+    #Source Tables Directory (raw data, configs, etc.)
+      source.tables.dir <- paste(working.dir,"\\3_source_tables\\", sep = "")
     
-    #Source Inputs (configs)
-      source.inputs.dir <- paste(working.dir,"4_source_inputs/",sep="")
-  
   # LOAD SOURCE CODE
       
     setwd(rproj.dir)
     source("utils_wnf.r")
-    #source("CWIS_custom.r")
     
   # LOAD LIBRARIES/PACKAGES
     
@@ -94,8 +90,7 @@
   #start_time: sys.time for code
   #working.dir: working directory - Google Drive folder "2018-08 Green Reports"
   #rproj.dir: directory for R project; also contains source data, additional function scripts, and config tables.
-  #source.resources.dir: directory with raw data
-  #source.inputs.dir: directory with config tables and powerpoint template
+  #source.tables.dir: directory with raw data, configs, etc.
 
 # 1-IMPORT -----------------------------------------
   
@@ -108,7 +103,7 @@
     source("1-import_functions.r")
   
   #Import Config Tables
-    configs.ss <- gs_key("1ku_OC9W87ut6W1qrdpFeYBlWlPN5X4fGHJ3h1k0HrOA",verbose = TRUE) 
+    configs.ss <- gs_key("188to81eW5DRDK9VxjYkfzTolFLR4YnlBp-XBDTDI44o",verbose = TRUE) 
     
     #Import all tables from config google sheet as tibbles
       all.configs.ls <- GoogleSheetLoadAllWorksheets(configs.ss)
@@ -128,21 +123,21 @@
 
   #Import Responses table (main data, imported as data frame)
     
-    setwd(source.resources.dir)
+    setwd(source.tables.dir)
     
     resp1.tb <- read.csv(
       file =  
         MostRecentlyModifiedFilename(
-          title.string.match = "CWIS",
+          title.string.match = "SurveyExport",
           file.type = "csv",
-          dir = source.resources.dir
+          dir = source.tables.dir
         ),
       stringsAsFactors = FALSE,
       header = TRUE
     ) %>% as_tibble(.)
     
   #Section Clocking
-    section1.duration <- Sys.time - section1.starttime
+    section1.duration <- Sys.time() - section1.starttime
     section1.duration
     Sys.time() - sections.all.starttime
 
@@ -1170,7 +1165,7 @@
       subtitle.format <- textProperties(color = notesgrey, font.size = 28, font.weight = "bold", font.family = "Century Gothic")
       section.title.format <- textProperties(color = "white", font.size = 48, font.weight = "bold", font.family = "Century Gothic")
       notes.format <- textProperties(color = notesgrey, font.size = 14, font.family = "Century Gothic")
-      setwd(source.inputs.dir)
+      setwd(source.tables.dir)
   
   ###                          ###    
 # ### LOOP "h" BY REPORT UNIT  ###
@@ -1194,7 +1189,7 @@
         FirstLetterCap_OneElement()
     
     #Set up target file
-      template.file <- paste(source.inputs.dir,
+      template.file <- paste(source.tables.dir,
                              "template_green reports.pptx",
                              sep = "")
       if(sample.print){
