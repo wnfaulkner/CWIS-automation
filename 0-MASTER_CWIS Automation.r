@@ -161,7 +161,7 @@
   #config.table.types.tb
   #config.pot.tb
   #buildings.tb
-  #q.branched.tb
+  #questions.tb
   #resp1.tb (initial responses dataset which will need extensive cleaning and organization in next sections)
 
 
@@ -659,7 +659,13 @@
     
     #Loop Inputs (both graphs and tables)
       unit.id.c <- unit.ids.sample[c]
-      district.c <- resp.long.tb %>% filter(unit.id == unit.id.c) %>% select(district) %>% unique %>% unlist %>% RemoveNA()
+      district.c <- 
+        resp.long.tb %>% 
+        filter(unit.id == unit.id.c) %>% 
+        select(district) %>% 
+        unique %>% 
+        unlist %>% 
+        RemoveNA()
       
       resp.long.tb.c <- 
         resp.long.tb %>%
