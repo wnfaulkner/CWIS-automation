@@ -8,6 +8,10 @@
   #INITIAL SETUP
     rm(list=ls()) #Remove lists
     options(java.parameters = "- Xmx8g") #helps r not to fail when importing large xlsx files with xlsx package
+    #TODO: MAKE UTILS MEMORY FUNCTIONS
+      #MEASURE MEMORY USAGE OF OBJECTS
+      #FUNCTION TO LIST MEMORY USAGE OF LARGEST OBJECTS IN CURRENT ENVIRONMENT
+      #WARN WHEN APPROACHING DEFINED MEMORY USAGE LIMITS AND, IF INSIDE OF A LOOP, BREAK THE LOOP
     
     
     #Section & Code Clocking
@@ -24,15 +28,20 @@
   # ESTABLISH BASE DIRECTORIES
   
     #M900
+<<<<<<< HEAD
       working.dir <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-03 CWIS Auto Phase 7"
       rproj.dir <- "C:\\Users\\willi\\Documents\\GIT PROJECTS\\CWIS-automation"
+=======
+      #working.dir <- "C:/Users/willi/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
+      #rproj.dir <- "C:/Users/willi/Documents/GIT PROJECTS/CWIS-automation/"
+>>>>>>> 7a9200ce01f77bf97dd11715715a89f9596a8add
       
     #Thinkpad T470
-      #working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
-      #rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
+      working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
+      rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
     
     #Source Code Directory
-      rproj.dir <- rproj.dir #paste(rproj.dir,"2_source_code/",sep="") #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
+      rproj.dir <- rproj.dir  #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
     
     #Source Tables Directory (raw data, configs, etc.)
       source.tables.dir <- paste(working.dir,"\\3_source_tables\\", sep = "")
@@ -98,7 +107,6 @@
     section1.starttime <- Sys.time()
       
   #Source Import Functions
-    #import.source.dir <- paste(rproj.dir,"1-Import/", sep = "")
     setwd(rproj.dir)
     source("1-import_functions.r")
   
@@ -178,7 +186,7 @@
     
   #config.pot.tb
     config.pot.types.tb <- AddSlideTypeCols(config.pot.types.tb) #Add slide.type columns via inner-join
-    config.pot.types.tb$color <- config.pot.types.tb$color %>% gsub("x","",.)  #Removing 'x' from colors
+    config.pot.types.tb$color <- config.pot.types.tb$color %>% gsub("x","",.)  #Removing 'x' from colors #TODO: 
     
   #buildings.tb
     buildings.tb <- LowerCaseCharVars(buildings.tb) #Lower-case all content 
@@ -222,8 +230,6 @@
             search.colname = names(resp1.tb)[1],
             search.char = "{"
           )
-      
-      #TODO:Rename important variables with names that make sense
       
       #TODO:Slider vars:
         #convert to integer (based on min/max, e.g. cutoff points at 1.5, 2.5, 3.5)

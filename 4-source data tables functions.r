@@ -109,7 +109,7 @@ source("utils_wnf.r")
   
   #Data restriction - district vs. unit.id
     #TODO:NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND GRAPH DATA.LEVEL IS DISTRICT, THIS WORKS, 
-      #BUT NOT IF REPORT.UNIT IS unit.id AND DATA.LEVEL IS DISTRICT.
+      #BUT NOT IF REPORT.UNIT IS BUILDING AND DATA.LEVEL IS DISTRICT.
     
     #Test Inputs
       #dat <- resp.long.tb.c
