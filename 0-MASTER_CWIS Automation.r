@@ -28,17 +28,14 @@
   # ESTABLISH BASE DIRECTORIES
   
     #M900
-<<<<<<< HEAD
+
       working.dir <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-03 CWIS Auto Phase 7"
       rproj.dir <- "C:\\Users\\willi\\Documents\\GIT PROJECTS\\CWIS-automation"
-=======
-      #working.dir <- "C:/Users/willi/Google Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
-      #rproj.dir <- "C:/Users/willi/Documents/GIT PROJECTS/CWIS-automation/"
->>>>>>> 7a9200ce01f77bf97dd11715715a89f9596a8add
+
       
     #Thinkpad T470
-      working.dir <- "G:/My Drive/1. FLUX CONTRACTS - CURRENT/2016-09 EXT Missouri Education/3. Missouri Education - GDRIVE/8. CWIS/2018-12 Green Reports Phase 6/"
-      rproj.dir <- "C:/Users/WNF/Documents/Git Projects/CWIS-automation"
+      #working.dir <- "G:\\My Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. Missouri - GDRIVE\\8. CWIS\\2018-12 Green Reports Phase 6"
+      #rproj.dir <- "C:\\Users\\WNF\\Documents\\Git Projects\\CWIS-automation"
     
     #Source Code Directory
       rproj.dir <- rproj.dir  #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
@@ -447,7 +444,7 @@
             outputs.dir <- 
               paste(
                 working.dir,
-                "5_outputs/",
+                "\\4_outputs\\",
                 gsub(":",".",Sys.time()), 
                 sep = ""
               )
@@ -455,7 +452,7 @@
             outputs.dir <- 
               paste(
                 working.dir,
-                "5_outputs/",
+                "\\4_outputs\\",
                 gsub(":",".",Sys.time()),
                 "_FULL PRINT",
                 sep = ""
