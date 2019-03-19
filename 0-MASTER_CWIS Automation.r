@@ -871,9 +871,9 @@
     graphs.ls.f <- list()
     tables.ls.f <- list()
   
-  #f <- 111 #LOOP TESTER
+  f <- 11 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  for(f in 1:length(unit.ids.sample)){
+  #for(f in 1:length(unit.ids.sample)){
     
     #Loop units  
       unit.id.f <- unit.ids.sample[f]
@@ -895,6 +895,7 @@
     
     #Loop output object(s)
     graphs.ls.g <- list()
+    maxrow.g <- length(graphdata.ls.f)
     
     #g <- 1 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
@@ -1036,7 +1037,7 @@
               )
               
         graphs.ls.g[[g]] <<- graph.g
-        setTxtProgressBar(progress.bar.f, 100*(g + graphdata.ls.c[1:(f-1)] %>% lengths %>% sum)/maxrow.f)
+        #setTxtProgressBar(progress.bar.f, 100*(g + graphdata.ls.c[1:(f-1)] %>% lengths %>% sum)/maxrow.g)
         
       })  ### END OF LOOP "g" BY GRAPH ###
 
@@ -1049,9 +1050,9 @@
     #Loop output object(s)
       tables.ls.g <- list()
     
-    #g <- 1 #LOOP TESTER
+    g <- 1 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    for(g in 1:length(tabledata.ls.c[[f]])){
+    #for(g in 1:length(tabledata.ls.c[[f]])){
       
       #Prep Loop Inputs
         if(dim(tabledata.ls.c[[f]][[g]])[1] == 0){
@@ -1071,7 +1072,6 @@
         #print(tabledata.df.g)
         #print(config.tables.df.g)
         
-      #TODO: 
       #Create FlexTable Object
         ft.g <- FlexTable(
           data = tabledata.df.g,
@@ -1134,7 +1134,6 @@
 
 
 # 5-OBJECT CREATION (GRAPHS & TABLES) OUTPUTS ------------------------------------
-  
   #graphs.ls.f
     #[[report.unit]]
       #ggplot object

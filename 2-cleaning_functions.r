@@ -315,7 +315,7 @@
     #Test Inputs
       #data.tb <- resp8.tb
       #data.id.varname <- "resp.id"
-      #var.guide.tb <- questions.tb
+      #var.guide.tb <- q.branched.tb
       #current.names.colname <- "var.id"
       #unbranched.names.colname <- "branch.master.var.id"
       
@@ -365,21 +365,32 @@
             
             branched.tb.i <- data.tb[, names(data.tb) %in% c(data.id.varname,branched.colnames.i)]
             
-            #Check if any columns have values/responses in more than one column
-              #mult.values <- 
-              #  apply(branched.tb.i, 1, function(x){x %>% equals("") %>% not %>% sum %>% is_greater_than(1)}) %>% any
-              
-              #if(mult.values){
-              #  mult.entries.tb <-
-              #    branched.tb.i %>%
-              #    filter(
-              #      apply(
-              #        branched.tb.i, 1, 
-              #        function(x){x %>% equals("") %>% not %>% sum %>% is_greater_than(1)}
-              ##      )
-              #    )
-              #  stop("Rows have data in "
-              #}
+            #Check if any columns have values/responses in more than one column. Print warning and 
+              #only use data from first response column.
+              mult.values <- 
+                apply(
+                  branched.tb.i[,!grepl("resp.id",names(branched.tb.i))], 
+                  1, 
+                  function(x){x %>% equals("") %>% not %>% sum %>% is_greater_than(1)}
+                ) 
+                
+              if(any(mult.values)){
+                mult.entries.tb <- branched.tb.i %>% filter(mult.values)
+                
+                branched.tb.i[mult.values,c(3:ncol(branched.tb.i))] <- "" 
+                
+                warning(
+                  paste0(
+                    "Branched rows have data in both columns. i = ",
+                    i,
+                    ". Column names: ",
+                    paste(names(branched.tb.i), collapse = ", "),
+                    ". Response IDs: ",
+                    paste(mult.entries.tb$resp.id, collapse = ", "),
+                    ". Using only response from first column."
+                  )
+                )
+              }
             
             #Data
               unbranched.data.ls[[i + 1]] <- 
@@ -409,7 +420,7 @@
           
           unbranched.data.tb <- 
             suppressMessages(
-              Reduce(function(x, y) full_join(x, y, all = TRUE), unbranched.data.ls)
+              Reduce(function(x, y) left_join(x, y, by = "resp.id", all = TRUE), unbranched.data.ls)
             )
           unbranched.var.guide.tb <- 
             suppressMessages(
