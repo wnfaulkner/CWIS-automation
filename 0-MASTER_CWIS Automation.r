@@ -62,6 +62,7 @@
     
     LoadCommonPackages()
     library(pander)
+    library(flextable)
     library(proftools)
     library(jsonlite)
     library(rlang)
@@ -1050,8 +1051,8 @@
     #Loop output object(s)
       tables.ls.g <- list()
     
-    g <- 1 #LOOP TESTER
-    #for(g in 1:2) #LOOP TESTER
+    #g <- 1 #LOOP TESTER
+    for(g in 1:2){ #LOOP TESTER
     #for(g in 1:length(tabledata.ls.c[[f]])){
       
       #Prep Loop Inputs
@@ -1073,48 +1074,66 @@
         #print(config.tables.df.g)
         
       #Create FlexTable Object
-        ft.g <- FlexTable(
-          data = tabledata.df.g,
-          header.columns = TRUE,
-          add.rownames = FALSE,
+        ft.g <- 
+          flextable(data = tabledata.df.g) %>%
+          theme_zebra(., odd_body = "#D0ABD6", even_body = "white", odd_header =  "#5F3356") %>% #zebra striping for body
+          fontsize(., size = 15) %>% #font size for whole table
+          font(., fontname = "Century Gothic") %>% #font for whole table
+          align(., align = "center", part = "header") %>% #center align all text
+          color(., color = "white", part = "header") %>% #font color for header
+          bold(., bold = TRUE, part = "header") %>% #bold header text
+          align(., align = "center", part = "body") %>% #center align body text
+          color(., color = "#515151", part = "body") %>% #font color for body
+          border_remove(.) #no borders
           
-          header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #TODO:Should put into configs instead of specifying in code
-          header.text.props = textProperties(
-            color = "white", 
-            font.size = 15,
-            font.family = "Century Gothic",
-            font.weight = "bold"),
-          header.par.props = parProperties(text.align = "center"),
-          body.cell.props = cellProperties(background.color = "white", border.style = "none"),
-          body.text.props = textProperties(
-            color = "#515151",
-            font.size = 15,
-            font.family = "Century Gothic"
-          )
-        )
+          #header.columns = TRUE,
+          #add.rownames = FALSE,
+          
+          #header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #TODO:Should put into configs instead of specifying in code
+          #header.text.props = textProperties(
+          #  color = "white", 
+            #font.size = 15,
+            #font.family = "Century Gothic",
+            #font.weight = "bold"),
+          #header.par.props = parProperties(text.align = "center"),
+          #body.cell.props = cellProperties(background.color = "white", border.style = "none"),
+          #body.text.props = textProperties(
+            #color = "#515151",
+            #font.size = 15,
+            #font.family = "Century Gothic"
+          #)
+        #)
         
         if(g == 1){
-          ft.g[dim(tabledata.df.g)[1],] <- 
-            chprop(
-              textProperties(
-                font.weight = "bold",
-                font.size = 18,
-                font.family = "Century Gothic"
-              )
-            ) #Bold text on last line (totals)
-          ft.g[,1] <- chprop(parProperties(text.align = "center"))
+          ft.g <- 
+            ft.g %>%
+            bold(., bold = TRUE, i = nrow(tabledata.df.g)) %>% #Bold text for totals row
+            fontsize(., size = 15, i = nrow(tabledata.df.g))
+          
+          #ft.g[dim(tabledata.df.g)[1],] <- 
+          #  chprop(
+          #    textProperties(
+          #      font.weight = "bold",
+          #      font.size = 18,
+          #      font.family = "Century Gothic"
+          #    )
+          #  ) #Bold text on last line (totals)
+          #ft.g[,1] <- chprop(parProperties(text.align = "center"))
           #ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(6,dim(tabledata.df.g)[2]-1)))      
           
         }
         
         if(g != 1){
-          ft.g[,1] <- chprop(parProperties(text.align = "right"))
+          ft.g <- 
+            ft.g %>%
+            align(., align = "right", part = "body", j = 1)
+          #ft.g[,1] <- chprop(parProperties(text.align = "right"))
         }
         
         #ft.g[1,1] <-  chprop(parProperties(text.align = "left")) 
-        ft.g[1:dim(tabledata.df.g)[1],2:dim(tabledata.df.g)[2]] <- #Center align numbers in all but first column
-          chprop(parProperties(text.align = "center")) 
-        ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
+        #ft.g[1:dim(tabledata.df.g)[1],2:dim(tabledata.df.g)[2]] <- #Center align numbers in all but first column
+        #  chprop(parProperties(text.align = "center")) 
+        #ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
         
         tables.ls.g[[g]] <- ft.g
         
