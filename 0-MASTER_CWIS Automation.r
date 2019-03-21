@@ -63,6 +63,7 @@
     LoadCommonPackages()
     library(pander)
     library(flextable)
+    library(officer)
     library(proftools)
     library(jsonlite)
     library(rlang)
@@ -72,22 +73,22 @@
     #Special for ReporteRs package because it has been archived (https://stackoverflow.com/questions/24194409/how-do-i-install-a-package-that-has-been-archived-from-cran)
       
       #Install Dependencies
-        if( !require( rJava ) ) install.packages("rJava")
-        if( !require( ggplot2 ) ) install.packages("ggplot2")
-        if( !require( base64 ) ) install.packages("base64")
-        if( !require( highlight ) ) install.packages("highlight")
-        if( !require( devtools ) ) install.packages("devtools")
-        if( !require( rvg ) ) install.packages("rvg")
-        if( !require( gdtools ) ) install.packages("gdtools")
-        if( !require( png ) ) install.packages("png")
-        if( !require( R.Utils ) ) install.packages("R.utils")
-        if( !require( ReporteRsjars ) ) install.packages("ReporteRsjars")
-        if( !require( jsonlite ) ) install.packages("jsonlite")
-        if( !require( rlang ) ) install.packages("rlang")
+        #if( !require( rJava ) ) install.packages("rJava")
+        #if( !require( ggplot2 ) ) install.packages("ggplot2")
+        #if( !require( base64 ) ) install.packages("base64")
+        #if( !require( highlight ) ) install.packages("highlight")
+        #if( !require( devtools ) ) install.packages("devtools")
+        #if( !require( rvg ) ) install.packages("rvg")
+        #if( !require( gdtools ) ) install.packages("gdtools")
+        #if( !require( png ) ) install.packages("png")
+        #if( !require( R.Utils ) ) install.packages("R.utils")
+        #if( !require( ReporteRsjars ) ) install.packages("ReporteRsjars")
+        #if( !require( jsonlite ) ) install.packages("jsonlite")
+        #if( !require( rlang ) ) install.packages("rlang")
       
       #Install Archived Packages: ReporteRsjars & ReporteRs  
-        if( !require( ReporteRsjars ) ) devtools::install_github("davidgohel/ReporteRsjars")
-        if( !require( ReporteRs ) ) devtools::install_github("davidgohel/ReporteRs")
+        #if( !require( ReporteRsjars ) ) devtools::install_github("davidgohel/ReporteRsjars")
+        #if( !require( ReporteRs ) ) devtools::install_github("davidgohel/ReporteRs")
     
     #Section Clocking
       section0.duration <- Sys.time() - section0.starttime
@@ -866,15 +867,15 @@
   
   #Loop Progress Tracking
     progress.bar.f <- txtProgressBar(min = 0, max = 100, style = 3)
-    maxrow.f <- graphdata.ls.c %>% lengths %>% sum
-  
+    maxrow.f <- length(unit.ids.sample)
+    
   #Loop Outputs
     graphs.ls.f <- list()
     tables.ls.f <- list()
   
-  f <- 11 #LOOP TESTER
+  #f <- 11 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  #for(f in 1:length(unit.ids.sample)){
+  for(f in 1:length(unit.ids.sample)){
     
     #Loop units  
       unit.id.f <- unit.ids.sample[f]
@@ -1038,7 +1039,7 @@
               )
               
         graphs.ls.g[[g]] <<- graph.g
-        #setTxtProgressBar(progress.bar.f, 100*(g + graphdata.ls.c[1:(f-1)] %>% lengths %>% sum)/maxrow.g)
+       
         
       })  ### END OF LOOP "g" BY GRAPH ###
 
@@ -1052,8 +1053,8 @@
       tables.ls.g <- list()
     
     #g <- 1 #LOOP TESTER
-    for(g in 1:2){ #LOOP TESTER
-    #for(g in 1:length(tabledata.ls.c[[f]])){
+    #for(g in 1:2){ #LOOP TESTER
+    for(g in 1:length(tabledata.ls.c[[f]])){
       
       #Prep Loop Inputs
         if(dim(tabledata.ls.c[[f]][[g]])[1] == 0){
@@ -1106,6 +1107,7 @@
   
     names(tables.ls.g) <- c("role","etlp","cfa","dbdm","pd","lead") #TODO:WAS CAUSING PROBLEMS WITH ORDERING OF TABLES ON SLIDES BECAUSE HAD NOT BEEN UPDATED TO NEW ORDER OF MODULES
     tables.ls.f[[f]] <- tables.ls.g
+    setTxtProgressBar(progress.bar.f, 100*f/maxrow.f)
     
   } ### END OF LOOP "f" BY REPORT.UNIT
   close(progress.bar.f)
@@ -1152,11 +1154,11 @@
       bar_series_fill.cols <- c("#800080","#ff33ff")
     
     #Text formatting
-      title.format <- textProperties(color = titlegreen, font.size = 48, font.weight = "bold", font.family = "Century Gothic")
-      title.format.small <- textProperties(color = titlegreen, font.size = 40, font.weight = "bold", font.family = "Century Gothic")
-      subtitle.format <- textProperties(color = notesgrey, font.size = 28, font.weight = "bold", font.family = "Century Gothic")
-      section.title.format <- textProperties(color = "white", font.size = 48, font.weight = "bold", font.family = "Century Gothic")
-      notes.format <- textProperties(color = notesgrey, font.size = 14, font.family = "Century Gothic")
+      #title.format <- textProperties(color = titlegreen, font.size = 48, font.weight = "bold", font.family = "Century Gothic")
+      #title.format.small <- textProperties(color = titlegreen, font.size = 40, font.weight = "bold", font.family = "Century Gothic")
+      #subtitle.format <- textProperties(color = notesgrey, font.size = 28, font.weight = "bold", font.family = "Century Gothic")
+      #section.title.format <- textProperties(color = "white", font.size = 48, font.weight = "bold", font.family = "Century Gothic")
+      #notes.format <- textProperties(color = notesgrey, font.size = 14, font.family = "Century Gothic")
       setwd(source.tables.dir)
   
   ###                          ###    
@@ -1168,9 +1170,9 @@
     maxrow.h <- sapply(config.slides.ls.b, dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     printed.reports.ls <- list()
   
-  #h <- 111 #LOOP TESTER
+  h <- 16 #LOOP TESTER
   #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
-  for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
+  #for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
     
     #Reading 'Cadre' so it can be added to file name
       cadre.h <- 
@@ -1200,8 +1202,6 @@
       }else{
         file.name.h <- 
           paste(
-            #cadre.h,
-            #"_",
             unit.ids.sample[h],
             sep = ""
           )
@@ -1210,12 +1210,12 @@
       target.path.h <- paste(outputs.dir,
                              "/",
                              file.name.h,
-                             ".pptx", sep="") 
+                             sep="") 
       
       file.copy(template.file, target.path.h)
     
     #Set up powerpoint object 
-      ppt.h <- pptx(template = target.path.h )
+      ppt.h <- read_pptx(target.path.h)
       options("ReporteRs-fontsize" = 20)
       options("ReporteRs-default-font" = "Century Gothic")
     

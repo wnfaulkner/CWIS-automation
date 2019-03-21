@@ -454,34 +454,41 @@
         #replacement.vals.colname = "ans.num"
         #na.replacement = NULL
       
-      RecodeIndexMatch <- function(tb, lookup.tb, match.colname, replacement.vals.colname, na.replacement = NULL){
-        for(i in 1:ncol(tb)){
+      RecodeIndexMatch <- 
+        function(
+          tb, 
+          lookup.tb, 
+          match.colname, 
+          replacement.vals.colname, 
+          na.replacement = NULL){
+        
+          for(i in 1:ncol(tb)){
           
-          replacement.vals <- lookup.tb %>% select(UQ(as.name(match.colname))) %>% unlist %>% as.vector %>% unique
-          if((tb[[i]] %>% unique) %in% replacement.vals %>% any %>% not){next()}
-          
-          tb[,i] <- 
-            IndexMatchToVectorFromTibble(
-              vector = tb[[i]],
-              lookup.tb = lookup.tb,
-              match.colname = match.colname,
-              replacement.vals.colname = replacement.vals.colname,
-              mult.replacements.per.cell = TRUE,
-              mult.replacements.separator.char = ",",
-              print.matches = FALSE
-            ) 
-          
-          if(!is.null(na.replacement)){
-            tb[[i]] <- SubNA(tb[[i]], na.replacement = na.replacement)
+            replacement.vals <- lookup.tb %>% select(UQ(as.name(match.colname))) %>% unlist %>% as.vector %>% unique
+            if((tb[[i]] %>% unique) %in% replacement.vals %>% any %>% not){next()}
+            
+            tb[,i] <- 
+              IndexMatchToVectorFromTibble(
+                vector = tb[[i]],
+                lookup.tb = lookup.tb,
+                match.colname = match.colname,
+                replacement.vals.colname = replacement.vals.colname,
+                mult.replacements.per.cell = TRUE,
+                mult.replacements.separator.char = ",",
+                print.matches = FALSE
+              ) 
+            
+            if(!is.null(na.replacement)){
+              tb[[i]] <- SubNA(tb[[i]], na.replacement = na.replacement)
+            }
+            
+            tb <- 
+              SetColClass(
+                tb = tb, 
+                colname = names(tb)[i], 
+                to.class = class(lookup.tb[[which(names(lookup.tb)==replacement.vals.colname)]])
+              )
           }
-          
-          tb <- 
-            SetColClass(
-              tb = tb, 
-              colname = names(tb)[i], 
-              to.class = class(lookup.tb[[which(names(lookup.tb)==replacement.vals.colname)]])
-            )
-        }
         return(tb)
       }
     
