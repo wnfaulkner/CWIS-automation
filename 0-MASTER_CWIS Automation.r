@@ -1154,11 +1154,11 @@
       bar_series_fill.cols <- c("#800080","#ff33ff")
     
     #Text formatting
-      #title.format <- textProperties(color = titlegreen, font.size = 48, font.weight = "bold", font.family = "Century Gothic")
-      #title.format.small <- textProperties(color = titlegreen, font.size = 40, font.weight = "bold", font.family = "Century Gothic")
-      #subtitle.format <- textProperties(color = notesgrey, font.size = 28, font.weight = "bold", font.family = "Century Gothic")
-      #section.title.format <- textProperties(color = "white", font.size = 48, font.weight = "bold", font.family = "Century Gothic")
-      #notes.format <- textProperties(color = notesgrey, font.size = 14, font.family = "Century Gothic")
+      #title.format <- text_prop(color = titlegreen, font.size = 48, font.weight = "bold", font.family = "Century Gothic")
+      #title.format.small <- text_prop(color = titlegreen, font.size = 40, font.weight = "bold", font.family = "Century Gothic")
+      #subtitle.format <- text_prop(color = notesgrey, font.size = 28, font.weight = "bold", font.family = "Century Gothic")
+      #section.title.format <- text_prop(color = "white", font.size = 48, font.weight = "bold", font.family = "Century Gothic")
+      #notes.format <- text_prop(color = notesgrey, font.size = 14, font.family = "Century Gothic")
       setwd(source.tables.dir)
   
   ###                          ###    
@@ -1239,9 +1239,9 @@
 #   ### LOOP "i" BY SLIDE   ###
     ###                     ###
     
-    #i <- 3 #LOOP TESTER
+    i <- 3 #LOOP TESTER
     #for(i in 1:4){ #LOOP TESTER
-    for(i in 1:dim(config.slides.ls.b[[h]])[1]){
+    #for(i in 1:dim(config.slides.ls.b[[h]])[1]){
       
       config.slide.df.i <- config.slides.ls.b[[h]] %>% .[i,]
       slide.type.id.i <- config.slide.df.i$slide.type.id
@@ -1249,8 +1249,8 @@
       
       #SLIDE FORMATION
       
-        ppt.h <- addSlide(ppt.h, slide.layout = layout.i)
-        ppt.h <- addPageNumber( ppt.h )
+        ppt.h <- add_slide(ppt.h, layout = layout.i, master = layout.i)
+        ppt.h <- ph_with_text(ppt.h, type = "sldNum", str = i)
       
       #ADD GRAPHS
       
@@ -1271,9 +1271,9 @@
 #         ### LOOP "k" BY GRAPH ###
           ###                   ###
           
-          #k <- 1 #LOOP TESTER
+          k <- 1 #LOOP TESTER
           #for(k in 1:2){ #LOOP TESTER
-          for(k in 1:dim(config.graphs.df.i)[1]){
+          #for(k in 1:dim(config.graphs.df.i)[1]){
             if(dim(config.graphs.df.i)[1] < 1){
               #print(paste("No graph objects for slide.id: ",config.slide.df.i$slide.type.id,sep = ""))
               next()
@@ -1281,14 +1281,17 @@
             
             graph.k <- graphs.ls.h[config.graphs.df.i$row.i[k]]
             ppt.h <- 
-              addPlot(
-                ppt.h,
-                fun = print,
-                x = graph.k,
+              ph_with_gg(
+                x = ppt.h,
+                value = graph.k,
+                type = "ctrTitl",
+                
+                #fun = print,
+                #x = graph.k,
                 height = config.graphs.df.i$height[k],
                 width = config.graphs.df.i$width[k],
-                offx = config.graphs.df.i$offx[k],
-                offy = config.graphs.df.i$offy[k]
+                left = config.graphs.df.i$offx[k],
+                top = config.graphs.df.i$offy[k]
               )
             
           } # END OF LOOP "k" BY GRAPH
@@ -1336,9 +1339,9 @@
           config.pot.i <- filter(config.pot.i, grepl(as.character(config.slide.df.i$module), config.pot.i$module))
         }  
         
-        #j <- 1 #LOOP TESTER
+        j <- 1 #LOOP TESTER
         #for(j in 1:2){ #LOOP TESTER
-        for(j in 1:dim(config.pot.i)[1]){
+        #for(j in 1:nrow(config.pot.i)){
           if(dim(config.pot.i)[1] < 1){
             #print(paste("No text objects for slide.id: ",config.slide.df.i$slide.id,sep = ""))
             next()
@@ -1361,38 +1364,54 @@
               sep = ""
             )
           
-          pot.j <- 
-            pot(
-              pot.content.j,
-              textProperties(
-                color = 
-                  alpha(
-                    ifelse(!is.na(config.pot.i$color[j]),
-                           config.pot.i$color[j] %>% 
-                             strsplit(.,",") %>% unlist %>% as.numeric %>% 
-                             rgb(red = .[1],green = .[2],blue = .[3] ,maxColorValue = 255) %>% .[1],
-                           "black"
-                    )
-                    ,1),
-                font.size = config.pot.i$font.size[j], 
-                font.weight = ifelse(is.na(config.pot.i$font.weight[j]),'normal',config.pot.i$font.weight[j]),
-                font.family = config.pot.i$font[j]
-              )
+          pot.format.j <- 
+            fp_text(
+              color = 
+                #alpha(
+                  ifelse(!is.na(config.pot.i$color[j]),
+                         config.pot.i$color[j] %>% 
+                         strsplit(.,",") %>% unlist %>% as.numeric %>% 
+                         rgb(red = .[1],green = .[2],blue = .[3] ,maxColorValue = 255) %>% .[1],
+                         "black"
+                  ),
+                  #,1),
+              font.size = config.pot.i$font.size[j], 
+              bold = ifelse(is.na(config.pot.i$font.weight[j]),FALSE,TRUE),
+              font.family = config.pot.i$font[j]
             )
           
+          
           ppt.h <- 
-            addParagraph(
-              ppt.h,
-              pot.j,
-              height = config.pot.i$height[j],
-              width = config.pot.i$width[j],
-              offx = config.pot.i$offx[j],
-              offy = config.pot.i$offy[j],
-              par.properties = parProperties(
-                text.align=config.pot.i$text.align[j], 
-                padding=0
+            ph_with_text(
+              x = ppt.h,
+              str = pot.content.j,
+              location = officer::ph_location(
+                left = config.pot.i$offx[j],
+                top = config.pot.i$offy[j],
+                height = config.pot.i$height[j],
+                width = config.pot.i$width[j]
               )
+            ) %>%
+            ph_add_text(
+              x = ., 
+              str = pot.content.j,
+              type = NULL,
+              ph_label = NULL,
+              style = pot.format.j
             )
+          
+            #addParagraph(
+            #  ppt.h,
+            #  pot.format.j,
+            #  height = config.pot.i$height[j],
+            #  width = config.pot.i$width[j],
+            #  offx = config.pot.i$offx[j],
+            #  offy = config.pot.i$offy[j],
+            #  par.properties = parProperties(
+            #    text.align=config.pot.i$text.align[j], 
+            #    padding=0
+            #  )
+            #)
           
         } #END OF LOOP "j" BY POT OBJECT (ROW OF POT CONFIG TABLE)
       
