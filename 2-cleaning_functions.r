@@ -315,7 +315,7 @@
     #Test Inputs
       #data.tb <- resp8.tb
       #data.id.varname <- "resp.id"
-      #var.guide.tb <- questions.tb
+      #var.guide.tb <- q.branched.tb
       #current.names.colname <- "var.id"
       #unbranched.names.colname <- "branch.master.var.id"
       
@@ -327,93 +327,106 @@
       unbranched.names.colname){
       
       #Unbranching Data
-        branch0.colnames <- #names of the current columns that don't need unbranching
-          var.guide.tb %>% 
-          filter(UQ(as.name(unbranched.names.colname)) %>% is.na) %>%
-          select(UQ(as.name(current.names.colname))) %>%
-          unlist %>% as.vector %>% 
-          c("unit.id",.)
-        
-        branch1.colnames <- #names of current columns that need unbranching
-          var.guide.tb %>% 
-          filter(UQ(as.name(unbranched.names.colname)) %>% is.na %>% not)  %>%
-          select(UQ(as.name(current.names.colname))) %>%
-          unlist %>% as.vector
-        
-        unbranched.colnames <- #names of final columns after unbranching
-          var.guide.tb %>% 
-          filter(UQ(as.name(unbranched.names.colname)) %>% is.na %>% not)  %>%
-          select(UQ(as.name(unbranched.names.colname))) %>%
-          unlist %>% unique
-        
-        branch0.tb <- data.tb[, names(data.tb) %in% c(data.id.varname,branch0.colnames)] #Columns that don't need unbranching
-
-        unbranched.data.ls <- list(branch0.tb)
-        unbranched.var.guide.ls <- 
-          list(var.guide.tb %>% filter(UQ(as.name(unbranched.names.colname)) %>% is.na))
-        
-        for(i in 1:length(unbranched.colnames)){
-          
-          unbranched.colname.i <- unbranched.colnames[i]
-          branched.colnames.i <- #current columns that will get unbranched into this final column
+        #Column names
+          branch0.colnames <- #names of the current columns that don't need unbranching
             var.guide.tb %>% 
-            filter(UQ(as.name(unbranched.names.colname)) == unbranched.colname.i) %>%
+            filter(UQ(as.name(unbranched.names.colname)) %>% is.na) %>%
+            select(UQ(as.name(current.names.colname))) %>%
+            unlist %>% as.vector %>% 
+            c("unit.id",.)
+          
+          branch1.colnames <- #names of current columns that need unbranching
+            var.guide.tb %>% 
+            filter(UQ(as.name(unbranched.names.colname)) %>% is.na %>% not)  %>%
             select(UQ(as.name(current.names.colname))) %>%
             unlist %>% as.vector
           
-          branched.tb.i <- data.tb[, names(data.tb) %in% c(data.id.varname,branched.colnames.i)]
+          unbranched.colnames <- #names of final columns after unbranching
+            var.guide.tb %>% 
+            filter(UQ(as.name(unbranched.names.colname)) %>% is.na %>% not)  %>%
+            select(UQ(as.name(unbranched.names.colname))) %>%
+            unlist %>% unique
+        
+        #Tables  
+          branch0.tb <- data.tb[, names(data.tb) %in% c(data.id.varname,branch0.colnames)] #Columns that don't need unbranching
+  
+          unbranched.data.ls <- list(branch0.tb)
+          unbranched.var.guide.ls <- 
+            list(var.guide.tb %>% filter(UQ(as.name(unbranched.names.colname)) %>% is.na))
           
-          #Check if any columns have values/responses in more than one column
-            #mult.values <- 
-            #  apply(branched.tb.i, 1, function(x){x %>% equals("") %>% not %>% sum %>% is_greater_than(1)}) %>% any
+          for(i in 1:length(unbranched.colnames)){
             
-            #if(mult.values){
-            #  mult.entries.tb <-
-            #    branched.tb.i %>%
-            #    filter(
-            #      apply(
-            #        branched.tb.i, 1, 
-            #        function(x){x %>% equals("") %>% not %>% sum %>% is_greater_than(1)}
-            ##      )
-            #    )
-            #  stop("Rows have data in "
-            #}
-          
-          #Data
-            unbranched.data.ls[[i + 1]] <- 
-              melt(branched.tb.i, id = data.id.varname) %>% 
-              filter(value != "") %>% 
-              select(c(1,3)) %>%
-              set_names(data.id.varname, unbranched.colname.i)
-          
-          #Var Guide
-            branched.var.guide.i <-
+            unbranched.colname.i <- unbranched.colnames[i]
+            branched.colnames.i <- #current columns that will get unbranched into this final column
               var.guide.tb %>% 
-              filter(UQ(as.name(unbranched.names.colname)) == unbranched.colname.i)
+              filter(UQ(as.name(unbranched.names.colname)) == unbranched.colname.i) %>%
+              select(UQ(as.name(current.names.colname))) %>%
+              unlist %>% as.vector
             
-            #TODO: could be converted to SplitColReshape function (exact opposite operation)
-            unbranched.var.guide.ls[[i + 1]] <-
-              branched.var.guide.i[1, names(branched.var.guide.i) != current.names.colname] %>%
-              mutate(
-                original.branched.varnames = 
-                  branched.var.guide.i %>% 
-                  select(UQ(as.name(current.names.colname))) %>% 
-                  unlist %>% 
-                  paste(., collapse = ", ")
-              )
-            names(unbranched.var.guide.ls[[i +1]])[names(unbranched.var.guide.ls[[i + 1]]) == unbranched.names.colname] <-
-              current.names.colname
-        }
-        
-        unbranched.data.tb <- 
-          suppressMessages(
-            Reduce(function(x, y) full_join(x, y, all = TRUE), unbranched.data.ls)
-          )
-        unbranched.var.guide.tb <- 
-          suppressMessages(
-            Reduce(function(x, y) full_join(x, y, all = TRUE), unbranched.var.guide.ls)
-          )
-        
+            branched.tb.i <- data.tb[, names(data.tb) %in% c(data.id.varname,branched.colnames.i)]
+            
+            #Check if any columns have values/responses in more than one column. Print warning and 
+              #only use data from first response column.
+              mult.values <- 
+                apply(
+                  branched.tb.i[,!grepl("resp.id",names(branched.tb.i))], 
+                  1, 
+                  function(x){x %>% equals("") %>% not %>% sum %>% is_greater_than(1)}
+                ) 
+                
+              if(any(mult.values)){
+                mult.entries.tb <- branched.tb.i %>% filter(mult.values)
+                
+                branched.tb.i[mult.values,c(3:ncol(branched.tb.i))] <- "" 
+                
+                warning(
+                  paste0(
+                    "Branched rows have data in both columns. i = ",
+                    i,
+                    ". Column names: ",
+                    paste(names(branched.tb.i), collapse = ", "),
+                    ". Response IDs: ",
+                    paste(mult.entries.tb$resp.id, collapse = ", "),
+                    ". Using only response from first column."
+                  )
+                )
+              }
+            
+            #Data
+              unbranched.data.ls[[i + 1]] <- 
+                melt(branched.tb.i, id = data.id.varname) %>% 
+                filter(value != "") %>% 
+                select(c(1,3)) %>%
+                set_names(data.id.varname, unbranched.colname.i)
+            
+            #Var Guide
+              branched.var.guide.i <-
+                var.guide.tb %>% 
+                filter(UQ(as.name(unbranched.names.colname)) == unbranched.colname.i)
+              
+              #TODO: could be converted to SplitColReshape function (exact opposite operation)
+              unbranched.var.guide.ls[[i + 1]] <-
+                branched.var.guide.i[1, names(branched.var.guide.i) != current.names.colname] %>%
+                mutate(
+                  original.branched.varnames = 
+                    branched.var.guide.i %>% 
+                    select(UQ(as.name(current.names.colname))) %>% 
+                    unlist %>% 
+                    paste(., collapse = ", ")
+                )
+              names(unbranched.var.guide.ls[[i +1]])[names(unbranched.var.guide.ls[[i + 1]]) == unbranched.names.colname] <-
+                current.names.colname
+          }
+          
+          unbranched.data.tb <- 
+            suppressMessages(
+              Reduce(function(x, y) left_join(x, y, by = "resp.id", all = TRUE), unbranched.data.ls)
+            )
+          unbranched.var.guide.tb <- 
+            suppressMessages(
+              Reduce(function(x, y) full_join(x, y, all = TRUE), unbranched.var.guide.ls)
+            )
+          
       #Return Results
         return(
           list(
@@ -441,34 +454,41 @@
         #replacement.vals.colname = "ans.num"
         #na.replacement = NULL
       
-      RecodeIndexMatch <- function(tb, lookup.tb, match.colname, replacement.vals.colname, na.replacement = NULL){
-        for(i in 1:ncol(tb)){
+      RecodeIndexMatch <- 
+        function(
+          tb, 
+          lookup.tb, 
+          match.colname, 
+          replacement.vals.colname, 
+          na.replacement = NULL){
+        
+          for(i in 1:ncol(tb)){
           
-          replacement.vals <- lookup.tb %>% select(UQ(as.name(match.colname))) %>% unlist %>% as.vector %>% unique
-          if((tb[[i]] %>% unique) %in% replacement.vals %>% any %>% not){next()}
-          
-          tb[,i] <- 
-            IndexMatchToVectorFromTibble(
-              vector = tb[[i]],
-              lookup.tb = lookup.tb,
-              match.colname = match.colname,
-              replacement.vals.colname = replacement.vals.colname,
-              mult.replacements.per.cell = TRUE,
-              mult.replacements.separator.char = ",",
-              print.matches = FALSE
-            ) 
-          
-          if(!is.null(na.replacement)){
-            tb[[i]] <- SubNA(tb[[i]], na.replacement = na.replacement)
+            replacement.vals <- lookup.tb %>% select(UQ(as.name(match.colname))) %>% unlist %>% as.vector %>% unique
+            if((tb[[i]] %>% unique) %in% replacement.vals %>% any %>% not){next()}
+            
+            tb[,i] <- 
+              IndexMatchToVectorFromTibble(
+                vector = tb[[i]],
+                lookup.tb = lookup.tb,
+                match.colname = match.colname,
+                replacement.vals.colname = replacement.vals.colname,
+                mult.replacements.per.cell = TRUE,
+                mult.replacements.separator.char = ",",
+                print.matches = FALSE
+              ) 
+            
+            if(!is.null(na.replacement)){
+              tb[[i]] <- SubNA(tb[[i]], na.replacement = na.replacement)
+            }
+            
+            tb <- 
+              SetColClass(
+                tb = tb, 
+                colname = names(tb)[i], 
+                to.class = class(lookup.tb[[which(names(lookup.tb)==replacement.vals.colname)]])
+              )
           }
-          
-          tb <- 
-            SetColClass(
-              tb = tb, 
-              colname = names(tb)[i], 
-              to.class = class(lookup.tb[[which(names(lookup.tb)==replacement.vals.colname)]])
-            )
-        }
         return(tb)
       }
     
