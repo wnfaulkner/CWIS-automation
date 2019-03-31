@@ -61,8 +61,6 @@
     
     LoadCommonPackages()
     library(pander)
-    library(flextable)
-    library(officer)
     library(proftools)
     library(jsonlite)
     library(rlang)
@@ -72,22 +70,22 @@
     #Special for ReporteRs package because it has been archived (https://stackoverflow.com/questions/24194409/how-do-i-install-a-package-that-has-been-archived-from-cran)
       
       #Install Dependencies
-        #if( !require( rJava ) ) install.packages("rJava")
-        #if( !require( ggplot2 ) ) install.packages("ggplot2")
-        #if( !require( base64 ) ) install.packages("base64")
-        #if( !require( highlight ) ) install.packages("highlight")
-        #if( !require( devtools ) ) install.packages("devtools")
-        #if( !require( rvg ) ) install.packages("rvg")
-        #if( !require( gdtools ) ) install.packages("gdtools")
-        #if( !require( png ) ) install.packages("png")
-        #if( !require( R.Utils ) ) install.packages("R.utils")
-        #if( !require( ReporteRsjars ) ) install.packages("ReporteRsjars")
-        #if( !require( jsonlite ) ) install.packages("jsonlite")
-        #if( !require( rlang ) ) install.packages("rlang")
+        if( !require( rJava ) ) install.packages("rJava")
+        if( !require( ggplot2 ) ) install.packages("ggplot2")
+        if( !require( base64 ) ) install.packages("base64")
+        if( !require( highlight ) ) install.packages("highlight")
+        if( !require( devtools ) ) install.packages("devtools")
+        if( !require( rvg ) ) install.packages("rvg")
+        if( !require( gdtools ) ) install.packages("gdtools")
+        if( !require( png ) ) install.packages("png")
+        if( !require( R.Utils ) ) install.packages("R.utils")
+        if( !require( ReporteRsjars ) ) install.packages("ReporteRsjars")
+        if( !require( jsonlite ) ) install.packages("jsonlite")
+        if( !require( rlang ) ) install.packages("rlang")
       
       #Install Archived Packages: ReporteRsjars & ReporteRs  
-        #if( !require( ReporteRsjars ) ) devtools::install_github("davidgohel/ReporteRsjars")
-        #if( !require( ReporteRs ) ) devtools::install_github("davidgohel/ReporteRs")
+        if( !require( ReporteRsjars ) ) devtools::install_github("davidgohel/ReporteRsjars")
+        if( !require( ReporteRs ) ) devtools::install_github("davidgohel/ReporteRs")
     
     #Section Clocking
       section0.duration <- Sys.time() - section0.starttime
@@ -1074,31 +1072,47 @@
         #print(config.tables.df.g)
         
       #Create FlexTable Object
-        ft.g <- 
-          flextable(data = tabledata.df.g) %>%
-          theme_zebra(., odd_body = "#D0ABD6", even_body = "white", odd_header =  "#5F3356") %>% #zebra striping for body
-          fontsize(., size = 15) %>% #font size for whole table
-          font(., fontname = "Century Gothic") %>% #font for whole table
-          align(., align = "center", part = "header") %>% #center align all text
-          color(., color = "white", part = "header") %>% #font color for header
-          bold(., bold = TRUE, part = "header") %>% #bold header text
-          align(., align = "center", part = "body") %>% #center align body text
-          color(., color = "#515151", part = "body") %>% #font color for body
-          border_remove(.) #no borders
+         ft.g <- FlexTable(
+          data = tabledata.df.g,
+          header.columns = TRUE,
+          add.rownames = FALSE,
+          
+          header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #TODO:Should put into configs instead of specifying in code
+          header.text.props = textProperties(
+            color = "white", 
+            font.size = 15,
+            font.family = "Century Gothic",
+            font.weight = "bold"),
+          header.par.props = parProperties(text.align = "center"),
+          body.cell.props = cellProperties(background.color = "white", border.style = "none"),
+          body.text.props = textProperties(
+            color = "#515151",
+            font.size = 15,
+            font.family = "Century Gothic"
+          )
+        )
         
         if(g == 1){
-          ft.g <- 
-            ft.g %>%
-            bold(., bold = TRUE, i = nrow(tabledata.df.g)) %>% #Bold text for totals row
-            fontsize(., size = 15, i = nrow(tabledata.df.g))
+          ft.g[dim(tabledata.df.g)[1],] <- 
+            chprop(
+              textProperties(
+                font.weight = "bold",
+                font.size = 18,
+                font.family = "Century Gothic"
+              )
+            ) #Bold text on last line (totals)
+          ft.g[,1] <- chprop(parProperties(text.align = "center"))
+          #ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(6,dim(tabledata.df.g)[2]-1)))      
+          
         }
         
         if(g != 1){
-          ft.g <- 
-            ft.g %>%
-            align(., align = "right", part = "body", j = 1)
-          #ft.g[,1] <- chprop(parProperties(text.align = "right"))
+          ft.g[,1] <- chprop(parProperties(text.align = "right"))
         }
+        
+        ft.g[1:dim(tabledata.df.g)[1],2:dim(tabledata.df.g)[2]] <- #Center align numbers in all but first column
+          chprop(parProperties(text.align = "center")) 
+        ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
         
         tables.ls.g[[g]] <- ft.g
         
@@ -1153,11 +1167,11 @@
       bar_series_fill.cols <- c("#800080","#ff33ff")
     
     #Text formatting
-      #title.format <- text_prop(color = titlegreen, font.size = 48, font.weight = "bold", font.family = "Century Gothic")
-      #title.format.small <- text_prop(color = titlegreen, font.size = 40, font.weight = "bold", font.family = "Century Gothic")
-      #subtitle.format <- text_prop(color = notesgrey, font.size = 28, font.weight = "bold", font.family = "Century Gothic")
-      #section.title.format <- text_prop(color = "white", font.size = 48, font.weight = "bold", font.family = "Century Gothic")
-      #notes.format <- text_prop(color = notesgrey, font.size = 14, font.family = "Century Gothic")
+      title.format <- textProperties(color = titlegreen, font.size = 48, font.weight = "bold", font.family = "Century Gothic")
+      title.format.small <- textProperties(color = titlegreen, font.size = 40, font.weight = "bold", font.family = "Century Gothic")
+      subtitle.format <- textProperties(color = notesgrey, font.size = 28, font.weight = "bold", font.family = "Century Gothic")
+      section.title.format <- textProperties(color = "white", font.size = 48, font.weight = "bold", font.family = "Century Gothic")
+      notes.format <- textProperties(color = notesgrey, font.size = 14, font.family = "Century Gothic")
       setwd(source.tables.dir)
   
   ###                          ###    
@@ -1169,9 +1183,9 @@
     maxrow.h <- sapply(config.slides.ls.b, dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     printed.reports.ls <- list()
   
-  h <- 10 #LOOP TESTER
+  #h <- 10 #LOOP TESTER
   #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
-  #for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
+  for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
     
     #Reading 'Cadre' so it can be added to file name
       cadre.h <- 
@@ -1201,22 +1215,24 @@
       }else{
         file.name.h <- 
           paste(
+            #cadre.h,
+            #"_",
             unit.ids.sample[h],
             sep = ""
           )
       }
       
       target.path.h <- paste(outputs.dir,
-                             "\\",
+                             "/",
                              file.name.h,
-                             sep="") 
+                             ".pptx", sep="") 
       
       file.copy(template.file, target.path.h)
     
     #Set up powerpoint object 
-      ppt.h <- read_pptx(target.path.h)
-      #options("ReporteRs-fontsize" = 20)
-      #options("ReporteRs-default-font" = "Century Gothic")
+      ppt.h <- pptx(template = target.path.h )
+      options("ReporteRs-fontsize" = 20)
+      options("ReporteRs-default-font" = "Century Gothic")
     
     #Set up report-level inputs
       config.graphs.df.h <- 
@@ -1238,9 +1254,9 @@
 #   ### LOOP "i" BY SLIDE   ###
     ###                     ###
     
-    i <- 1 #LOOP TESTER
+    #i <- 2 #LOOP TESTER
     #for(i in 1:4){ #LOOP TESTER
-    #for(i in 1:dim(config.slides.ls.b[[h]])[1]){
+    for(i in 1:dim(config.slides.ls.b[[h]])[1]){
       
       config.slide.df.i <- config.slides.ls.b[[h]] %>% .[i,]
       slide.type.id.i <- config.slide.df.i$slide.type.id
@@ -1248,22 +1264,9 @@
       
       #SLIDE FORMATION
       
-        ppt.h <- add_slide(ppt.h, layout = layout.i, master = layout.i)
-        ppt.h <- 
-          ph_empty_at(ppt.h, left = 12.32, top = 6.88, width = 0.29, height = 0.3) %>%
-          #ph_add_par(id_chr = "3") %>%
-          ph_add_text("test")
-          #ph_with_text(str = i, type = "sldNum", index = 1)
-        
-        
-        print(ppt.h, target.path.h)
-            #location = ph_location(left = 1, top = 1, width = 1, height = 1))
-          
-          
-          
-          #ph_with_text(ppt.h, type = "sldNum", str = i)
-        
-        
+        ppt.h <- addSlide(ppt.h, slide.layout = layout.i)
+        ppt.h <- addPageNumber( ppt.h )
+      
       #ADD GRAPHS
       
         #Graph Loop Inputs
@@ -1283,9 +1286,9 @@
 #         ### LOOP "k" BY GRAPH ###
           ###                   ###
           
-          k <- 1 #LOOP TESTER
+          #k <- 1 #LOOP TESTER
           #for(k in 1:2){ #LOOP TESTER
-          #for(k in 1:dim(config.graphs.df.i)[1]){
+          for(k in 1:dim(config.graphs.df.i)[1]){
             if(dim(config.graphs.df.i)[1] < 1){
               #print(paste("No graph objects for slide.id: ",config.slide.df.i$slide.type.id,sep = ""))
               next()
@@ -1293,17 +1296,14 @@
             
             graph.k <- graphs.ls.h[config.graphs.df.i$row.i[k]]
             ppt.h <- 
-              ph_with_gg(
-                x = ppt.h,
-                value = graph.k,
-                type = "ctrTitl",
-                
-                #fun = print,
-                #x = graph.k,
+              addPlot(
+                ppt.h,
+                fun = print,
+                x = graph.k,
                 height = config.graphs.df.i$height[k],
                 width = config.graphs.df.i$width[k],
-                left = config.graphs.df.i$offx[k],
-                top = config.graphs.df.i$offy[k]
+                offx = config.graphs.df.i$offx[k],
+                offy = config.graphs.df.i$offy[k]
               )
             
           } # END OF LOOP "k" BY GRAPH
@@ -1351,9 +1351,9 @@
           config.pot.i <- filter(config.pot.i, grepl(as.character(config.slide.df.i$module), config.pot.i$module))
         }  
         
-        j <- 1 #LOOP TESTER
+        #j <- 1 #LOOP TESTER
         #for(j in 1:2){ #LOOP TESTER
-        #for(j in 1:nrow(config.pot.i)){
+        for(j in 1:dim(config.pot.i)[1]){
           if(dim(config.pot.i)[1] < 1){
             #print(paste("No text objects for slide.id: ",config.slide.df.i$slide.id,sep = ""))
             next()
@@ -1376,54 +1376,38 @@
               sep = ""
             )
           
-          pot.format.j <- 
-            fp_text(
-              color = 
-                #alpha(
-                  ifelse(!is.na(config.pot.i$color[j]),
-                         config.pot.i$color[j] %>% 
-                         strsplit(.,",") %>% unlist %>% as.numeric %>% 
-                         rgb(red = .[1],green = .[2],blue = .[3] ,maxColorValue = 255) %>% .[1],
-                         "black"
-                  ),
-                  #,1),
-              font.size = config.pot.i$font.size[j], 
-              bold = ifelse(is.na(config.pot.i$font.weight[j]),FALSE,TRUE),
-              font.family = config.pot.i$font[j]
+          pot.j <- 
+            pot(
+              pot.content.j,
+              textProperties(
+                color = 
+                  alpha(
+                    ifelse(!is.na(config.pot.i$color[j]),
+                           config.pot.i$color[j] %>% 
+                             strsplit(.,",") %>% unlist %>% as.numeric %>% 
+                             rgb(red = .[1],green = .[2],blue = .[3] ,maxColorValue = 255) %>% .[1],
+                           "black"
+                    )
+                    ,1),
+                font.size = config.pot.i$font.size[j], 
+                font.weight = ifelse(is.na(config.pot.i$font.weight[j]),'normal',config.pot.i$font.weight[j]),
+                font.family = config.pot.i$font[j]
+              )
             )
-          
           
           ppt.h <- 
-            ph_with_text(
-              x = ppt.h,
-              str = pot.content.j,
-              location = officer::ph_location(
-                left = config.pot.i$offx[j],
-                top = config.pot.i$offy[j],
-                height = config.pot.i$height[j],
-                width = config.pot.i$width[j]
+            addParagraph(
+              ppt.h,
+              pot.j,
+              height = config.pot.i$height[j],
+              width = config.pot.i$width[j],
+              offx = config.pot.i$offx[j],
+              offy = config.pot.i$offy[j],
+              par.properties = parProperties(
+                text.align=config.pot.i$text.align[j], 
+                padding=0
               )
-            ) %>%
-            ph_add_text(
-              x = ., 
-              str = pot.content.j,
-              type = NULL,
-              ph_label = NULL,
-              style = pot.format.j
             )
-          
-            #addParagraph(
-            #  ppt.h,
-            #  pot.format.j,
-            #  height = config.pot.i$height[j],
-            #  width = config.pot.i$width[j],
-            #  offx = config.pot.i$offx[j],
-            #  offy = config.pot.i$offy[j],
-            #  par.properties = parProperties(
-            #    text.align=config.pot.i$text.align[j], 
-            #    padding=0
-            #  )
-            #)
           
         } #END OF LOOP "j" BY POT OBJECT (ROW OF POT CONFIG TABLE)
       
@@ -1433,9 +1417,8 @@
       
     } #END OF LOOP "i" BY SLIDE
     
-    #writeDoc(ppt.h, file = target.path.h) #Write complete pptx object to file
-    print(ppt.h, file = target.path.h)    
-
+    writeDoc(ppt.h, file = target.path.h) #Write complete pptx object to file
+    
     print(h)
     printed.reports.ls[[h]] <- unit.ids.sample[h]
   
