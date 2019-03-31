@@ -28,7 +28,6 @@
   # ESTABLISH BASE DIRECTORIES
   
     #M900
-
       working.dir <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-03 CWIS Auto Phase 7"
       rproj.dir <- "C:\\Users\\willi\\Documents\\GIT PROJECTS\\CWIS-automation"
 
@@ -1170,7 +1169,7 @@
     maxrow.h <- sapply(config.slides.ls.b, dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     printed.reports.ls <- list()
   
-  h <- 16 #LOOP TESTER
+  h <- 10 #LOOP TESTER
   #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
   #for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
     
@@ -1208,7 +1207,7 @@
       }
       
       target.path.h <- paste(outputs.dir,
-                             "/",
+                             "\\",
                              file.name.h,
                              sep="") 
       
@@ -1216,8 +1215,8 @@
     
     #Set up powerpoint object 
       ppt.h <- read_pptx(target.path.h)
-      options("ReporteRs-fontsize" = 20)
-      options("ReporteRs-default-font" = "Century Gothic")
+      #options("ReporteRs-fontsize" = 20)
+      #options("ReporteRs-default-font" = "Century Gothic")
     
     #Set up report-level inputs
       config.graphs.df.h <- 
@@ -1239,7 +1238,7 @@
 #   ### LOOP "i" BY SLIDE   ###
     ###                     ###
     
-    i <- 3 #LOOP TESTER
+    i <- 1 #LOOP TESTER
     #for(i in 1:4){ #LOOP TESTER
     #for(i in 1:dim(config.slides.ls.b[[h]])[1]){
       
@@ -1250,8 +1249,21 @@
       #SLIDE FORMATION
       
         ppt.h <- add_slide(ppt.h, layout = layout.i, master = layout.i)
-        ppt.h <- ph_with_text(ppt.h, type = "sldNum", str = i)
-      
+        ppt.h <- 
+          ph_empty_at(ppt.h, left = 12.32, top = 6.88, width = 0.29, height = 0.3) %>%
+          #ph_add_par(id_chr = "3") %>%
+          ph_add_text("test")
+          #ph_with_text(str = i, type = "sldNum", index = 1)
+        
+        
+        print(ppt.h, target.path.h)
+            #location = ph_location(left = 1, top = 1, width = 1, height = 1))
+          
+          
+          
+          #ph_with_text(ppt.h, type = "sldNum", str = i)
+        
+        
       #ADD GRAPHS
       
         #Graph Loop Inputs
@@ -1421,8 +1433,9 @@
       
     } #END OF LOOP "i" BY SLIDE
     
-    writeDoc(ppt.h, file = target.path.h) #Write complete pptx object to file
-    
+    #writeDoc(ppt.h, file = target.path.h) #Write complete pptx object to file
+    print(ppt.h, file = target.path.h)    
+
     print(h)
     printed.reports.ls[[h]] <- unit.ids.sample[h]
   
