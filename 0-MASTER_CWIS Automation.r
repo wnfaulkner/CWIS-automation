@@ -41,7 +41,7 @@
       rproj.dir <- rproj.dir  #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
     
     #Source Tables Directory (raw data, configs, etc.)
-      source.tables.dir <- paste(working.dir,"\\3_source_tables\\", sep = "")
+      source.tables.dir <- paste(working.dir,"\\3_source_resources\\", sep = "")
     
   # LOAD SOURCE CODE
       
@@ -110,7 +110,7 @@
     source("1-import_functions.r")
   
   #Import Config Tables
-    configs.ss <- gs_key("188to81eW5DRDK9VxjYkfzTolFLR4YnlBp-XBDTDI44o",verbose = TRUE) 
+    configs.ss <- gs_key("1ku_OC9W87ut6W1qrdpFeYBlWlPN5X4fGHJ3h1k0HrOA",verbose = TRUE) 
     
     #Import all tables from config google sheet as tibbles
       all.configs.ls <- GoogleSheetLoadAllWorksheets(configs.ss)
@@ -244,14 +244,17 @@
           replacement.vals.colname = "var.id",
           mult.replacements.per.cell = FALSE
         )
-
+        
     #BOTH DATA SOURCES
+      #Remove unnecessary columns from response table (any column with fewer than two unique values, including NA)
+        resp2b.tb <- resp2.tb[,apply(resp2.tb, 2, function(x) length(unique(x)) > 1)] #TODO: Make into utils function
+        
       #Add id column which is either unique district name or unique building_district combo &
         #filter out rows with nothing in columns necessary to define unit.id 
         #(e.g. district and building)
         
         resp3.tb <- CreateUnitIDCol(
-          tb = resp2.tb,
+          tb = resp2b.tb,
           id.unit = report.unit,
           additional.colnames = c("district"),
           remove.blanks = "ANY.MISSING",
@@ -446,7 +449,7 @@
             outputs.dir <- 
               paste(
                 working.dir,
-                "\\4_outputs\\",
+                "\\5_outputs\\",
                 gsub(":",".",Sys.time()), 
                 sep = ""
               )
@@ -454,7 +457,7 @@
             outputs.dir <- 
               paste(
                 working.dir,
-                "\\4_outputs\\",
+                "\\5_outputs\\",
                 gsub(":",".",Sys.time()),
                 "_FULL PRINT",
                 sep = ""

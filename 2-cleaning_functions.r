@@ -109,7 +109,7 @@
               id.varname = replacement.vals.colname,
               split.varname = match.colname, 
               split.char = ","
-            ) #strsplit(match.col, mult.replacements.separator.char) %>% unlist %>% as.vector
+            ) 
         }
         
         match.col <- lookup.tb %>% select(match.colname) %>% unlist %>% as.vector
