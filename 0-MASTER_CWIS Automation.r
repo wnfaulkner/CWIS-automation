@@ -107,7 +107,7 @@
     source("1-import_functions.r")
   
   #Import Config Tables
-    configs.ss <- gs_key("188to81eW5DRDK9VxjYkfzTolFLR4YnlBp-XBDTDI44o",verbose = TRUE) 
+    configs.ss <- gs_key("1ku_OC9W87ut6W1qrdpFeYBlWlPN5X4fGHJ3h1k0HrOA",verbose = TRUE) 
     
     #Import all tables from config google sheet as tibbles
       all.configs.ls <- GoogleSheetLoadAllWorksheets(configs.ss)
