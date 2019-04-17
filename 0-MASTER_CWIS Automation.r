@@ -28,7 +28,7 @@
   # ESTABLISH BASE DIRECTORIES
   
     #M900
-      working.dir <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-03 CWIS Auto Phase 7"
+      working.dir <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-04 CWIS Auto Phase 8"
       rproj.dir <- "C:\\Users\\willi\\Documents\\GIT PROJECTS\\CWIS-automation"
 
       
@@ -107,7 +107,7 @@
     source("1-import_functions.r")
   
   #Import Config Tables
-    configs.ss <- gs_key("1ku_OC9W87ut6W1qrdpFeYBlWlPN5X4fGHJ3h1k0HrOA",verbose = TRUE) 
+    configs.ss <- gs_key("1wukfxVKxx8vXq1ZsU1_eqr3Yh0e00u8WLqepOe9I9YU",verbose = TRUE) 
     
     #Import all tables from config google sheet as tibbles
       all.configs.ls <- GoogleSheetLoadAllWorksheets(configs.ss)
@@ -422,7 +422,8 @@
                 "unit.id",
                 q.unbranched.tb %>% 
                   filter(q.unbranched.tb$necessary.for.reports == "yes") %>% select(var.id) %>% unlist
-              )] %>%
+              )
+            ] %>%
             #DON'T ACTUALLY WANT TO DO THIS - WANT TO PRINT REPORTS FOR BUILDINGS THAT RESPONDED TO SURVEY 
             #BUT DIDN'T ANSWER ANY CWIS QUESTIONS.
             #filter(answer != "") %>% #filter out rows with blank answers
@@ -437,7 +438,25 @@
                 q.long.tb %>% select(var.id, module, practice),
                 by = c("question" = "var.id")
               )
-      
+            
+          #Split Col Reshape on Module column so don't have "cfa,etlp" values
+            resp.long.tb <-
+              SplitColReshape.ToLong(
+                df = resp.long.tb,
+                id.varname = "resp.id",
+                split.varname = "module",
+                split.char = ","
+              ) %>%
+              filter(answer != "")
+            
+          #Convert answer column to numeric
+            resp.long.tb$answer <- resp.long.tb$answer %>% substr(., 1,1) %>% as.numeric()
+            
+          #Filter out rows with no answer
+            resp.long.tb$district.farmington <-
+              ifelse(grepl("farmington",resp.long.tb$district),"farmington","other")
+              
+              
         #Establish Outputs Directory
           if(sample.print){
             outputs.dir <- 
@@ -480,7 +499,7 @@
             row.names = FALSE
           )
           
-        #Write Wide Data to CSV File
+        #Write Long Data to CSV File
           longdata.file.name <- 
             paste( 
               "longdata_",
