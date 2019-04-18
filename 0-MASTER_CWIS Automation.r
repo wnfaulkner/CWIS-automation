@@ -745,12 +745,12 @@
             dat = .,
             dat.config = config.graphs.df.d
           ) %>%
-          SplitColReshape.ToLong(
-            df = .,
-            id.varname = "resp.id",
-            split.varname = "module",
-            split.char = ","
-          ) %>%
+          #SplitColReshape.ToLong(
+          #  df = .,
+          #  id.varname = "resp.id",
+          #  split.varname = "module",
+          #  split.char = ","
+          #) %>%
           group_by(!!! syms(group_by.d)) %>%
           summarize.graph.fun(config.input = config.graphs.df.d, dat = .) %>%
           left_join(axis.cat.labels, ., by = c(group_by.d)) %>%
