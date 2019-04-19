@@ -24,7 +24,7 @@ source("utils_wnf.r")
 
 #Loop Expander for creating full config tables
   #Test Inputs
-    configs = config.graph.types.tb
+    configs = config.slide.types.tb
     loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3") 
     manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3")
     collate.varnames = c("slide.section.1","slide.section.2","slide.section.3")
@@ -44,7 +44,7 @@ source("utils_wnf.r")
     output.ls <- list()
     
     #c = 2 #LOOP TESTER: NO LOOPS
-    #c = 3 #LOOP TESTER: ONE LOOP VAR
+    #c = 9 #LOOP TESTER: ONE LOOP VAR
     #c = 4 #LOOP TESTER: TWO LOOP VARS
     #for(c in 2:3){
     for(c in 1:dim(configs)[1]){
@@ -54,7 +54,8 @@ source("utils_wnf.r")
       
       #Make data frame with configurations repeated out across all unique combinations of loop.varname(s) in source.data      
       
-        loop.varnames.c <- configs[c,names(configs) %in% loop.varnames] %>% 
+        loop.varnames.c <- 
+          configs[c,names(configs) %in% loop.varnames] %>% 
           as.matrix %>% 
           as.vector %>% 
           RemoveNA()
@@ -68,46 +69,71 @@ source("utils_wnf.r")
           UniqueCombnFromColnames(source.data,loop.varnames.c) %>%
           cbind(configs.c,.)
         
-        #output.c <- output1.c[order(match(order.c, output1.c$module)),] 
-          
         output.ls[[c]] <- output.c #store loop output
         
     } ### END OF LOOP "C" BY ROW OF CONFIG INPUT ###
     
     output1.df <- rbind.fill(output.ls)
     
-    #Manually Ordering Result (if necessary)
-      if(is.na(configs %>% select(manual.order.varnames[1]) %>% unique) %>% all){
-        result <- output1.df
-      }else{
-        manual.order.varname <- #TODO: Put in config table?
+    #Collate & Manual Order 
+    
+      output2.ls <- list()
+      #i = 10
+      for(i in 1:length(unique(output1.df$slide.section.1))){
+        
+        slide.section.i <- unique(output1.df$slide.section.1)[i]
+        df.i <- output1.df %>% filter(slide.section.1 == slide.section.i) %>% as_tibble()
+        loop.varnames.i <- 
+          configs[configs$slide.section.1 == slide.section.i,names(configs) %in% loop.varnames] %>% 
+          unlist %>% as.vector %>% RemoveNA() %>% unique
+        
+        if(length(loop.varnames.i) == 0){
+          output2.ls[[i]] <- df.i
+          next()
+        }
+      
+      #Manually Ordering Result (if necessary)
+        manual.order.ls <-
           UniqueValsFromColnames(
             df = output1.df,
-            varnames = "slide.loop.var.1"
-          ) %>% unlist %>% as.vector
-        
-        ordering.vector <- 
-          configs %>% 
-          select(manual.order.varnames[1]) %>% 
-          unique %>% 
-          unlist %>% 
-          RemoveNA %>% 
-          strsplit(., ",") %>% 
-          unlist
-        
-        result <- 
-          ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable(
-            tb = output1.df,
-            tb.order.varnames = c("slide.section.1", manual.order.varname),
-            ordering.vectors.list = 
-              list(
-                output1.df$slide.section.1[order(output1.df$slide.section.1)] %>% unique,
-                configs$slide.order.1 %>% unique %>% unlist %>% RemoveNA %>% strsplit(., ",") %>% unlist
-              )
+            varnames = manual.order.varnames[1:length(loop.varnames.i)]
           )
+        
+        #Ordering vector for sub-sections
+          if(length(loop.varnames.i) == 1){
+            order.v.i <-
+              order(
+                df.i$slide.section.1,
+                df.i %>% select(loop.varnames.i[1]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[1]]))]
+              )
+          }
+          if(length(loop.varnames.i) == 2){
+            order.v.i <-
+              order(
+                df.i$slide.section.1,
+                df.i %>% select(loop.varnames.i[1]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[1]]))], 
+                df.i$slide.section.2,
+                df.i %>% select(loop.varnames.i[2]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[2]]))]
+              )
+          }
+          if(length(loop.varnames.i) == 3){
+            order.v.i <-
+              order(
+                df.i$slide.section.1,
+                df.i %>% select(loop.varnames.i[1]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[1]]))],
+                df.i$slide.section.2,
+                df.i %>% select(loop.varnames.i[2]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[2]]))],
+                df.i$slide.loop.var.3,
+                df.i %>% select(loop.varnames.i[3]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[3]]))]
+              )
+          }
+          
+        output2.ls[[i]] <- df.i[order.v.i,]
       }
     
+      result <- do.call(rbind, output2.ls) %>% as_tibble()
+  
     return(result)
-    
+   
   } #END OF LOOP EXPANDER FUNCTION
   

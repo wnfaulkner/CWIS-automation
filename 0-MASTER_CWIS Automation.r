@@ -264,7 +264,7 @@
       #Filter out district office & blank schools
         resp4.tb <- 
           resp3.tb %>% 
-          filter(!grepl("district office", unit.id)) %>%
+          filter(!grepl("district office", building)) %>%
           filter(building != "")
         
       #TODO:Filter out test responses
@@ -586,9 +586,9 @@
     maxrow.b <- length(unit.ids.sample)
     b.loop.startime <- Sys.time()
   
-  #b <- 2 #LOOP TESTER (19 = "Raytown C-2")
+  b <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
-  for(b in 1:length(unit.ids.sample)){   #START OF LOOP BY REPORT UNIT
+  #for(b in 1:length(unit.ids.sample)){   #START OF LOOP BY REPORT UNIT
   
     loop.start.time.b <- Sys.time()
     
