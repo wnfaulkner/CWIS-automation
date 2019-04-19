@@ -1,6 +1,6 @@
-#########################################################
-##### 	CWIS Automation for MMD                   	#####
-#########################################################
+#0000000000000000000000000000000000000000000000000000000#
+#      	CWIS Automation for MMD                   	    #
+#0000000000000000000000000000000000000000000000000000000#
 
 
 # 0-SETUP -----------------------------------------------------------
@@ -31,18 +31,24 @@
       working.dir <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-04 CWIS Auto Phase 8"
       rproj.dir <- "C:\\Users\\willi\\Documents\\GIT PROJECTS\\CWIS-automation"
 
-      
     #Thinkpad T470
       #working.dir <- "G:\\My Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. Missouri - GDRIVE\\8. CWIS\\2018-12 Green Reports Phase 6"
       #rproj.dir <- "C:\\Users\\WNF\\Documents\\Git Projects\\CWIS-automation"
     
-    #Source Code Directory
-      rproj.dir <- rproj.dir  #Changed back to using 'Documents' folder after attempting to move project into Google Drive but running into problems
+    #Check Directories
+      working.dir <- if(!dir.exists(working.dir)){choose.dir()}else{working.dir}
+      rproj.dir <- if(!dir.exists(rproj.dir)){choose.dir()}else{rproj.dir}
     
     #Source Tables Directory (raw data, configs, etc.)
       source.tables.dir <- paste(working.dir,"\\3_source_tables\\", sep = "")
+      if(dir.exists(source.tables.dir)){ 
+        print("source.tables.dir exists.")
+      }else{
+        print("source.tables.dir does not exist yet.")
+      }
+      print(source.tables.dir)
     
-  # LOAD SOURCE CODE
+  # LOAD UTILS FUNCTIONS
       
     setwd(rproj.dir)
     source("utils_wnf.r")
@@ -126,13 +132,12 @@
       )
 
   #Import Responses table (main data, imported as data frame)
-    
     setwd(source.tables.dir)
     
     resp1.tb <- read.csv(
       file =  
         MostRecentlyModifiedFilename(
-          title.string.match = "SurveyExport",
+          title.string.match = main.data.file.name.character.string,
           file.type = "csv",
           dir = source.tables.dir
         ),
@@ -140,6 +145,20 @@
       header = TRUE
     ) %>% as_tibble(.)
     
+  #Load previous period comparison data if printing purple reports
+    if(report.type == "purple"){
+      resp.comparison.tb <- read.csv(
+        file =  
+          MostRecentlyModifiedFilename(
+            title.string.match = comparison.period.data.file.name,
+            file.type = "csv",
+            dir = source.tables.dir
+          ),
+        stringsAsFactors = FALSE,
+        header = TRUE
+      ) %>% as_tibble(.)
+    }
+  
   #Section Clocking
     section1.duration <- Sys.time() - section1.starttime
     section1.duration
@@ -161,7 +180,8 @@
   #config.pot.tb
   #buildings.tb
   #questions.tb
-  #resp1.tb (initial responses dataset which will need extensive cleaning and organization in next sections)
+  #resp1.tb - main responses dataset which will need extensive cleaning and organization in next sections
+  #resp.comparison.tb - comparison time period response dataset
 
 
 # 2-CLEANING --------
@@ -209,8 +229,8 @@
    
     
     #SURVEYGIZMO-SPECIFIC
-      #Set up variable 'row.1' so can replace response variable names with short names
-      q.branched.tb$row.1 <- SubRepeatedCharWithSingleChar(string.vector = q.branched.tb$row.1, char = ".")  
+      #Set up variable 'raw.var.id' so can replace response variable names with short names
+      q.branched.tb$raw.var.id <- SubRepeatedCharWithSingleChar(string.vector = q.branched.tb$raw.var.id, char = ".")  
     
     #QUALTRICS: add 'x' to questions so match export exactly
       #TODO: couldn't just remove it from column names? Wouldn't that be more efficient?
@@ -237,7 +257,7 @@
         names(resp2.tb) <- IndexMatchToVectorFromTibble(
           vector = names(resp2.tb),
           lookup.tb = q.branched.tb,
-          match.colname = "row.1",
+          match.colname = "raw.var.id",
           replacement.vals.colname = "var.id",
           mult.replacements.per.cell = FALSE
         )
@@ -311,7 +331,7 @@
               data.id.varname = "resp.id",
               var.guide.tb = q.branched.tb,
               current.names.colname = "var.id",
-              unbranched.names.colname = "branch.master.var.id"
+              unbranched.names.colname = "unbranched.var.id"
             ) %>% .[[1]] 
         
         #Unbranched Questions table
@@ -321,7 +341,7 @@
               data.id.varname = "resp.id",
               var.guide.tb = q.branched.tb,
               current.names.colname = "var.id",
-              unbranched.names.colname = "branch.master.var.id"
+              unbranched.names.colname = "unbranched.var.id"
             ) %>% .[[2]] %>%
             filter(., necessary.in.final.data == "yes") #filter to questions necessary to final data
           
