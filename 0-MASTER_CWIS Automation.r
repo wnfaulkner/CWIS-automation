@@ -145,20 +145,6 @@
       header = TRUE
     ) %>% as_tibble(.)
     
-  #Load previous period comparison data if printing purple reports
-    if(report.type == "purple"){
-      resp.comparison.tb <- read.csv(
-        file =  
-          MostRecentlyModifiedFilename(
-            title.string.match = comparison.period.data.file.name,
-            file.type = "csv",
-            dir = source.tables.dir
-          ),
-        stringsAsFactors = FALSE,
-        header = TRUE
-      ) %>% as_tibble(.)
-    }
-  
   #Section Clocking
     section1.duration <- Sys.time() - section1.starttime
     section1.duration
@@ -218,16 +204,16 @@
       ifelse(names(resp1.tb)[1] == "startdate", TRUE, FALSE)
     
   #q.branched.tb (round 1)
-    q.branched.tb <- #Restrict to rows for questions for this year/semester 
-      questions.tb[ 
-        as.character(questions.tb$year) == data.year & #year
-        tolower(questions.tb$semester) == data.semester #semester
-        ,]
-    q.branched.tb <- LowerCaseNames(q.branched.tb)    #Lower-case all variable names
+    q.branched.tb <- LowerCaseNames(questions.tb)    #Lower-case all variable names
     names(q.branched.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(q.branched.tb), char = ".") #Replace any number of repeated periods with a single period
     q.branched.tb <- LowerCaseCharVars(q.branched.tb)  #Lower-case all content
-   
     
+    q.branched.tb <- #Restrict to rows for questions for this year/semester 
+      q.branched.tb[ 
+        as.character(q.branched.tb$year) == data.year & #year
+        tolower(q.branched.tb$semester) == data.semester #semester
+        ,]
+   
     #SURVEYGIZMO-SPECIFIC
       #Set up variable 'raw.var.id' so can replace response variable names with short names
       q.branched.tb$raw.var.id <- SubRepeatedCharWithSingleChar(string.vector = q.branched.tb$raw.var.id, char = ".")  
@@ -254,13 +240,14 @@
         
     #SURVEYGIZMO-SPECIFIC: 
       #Replace names of resp1.df with short names from q.branched.tb
-        names(resp2.tb) <- IndexMatchToVectorFromTibble(
-          vector = names(resp2.tb),
-          lookup.tb = q.branched.tb,
-          match.colname = "raw.var.id",
-          replacement.vals.colname = "var.id",
-          mult.replacements.per.cell = FALSE
-        )
+        names(resp2.tb) <- 
+          IndexMatchToVectorFromTibble(
+            vector = names(resp2.tb),
+            lookup.tb = q.branched.tb,
+            match.colname = "raw.var.id",
+            replacement.vals.colname = "var.id",
+            mult.replacements.per.cell = FALSE
+          )
 
     #BOTH DATA SOURCES
       #Add id column which is either unique district name or unique building_district combo &
@@ -270,13 +257,15 @@
         resp3.tb <- CreateUnitIDCol(
           tb = resp2.tb,
           id.unit = report.unit,
-          additional.colnames = c("district"),
           remove.blanks = "ANY.MISSING",
           paste.char = "_"
         )
       
-      #Filter out district office rows
-        resp4.tb <- resp3.tb %>% filter(!grepl("district office", resp3.tb$unit.id))
+      #Filter out district office & blank schools
+        resp4.tb <- 
+          resp3.tb %>% 
+          filter(!grepl("district office", unit.id)) %>%
+          filter(building != "")
         
       #TODO:Filter out test responses
           
@@ -323,30 +312,39 @@
           ]
         
       #Unbranch columns
-        
-        #Response data
-          resp9.tb <- 
-            Unbranch(
-              data.tb = resp8.tb,
-              data.id.varname = "resp.id",
-              var.guide.tb = q.branched.tb,
-              current.names.colname = "var.id",
-              unbranched.names.colname = "unbranched.var.id"
-            ) %>% .[[1]] 
-        
-        #Unbranched Questions table
-          q.unbranched.tb <- 
-            Unbranch(
-              data.tb = resp8.tb,
-              data.id.varname = "resp.id",
-              var.guide.tb = q.branched.tb,
-              current.names.colname = "var.id",
-              unbranched.names.colname = "unbranched.var.id"
-            ) %>% .[[2]] %>%
-            filter(., necessary.in.final.data == "yes") #filter to questions necessary to final data
+         
+        if(q.branched.tb$unbranched.var.id %>% is.na %>% all){
           
-          cwis.varnames.unbranched <- 
-            q.unbranched.tb$var.id[!is.na(q.unbranched.tb$module)]
+          resp9.tb <- resp8.tb
+          q.unbranched.tb <- q.branched.tb
+          cwis.varnames.unbranched <- cwis.varnames.branched
+          
+        }else{
+          
+          #Response data
+            resp9.tb <- 
+              Unbranch(
+                data.tb = resp8.tb,
+                data.id.varname = "resp.id",
+                var.guide.tb = q.branched.tb,
+                current.names.colname = "var.id",
+                unbranched.names.colname = "unbranched.var.id"
+              ) %>% .[[1]] 
+            
+          #Unbranched Questions table  
+            q.unbranched.tb <- 
+              Unbranch(
+                data.tb = resp8.tb,
+                data.id.varname = "resp.id",
+                var.guide.tb = q.branched.tb,
+                current.names.colname = "var.id",
+                unbranched.names.colname = "unbranched.var.id"
+              ) %>% .[[2]] %>%
+              filter(., necessary.in.final.data == "yes") #filter to questions necessary to final data
+          
+            cwis.varnames.unbranched <- 
+              q.unbranched.tb$var.id[!is.na(q.unbranched.tb$module)]
+        }
           
       #Data type conversions for CWIS vars
         #Text vars (freq & agreement): 
@@ -444,11 +442,8 @@
                   filter(q.unbranched.tb$necessary.for.reports == "yes") %>% select(var.id) %>% unlist
               )
             ] %>%
-            #DON'T ACTUALLY WANT TO DO THIS - WANT TO PRINT REPORTS FOR BUILDINGS THAT RESPONDED TO SURVEY 
-            #BUT DIDN'T ANSWER ANY CWIS QUESTIONS.
-            #filter(answer != "") %>% #filter out rows with blank answers
             as_tibble()
-          
+                 
           #Add module and practice variables for looping 
             #TODO: need to abstract? Just for module variable or are there others?
             
@@ -466,15 +461,22 @@
                 id.varname = "resp.id",
                 split.varname = "module",
                 split.char = ","
-              ) %>%
-              filter(answer != "")
+              ) 
             
           #Convert answer column to numeric
             resp.long.tb$answer <- resp.long.tb$answer %>% substr(., 1,1) %>% as.numeric()
             
           #Filter out rows with no answer
-            resp.long.tb$district.farmington <-
-              ifelse(grepl("farmington",resp.long.tb$district),"farmington","other")
+            resp.long.tb <- 
+              resp.long.tb %>% 
+              filter(!is.na(answer)) %>% 
+              filter(answer != "") %>% 
+              as_tibble
+            
+          #Create variable to permit pivoting comparing one district with the rest
+            #isolate.district.name
+            #resp.long.tb$special.district <-
+            #  ifelse(grepl(isolate.district.name,resp.long.tb$district),isolate.district.name,"other")
               
               
         #Establish Outputs Directory

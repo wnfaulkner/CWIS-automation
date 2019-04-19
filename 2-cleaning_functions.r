@@ -158,8 +158,9 @@
         
         #Check that additional.colnames of length one or greater
           if(missing(additional.colnames)){
-            print("No additional.colnames specified. Returning tb with additional column 'id' equal to column specified in id.unit.")
-            return(tb %>% mutate(id = tb %>% select(id.unit) %>% unlist))
+            print("No additional.colnames specified. Returning tb with additional column 'unit.id' equal to column specified in id.unit.")
+            return(tb %>% mutate(unit.id = tb %>% select(id.unit) %>% unlist))
+            stop()
           }
         
         #Check additional.colnames in tb names
