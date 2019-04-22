@@ -310,21 +310,31 @@
               which(!grepl("resp.id|unit.id", names(resp7.tb)))
             )
           ]
+      
+      #Add variables for: building.id, school.level
+        resp8.tb$building.id <- paste(resp8.tb$district, "_", resp8.tb$building, sep = "")
+        
+        resp9.tb <-
+          left_join(
+            resp8.tb,
+            buildings.tb %>% select(building.id,building.level),
+            by = c("building.id")
+          )
         
       #Unbranch columns
          
         if(q.branched.tb$unbranched.var.id %>% is.na %>% all){
           
-          resp9.tb <- resp8.tb
+          resp10.tb <- resp9.tb
           q.unbranched.tb <- q.branched.tb
           cwis.varnames.unbranched <- cwis.varnames.branched
           
         }else{
           
           #Response data
-            resp9.tb <- 
+            resp10.tb <- 
               Unbranch(
-                data.tb = resp8.tb,
+                data.tb = resp9.tb,
                 data.id.varname = "resp.id",
                 var.guide.tb = q.branched.tb,
                 current.names.colname = "var.id",
@@ -334,7 +344,7 @@
           #Unbranched Questions table  
             q.unbranched.tb <- 
               Unbranch(
-                data.tb = resp8.tb,
+                data.tb = resp9.tb,
                 data.id.varname = "resp.id",
                 var.guide.tb = q.branched.tb,
                 current.names.colname = "var.id",
@@ -362,7 +372,7 @@
             
           recode.addnums.tb <- #add numbers to text variables
             RecodeIndexMatch(
-              tb = SelectColsIn(resp9.tb, "IN", c("resp.id", cwis.varnames.unbranched)),
+              tb = SelectColsIn(resp10.tb, "IN", c("resp.id", cwis.varnames.unbranched)),
               lookup.tb = config.ans.opt.tb,
               match.colname = "ans.text.freq",
               replacement.vals.colname = "ans.text.freq.num",
@@ -408,7 +418,7 @@
         #Wide table for export
           resp.wide.tb <- 
             left_join(
-              SelectColsIn(resp9.tb, "NOT.IN", cwis.varnames.unbranched),
+              SelectColsIn(resp10.tb, "NOT.IN", cwis.varnames.unbranched),
               recode.addnums.tb,
               by = "resp.id"
             ) %>%
@@ -438,6 +448,8 @@
                 "question",
                 "answer",
                 "unit.id",
+                "building.id",
+                "building.level",
                 q.unbranched.tb %>% 
                   filter(q.unbranched.tb$necessary.for.reports == "yes") %>% select(var.id) %>% unlist
               )
@@ -693,9 +705,9 @@
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     c.loop.startime <- Sys.time()
     
-  #c <- 1 #LOOP TESTER 
+  c <- 1 #LOOP TESTER 
   #for(c in slider.unit.ids.sample){   #LOOP TESTER
-  for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
+  #for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
     
     #Loop Inputs (both graphs and tables)
       unit.id.c <- unit.ids.sample[c]
@@ -728,9 +740,9 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    #d <- 1
+    d <- 1
     #for(d in 1:2){ #LOOP TESTER
-    for(d in 1:dim(config.graphs.df.c)[1]){
+    #for(d in 1:dim(config.graphs.df.c)[1]){
       
       #Print loop messages
         #print(
@@ -742,7 +754,7 @@
       
       config.graphs.df.d <- config.graphs.df.c[d,]
       
-      group_by.d <- config.graphs.df.d$x.varname.1 %>% 
+      group_by.d <- config.graphs.df.d$x.varnames %>% 
         strsplit(., ",") %>% 
         unlist
       
@@ -755,7 +767,7 @@
           DefineAxisCategories(
             tb = q.long.tb,
             config.table = config.graphs.df.d,
-            config.varname = "x.varname.1"
+            config.varname = "x.varnames"
           ) %>% 
           as.data.frame() %>% 
           ReplaceNames(., current.names = ".", new.names = group_by.d)

@@ -8,39 +8,38 @@ source("utils_wnf.r")
 
 #Define names of categories that will go along bottom of graph
   #Test Inputs
-    #tb = resp.long.tb
-    #config.table = config.tables.df.d
-    #config.varname = "x.varname"
+    tb = resp.long.tb
+    config.table = config.graphs.df.d
+    config.varname = "x.varnames"
   
   DefineAxisCategories <- function(
     tb,
     config.table,
     config.varname
   ){
-    cat.colname <- config.table %>% select(config.varname) %>% unlist %>% as.character
-    
-    if(is.na(cat.colname)){
+    cat.colnames <- 
+      config.table %>% select(config.varname) %>% unlist %>% as.character %>%
+      strsplit(., ",") %>% unlist %>% as.character
+      
+    if(all(is.na(cat.colnames))){
       result <- NA
       warning(paste0("Config table column '", config.varname, "' is NA."))
     }
     
-    if(!is.na(cat.colname)){
-      
-      if(cat.colname %in% "practice"){
-        tb <- tb[grep(config.table$module, tb$module),]
-      }
-      
-      result <-
-        UniqueVariableValues(
-          varnames = cat.colname, 
-          tb = tb
-        ) %>%
-        strsplit(., ",") %>%
-        unlist %>%
-        unique %>%
-        RemoveNA(.) %>%
-        .[order(.)]
+    if(any(cat.colnames %in% "practice")){
+      tb <- tb[grep(config.table$module, tb$module),]
     }
+      
+    result <-
+      UniqueCombnFromColnames(
+        varnames = cat.colnames, 
+        df = tb
+      ) #%>%
+      #strsplit(., ",") %>%
+      #unlist %>%
+      #unique %>%
+      #RemoveNA(.) %>%
+      #.[order(.)]
     
     return(result)
   }
