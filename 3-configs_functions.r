@@ -24,11 +24,11 @@ source("utils_wnf.r")
 
 #Loop Expander for creating full config tables
   #Test Inputs
-    configs = config.slide.types.tb
-    loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3") 
-    manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3")
-    collate.varnames = c("slide.section.1","slide.section.2","slide.section.3")
-    source.data = resp.long.tb  
+    #configs = config.slide.types.tb
+    #loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3") 
+    #manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3")
+    #collate.varnames = c("slide.section.1","slide.section.2","slide.section.3")
+    #source.data = resp.long.tb  
 
   
   #TODO: make so can handle recursive loops, sections, ordering
@@ -78,24 +78,24 @@ source("utils_wnf.r")
     #Collate & Manual Order 
     
       output2.ls <- list()
-      #i = 10
+      #i = 11
       for(i in 1:length(unique(output1.df$slide.section.1))){
         
         slide.section.i <- unique(output1.df$slide.section.1)[i]
-        df.i <- output1.df %>% filter(slide.section.1 == slide.section.i) %>% as_tibble()
+        tb.i <- output1.df %>% filter(slide.section.1 == slide.section.i) %>% as_tibble()
         loop.varnames.i <- 
           configs[configs$slide.section.1 == slide.section.i,names(configs) %in% loop.varnames] %>% 
           unlist %>% as.vector %>% RemoveNA() %>% unique
         
         if(length(loop.varnames.i) == 0){
-          output2.ls[[i]] <- df.i
+          output2.ls[[i]] <- tb.i
           next()
         }
       
       #Manually Ordering Result (if necessary)
         manual.order.ls <-
           UniqueValsFromColnames(
-            df = output1.df,
+            df = tb.i,
             varnames = manual.order.varnames[1:length(loop.varnames.i)]
           )
         
@@ -103,32 +103,32 @@ source("utils_wnf.r")
           if(length(loop.varnames.i) == 1){
             order.v.i <-
               order(
-                df.i$slide.section.1,
-                df.i %>% select(loop.varnames.i[1]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[1]]))]
+                tb.i$slide.section.1,
+                tb.i %>% select(loop.varnames.i[1]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[1]]))]
               )
           }
           if(length(loop.varnames.i) == 2){
             order.v.i <-
               order(
-                df.i$slide.section.1,
-                df.i %>% select(loop.varnames.i[1]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[1]]))], 
-                df.i$slide.section.2,
-                df.i %>% select(loop.varnames.i[2]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[2]]))]
+                tb.i$slide.section.1,
+                tb.i %>% select(loop.varnames.i[1]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[1]]))], 
+                tb.i$slide.section.2,
+                tb.i %>% select(loop.varnames.i[2]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[2]]))]
               )
           }
           if(length(loop.varnames.i) == 3){
             order.v.i <-
               order(
-                df.i$slide.section.1,
-                df.i %>% select(loop.varnames.i[1]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[1]]))],
-                df.i$slide.section.2,
-                df.i %>% select(loop.varnames.i[2]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[2]]))],
-                df.i$slide.loop.var.3,
-                df.i %>% select(loop.varnames.i[3]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[3]]))]
+                tb.i$slide.section.1,
+                tb.i %>% select(loop.varnames.i[1]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[1]]))],
+                tb.i$slide.section.2,
+                tb.i %>% select(loop.varnames.i[2]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[2]]))],
+                tb.i$slide.loop.var.3,
+                tb.i %>% select(loop.varnames.i[3]) %>% unlist %>% as.vector %>% .[order(match(.,manual.order.ls[[3]]))]
               )
           }
           
-        output2.ls[[i]] <- df.i[order.v.i,]
+        output2.ls[[i]] <- tb.i[order.v.i,]
       }
     
       result <- do.call(rbind, output2.ls) %>% as_tibble()

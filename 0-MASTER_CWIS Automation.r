@@ -586,9 +586,9 @@
     maxrow.b <- length(unit.ids.sample)
     b.loop.startime <- Sys.time()
   
-  b <- 1 #LOOP TESTER (19 = "Raytown C-2")
+  #b <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
-  #for(b in 1:length(unit.ids.sample)){   #START OF LOOP BY REPORT UNIT
+  for(b in 1:length(unit.ids.sample)){   #START OF LOOP BY REPORT UNIT
   
     loop.start.time.b <- Sys.time()
     
