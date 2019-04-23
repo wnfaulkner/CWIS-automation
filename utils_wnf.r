@@ -157,8 +157,8 @@
   
   #Unique values from multiple columns of a data frame (returns list)
     #TEST INPUTS
-    df <- resp.long.tb
-    varnames <- cat.colnames
+      #df <- resp.long.tb
+      #varnames <- cat.colnames
     
     UniqueValsFromColnames <- function(df, varnames){
       

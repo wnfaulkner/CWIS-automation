@@ -8,9 +8,9 @@ source("utils_wnf.r")
 
 #Define names of categories that will go along bottom of graph
   #Test Inputs
-    tb = resp.long.tb
-    config.table = config.graphs.df.d
-    config.varname = "x.varnames"
+    #tb = resp.long.tb
+    #config.table = config.graphs.df.d
+    #config.varname = "x.varnames"
   
   DefineAxisCategories <- function(
     tb,

@@ -709,9 +709,9 @@
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     c.loop.startime <- Sys.time()
     
-  c <- 1 #LOOP TESTER 
+  #c <- 1 #LOOP TESTER 
   #for(c in slider.unit.ids.sample){   #LOOP TESTER
-  #for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
+  for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
     
     #Loop Inputs (both graphs and tables)
       unit.id.c <- unit.ids.sample[c]
@@ -744,9 +744,9 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    d <- which(config.graphs.df.c$graph.type.id == "i")[1]
+    #d <- which(config.graphs.df.c$graph.type.id == "i")[1]
     #for(d in 1:2){ #LOOP TESTER
-    #for(d in 1:dim(config.graphs.df.c)[1]){
+    for(d in 1:nrow(config.graphs.df.c)){
       
       #Print loop messages
         #print(
@@ -763,7 +763,7 @@
         unlist
       
       #Form Graph Data Table
-        graphdata.ls.d <-
+        graphdata.ls <-
           list(
             axis.cat.labels =  #Define category names that will go along axis of bar graph - module, practice
               DefineAxisCategories(
@@ -795,7 +795,7 @@
           )
         
         graphdata.df.d <- 
-          Reduce(function(x,y){left_join(x,y, by = group_by.d)}, graphdata.ls.d) %>%
+          Reduce(function(x,y){left_join(x,y, by = group_by.d)}, graphdata.ls) %>%
           ReplaceNames(
             df = ., 
             current.names = names(.), 
@@ -804,6 +804,7 @@
       
       #Store Results  
         graphdata.ls.d[[d]] <- graphdata.df.d
+        names(graphdata.ls.d)[[d]] <- config.graphs.df.d$graph.type.name
       
       #Progress Bar
         setTxtProgressBar(
@@ -814,7 +815,7 @@
     } ### END OF LOOP "d" BY GRAPH ###
     
     graphdata.ls.c[[c]] <- graphdata.ls.d
-    
+  
     ###                    ###
 #   ### LOOP "d" BY TABLE  ###
     ###                    ###
