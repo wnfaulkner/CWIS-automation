@@ -6,109 +6,43 @@ source("utils_wnf.r")
 
 # GRAPHS --------------------------  
 
-#Define names of categories that will go along bottom of graph
-  #Test Inputs
-    #tb = resp.long.tb
-    #config.table = config.graphs.df.d
-    #config.varname = "x.varnames"
-  
-  DefineAxisCategories <- function(
-    tb,
-    config.table,
-    config.varname
-  ){
-    cat.colnames <- 
-      config.table %>% select(config.varname) %>% unlist %>% as.character %>%
-      strsplit(., ",") %>% unlist %>% as.character
-      
-    if(all(is.na(cat.colnames))){
-      result <- NA
-      warning(paste0("Config table column '", config.varname, "' is NA."))
-    }
-    
-    if(any(cat.colnames %in% "practice")){
-      tb <- tb[grep(config.table$module, tb$module),]
-    }
-      
-    result <-
-      UniqueCombnFromColnames(
-        varnames = cat.colnames, 
-        df = tb
-      ) 
-    
-    return(result)
-  }
-
-#Selecting variable names that will be used in graph/table calculations
-    #TODO: add parameters for questions table (which one to use), names of variables in there to select
+  #Define names of categories that will go along bottom of graph
     #Test Inputs
-      #config.input <- config.graphs.df.d
-      #dat <- resp.long.tb
+      #tb = resp.long.tb
+      #config.table = config.graphs.df.d
+      #config.varname = "x.varnames"
     
-    GraphVarnamesInData <- function(config.input, dat){
-      
-      varname.i <- config.input %>% select(x.varname.1)
-      
-      if(is.na(varname.i)){
-        all.cats.ls[[i]] <- ""
-        next()
+    DefineAxisCategories <- function(
+      tb,
+      cat.colnames
+    ){
+
+      if(all(is.na(cat.colnames))){
+        result <- NA
+        warning(paste0("Config table column '", config.varname, "' is NA."))
       }
       
-      if(varname.i == "answer"){
-        module.varnames <- 
-          q.long.tb %>% 
-          filter(grepl(config.input$module, module)) %>% 
-          select(var.id) %>% 
-          unlist %>% 
-          setdiff(., names(slider.vars.df))
+      if(any(cat.colnames %in% "practice")){
+        tb <- tb[grep(tb.config$module, tb$module),]
+      }
         
-        result <- 
-          dat$question %in% module.varnames %>% 
-          dat$answer[.] %>% 
-          unique %>%
-          .[.!=""] %>%
-          RemoveNA() %>%
-          .[.!=""]
-      }
+      result <-
+        UniqueCombnFromColnames(
+          varnames = cat.colnames, 
+          df = tb
+        ) 
       
-      if(varname.i == "module"){
-        result <- "module"
-      }
-      
-      if(varname.i == "practice"){
-        result <- 
-          q.long.tb %>% 
-          filter(grepl(config.input$module, module)) %>% 
-          select(var.id) %>% 
-          unique %>% 
-          unlist %>%
-          RemoveNA() %>%
-          .[.!=""]
-      }
-      
-      if(varname.i == "role"){
-        result <- 
-          dat %>%
-          select(varname.i) %>%
-          unique %>% 
-          unlist %>%
-          RemoveNA() %>%
-          .[.!=""]
-      }
-      
-      #all.cats.ls[[i]] <- result %>% as.data.frame %>% ReplaceNames(df = ., current.names = ".", new.names = "all.cats")
       return(result)
-    }  
-  
+    }
   
   #Data restriction - district vs. unit.id
     #TODO:NEED TO GENEARALIZE: IF REPORT.UNIT IS DISTRICT AND GRAPH DATA.LEVEL IS DISTRICT, THIS WORKS, 
       #BUT NOT IF REPORT.UNIT IS BUILDING AND DATA.LEVEL IS DISTRICT.
     
     #Test Inputs
-      #dat = resp.long.tb.c
+      #tb = resp.long.tb.c
       #id.varname = "answer.id"
-      #dat.config = config.graphs.df.d
+      #tb.config = config.graphs.df.d
       
     GraphDataRestriction <- function(
       tb,
@@ -256,39 +190,57 @@ source("utils_wnf.r")
   #BUILDING AND DATA.LEVEL IS DISTRICT.
   
   #Test Inputs
-    #dat = resp.long.tb.c
-    #config.input = config.tables.df.d
+    #tb = resp.long.tb.c
+    #id.varname = "answer.id"
+    #tb.config = config.tables.df.d
   
-  table.data.filter.fun <- function(dat, config.input){
-
-    #dat <- dat[grep("_num", dat$question),] 
-    
-    #Restrict data according to 'filter' variable in configs
-      if(is.na(config.input$filter)){ #
-        result1 <- dat
-      }
+  TableDataRestriction <- #TODO: FINISH - MAYBE GRAPH DATA RESTRICTION FUNCTION WILL WORK HERE AS WELL NOW?
+    function(
+      tb,
+      id.varname,
+      tb.config
+    ){
+      
+      loop.varnames <- 
+        tb.config %>% 
+        select(slide.loop.var.1, slide.loop.var.2, slide.loop.var.3) %>% 
+        unlist %>% unique %>% RemoveNA
+      
+      if(all(is.na(loop.varnames))|length(loop.varnames) == 0){
         
-      if(!config.input$filter %in% c("building","district")){
-        stop("Configuration 'filter' is neither 'building' nor 'district.' Check input.")
-      }
+        result <- tb %>% select(c(id.varname,unit.id,loop.varnames,group_by.d, tb.config$summarize.varname,practice,answer))
+        return(result)
+        warning("No loop varnames. Returning data as-is.")
       
-      if(config.input$filter == "building"){
-        result1 <- dat %>% filter(unit.id == unit.id.c)
-      }
-      
-      if(config.input$filter == "district"){
-        result1 <- datap.input %>% filter(district == district.c)
-      }
-    
-    #Additional filtering for Loop Var(s)
-      if(is.na(config.input$module)){
-        result <- result1
       }else{
-        result <- result1 %>% filter(grepl(config.input$module, module))
+      
+        restrictions.ls <-
+          UniqueValsFromColnames(
+            df = tb.config,
+            varnames = loop.varnames
+          )
+        
+        output.ls <- list()
+        for(i in 1:length(restrictions.ls)){
+          output.ls[[i]] <- 
+            tb %>% 
+            select(names(restrictions.ls)[i]) %>% 
+            equals(restrictions.ls[[i]]) %>% 
+            tb[.,] %>% select(id.varname) %>% 
+            unique %>% unlist %>% as.vector
+        }
+        
+        restricted.resp.ids <-
+          Reduce(intersect, output.ls)
+          
+        result <- 
+          tb %>% 
+          filter(tb$answer.id %in% restricted.resp.ids) %>%
+          select(c(id.varname,unit.id,loop.varnames,group_by.d, tb.config$summarize.varname,practice,answer))
+        
+        return(result)
       }
-    
-    return(result)
-  }
+    }
     
 #Define table x and y headers from table
   #Test Inputs

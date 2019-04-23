@@ -625,28 +625,33 @@
         resp.long.tb %>% filter(unit.id == unit.id.b)
     
     #Graphs config table for this report unit
-      config.graphs.ls.b[[b]] <- 
-        loop.expander.fun(
-          configs = config.graph.types.tb, 
-          loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
-          manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3"),
-          collate.varnames = c("slide.section.1","slide.section.2","slide.section.3"),
-          source.data = resp.long.tb.b
-        )
-      
+      if(nrow(config.graph.types.tb) == 0){
+        config.graphs.ls.b[[b]] <- NA
+      }else{
+        config.graphs.ls.b[[b]] <- 
+          loop.expander.fun(
+            configs = config.graph.types.tb, 
+            loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
+            manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3"),
+            collate.varnames = c("slide.section.1","slide.section.2","slide.section.3"),
+            source.data = resp.long.tb.b
+          )
+      }
       #config.graphs.ls.b[[b]] <- remove.district.office.fun(config.graphs.df)
     
     #Tables config table for this report unit
-      config.tables.ls.b[[b]] <-
-        loop.expander.fun(
-          configs =  config.table.types.tb, 
-          loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
-          manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3"),
-          collate.varnames = c("slide.section.1","slide.section.2","slide.section.3"),
-          source.data = resp.long.tb.b
-        )
-      
-      #config.tables.ls.b[[b]] <- remove.district.office.fun(config.tables.df)
+      if(nrow(config.table.types.tb) == 0){
+        config.tables.ls.b[[b]] <- NA
+      }else{
+        config.tables.ls.b[[b]] <-
+          loop.expander.fun(
+            configs =  config.table.types.tb, 
+            loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
+            manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3"),
+            collate.varnames = c("slide.section.1","slide.section.2","slide.section.3"),
+            source.data = resp.long.tb.b
+          )
+      }
     
     #Slide config table for this report unit
       config.slides.ls.b[[b]] <- 
@@ -768,8 +773,9 @@
             axis.cat.labels =  #Define category names that will go along axis of bar graph - module, practice
               DefineAxisCategories(
                 tb = resp.long.tb,
-                config.table = config.graphs.df.d,
-                config.varname = "x.varnames"
+                cat.colnames = 
+                  config.graphs.df.d %>% select("x.varnames") %>% unlist %>% as.character %>%
+                  strsplit(., ",") %>% unlist %>% as.character
               ),
             graphtable.d =  #Data table with measurements
               GraphDataRestriction(
@@ -821,37 +827,43 @@
     ###                    ###
     
     #Loop Inputs
-    config.tables.df.c <- config.tables.ls.b[[c]]
-    tabledata.ls.d <- list()
+      config.tables.df.c <- config.tables.ls.b[[c]]
+      tabledata.ls.d <- list()
     
-    #d <- 2
-    #for(d in 1:2){ #LOOP TESTER
-    for(d in 1:dim(config.tables.df.c)[1]){
+    if(is.na(config.tables.df.c)){
       
-      #Print loop messages
-        #print(
-        #  paste(
-        #    "LOOP 'D' TABLE -- Loop num: ", d,
-        #    ", Pct. complete:", round(100*d/dim(config.tables.df.c)[1], 2), "%"
-        #  )
-        #)
+    }else{
       
-      config.tables.df.d <- config.tables.df.c[d,]
+      #d <- 2
+      #for(d in 1:2){ #LOOP TESTER
+      for(d in 1:dim(config.tables.df.c)[1]){
+        
+        #Print loop messages
+          #print(
+          #  paste(
+          #    "LOOP 'D' TABLE -- Loop num: ", d,
+          #    ", Pct. complete:", round(100*d/dim(config.tables.df.c)[1], 2), "%"
+          #  )
+          #)
+        
+        config.tables.df.d <- config.tables.df.c[d,]
+        
+        #Form final data frame
+          tabledata.df.d <-  
+            resp.long.tb.c %>%
+            table.data.filter.fun(dat = ., config.input = config.tables.df.d) %>%
+            summarize.table.fun(dat = ., config.input = config.tables.df.d) %>%
+            FirstTableOperations(tb = ., iterations = c(1))
+        
+        tabledata.ls.d[[d]] <- tabledata.df.d
+        
+      } ### END OF LOOP "d" BY TABLE ###
       
-      #Form final data frame
-        tabledata.df.d <-  
-          resp.long.tb.c %>%
-          table.data.filter.fun(dat = ., config.input = config.tables.df.d) %>%
-          summarize.table.fun(dat = ., config.input = config.tables.df.d) %>%
-          FirstTableOperations(tb = ., iterations = c(1))
-      
-      tabledata.ls.d[[d]] <- tabledata.df.d
-      
-    } ### END OF LOOP "d" BY TABLE ###
+      names(tabledata.ls.d) <- config.tables.df.c$module %>% RemoveNA() %>% as.character %>% c("role",.)
+      tabledata.ls.c[[c]] <- tabledata.ls.d
     
-    names(tabledata.ls.d) <- config.tables.df.c$module %>% RemoveNA() %>% as.character %>% c("role",.)
-    tabledata.ls.c[[c]] <- tabledata.ls.d   
-
+    } ### END OF LOOP "d" BY TABLE
+      
   } ### END OF LOOP "c" BY REPORT UNIT     
   
   #Loop Measurement - progress bar & timing
@@ -866,13 +878,12 @@
 
 
 # 4-SOURCE DATA TABLES OUTPUTS --------------------------------------------
-  #tabledata.ls.c
-    #[[report.unit]]
-    #data frame where each line represents a table
   #graphdata.ls.c
     #[[report unit]]
     #data frame where each line represents a graph
-
+  #tabledata.ls.c
+    #[[report.unit]]
+    #data frame where each line represents a table
 
 
 # 5-OBJECT CREATION (GRAPHS & TABLES) ------------------------------------
@@ -897,9 +908,9 @@
     graphs.ls.f <- list()
     tables.ls.f <- list()
   
-  #f <- 11 #LOOP TESTER
+  f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  for(f in 1:length(unit.ids.sample)){
+  #for(f in 1:length(unit.ids.sample)){
     
     #Loop units  
       unit.id.f <- unit.ids.sample[f]
@@ -923,15 +934,13 @@
     graphs.ls.g <- list()
     maxrow.g <- length(graphdata.ls.f)
     
-    #g <- 1 #LOOP TESTER
+    g <- 1 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    for(g in 1:length(graphdata.ls.f))
-      local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
+    #for(g in 1:length(graphdata.ls.f))
+      #local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         
         #Redefine necessary objects in local environment
           g<-g #same as above
-        
-        ### GRAPH INPUTS FOR GGPLOT ###
         
         #GRAPH DATA & CONFIGS DATA FRAMES
           
