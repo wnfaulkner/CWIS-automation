@@ -744,7 +744,7 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    d <- 23
+    d <- which(config.graphs.df.c$graph.type.id == "i")[1]
     #for(d in 1:2){ #LOOP TESTER
     #for(d in 1:dim(config.graphs.df.c)[1]){
       
@@ -770,8 +770,7 @@
                 tb = resp.long.tb,
                 config.table = config.graphs.df.d,
                 config.varname = "x.varnames"
-              ) %>% 
-              as.data.frame(),
+              ),
             graphtable.d =  #Data table with measurements
               GraphDataRestriction(
                 tb =  resp.long.tb.c,
@@ -796,7 +795,12 @@
           )
         
         graphdata.df.d <- 
-          Reduce(function(x,y){left_join(x,y, by = group_by.d)}, graphdata.ls.d)
+          Reduce(function(x,y){left_join(x,y, by = group_by.d)}, graphdata.ls.d) %>%
+          ReplaceNames(
+            df = ., 
+            current.names = names(.), 
+            new.names = c(names(.)[1:(length(names(.))-2)],"measure","avg")
+          )
       
       #Store Results  
         graphdata.ls.d[[d]] <- graphdata.df.d

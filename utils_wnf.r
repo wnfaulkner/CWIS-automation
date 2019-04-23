@@ -157,8 +157,8 @@
   
   #Unique values from multiple columns of a data frame (returns list)
     #TEST INPUTS
-    #df <- resp.long.df.b
-    #varnames <- loop.varnames.c
+    df <- resp.long.tb
+    varnames <- cat.colnames
     
     UniqueValsFromColnames <- function(df, varnames){
       
@@ -181,11 +181,11 @@
         df[,names(df) %in% varnames] %>%
         as.data.frame %>%
         lapply(., unique) %>%
-        lapply(., RemoveNA) %>%
-        lapply(., as.character) %>%
-        lapply(., function(x) {strsplit(x, ",")}) %>%
-        lapply(., unlist) %>%
-        lapply(., unique)
+        lapply(., RemoveNA) #%>%
+        #lapply(., as.character) %>%
+        #lapply(., function(x) {strsplit(x, ",")}) %>%
+        #lapply(., unlist) %>%
+        #lapply(., unique)
       return(result)
     }
     
@@ -208,8 +208,9 @@
       
       result <- 
         UniqueValsFromColnames(df, varnames) %>%
-        expand.grid(., stringsAsFactors = FALSE) #%>%
-        #ReplaceNames(., current.names = names(.), new.names = varnames)
+        expand.grid(., stringsAsFactors = FALSE) %>%
+        as_tibble
+        
       return(result)
     }
     
