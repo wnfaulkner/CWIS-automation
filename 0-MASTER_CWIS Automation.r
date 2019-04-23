@@ -744,7 +744,7 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    d <- 1
+    d <- 23
     #for(d in 1:2){ #LOOP TESTER
     #for(d in 1:dim(config.graphs.df.c)[1]){
       
@@ -762,64 +762,50 @@
         strsplit(., ",") %>% 
         unlist
       
-      #Define category names that will go along axis of bar graph - module, practice
-       
-        axis.cat.labels <- 
-          DefineAxisCategories(
-            tb = resp.long.tb,
-            config.table = config.graphs.df.d,
-            config.varname = "x.varnames"
-          ) %>% 
-          as.data.frame()
-        
-      #Form final data frame (no averages)
-        
-        graphdata.df.d <-  
-          GraphDataRestriction(
-            dat =  resp.long.tb.c,
-            id.varname = "answer.id",
-            dat.config = config.graphs.df.d
-          ) %>%
-          SummarizeDataByGroups(
-            tb = .,
-            group.varnames = group_by.d,
-            summarize.varname = config.graphs.df.d$summary.varname %>% unlist %>% as.vector,
-            summarize.fun = config.graphs.df.d$summary.function %>% unlist %>% as.vector
-          ) %>%
-          left_join(axis.cat.labels, ., by = c(group_by.d))
-
-      #Add average variable to final data frame
-        graph.avg.df.d <-
-          GroupedAveragesByLevel(
-            tb = resp.long.tb,
-            group.varnames = group_by.d,
-            summarize.varname = config.graphs.df.d$summary.varname %>% unlist %>% as.vector,
-            summarize.fun = config.graphs.df.d$summary.function %>% unlist %>% as.vector,
-            avg.level = config.graphs.df.d$avg.level,
-            tb.restriction.value = "cfa"
+      #Form Graph Data Table
+        graphdata.ls.d <-
+          list(
+            axis.cat.labels =  #Define category names that will go along axis of bar graph - module, practice
+              DefineAxisCategories(
+                tb = resp.long.tb,
+                config.table = config.graphs.df.d,
+                config.varname = "x.varnames"
+              ) %>% 
+              as.data.frame(),
+            graphtable.d =  #Data table with measurements
+              GraphDataRestriction(
+                tb =  resp.long.tb.c,
+                id.varname = "answer.id",
+                tb.config = config.graphs.df.d
+              ) %>%
+              SummarizeDataByGroups(
+                tb = .,
+                group.varnames = group_by.d,
+                summarize.varname = config.graphs.df.d$summarize.varname %>% unlist %>% as.vector,
+                summarize.fun = config.graphs.df.d$summarize.fun %>% unlist %>% as.vector
+              ),
+            graph.avgs.d = #Averages (using average.level from configs)
+              GroupedAveragesByLevel(
+                tb = resp.long.tb,
+                group.varnames = group_by.d,
+                summarize.varname = config.graphs.df.d$summarize.varname %>% unlist %>% as.vector,
+                summarize.fun = config.graphs.df.d$summarize.fun %>% unlist %>% as.vector,
+                avg.level = config.graphs.df.d$avg.level,
+                tb.restriction.value = district.c
+              )
           )
         
-       
-          
-          graphdata.df.d <- 
-            left_join(
-              x = graphdata.df.d, 
-              y = graph.avg.df.d, 
-              by = c(group_by.d)
-              #na.replacement = 0
-            ) %>%
-            ReplaceNames(
-              df = .,
-              current.names = c(names(.)),
-              new.names = c(config.graphs.df.d$x.varname.1,"measure.var","measure.var.avg")
-            )
-        }
+        graphdata.df.d <- 
+          Reduce(function(x,y){left_join(x,y, by = group_by.d)}, graphdata.ls.d)
       
-      graphdata.ls.d[[d]] <- graphdata.df.d
-      setTxtProgressBar(
-        progress.bar.c, 
-        100*(d + config.graphs.ls.b[1:(c-1)] %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum)/maxrow.c
-      )
+      #Store Results  
+        graphdata.ls.d[[d]] <- graphdata.df.d
+      
+      #Progress Bar
+        setTxtProgressBar(
+          progress.bar.c, 
+          100*(d + config.graphs.ls.b[1:(c-1)] %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum)/maxrow.c
+        )
       
     } ### END OF LOOP "d" BY GRAPH ###
     

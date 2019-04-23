@@ -24,7 +24,7 @@ source("utils_wnf.r")
 
 #Loop Expander for creating full config tables
   #Test Inputs
-    #configs = config.slide.types.tb
+    #configs = config.graph.types.tb
     #loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3") 
     #manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3")
     #collate.varnames = c("slide.section.1","slide.section.2","slide.section.3")

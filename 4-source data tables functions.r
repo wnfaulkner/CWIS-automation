@@ -111,19 +111,19 @@ source("utils_wnf.r")
       #dat.config = config.graphs.df.d
       
     GraphDataRestriction <- function(
-      dat,
+      tb,
       id.varname,
-      dat.config
+      tb.config
     ){
       
       loop.varnames <- 
-        dat.config %>% 
+        tb.config %>% 
         select(slide.loop.var.1, slide.loop.var.2, slide.loop.var.3) %>% 
         unlist %>% unique %>% RemoveNA
       
       if(all(is.na(loop.varnames))|length(loop.varnames) == 0){
         
-        result <- dat %>% select(c(id.varname,unit.id,loop.varnames,group_by.d, dat.config$summary.varname,practice,answer))
+        result <- tb %>% select(c(id.varname,unit.id,loop.varnames,group_by.d, tb.config$summarize.varname,practice,answer))
         return(result)
         warning("No loop varnames. Returning data as-is.")
       
@@ -131,17 +131,17 @@ source("utils_wnf.r")
       
         restrictions.ls <-
           UniqueValsFromColnames(
-            df = dat.config,
+            df = tb.config,
             varnames = loop.varnames
           )
         
         output.ls <- list()
         for(i in 1:length(restrictions.ls)){
           output.ls[[i]] <- 
-            dat %>% 
+            tb %>% 
             select(names(restrictions.ls)[i]) %>% 
             equals(restrictions.ls[[i]]) %>% 
-            dat[.,] %>% select(id.varname) %>% 
+            tb[.,] %>% select(id.varname) %>% 
             unique %>% unlist %>% as.vector
         }
         
@@ -149,9 +149,9 @@ source("utils_wnf.r")
           Reduce(intersect, output.ls)
           
         result <- 
-          dat %>% 
-          filter(dat$answer.id %in% restricted.resp.ids) %>%
-          select(c(id.varname,unit.id,loop.varnames,group_by.d, dat.config$summary.varname,practice,answer))
+          tb %>% 
+          filter(tb$answer.id %in% restricted.resp.ids) %>%
+          select(c(id.varname,unit.id,loop.varnames,group_by.d, tb.config$summarize.varname,practice,answer))
         
         return(result)
       }
@@ -159,15 +159,15 @@ source("utils_wnf.r")
   
   #Data Summarize GRAPHS - participation vs. implementation vs. performance 
     #Test inputs
-      #tb = tb
+      #tb = 
       #  GraphDataRestriction(
-      #      dat =  resp.long.tb.c,
+      #      tb =  resp.long.tb.c,
       #      id.varname = "answer.id",
-      #      dat.config = config.graphs.df.d
+      #      tb.config = config.graphs.df.d
       #    )
       #group.varnames = group_by.d
-      #summarize.varname = config.graphs.df.d$summary.varname %>% unlist %>% as.vector
-      #summarize.fun = config.graphs.df.d$summary.function %>% unlist %>% as.vector
+      #summarize.varname = config.graphs.df.d$summarize.varname %>% unlist %>% as.vector
+      #summarize.fun = config.graphs.df.d$summarize.fun %>% unlist %>% as.vector
     
     SummarizeDataByGroups <- 
       function(
@@ -176,13 +176,8 @@ source("utils_wnf.r")
         summarize.varname,
         summarize.fun
       ){
-        if(summarize.fun == "implementation"){
-          summarize.fun <- paste0("mean(",summarize.varname," > 3)")
-        }
-        
-        if(summarize.fun == "count.unique"){
-          summarize.fun <- paste0("length(unique(",summarize.varname,"))")
-        }
+
+        summarize.fun <- gsub("x",summarize.varname,summarize.fun)
         
         result <-
           tb %>% 
@@ -201,10 +196,10 @@ source("utils_wnf.r")
     #Test Inputs
       #tb = resp.long.tb
       #group.varnames = group_by.d
-      #summarize.varname = config.graphs.df.d$summary.varname %>% unlist %>% as.vector
-      #summarize.fun = config.graphs.df.d$summary.function %>% unlist %>% as.vector
+      #summarize.varname = config.graphs.df.d$summarize.varname %>% unlist %>% as.vector
+      #summarize.fun = config.graphs.df.d$summarize.fun %>% unlist %>% as.vector
       #avg.level = config.graphs.df.d$avg.level
-      #tb.restriction.value = "cfa"
+      #tb.restriction.value = district.c
     
     GroupedAveragesByLevel <- function(
       tb, #source data table
@@ -214,85 +209,45 @@ source("utils_wnf.r")
       avg.level = NULL, #name of the variable for filtering data (if necessary)
       tb.restriction.value = NULL #value to match in avg.level variable to restrict data (if necessary)
     ){
-      if(!is.null(avg.level) && !any(grepl(avg.level, names(tb)))){ #make avg.level NULL if not in names of table that will be filtered
+      if(is.na(avg.level)){
         avg.level <- NULL
+      }else{
+        if(!is.null(avg.level) && !any(grepl(avg.level, names(tb)))){ #make avg.level NULL if not in names of table that will be filtered
+          avg.level <- NULL
+        }
       }
       
       if(!is.null(avg.level)){ #If avg.level is relevant, restrict data to rows where avg.level var == tb.restriction.value
         tb <- tb[tb[,names(tb) ==avg.level] == tb.restriction.value,]
       }
       
-      result <- 
-        SummarizeDataByGroups(
-          tb = tb,
-          group.varnames = group.varnames,
-          summarize.varname = summarize.varname,
-          summarize.fun = summarize.fun
-        )
+      if(!grepl("mean",summarize.fun)){
+        output1.tb <- 
+          SummarizeDataByGroups(
+            tb = tb,
+            group.varnames = c("unit.id",group.varnames),
+            summarize.varname = summarize.varname,
+            summarize.fun = summarize.fun
+          )
+        result <- 
+          SummarizeDataByGroups(
+            tb = output1.tb,
+            group.varnames = c(group.varnames),
+            summarize.varname = "measure",
+            summarize.fun = "mean(x)"
+          )
+      }else{
+        result <- 
+          SummarizeDataByGroups(
+            tb = tb,
+            group.varnames = c(group.varnames),
+            summarize.varname = summarize.varname,
+            summarize.fun = summarize.fun
+          )
+      }
       
       return(result)
     } 
-      
-      
-      
-      #if(avg.level == "building"){
-      #  y <- 
-      #    x %>% 
-      #    filter(district == unique(resp.long.tb$district[resp.long.tb$unit.id == unit.id.c])) 
-      #}
-      
-      #z <- y %>% filter(!is.na(y[,names(y)==group_by.d])) #TODO:Might want to make flexible - i.e. add a parameter which allows user to include NA
-      
-      #if(!config.graphs.df.d$data.restriction=="module" | is.na(config.graphs.df.d$data.restriction)){ 
-        #TODO:Should look into a better way to deal with this restriction, think about input tables
-      #  result <- z
-      #}
-      
-      #if(config.graphs.df.d$data.restriction=="module" & !is.na(config.graphs.df.d$data.restriction)){
-      #  result <- 
-      #    z %>%
-      #    filter(
-      #      z[,names(z)==config.graphs.df.d$data.restriction] == 
-      #        config.graphs.df.d[,names(config.graphs.df.d)==config.graphs.df.d$data.restriction]
-      #    )
-      #}
-      
-      return(result)
-    }
-    
-  #Summary Function for Graph Averages
-    #Test Inputs
-      #x<-resp.long.tb %>% avg.data.restriction.fun(.) %>% group_by(!!! syms(group_by.d))
-    
-    summarize.avg.fun <- function(x){
-      
-      if(config.graphs.df.d$data.measure == "participation"){
-        result <- x %>%
-          dplyr::summarize(avg = length(unique(resp.id))/length(unique(school.id)))#participation
-      }
-      
-      if(config.graphs.df.d$data.measure == "implementation"){
-        result <- x %>% 
-          filter(.,impbinary == 1) %>%
-          dplyr::summarize(., avg = mean(as.numeric(answer), na.rm = TRUE))#implementation
-        
-      }
-      
-      if(config.graphs.df.d$data.measure == "performance"){
-        result <- x %>%
-          filter(impbinary == 0, !is.na(answer)) %>%
-          dplyr::summarize(avg = length(unique(resp.id))/length(unique(school.id)))
-      }
-      
-      if(config.graphs.df.d$data.measure == "average performance"){
-        result <- 
-          x %>%
-          filter(grepl("_num",question)) %>%
-          dplyr::summarize(., measure.var.avg =  mean(as.numeric(answer), na.rm = TRUE))
-      }
-      
-      return(result)
-    }
 
 # TABLES --------------------------
 
