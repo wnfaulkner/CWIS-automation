@@ -604,7 +604,7 @@
   
     loop.start.time.b <- Sys.time()
     
-    #Create unit.id.b (for this iteration) and skip if report for district office
+    #Create unit.id.b (for this iteration)
       unit.id.b <- unit.ids.sample[b]
     
     #Print loop messages
@@ -627,7 +627,7 @@
           loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
           manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3"),
           collate.varnames = c("slide.section.1","slide.section.2","slide.section.3"),
-          source.data = resp.long.tb
+          source.data = resp.long.tb.b
         )
       
       #config.graphs.ls.b[[b]] <- remove.district.office.fun(config.graphs.df)
@@ -639,7 +639,7 @@
           loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
           manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3"),
           collate.varnames = c("slide.section.1","slide.section.2","slide.section.3"),
-          source.data = resp.long.tb
+          source.data = resp.long.tb.b
         )
       
       #config.tables.ls.b[[b]] <- remove.district.office.fun(config.tables.df)
@@ -651,7 +651,7 @@
           loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
           manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3"),
           collate.varnames = c("slide.section.1","slide.section.2","slide.section.3"),
-          source.data = resp.long.tb
+          source.data = resp.long.tb.b
         )
     
       #config.slides.ls.b[[b]] <- remove.district.office.fun(config.slides.df)
@@ -740,7 +740,7 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    d <- 1
+    d <- 13
     #for(d in 1:2){ #LOOP TESTER
     #for(d in 1:dim(config.graphs.df.c)[1]){
       
@@ -765,12 +765,11 @@
         
         axis.cat.labels <- 
           DefineAxisCategories(
-            tb = q.long.tb,
+            tb = resp.long.tb,
             config.table = config.graphs.df.d,
             config.varname = "x.varnames"
           ) %>% 
-          as.data.frame() %>% 
-          ReplaceNames(., current.names = ".", new.names = group_by.d)
+          as.data.frame()
         
       #Form final data frame (no averages)
         graphdata.df.d <-  
@@ -786,6 +785,10 @@
           #  split.char = ","
           #) %>%
           group_by(!!! syms(group_by.d)) %>%
+          summarize(
+            .,
+            n()
+          )
           summarize.graph.fun(config.input = config.graphs.df.d, dat = .) %>%
           left_join(axis.cat.labels, ., by = c(group_by.d)) %>%
           ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable(

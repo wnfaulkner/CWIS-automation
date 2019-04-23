@@ -8,9 +8,9 @@ source("utils_wnf.r")
 
 #Define names of categories that will go along bottom of graph
   #Test Inputs
-    tb = resp.long.tb
-    config.table = config.graphs.df.d
-    config.varname = "x.varnames"
+    #tb = resp.long.tb
+    #config.table = config.graphs.df.d
+    #config.varname = "x.varnames"
   
   DefineAxisCategories <- function(
     tb,
@@ -111,88 +111,131 @@ source("utils_wnf.r")
       #BUT NOT IF REPORT.UNIT IS BUILDING AND DATA.LEVEL IS DISTRICT.
     
     #Test Inputs
-      #dat <- resp.long.tb.c
-      #dat.config <- config.graphs.df.d
+      dat <- resp.long.tb.c
+      dat.config <- config.graphs.df.d
       
     GraphDataRestriction <- function(
       dat,
       dat.config
     ){
       
-      if(dat.config$data.level == "district"){
-        y <- dat
-      }
+      loop.varnames <- 
+        dat.config %>% 
+        select(slide.loop.var.1, slide.loop.var.2, slide.loop.var.3) %>% 
+        unlist %>% unique %>% RemoveNA
       
-      if(dat.config$data.level == "building"){
+      if(all(is.na(loop.varnames))|length(loop.varnames == 0)){
+        y <- dat %>% select(c(loop.varnames,dat.config$summary.varname,practice,answer))
+      }else{
+      
+        restrictions.ls <-
+          UniqueValsFromColnames(
+            df = dat.config,
+            varnames = loop.varnames
+          )
+        
+        output.ls <- list()
+        for(i in 1:length(restrictions.ls)){
+          output.ls[[i]] <- 
+            dat %>% 
+            select(names(restrictions.ls)[i]) %>% 
+            equals(restrictions.ls[[i]]) %>% 
+            dat[.,] %>% select(resp.id)
+        }
+        
         y <- 
           dat %>% 
-          filter(unit.id == unit.id.c) 
+          filter(dat$resp.id %in% (do.call(rbind,output.ls) %>% unique %>% unlist)) %>%
+          select(c(loop.varnames,dat.config$summary.varname,practice,answer))
       }
-      
-      z <- y[grep("_num", y$question),]
-      
-      if(!is.na(dat.config$slide.loop.var.1)){
-        if(dat.config$slide.loop.var.1 == "module"){
-          z <- z %>% filter(grepl(dat.config$module, module))
-        }
-      }
-      
-      if(is.na(dat.config$data.restriction)){
-        result <- z
-      }
-      
-      if(!is.na(dat.config$data.restriction)){
-        result <- 
-          z %>% 
-          filter(
-            z[,names(z) == dat.config$data.restriction] == 
-              dat.config[,names(dat.config) == dat.config$data.restriction]
-          )
-      }
-      
+      result <- y
       return(result)
     }
   
   #Data Summarize GRAPHS - participation vs. implementation vs. performance 
     #Test inputs
-      #config.input <- config.graphs.df.d
-      #dat <-  resp.long.tb.c %>% GraphDataRestriction %>% group_by(!!! syms(group_by.d))
+      dat.config <- config.graphs.df.d
+      dat <-  
+        resp.long.tb.c %>% 
+        GraphDataRestriction(
+          dat = .,
+          dat.config = config.graphs.df.d
+        ) %>% 
+        #select(c(group_by.d,config.graphs.df.d$summary.varname,answer,practice) %>% RemoveNA) %>%
+        group_by(!!! syms(group_by.d))
     
-    summarize.graph.fun <- function(config.input, dat){
-      
-      dat <- dat[grep("_num", dat$question),]
-      
-      if(config.input$data.measure == "participation"){
-        result <- 
-          dplyr::summarize(dat, measure.var =  length(unique(resp.id)))
+    summarize.graph.fun <- 
+      function(
+        dat,
+        dat.config
+      ){
+        if(dat.config$summary.function == "participation"){
+          result <- 
+            summarize(
+              dat,
+              measure = n()
+            )
+        }
+        
+        if(dat.config$summary.function == "implementation"){
+          result <-
+            summarize(
+              dat,
+              measure = answer %>% is_greater_than(3)
+            )
+        }
+        
+        if(dat.config$summary.function == "count.unique"){
+          summary.var <- dat[, names(dat) == dat.config$summary.varname]
+          result <- 
+            summarize(
+              dat,
+              measure = n_distinct(resp.id)
+            )
+        }
+        
+        if(dat.config$summary.function == "performance"){
+          result <- 
+            summarize(
+              dat,
+              measure = n()
+            )
+        }
+        
+        dat <- dat[grep("_num", dat$question),]
+        
+        if(dat.config$data.measure == "participation"){
+          result <- 
+            dplyr::summarize(dat, measure.var =  length(unique(resp.id)))
+        }
+        
+        
+        if(dat.config$data.measure == "implementation"){
+          dat$impbinary <- ifelse(as.numeric(dat$answer) > 3, 1, 0)
+            
+          result <- 
+            dat %>% 
+            dplyr::summarize(measure.var = mean(as.numeric(impbinary), na.rm = TRUE)) %>%
+            as.data.frame(., stringsAsFactors = FALSE)
+        }
+        
+        if(dat.config$data.measure == "performance"){
+          result <- dat %>%
+            dplyr::summarize(measure.var = as.character(length(unique(resp.id))))
+        }
+        
+        if(dat.config$data.measure == "average performance"){
+          result <- 
+            dat %>%
+            filter(grepl("_num",question)) %>%
+            dplyr::summarize(., measure.var =  mean(as.numeric(answer), na.rm = TRUE))
+        }
+        
+        return(result)
       }
-      
-      if(config.input$data.measure == "implementation"){
-        dat$impbinary <- ifelse(as.numeric(dat$answer) > 3, 1, 0)
-          
-        result <- 
-          dat %>% 
-          dplyr::summarize(measure.var = mean(as.numeric(impbinary), na.rm = TRUE)) %>%
-          as.data.frame(., stringsAsFactors = FALSE)
-      }
-      
-      if(config.input$data.measure == "performance"){
-        result <- dat %>%
-          dplyr::summarize(measure.var = as.character(length(unique(resp.id))))
-      }
-      
-      if(config.input$data.measure == "average performance"){
-        result <- 
-          dat %>%
-          filter(grepl("_num",question)) %>%
-          dplyr::summarize(., measure.var =  mean(as.numeric(answer), na.rm = TRUE))
-      }
-      
-      return(result)
-    }
     
   #Restriction function for graph average data
-    #TODO: THESE TWO FUNCTIONS ARE VERY SIMILAR TO THE ONES ABOVE WHICH HAVE BEEN CHANGED SO NOW NEED TO SPECIFY "config.input" BUT
+    #TODO: THESE TWO FUNCTIONS ARE VERY SIMILAR TO THE ONES ABOVE WHICH HAVE BEEN CHANGED SO NOW NEED TO SPECIFY "dat.config" BUT
       #HAVE NOT MADE THOSE CHANGES HERE YET. PROBABLY COULD ROLL UP INTO ONE OR TWO FUNCTIONS.
     
     #Test Inputs

@@ -208,8 +208,8 @@
       
       result <- 
         UniqueValsFromColnames(df, varnames) %>%
-        expand.grid(., stringsAsFactors = FALSE) %>%
-        ReplaceNames(., current.names = names(.), new.names = varnames)
+        expand.grid(., stringsAsFactors = FALSE) #%>%
+        #ReplaceNames(., current.names = names(.), new.names = varnames)
       return(result)
     }
     
