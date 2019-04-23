@@ -485,6 +485,10 @@
               filter(answer != "") %>% 
               as_tibble
             
+          #Add answer.id variable to be able to distinguish each row
+            resp.long.tb$answer.id <-
+              1:nrow(resp.long.tb)
+              
           #Create variable to permit pivoting comparing one district with the rest
             #isolate.district.name
             #resp.long.tb$special.district <-
@@ -740,7 +744,7 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    d <- 13
+    d <- 1
     #for(d in 1:2){ #LOOP TESTER
     #for(d in 1:dim(config.graphs.df.c)[1]){
       
@@ -759,10 +763,7 @@
         unlist
       
       #Define category names that will go along axis of bar graph - module, practice
-        #If graph category is 'practice' as in 2018-08 Green Reports, have to make extra restriction to 
-        #filter down to practices relevant to the specific module.
-        #TODO: expand to allow year, role, answer option, etc.
-        
+       
         axis.cat.labels <- 
           DefineAxisCategories(
             tb = resp.long.tb,
@@ -772,54 +773,33 @@
           as.data.frame()
         
       #Form final data frame (no averages)
+        
         graphdata.df.d <-  
-          resp.long.tb.c %>%
           GraphDataRestriction(
-            dat = .,
+            dat =  resp.long.tb.c,
+            id.varname = "answer.id",
             dat.config = config.graphs.df.d
           ) %>%
-          #SplitColReshape.ToLong(
-          #  df = .,
-          #  id.varname = "resp.id",
-          #  split.varname = "module",
-          #  split.char = ","
-          #) %>%
-          group_by(!!! syms(group_by.d)) %>%
-          summarize(
-            .,
-            n()
-          )
-          summarize.graph.fun(config.input = config.graphs.df.d, dat = .) %>%
-          left_join(axis.cat.labels, ., by = c(group_by.d)) %>%
-          ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable(
-            tb = ., 
-            tb.order.varnames = names(.)[!grepl("measure",names(.))],
-            ordering.vectors.list = config.graphs.df.d$x.var.order.1 %>% strsplit(., ",")
-          )
+          SummarizeDataByGroups(
+            tb = .,
+            group.varnames = group_by.d,
+            summarize.varname = config.graphs.df.d$summary.varname %>% unlist %>% as.vector,
+            summarize.fun = config.graphs.df.d$summary.function %>% unlist %>% as.vector
+          ) %>%
+          left_join(axis.cat.labels, ., by = c(group_by.d))
 
       #Add average variable to final data frame
-        avg.level <- config.graphs.df.d$avg.level
+        graph.avg.df.d <-
+          GroupedAveragesByLevel(
+            tb = resp.long.tb,
+            group.varnames = group_by.d,
+            summarize.varname = config.graphs.df.d$summary.varname %>% unlist %>% as.vector,
+            summarize.fun = config.graphs.df.d$summary.function %>% unlist %>% as.vector,
+            avg.level = config.graphs.df.d$avg.level,
+            tb.restriction.value = "cfa"
+          )
         
-        if(is.na(avg.level)){
-          
-          graphdata.df.d <- graphdata.df.d %>%
-            mutate(measure.var.avg = NA)
-          
-        }else{
-        
-          graph.avg.df.d <- 
-            resp.long.tb %>%
-            SplitColReshape.ToLong(
-              df = .,
-              id.varname = "resp.id",
-              split.varname = "module",
-              split.char = ","
-            ) %>%
-            avg.data.restriction.fun(.) %>%
-            group_by(!!! syms(group_by.d)) %>%
-            summarize.avg.fun(.)
-          
-          #print(graph.avg.df.d)
+       
           
           graphdata.df.d <- 
             left_join(
