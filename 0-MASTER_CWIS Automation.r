@@ -959,36 +959,46 @@
             #print(config.graphs.df.g)
         
         #CLEANING DATA & CONFIGS
-          
-          #Capitalize headers in graphdata.df.g, all-caps for module, upper-case first letter for everything else
-          
-            if(names(graphdata.df.g)[1] %>% grepl("module",.)){
-              graphdata.df.g[,1] <- graphdata.df.g[,1] %>% toupper()
-            }else{
-              graphdata.df.g[,1] <- graphdata.df.g[,1] %>% FirstLetterCap_MultElements()
-            }
-           
           #Making new [shortened] objects that will get a lot of use in graph formation; 
             #headers.varname <- names(graphdata.df.g)[!grepl("measure", names(graphdata.df.g))] #name of variable in input data for graph designating column/bar header labels
             #headers <- graphdata.df.g[,names(graphdata.df.g) == headers.varname] #vector of column/bar headers
             
-            if(is.na(config.graphs.df.g$graph.group.by.var) || is.null(config.graphs.df.g$data.group.by.var)){
-              graph.group.by.varname <- NULL
-              graph.group.by.var <- NULL
+            graph.group.by.varnames <- 
+              names(graphdata.df.g)[1:(which(names(graphdata.df.g) == "measure")-1)]
+            
+            #if(is.na(config.graphs.df.g$graph.group.by.var) || is.null(config.graphs.df.g$data.group.by.var)){
+            #  graph.group.by.varname <- NULL
+            #  graph.group.by.var <- NULL
+            #}else{
+            #  graph.group.by.varname <- config.graphs.df.g$graph.group.by.var
+            #  graph.group.by.var <- graphdata.df.g[,names(graphdata.df.g) == graph.group.by.varname] 
+            #}
+            
+          #Capitalize headers in graphdata.df.g, all-caps for module, upper-case first letter for everything else
+          
+            if(names(graphdata.df.g)[1] %>% grepl("module",.)){
+              graphdata.df.g[,1:(which(names(graphdata.df.g) == "measure")-1)] <- 
+                graphdata.df.g[,1:(which(names(graphdata.df.g) == "measure")-1)] %>% 
+                apply(., c(1:2), toupper)
             }else{
-              graph.group.by.varname <- config.graphs.df.g$graph.group.by.var
-              graph.group.by.var <- graphdata.df.g[,names(graphdata.df.g) == graph.group.by.varname] 
+              graphdata.df.g[,1:(which(names(graphdata.df.g) == "measure")-1)] <- 
+                graphdata.df.g[,1:(which(names(graphdata.df.g) == "measure")-1)] %>% 
+                apply(., c(1:2), FirstLetterCap_MultElements)
             }
           
           #Inserting corrected scale for graphs that have Answer Options along the bottom
-            if(!is.null(graph.group.by.varname) && graph.group.by.varname == "answer"){
+            if(!is.null(graph.group.by.varnames) && "answer" %in% graph.group.by.varnames){
               graphdata.df.g <- left_join(graphdata.df.g,config.ans.opt.tb, by = c("answer" = "ans.num"))#graphdata.df.g[order(graphdata.df.g[,2]),]
               
               if(config.graphs.df.g$module %in% c("LEAD","PD")){
-                graphdata.df.g <- graphdata.df.g %>% select(data.year, ans.text.agreement, measure.var, avg)
+                graphdata.df.g <- 
+                  graphdata.df.g %>% 
+                  select(graph.group.by.varnames, ans.text.agreement, measure, avg)
                 graph.cat.varname <- "ans.text.agreement"
               }else{
-                graphdata.df.g <- graphdata.df.g %>% select(data.year, ans.text.freq, measure.var, avg)
+                graphdata.df.g <- 
+                  graphdata.df.g %>% 
+                  select(graph.group.by.varnames, ans.text.agreement, measure, avg)
                 graph.cat.varname <- "ans.text.freq"
               }
             }
@@ -1003,12 +1013,15 @@
 
           #Adding Columns (Clustered or Non-Clustered)
             #Define Fill Values
-              if(
-                strsplit(config.graphs.df.g$graph.fill, ",") %>% unlist %>% trimws %>% length %>% equals(1)
-              ){
-                graph.fill.g <- config.graphs.df.g$graph.fill %>% rep(., nrow(graphdata.df.g))
+              if(strsplit(config.graphs.df.g$graph.fill, ",") %>% unlist %>% trimws %>% length %>% equals(1)){
+                graph.fill.g <- 
+                  config.graphs.df.g$graph.fill %>% 
+                  rep(., nrow(graphdata.df.g))
               }else{
-                graph.fill.g <- strsplit(config.graphs.df.g$graph.fill, ",") %>% unlist %>% trimws %>% rev
+                graph.fill.g <- 
+                  strsplit(config.graphs.df.g$graph.fill, ",") %>% 
+                  unlist %>% trimws %>% rev %>% 
+                  rep(., nrow(graphdata.df.g)/2)
               }
 
             #Add columns
@@ -1016,8 +1029,7 @@
                 AddColsToGraph(
                   base.graph.input = graph.1,
                   dat = graphdata.df.g,
-                  #graph.headers = headers,
-                  graph.group.by.var = graph.group.by.var,
+                  graph.group.by.varnames = graph.group.by.varnames,
                   graph.fill = graph.fill.g,
                   print.graph = FALSE
                 )
@@ -1028,7 +1040,7 @@
               graph.labels.df <- 
                 create.graph.labels.fun(
                   dat = graphdata.df.g, 
-                  dat.measure.varname = "measure.var", 
+                  dat.measure.varname = "measure", 
                   height.ratio.threshold = 8.2,
                   dat.configs = config.graphs.df.g
                 )
@@ -1037,7 +1049,6 @@
               graph.3 <-
                 AddGraphDataLabels(
                   base.graph.input = graph.2,
-                  #graph.headers = headers,
                   dat = graphdata.df.g,
                   dat.labels = graph.labels.df,
                   label.font.size = 4,
@@ -1046,12 +1057,11 @@
             
           #Add Graph Averages (as error bar)
             #NOTE: does not depend on config.graphs.df.g - taken care of with if statement outside function
-            if(config.graphs.df.g$graph.average == "yes"){
+            if(!is.na(config.graphs.df.g$avg.level)){
               graph.4 <-
                 AddGraphAverages(
                   base.graph.input = graph.3,
                   dat = graphdata.df.g,
-                  #graph.headers = headers,
                   avg.bar.color = config.graphs.df.g$avg.bar.color,
                   dat.configs = config.graphs.df.g,
                   print.graph = FALSE 

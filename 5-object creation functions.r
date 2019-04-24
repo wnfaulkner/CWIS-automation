@@ -31,21 +31,17 @@ source("utils_wnf.r")
   }
 
 #Add columns to graph: 
-  #first column of data becomes x-axis categories, 
-  #measure.var = height (y values), 
-  #graph.fill = fill
-  #Transparency (alpha) automatically set to 0 - fully opaque
   #Test Inputs
     #base.graph.input = graph.1
     #dat = graphdata.df.g
-    #graph.group.by.var = graph.group.by.var
+    #graph.group.by.varnames = graph.group.by.varnames
     #graph.fill = graph.fill.g
     #print.graph = TRUE
   
   AddColsToGraph <- function(
     base.graph.input, #a base graph ggplot object with data and alpha defined (e.g. resulting from function above)
     dat, #the graph data frame with x-axis labels in column 1 and bar heights in a column named 'measure.var'
-    graph.group.by.var, #[for stacked graphs only] a data frame of the grouping variable extracted from input data earlier in code
+    graph.group.by.varnames, #[for stacked graphs only] a data frame of the grouping variable extracted from input data earlier in code
     graph.fill, #a vector of hex color values with same length as nrow(dat)
     print.graph = FALSE #TRUE/FALSE: if true, prints graph in new window. FALSE = default.
   ){
@@ -74,17 +70,16 @@ source("utils_wnf.r")
       }
     
     #Produce Inputs for Final Results
-      headers.varname <- names(dat)[!grepl("measure", names(dat))]
-      headers <- dat[,names(dat) == headers.varname] 
-    
+      headers.varname <- graph.group.by.varnames[graph.group.by.varnames != "time.period"]
+
     #Produce Final Result  
-      if(is.null(graph.group.by.var)){
+      if(is.null(graph.group.by.varnames)){
         graph.w.cols <-
           base.graph.input +
           
           geom_bar(
-            aes(x = headers, 
-                y = measure.var %>% as.numeric
+            aes(x = dat[,names(dat) == headers.varname], 
+                y = measure %>% as.numeric
             ),
             fill = graph.fill,
             alpha = 1,
@@ -97,9 +92,9 @@ source("utils_wnf.r")
           base.graph.input +
           
           geom_bar(
-            aes(x = headers, 
-                y = measure.var %>% as.numeric,
-                group = graph.group.by.var, 
+            aes(x = dat[,names(dat) == headers.varname], 
+                y = measure %>% as.numeric,
+                group = dat %>% select(graph.group.by.varnames[1]) %>% unlist %>% as.vector, 
                 fill = graph.fill
             ),
             alpha = 1,
@@ -119,8 +114,6 @@ source("utils_wnf.r")
   }
   
 #Graph Label Heights (defined based on ratio of tallest to shortest columns)
-  #TODO: STANDARDIZE ALL FUNCTIONS SO DATA TABLE INPUT (WHETHER TIBBLE OR DATA FRAME) PARAMETER IS "dat"
-  
   #NOTE: WHEN WITHIN local() COMMAND AND USING A FUNCTION SOURCED FROM ANOTHER FILE, CANNOT USE OBJECTS
     #NOT DEFINED IN FUNCTION PARAMETERS. THIS FUNCTION USES THE CONFIG TABLE BUT DOES NOT HAVE IT AS A
     #PARAMETER, SO THROWS AN ERROR: 
@@ -129,7 +122,7 @@ source("utils_wnf.r")
   
   #Test Inputs
     #dat = graphdata.df.g
-    #dat.measure.varname = "measure.var"
+    #dat.measure.varname = "measure"
     #height.ratio.threshold = 8.2
     #dat.configs = config.graphs.df.g
   
@@ -160,26 +153,26 @@ source("utils_wnf.r")
     
       #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
     
-    if(height.ratio < height.ratio.threshold){ 
-      graph.labels.heights.v <- rep(min/2, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
-      above.label.vectorposition <- max/var > height.ratio.threshold
-    }
-    
-    if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
-      graph.labels.heights.v <- vector(length = length(var), mode = "numeric")
-      above.label.vectorposition <- max/var > height.ratio.threshold
-      above.label.vectorposition[is.na(above.label.vectorposition)] <- TRUE
-      graph.labels.heights.v[above.label.vectorposition] <-   #labels for columns below threshold, position is height of bar plus 1/10 of max bar height 
-        var[above.label.vectorposition] + max/10
-      graph.labels.heights.v[graph.labels.heights.v == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
-        min(var[!above.label.vectorposition])/2
-      graph.labels.heights.v[which(is.na(var))] <- max/3  #"No Responses" labels at max/3 height
+      if(height.ratio < height.ratio.threshold){ 
+        graph.labels.heights.v <- rep(min/2, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
+        above.label.vectorposition <- max/var > height.ratio.threshold
+      }
       
-    }
-    
+      if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
+        graph.labels.heights.v <- vector(length = length(var), mode = "numeric")
+        above.label.vectorposition <- max/var > height.ratio.threshold
+        above.label.vectorposition[is.na(above.label.vectorposition)] <- TRUE
+        graph.labels.heights.v[above.label.vectorposition] <-   #labels for columns below threshold, position is height of bar plus 1/10 of max bar height 
+          var[above.label.vectorposition] + max/10
+        graph.labels.heights.v[graph.labels.heights.v == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
+          min(var[!above.label.vectorposition])/2
+        graph.labels.heights.v[which(is.na(var))] <- max/3  #"No Responses" labels at max/3 height
+        
+      }
+      
     #Label Text
       
-      if(dat.configs$data.measure == "implementation"){
+      if(grepl("mean",dat.configs$summarize.fun)){
         graph.labels.text.v <- as.character(100*var %>% round(., 2)) %>% paste(.,"%",sep="")
       }else{
         graph.labels.text.v <- 
@@ -189,9 +182,14 @@ source("utils_wnf.r")
           sprintf("%.1f",.) %>% 
           trimws(., which = "both") 
       }
-      graph.labels.text.v[dat[,names(dat) == dat.measure.varname] %>% as.matrix %>% as.vector(.,mode = "numeric") %>% is.na(.) %>% which] <- 
-        "No Responses"
-    
+      graph.labels.text.v[
+        dat[,
+          names(dat) == dat.measure.varname] %>% 
+          as.matrix %>% 
+          as.vector(.,mode = "numeric") %>% 
+          is.na(.) %>% 
+          which
+      ] <- "No Responses"
     }
   
     #Label visibility
@@ -228,6 +226,7 @@ source("utils_wnf.r")
     #dat = graphdata.df.g
     #dat.labels = graph.labels.df
     #label.font.size = 4
+    #print.graph = TRUE
     
   AddGraphDataLabels <- function(
     base.graph.input,
@@ -250,8 +249,7 @@ source("utils_wnf.r")
       label.font.size <- as.numeric(label.font.size)
      
     #Produce Inputs for Final Results
-      headers.varname <- names(dat)[!grepl("measure", names(dat))]
-      headers <- dat[,names(dat) == headers.varname] 
+      headers.varname <- graph.group.by.varnames[graph.group.by.varnames != "time.period"]
    
     #Produce Final Result  
       graph.w.datalabels <- 
@@ -259,9 +257,8 @@ source("utils_wnf.r")
         geom_text( 
           aes(                                                          
             y = dat.labels$graph.labels.heights, 
-            x = headers,
+            x = dat[,names(dat) == headers.varname],
             label = dat.labels$graph.labels.text,
-            #alpha = dat.labels$graph.labels.alpha.v,
             group = dat[,1]
           ),
           alpha = dat.labels$graph.labels.alpha.v,
@@ -302,7 +299,7 @@ source("utils_wnf.r")
         #Average bar opacity (alpha)
           dat$avg.alpha <- 
             ifelse(
-              is.na(dat.configs$graph.group.by.vars)||is.null(dat.configs$graph.group.by.vars),
+              is.na(dat.configs$graph.group.by.varnamess)||is.null(dat.configs$graph.group.by.varnamess),
               1,
               rep(c(0.8,0.0),nrow(dat))
             )
