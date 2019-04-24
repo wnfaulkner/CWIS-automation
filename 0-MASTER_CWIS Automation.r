@@ -959,20 +959,10 @@
             #print(config.graphs.df.g)
         
         #CLEANING DATA & CONFIGS
-          #Making new [shortened] objects that will get a lot of use in graph formation; 
-            #headers.varname <- names(graphdata.df.g)[!grepl("measure", names(graphdata.df.g))] #name of variable in input data for graph designating column/bar header labels
-            #headers <- graphdata.df.g[,names(graphdata.df.g) == headers.varname] #vector of column/bar headers
             
+          #Making new [shortened] objects that will get a lot of use in graph formation; 
             graph.group.by.varnames <- 
               names(graphdata.df.g)[1:(which(names(graphdata.df.g) == "measure")-1)]
-            
-            #if(is.na(config.graphs.df.g$graph.group.by.var) || is.null(config.graphs.df.g$data.group.by.var)){
-            #  graph.group.by.varname <- NULL
-            #  graph.group.by.var <- NULL
-            #}else{
-            #  graph.group.by.varname <- config.graphs.df.g$graph.group.by.var
-            #  graph.group.by.var <- graphdata.df.g[,names(graphdata.df.g) == graph.group.by.varname] 
-            #}
             
           #Capitalize headers in graphdata.df.g, all-caps for module, upper-case first letter for everything else
           
@@ -1075,7 +1065,6 @@
             graph.g <- 
               FinalGraphFormatting(
                 base.graph.input = graph.4,
-                #graph.headers = headers,
                 dat = graphdata.df.g,
                 dat.configs = config.graphs.df.g,
                 print.graph = FALSE

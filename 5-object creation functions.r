@@ -40,7 +40,7 @@ source("utils_wnf.r")
   
   AddColsToGraph <- function(
     base.graph.input, #a base graph ggplot object with data and alpha defined (e.g. resulting from function above)
-    dat, #the graph data frame with x-axis labels in column 1 and bar heights in a column named 'measure.var'
+    dat, #the graph data frame with x-axis labels in column 1 and bar heights in a column named 'measure'
     graph.group.by.varnames, #[for stacked graphs only] a data frame of the grouping variable extracted from input data earlier in code
     graph.fill, #a vector of hex color values with same length as nrow(dat)
     print.graph = FALSE #TRUE/FALSE: if true, prints graph in new window. FALSE = default.
@@ -117,7 +117,7 @@ source("utils_wnf.r")
   #NOTE: WHEN WITHIN local() COMMAND AND USING A FUNCTION SOURCED FROM ANOTHER FILE, CANNOT USE OBJECTS
     #NOT DEFINED IN FUNCTION PARAMETERS. THIS FUNCTION USES THE CONFIG TABLE BUT DOES NOT HAVE IT AS A
     #PARAMETER, SO THROWS AN ERROR: 
-      #"Error in create.graph.labels.fun(dat = graphdata.df.g, measure.var = "measure.var",  : 
+      #"Error in create.graph.labels.fun(dat = graphdata.df.g, measure = "measure",  : 
       #object 'config.graphs.df.g' not found"
   
   #Test Inputs
@@ -292,42 +292,48 @@ source("utils_wnf.r")
     dat.configs,
     print.graph = FALSE
   ){
-     #Produce Inputs for Final Results
-        headers.varname <- names(dat)[!grepl("measure", names(dat))]
-        headers <- dat[,names(dat) == headers.varname]
+    
+    headers.varname <- graph.group.by.varnames[graph.group.by.varnames != "time.period"]
         
-        #Average bar opacity (alpha)
-          dat$avg.alpha <- 
-            ifelse(
-              is.na(dat.configs$graph.group.by.varnamess)||is.null(dat.configs$graph.group.by.varnamess),
-              1,
-              rep(c(0.8,0.0),nrow(dat))
-            )
-     
-      #Produce Final Results
-        if(dat$measure.var.avg %>% is.na %>% all){
-          graph.w.averages <- base.graph.input
-        }else{
-          graph.w.averages <- 
-          
-            base.graph.input +
-          
-            geom_errorbar(
-              aes(
-                x = headers,
-                #group = dat[[graph.cat.varname]],
-                ymin = dat$measure.var.avg, 
-                ymax = dat$measure.var.avg,
-                alpha = dat$avg.alpha
+    #Average bar opacity (alpha)
+      if(is.null(graph.group.by.varnames)|all(is.na(graph.group.by.varnames))){
+        dat$avg.alpha <- 1
+      }else{
+        dat$avg.alpha <- rep(c(0.8,1),nrow(dat)/2) 
+      }
+ 
+    #Produce Final Results
+      if(dat$avg %>% is.na %>% all){
+        graph.w.averages <- base.graph.input
+      }else{
+        graph.w.averages <- 
+        
+          base.graph.input +
+        
+          geom_errorbar(
+            aes(
+              x = dat[,names(dat) == headers.varname],
+              group = 
+                dat %>% 
+                select(graph.group.by.varnames[!graph.group.by.varnames %in% headers.varname]) %>%
+                unlist %>% as.vector,
+              ymin = dat$avg, 
+              ymax = dat$avg,
+              alpha = dat$avg.alpha
+            
+                #x = dat[,names(dat) == headers.varname], 
+                #y = measure %>% as.numeric,
+                #group = dat %>% select(graph.group.by.varnames[1]) %>% unlist %>% as.vector, 
+                #fill = graph.fill
+              
               ), 
-              position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-              color = avg.bar.color, 
-              width = 1,
-              size = 2,
-              #alpha = 1,
-              show.legend = FALSE
-            )
-        }
+            position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+            color = avg.bar.color, 
+            width = 1,
+            size = 2,
+            show.legend = FALSE
+          )
+      }
           
     #Return/Print Results  
       if(print.graph){
@@ -350,36 +356,30 @@ source("utils_wnf.r")
   
   FinalGraphFormatting <- function(
     base.graph.input,
-    #graph.headers,
     dat,
     dat.configs,
     print.graph = FALSE
     
   ){
-    #List with all potential header vectors in correct order
-      #NOTE: SHOULD BE OBSOLETE - NOW SHOULD ALREADY BE DEFINED IN CONFIGS TABLE
-      #graph.cat.order.ls <-
-      #  list(
-      #    data.year = c("Baseline","2017-18"),
-      #    school.level = c("Elem.","Middle","High","Mult.","Other"),
-      #    role = c("Special Educator","Classroom Teacher","Instructional Coach","School Counselor","School Social Worker","Building Administrator","Other"),
-      #    module = c("ETLP", "CFA","DBDM","LEAD","PD"),
-      #    ans.text.freq = c("Always","Most of the time","About half the time","Sometimes","Never"),
-      #    ans.text.agreement = c("Strongly Agree","Agree","Neutral","Disagree","Strongly Disagree"),
-      #    practice = if("practice" %in% names(graphdata.df.g)){graphdata.df.g$practice}else{""} #TODO:When moving this out of loop, will need to generalize for all module practices
-      #  )
-        
-    #Produce Inputs for Final Results
-      headers.varname <- names(dat)[!grepl("measure", names(dat))]
-      headers <- dat[,names(dat) == headers.varname] 
-      
+    #Create factor vector for ordering axis
+      headers.varname <- graph.group.by.varnames[graph.group.by.varnames != "time.period"]
+      order.ls <-
+        strsplit(dat.configs$x.var.order, ";") %>% 
+        unlist   %>% strsplit(., ",")
+      names(order.ls) <- 
+        dat.configs$x.varnames %>% strsplit(., ",") %>% unlist 
+      headers.v <- 
+        order.ls[names(order.ls)==headers.varname] %>% 
+        unlist %>% as.vector %>%
+        FirstLetterCap_MultElements()
+     
       #Factor vector with levels in order they will need to be to get column/bar ordering right
         #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() 
         #command does a mirror image
         if(dat.configs$graph.type.orientation == "bar"){
-          graph.order.g <- headers %>% factor(., levels = headers %>% rev)
+          graph.order.g <- factor(headers.v, levels = headers.v %>% rev) 
         }else{
-          graph.order.g <- headers %>% factor(., levels = headers %>% rev)        
+          graph.order.g <- factor(headers.v, levels = headers.v)       
         }
     
     #Graph category axis ordering
