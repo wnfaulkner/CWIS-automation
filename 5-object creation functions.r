@@ -78,7 +78,7 @@ source("utils_wnf.r")
           base.graph.input +
           
           geom_bar(
-            aes(x = dat[,names(dat) == headers.varname], 
+            aes(x = dat[,names(dat) == headers.varname] %>% unlist %>% as.vector, 
                 y = measure %>% as.numeric
             ),
             fill = graph.fill,
@@ -92,11 +92,11 @@ source("utils_wnf.r")
           base.graph.input +
           
           geom_bar(
-            aes(x = dat[,names(dat) == headers.varname], 
-                y = measure %>% as.numeric,
-                group = dat %>% select(graph.group.by.varnames[1]) %>% unlist %>% as.vector, 
-                fill = graph.fill
+            aes(x = dat[,names(dat) == headers.varname] %>% unlist %>% as.vector(), 
+                y = dat$measure %>% as.numeric,
+                group = dat %>% select(graph.group.by.varnames[1]) %>% unlist %>% as.vector %>% factor 
             ),
+            fill = graph.fill,
             alpha = 1,
             position = "dodge", 
             stat = "identity"
@@ -231,6 +231,7 @@ source("utils_wnf.r")
   AddGraphDataLabels <- function(
     base.graph.input,
     dat,
+    graph.group.by.varnames,
     dat.labels,
     label.font.size,
     print.graph = FALSE
@@ -288,6 +289,7 @@ source("utils_wnf.r")
   AddGraphAverages <- function(
     base.graph.input,
     dat,
+    graph.group.by.varnames,
     avg.bar.color,
     dat.configs,
     print.graph = FALSE
@@ -299,7 +301,7 @@ source("utils_wnf.r")
       if(is.null(graph.group.by.varnames)|all(is.na(graph.group.by.varnames))){
         dat$avg.alpha <- 1
       }else{
-        dat$avg.alpha <- rep(c(0.8,1),nrow(dat)/2) 
+        dat$avg.alpha <- rep(c(1,0.8),nrow(dat)/2) 
       }
  
     #Produce Final Results
@@ -320,13 +322,7 @@ source("utils_wnf.r")
               ymin = dat$avg, 
               ymax = dat$avg,
               alpha = dat$avg.alpha
-            
-                #x = dat[,names(dat) == headers.varname], 
-                #y = measure %>% as.numeric,
-                #group = dat %>% select(graph.group.by.varnames[1]) %>% unlist %>% as.vector, 
-                #fill = graph.fill
-              
-              ), 
+            ), 
             position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
             color = avg.bar.color, 
             width = 1,
@@ -357,6 +353,7 @@ source("utils_wnf.r")
   FinalGraphFormatting <- function(
     base.graph.input,
     dat,
+    graph.group.by.varnames,
     dat.configs,
     print.graph = FALSE
     
@@ -371,7 +368,7 @@ source("utils_wnf.r")
       headers.v <- 
         order.ls[names(order.ls)==headers.varname] %>% 
         unlist %>% as.vector %>%
-        FirstLetterCap_MultElements()
+        FirstLetterCap()
      
       #Factor vector with levels in order they will need to be to get column/bar ordering right
         #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() 

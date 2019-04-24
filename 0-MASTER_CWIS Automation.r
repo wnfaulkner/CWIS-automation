@@ -908,9 +908,9 @@
     graphs.ls.f <- list()
     tables.ls.f <- list()
   
-  f <- 1 #LOOP TESTER
+  #f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  #for(f in 1:length(unit.ids.sample)){
+  for(f in 1:length(unit.ids.sample)){
     
     #Loop units  
       unit.id.f <- unit.ids.sample[f]
@@ -934,10 +934,10 @@
     graphs.ls.g <- list()
     maxrow.g <- length(graphdata.ls.f)
     
-    g <- 1 #LOOP TESTER
+    #g <- 1 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    #for(g in 1:length(graphdata.ls.f))
-      #local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
+    for(g in 1:length(graphdata.ls.f))
+      local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         
         #Redefine necessary objects in local environment
           g<-g #same as above
@@ -945,7 +945,7 @@
         #GRAPH DATA & CONFIGS DATA FRAMES
           
           #Select tables from lists produced in previous sections
-            graphdata.df.g <- graphdata.ls.f[[g]] %>% as.data.frame()
+            graphdata.df.g <- graphdata.ls.f[[g]]
             config.graphs.df.g <- config.graphs.df.f[g,] %>% as.data.frame()
           
           #Print loop messages for bug checking
@@ -966,19 +966,24 @@
             
           #Capitalize headers in graphdata.df.g, all-caps for module, upper-case first letter for everything else
           
-            if(names(graphdata.df.g)[1] %>% grepl("module",.)){
-              graphdata.df.g[,1:(which(names(graphdata.df.g) == "measure")-1)] <- 
-                graphdata.df.g[,1:(which(names(graphdata.df.g) == "measure")-1)] %>% 
-                apply(., c(1:2), toupper)
-            }else{
-              graphdata.df.g[,1:(which(names(graphdata.df.g) == "measure")-1)] <- 
-                graphdata.df.g[,1:(which(names(graphdata.df.g) == "measure")-1)] %>% 
-                apply(., c(1:2), FirstLetterCap_MultElements)
-            }
+            #if(grepl("module",names(graphdata.df.g)) %>% any){
+             graphdata.df.g[,
+                names(graphdata.df.g)[!names(graphdata.df.g) %in% c("module","answer","measure","avg")]
+              ] <- 
+                graphdata.df.g %>% 
+                select(
+                  names(graphdata.df.g)[!names(graphdata.df.g) %in% c("module","answer","measure","avg")]
+                ) %>% 
+                apply(., c(1,2), FirstLetterCap_MultElements)
+             
+             graphdata.df.g[names(graphdata.df.g) == "module"] <- 
+               graphdata.df.g[names(graphdata.df.g) == "module"] %>%
+               apply(., c(1:2), toupper)
           
           #Inserting corrected scale for graphs that have Answer Options along the bottom
             if(!is.null(graph.group.by.varnames) && "answer" %in% graph.group.by.varnames){
-              graphdata.df.g <- left_join(graphdata.df.g,config.ans.opt.tb, by = c("answer" = "ans.num"))#graphdata.df.g[order(graphdata.df.g[,2]),]
+              graphdata.df.g <- 
+                left_join(graphdata.df.g,config.ans.opt.tb, by = c("answer" = "ans.num"))
               
               if(config.graphs.df.g$module %in% c("LEAD","PD")){
                 graphdata.df.g <- 
@@ -1040,6 +1045,7 @@
                 AddGraphDataLabels(
                   base.graph.input = graph.2,
                   dat = graphdata.df.g,
+                  graph.group.by.varnames = graph.group.by.varnames,
                   dat.labels = graph.labels.df,
                   label.font.size = 4,
                   print.graph = FALSE
@@ -1052,6 +1058,7 @@
                 AddGraphAverages(
                   base.graph.input = graph.3,
                   dat = graphdata.df.g,
+                  graph.group.by.varnames = graph.group.by.varnames,
                   avg.bar.color = config.graphs.df.g$avg.bar.color,
                   dat.configs = config.graphs.df.g,
                   print.graph = FALSE 
@@ -1066,6 +1073,7 @@
               FinalGraphFormatting(
                 base.graph.input = graph.4,
                 dat = graphdata.df.g,
+                graph.group.by.varnames = graph.group.by.varnames,
                 dat.configs = config.graphs.df.g,
                 print.graph = FALSE
               )
@@ -1080,21 +1088,21 @@
     ###                       ###    
 #   ### LOOP "g" BY TABLE     ###
     ###                       ###
-    
+    {
     #Loop output object(s)
-      tables.ls.g <- list()
+      #tables.ls.g <- list()
     
     #g <- 1 #LOOP TESTER
     #for(g in 1:2){ #LOOP TESTER
-    for(g in 1:length(tabledata.ls.c[[f]])){
+    #for(g in 1:length(tabledata.ls.c[[f]])){
       
       #Prep Loop Inputs
-        if(dim(tabledata.ls.c[[f]][[g]])[1] == 0){
-          tabledata.ls.c[[f]][[g]][1,] <- rep(0, dim(tabledata.ls.c[[f]][[g]])[2]) 
-        }
+        #if(dim(tabledata.ls.c[[f]][[g]])[1] == 0){
+        #  tabledata.ls.c[[f]][[g]][1,] <- rep(0, dim(tabledata.ls.c[[f]][[g]])[2]) 
+        #}
         
-        tabledata.df.g <- tabledata.ls.c[[f]][[g]]
-        config.tables.df.g <- config.tables.df.c[g,]
+        #tabledata.df.g <- tabledata.ls.c[[f]][[g]]
+        #config.tables.df.g <- config.tables.df.c[g,]
     
       #Print loop messages for bug checking
         #print(
@@ -1107,59 +1115,61 @@
         #print(config.tables.df.g)
         
       #Create FlexTable Object
-         ft.g <- FlexTable(
-          data = tabledata.df.g,
-          header.columns = TRUE,
-          add.rownames = FALSE,
+         #ft.g <- FlexTable(
+          #data = tabledata.df.g,
+          #header.columns = TRUE,
+          #add.rownames = FALSE,
           
-          header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #TODO:Should put into configs instead of specifying in code
-          header.text.props = textProperties(
-            color = "white", 
-            font.size = 15,
-            font.family = "Century Gothic",
-            font.weight = "bold"),
-          header.par.props = parProperties(text.align = "center"),
-          body.cell.props = cellProperties(background.color = "white", border.style = "none"),
-          body.text.props = textProperties(
-            color = "#515151",
-            font.size = 15,
-            font.family = "Century Gothic"
-          )
-        )
+          #header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #TODO:Should put into configs instead of specifying in code
+          #header.text.props = textProperties(
+          #  color = "white", 
+          #  font.size = 15,
+          #  font.family = "Century Gothic",
+          #  font.weight = "bold"),
+          #header.par.props = parProperties(text.align = "center"),
+          #body.cell.props = cellProperties(background.color = "white", border.style = "none"),
+          #body.text.props = textProperties(
+          #  color = "#515151",
+          #  font.size = 15,
+          #  font.family = "Century Gothic"
+          #)
+        #)
         
-        if(g == 1){
-          ft.g[dim(tabledata.df.g)[1],] <- 
-            chprop(
-              textProperties(
-                font.weight = "bold",
-                font.size = 18,
-                font.family = "Century Gothic"
-              )
-            ) #Bold text on last line (totals)
-          ft.g[,1] <- chprop(parProperties(text.align = "center"))
+        #if(g == 1){
+          #ft.g[dim(tabledata.df.g)[1],] <- 
+            #chprop(
+              #textProperties(
+                #font.weight = "bold",
+                #font.size = 18,
+                #font.family = "Century Gothic"
+              #)
+            #) #Bold text on last line (totals)
+          #ft.g[,1] <- chprop(parProperties(text.align = "center"))
           #ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(6,dim(tabledata.df.g)[2]-1)))      
           
-        }
+        #}
         
-        if(g != 1){
-          ft.g[,1] <- chprop(parProperties(text.align = "right"))
-        }
+        #if(g != 1){
+        #  ft.g[,1] <- chprop(parProperties(text.align = "right"))
+        #}
         
-        ft.g[1:dim(tabledata.df.g)[1],2:dim(tabledata.df.g)[2]] <- #Center align numbers in all but first column
-          chprop(parProperties(text.align = "center")) 
-        ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
+        #ft.g[1:dim(tabledata.df.g)[1],2:dim(tabledata.df.g)[2]] <- #Center align numbers in all but first column
+        #  chprop(parProperties(text.align = "center")) 
+        #ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
         
-        tables.ls.g[[g]] <- ft.g
+        #tables.ls.g[[g]] <- ft.g
         
-    } ### END OF LOOP "g" BY TABLE ###
+    #} ### END OF LOOP "g" BY TABLE ###
   
-    names(tables.ls.g) <- c("role","etlp","cfa","dbdm","pd","lead") #TODO:WAS CAUSING PROBLEMS WITH ORDERING OF TABLES ON SLIDES BECAUSE HAD NOT BEEN UPDATED TO NEW ORDER OF MODULES
-    tables.ls.f[[f]] <- tables.ls.g
+    #names(tables.ls.g) <- c("role","etlp","cfa","dbdm","pd","lead") #TODO:WAS CAUSING PROBLEMS WITH ORDERING OF TABLES ON SLIDES BECAUSE HAD NOT BEEN UPDATED TO NEW ORDER OF MODULES
+    #tables.ls.f[[f]] <- tables.ls.g
+    }
+      
     setTxtProgressBar(progress.bar.f, 100*f/maxrow.f)
     
   } ### END OF LOOP "f" BY REPORT.UNIT
   close(progress.bar.f)
-  
+    
    #Section Clocking
     section5.duration <- Sys.time() - section5.starttime
     section5.duration
@@ -1218,17 +1228,17 @@
     maxrow.h <- sapply(config.slides.ls.b, dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     printed.reports.ls <- list()
   
-  #h <- 10 #LOOP TESTER
+  h <- 1 #LOOP TESTER
   #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
-  for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
+  #for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
     
     #Reading 'Cadre' so it can be added to file name
-      cadre.h <- 
-        buildings.tb %>% 
-        filter(report.id == unit.ids.sample[h]) %>% 
-        select(cadre) %>% 
-        unlist %>% 
-        FirstLetterCap_OneElement()
+      #cadre.h <- 
+      #  buildings.tb %>% 
+      #  filter(buildings.tb %>% select(report.unit) %>% equals(unit.ids.sample[h])) %>% 
+      #  select(cadre) %>% 
+      #  unlist %>% 
+      #  FirstLetterCap_OneElement()
     
     #Set up target file
       template.file <- paste(source.tables.dir,
