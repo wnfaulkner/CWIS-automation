@@ -954,7 +954,7 @@
     graphs.ls.g <- list()
     maxrow.g <- length(graphdata.ls.f)
     
-    #g <- which(config.graphs.df.f$graph.type.id == "i")[1] #LOOP TESTER
+    #g <- which(config.graphs.df.f$graph.type.id == "e")[1] #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.f))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -1018,8 +1018,7 @@
              graphdata.df.g[names(graphdata.df.g) == "module"] <- 
                graphdata.df.g[names(graphdata.df.g) == "module"] %>%
                apply(., c(1:2), toupper)
-          
-         
+   
         
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
         
