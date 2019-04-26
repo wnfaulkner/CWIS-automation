@@ -922,9 +922,9 @@
     graphs.ls.f <- list()
     #tables.ls.f <- list()
   
-  f <- 1 #LOOP TESTER
+  #f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  #for(f in 1:length(unit.ids.sample)){
+  for(f in 1:length(unit.ids.sample)){
     
     #Loop units  
       unit.id.f <- unit.ids.sample[f]
@@ -948,10 +948,10 @@
     graphs.ls.g <- list()
     maxrow.g <- length(graphdata.ls.f)
     
-    g <- which(config.graphs.df.f$graph.type.id == "i")[1] #LOOP TESTER
+    #g <- which(config.graphs.df.f$graph.type.id == "i")[1] #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    #for(g in 1:length(graphdata.ls.f))
-      #local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
+    for(g in 1:length(graphdata.ls.f))
+      local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         
         #Redefine necessary objects in local environment
           g<-g #same as above
