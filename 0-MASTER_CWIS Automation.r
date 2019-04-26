@@ -2,7 +2,6 @@
 #      	CWIS Automation for MMD                   	    #
 #0000000000000000000000000000000000000000000000000000000#
 
-
 # 0-SETUP -----------------------------------------------------------
   
   #INITIAL SETUP
@@ -267,11 +266,26 @@
           filter(!grepl("district office", building)) %>%
           filter(building != "")
         
-      #TODO:Filter out test responses
-          
-      #Restrict rows 
-        #Data to sample of user-defined size if doing sample print
-         resp5.tb <- RestrictDataToSample(
+        output.ls <- list()
+       
+      #Filter out units with no answers for cwis vars 
+        for(i in 1:length(resp4.tb$unit.id %>% unique)){
+          unit.id.i <- unique(resp4.tb$unit.id)[i]
+          empty.cwis.answers <- 
+            resp4.tb %>% 
+            filter(unit.id == unit.id.i) %>% 
+            select(cwis.varnames.branched) %>%
+            apply(., 2, function(x){all(is.na(x))}) %>% 
+            all
+          output.ls[[i]] <- c(unit.id.i, empty.cwis.answers)
+        }  
+        
+        empty.cwis.unit.ids <- do.call(rbind, output.ls) %>% as_tibble %>% filter(V2 == TRUE)
+        resp4.tb <- resp4.tb %>% filter(!unit.id %in% empty.cwis.unit.ids)
+        
+      #Restrict Data to sample of user-defined size if doing sample print
+         resp5.tb <- 
+          RestrictDataToSample(
             tb = resp4.tb,
             report.unit = report.unit,
             sample.print = sample.print,
@@ -451,14 +465,14 @@
                 "building.id",
                 "building.level",
                 q.unbranched.tb %>% 
-                  filter(q.unbranched.tb$necessary.for.reports == "yes") %>% select(var.id) %>% unlist
+                  filter(q.unbranched.tb$necessary.for.reports == "yes") %>% 
+                  select(var.id) %>% 
+                  unlist
               )
             ] %>%
             as_tibble()
                  
           #Add module and practice variables for looping 
-            #TODO: need to abstract? Just for module variable or are there others?
-            
             resp.long.tb <-
               left_join(
                 resp.long1.tb,
@@ -590,7 +604,7 @@
   ###                          ###
   
   #Loop Inputs
-    unit.ids.sample <- resp.wide.tb$unit.id %>% unique 
+    unit.ids.sample <- resp.long.tb$unit.id %>% unique 
     
   #Loop Outputs 
     config.graphs.ls.b <- list()
@@ -906,9 +920,9 @@
     
   #Loop Outputs
     graphs.ls.f <- list()
-    tables.ls.f <- list()
+    #tables.ls.f <- list()
   
-  #f <- 1 #LOOP TESTER
+  #f <- 2 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
   for(f in 1:length(unit.ids.sample)){
     
@@ -934,7 +948,7 @@
     graphs.ls.g <- list()
     maxrow.g <- length(graphdata.ls.f)
     
-    #g <- 1 #LOOP TESTER
+    #g <- 11 #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.f))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -961,8 +975,11 @@
         #CLEANING DATA & CONFIGS
             
           #Making new [shortened] objects that will get a lot of use in graph formation; 
-            graph.group.by.varnames <- 
-              names(graphdata.df.g)[1:(which(names(graphdata.df.g) == "measure")-1)]
+            x.varnames.g <- 
+              config.graphs.df.g$x.varnames %>% strsplit(., ",") %>% unlist
+            
+            graph.header.varname <- x.varnames.g[1]
+            graph.group.by.varnames <- if(length(x.varnames.g)==1){NULL}else{x.varnames.g[2:length(x.varnames.g)]}
             
           #Capitalize headers in graphdata.df.g, all-caps for module, upper-case first letter for everything else
           
@@ -1024,6 +1041,7 @@
                 AddColsToGraph(
                   base.graph.input = graph.1,
                   dat = graphdata.df.g,
+                  graph.header.varname = graph.header.varname,
                   graph.group.by.varnames = graph.group.by.varnames,
                   graph.fill = graph.fill.g,
                   print.graph = FALSE
@@ -1045,6 +1063,7 @@
                 AddGraphDataLabels(
                   base.graph.input = graph.2,
                   dat = graphdata.df.g,
+                  graph.header.varname = graph.header.varname,
                   graph.group.by.varnames = graph.group.by.varnames,
                   dat.labels = graph.labels.df,
                   label.font.size = 4,
@@ -1058,6 +1077,7 @@
                 AddGraphAverages(
                   base.graph.input = graph.3,
                   dat = graphdata.df.g,
+                  graph.header.varname = graph.header.varname,
                   graph.group.by.varnames = graph.group.by.varnames,
                   avg.bar.color = config.graphs.df.g$avg.bar.color,
                   dat.configs = config.graphs.df.g,
@@ -1073,6 +1093,7 @@
               FinalGraphFormatting(
                 base.graph.input = graph.4,
                 dat = graphdata.df.g,
+                graph.header.varname = graph.header.varname,
                 graph.group.by.varnames = graph.group.by.varnames,
                 dat.configs = config.graphs.df.g,
                 print.graph = FALSE
@@ -1242,7 +1263,7 @@
     
     #Set up target file
       template.file <- paste(source.tables.dir,
-                             "template_green reports.pptx",
+                             "template_purple reports.pptx",
                              sep = "")
       if(sample.print){
         file.name.h <- 
@@ -1286,20 +1307,19 @@
       
       config.tables.df.h <- config.tables.ls.b[[h]]
       
-      #TODO:Will need to generalize below for different report units (i.e. Repeated Measures vs. Green Reports)
       unit.id.h <- unit.ids.sample[h]
       district.h <- strsplit(unit.id.h, "_") %>% unlist %>% .[1] %>% toupper()
       school.h <- strsplit(unit.id.h, "_") %>% unlist %>% .[2] %>% toupper()
       config.slides.df.h <- config.slides.ls.b[[h]]
       
       graphs.ls.h <- graphs.ls.f[[h]]
-      tables.ls.h <- tables.ls.f[[h]]
+      #tables.ls.h <- tables.ls.f[[h]]
     
     ###                     ###    
 #   ### LOOP "i" BY SLIDE   ###
     ###                     ###
     
-    #i <- 2 #LOOP TESTER
+    #i <- 4 #LOOP TESTER
     #for(i in 1:4){ #LOOP TESTER
     for(i in 1:dim(config.slides.ls.b[[h]])[1]){
       
@@ -1355,33 +1375,33 @@
         }
         
       #ADD TABLES
-      
+        {
         #TODO: Will want to generalize so can add more than one table to each slide if necessary
-        config.tables.df.i <- config.tables.df.h %>% 
-          filter(slide.type.id == slide.type.id.i)
+        #config.tables.df.i <- config.tables.df.h %>% 
+        #  filter(slide.type.id == slide.type.id.i)
         
-        if(dim(config.tables.df.i)[1] != 0 && !is.na(config.tables.df.i$table.type.id)){
+        #if(dim(config.tables.df.i)[1] != 0 && !is.na(config.tables.df.i$table.type.id)){
           
-          if(is.na(config.slide.df.i$module)){
-            config.tables.df.i <- config.tables.df.i[is.na(config.tables.df.i$module),]
-          }else{
-            config.tables.df.i <- config.tables.df.i[config.tables.df.i$module == config.slide.df.i$module,]
-          }
+        #  if(is.na(config.slide.df.i$module)){
+        #    config.tables.df.i <- config.tables.df.i[is.na(config.tables.df.i$module),]
+        #  }else{
+        #    config.tables.df.i <- config.tables.df.i[config.tables.df.i$module == config.slide.df.i$module,]
+        #  }
           
-          if(i == 2){
-            ft.i <- tables.ls.f[[h]][[1]]
-          }else{
-            ft.i <- tables.ls.f[[h]][[which(names(tables.ls.f[[h]])==config.tables.df.i$module)]]
-          }
-          
-          ppt.h <- addFlexTable(ppt.h, 
-                                ft.i, 
-                                height = config.tables.df.i$height,
-                                width = config.tables.df.i$width,
-                                offx = config.tables.df.i$offx,
-                                offy = config.tables.df.i$offy
-                                #par.properties=parProperties(text.align="center", padding=0)
-          )
+        #  if(i == 2){
+        #    ft.i <- tables.ls.f[[h]][[1]]
+        #  }else{
+        #    ft.i <- tables.ls.f[[h]][[which(names(tables.ls.f[[h]])==config.tables.df.i$module)]]
+        #  }
+        #  
+        #  ppt.h <- addFlexTable(ppt.h, 
+        #                        ft.i, 
+        #                        height = config.tables.df.i$height,
+        #                        width = config.tables.df.i$width,
+        #                        offx = config.tables.df.i$offx,
+        #                        offy = config.tables.df.i$offy
+        #                        #par.properties=parProperties(text.align="center", padding=0)
+        #  )
         }
         
       #ADD POT OBJECTS
@@ -1399,6 +1419,7 @@
         #j <- 1 #LOOP TESTER
         #for(j in 1:2){ #LOOP TESTER
         for(j in 1:dim(config.pot.i)[1]){
+          
           if(dim(config.pot.i)[1] < 1){
             #print(paste("No text objects for slide.id: ",config.slide.df.i$slide.id,sep = ""))
             next()

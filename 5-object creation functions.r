@@ -34,6 +34,7 @@ source("utils_wnf.r")
   #Test Inputs
     #base.graph.input = graph.1
     #dat = graphdata.df.g
+    #graph.header.varname = graph.header.varname
     #graph.group.by.varnames = graph.group.by.varnames
     #graph.fill = graph.fill.g
     #print.graph = TRUE
@@ -41,6 +42,7 @@ source("utils_wnf.r")
   AddColsToGraph <- function(
     base.graph.input, #a base graph ggplot object with data and alpha defined (e.g. resulting from function above)
     dat, #the graph data frame with x-axis labels in column 1 and bar heights in a column named 'measure'
+    graph.header.varname,
     graph.group.by.varnames, #[for stacked graphs only] a data frame of the grouping variable extracted from input data earlier in code
     graph.fill, #a vector of hex color values with same length as nrow(dat)
     print.graph = FALSE #TRUE/FALSE: if true, prints graph in new window. FALSE = default.
@@ -68,9 +70,6 @@ source("utils_wnf.r")
           )
         )
       }
-    
-    #Produce Inputs for Final Results
-      headers.varname <- graph.group.by.varnames[graph.group.by.varnames != "time.period"]
 
     #Produce Final Result  
       if(is.null(graph.group.by.varnames)){
@@ -78,7 +77,7 @@ source("utils_wnf.r")
           base.graph.input +
           
           geom_bar(
-            aes(x = dat[,names(dat) == headers.varname] %>% unlist %>% as.vector, 
+            aes(x = dat[,names(dat) == graph.header.varname] %>% unlist %>% as.vector, 
                 y = measure %>% as.numeric
             ),
             fill = graph.fill,
@@ -92,7 +91,7 @@ source("utils_wnf.r")
           base.graph.input +
           
           geom_bar(
-            aes(x = dat[,names(dat) == headers.varname] %>% unlist %>% as.vector(), 
+            aes(x = dat[,names(dat) == graph.header.varname] %>% unlist %>% as.vector(), 
                 y = dat$measure %>% as.numeric,
                 group = dat %>% select(graph.group.by.varnames[1]) %>% unlist %>% as.vector %>% factor 
             ),
@@ -222,8 +221,9 @@ source("utils_wnf.r")
 #Add data labels to columns in graph
   #Test Inputs
     #base.graph.input = graph.2
-    #graph.headers = headers
     #dat = graphdata.df.g
+    #graph.header.varname = graph.header.varname
+    #graph.group.by.varnames = graph.group.by.varnames
     #dat.labels = graph.labels.df
     #label.font.size = 4
     #print.graph = TRUE
@@ -231,6 +231,7 @@ source("utils_wnf.r")
   AddGraphDataLabels <- function(
     base.graph.input,
     dat,
+    graph.header.varname,
     graph.group.by.varnames,
     dat.labels,
     label.font.size,
@@ -248,27 +249,44 @@ source("utils_wnf.r")
       }
     
       label.font.size <- as.numeric(label.font.size)
-     
-    #Produce Inputs for Final Results
-      headers.varname <- graph.group.by.varnames[graph.group.by.varnames != "time.period"]
    
     #Produce Final Result  
-      graph.w.datalabels <- 
-        base.graph.input +
-        geom_text( 
-          aes(                                                          
-            y = dat.labels$graph.labels.heights, 
-            x = dat[,names(dat) == headers.varname],
-            label = dat.labels$graph.labels.text,
-            group = dat[,1]
-          ),
-          alpha = dat.labels$graph.labels.alpha.v,
-          color = dat.labels$graph.labels.color,
-          size = label.font.size,
-          fontface = "bold",
-          position = position_dodge(width = 1),
-          show.legend = FALSE
-        )
+      if(is.null(graph.group.by.varnames)){
+        graph.w.datalabels <- 
+          base.graph.input +
+          geom_text( 
+            aes(                                                          
+              y = dat.labels$graph.labels.heights, 
+              x = dat[,names(dat) == graph.header.varname] %>% unlist %>% as.vector,
+              label = dat.labels$graph.labels.text
+            ),
+            alpha = dat.labels$graph.labels.alpha.v,
+            color = dat.labels$graph.labels.color,
+            size = label.font.size,
+            fontface = "bold",
+            position = position_dodge(width = 1),
+            show.legend = FALSE
+          )
+      }else{
+        graph.w.datalabels <- 
+          base.graph.input +
+          geom_text( 
+            aes(                                                          
+              y = dat.labels$graph.labels.heights, 
+              x = dat[,names(dat) == graph.header.varname] %>% unlist %>% as.vector,
+              label = dat.labels$graph.labels.text,
+              group = dat[,
+                names(dat) == graph.group.by.varnames
+              ] %>% unlist %>% as.vector
+            ),
+            alpha = dat.labels$graph.labels.alpha.v,
+            color = dat.labels$graph.labels.color,
+            size = label.font.size,
+            fontface = "bold",
+            position = position_dodge(width = 1),
+            show.legend = FALSE
+          )
+      }
     #Return/Print Results  
       if(print.graph){
         windows()
@@ -282,6 +300,8 @@ source("utils_wnf.r")
   #Test Inputs
     #base.graph.input = graph.3
     #dat = graphdata.df.g
+    #graph.header.varname = graph.header.varname
+    #graph.group.by.varnames = graph.group.by.varnames
     #avg.bar.color = config.graphs.df.g$avg.bar.color
     #dat.configs = config.graphs.df.g
     #print.graph = TRUE
@@ -289,13 +309,12 @@ source("utils_wnf.r")
   AddGraphAverages <- function(
     base.graph.input,
     dat,
+    graph.header.varname,
     graph.group.by.varnames,
     avg.bar.color,
     dat.configs,
     print.graph = FALSE
   ){
-    
-    headers.varname <- graph.group.by.varnames[graph.group.by.varnames != "time.period"]
         
     #Average bar opacity (alpha)
       if(is.null(graph.group.by.varnames)|all(is.na(graph.group.by.varnames))){
@@ -308,27 +327,48 @@ source("utils_wnf.r")
       if(dat$avg %>% is.na %>% all){
         graph.w.averages <- base.graph.input
       }else{
-        graph.w.averages <- 
         
-          base.graph.input +
-        
-          geom_errorbar(
-            aes(
-              x = dat[,names(dat) == headers.varname],
-              group = 
-                dat %>% 
-                select(graph.group.by.varnames[!graph.group.by.varnames %in% headers.varname]) %>%
-                unlist %>% as.vector,
-              ymin = dat$avg, 
-              ymax = dat$avg,
-              alpha = dat$avg.alpha
-            ), 
-            position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
-            color = avg.bar.color, 
-            width = 1,
-            size = 2,
-            show.legend = FALSE
-          )
+        if(is.null(graph.group.by.varnames)){
+          graph.w.averages <- 
+          
+            base.graph.input +
+          
+            geom_errorbar(
+              aes(
+                x = dat[,names(dat) == graph.header.varname] %>% unlist %>% as.vector,
+                ymin = dat$avg, 
+                ymax = dat$avg,
+                alpha = dat$avg.alpha
+              ), 
+              position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+              color = avg.bar.color, 
+              width = 1,
+              size = 2,
+              show.legend = FALSE
+            )
+        }else{
+          graph.w.averages <- 
+          
+            base.graph.input +
+          
+            geom_errorbar(
+              aes(
+                x = dat[,names(dat) == graph.header.varname] %>% unlist %>% as.vector,
+                group = 
+                  dat %>% 
+                  select(graph.group.by.varnames[!graph.group.by.varnames %in% graph.header.varname]) %>%
+                  unlist %>% as.vector,
+                ymin = dat$avg, 
+                ymax = dat$avg,
+                alpha = dat$avg.alpha
+              ), 
+              position = position_dodge(width = 1), # 1 is dead center, < 1 moves towards other series, >1 away from it
+              color = avg.bar.color, 
+              width = 1,
+              size = 2,
+              show.legend = FALSE
+            )
+        }
       }
           
     #Return/Print Results  
@@ -346,29 +386,33 @@ source("utils_wnf.r")
   #Test Inputs
     #base.graph.input = graph.4
     #graph.headers = headers
-    #dat = graphdata.df.g 
+    #dat = graphdata.df.g
+    #graph.header.varname = graph.header.varname
+    #graph.group.by.varname = graph.group.by.varname
     #dat.configs = config.graphs.df.g
     #print.graph = TRUE
   
   FinalGraphFormatting <- function(
     base.graph.input,
     dat,
+    graph.header.varname,
     graph.group.by.varnames,
     dat.configs,
     print.graph = FALSE
     
   ){
     #Create factor vector for ordering axis
-      headers.varname <- graph.group.by.varnames[graph.group.by.varnames != "time.period"]
       order.ls <-
         strsplit(dat.configs$x.var.order, ";") %>% 
         unlist   %>% strsplit(., ",")
       names(order.ls) <- 
         dat.configs$x.varnames %>% strsplit(., ",") %>% unlist 
       headers.v <- 
-        order.ls[names(order.ls)==headers.varname] %>% 
+        order.ls[names(order.ls)==graph.header.varname] %>% 
         unlist %>% as.vector %>%
-        FirstLetterCap()
+        FirstLetterCap_MultElements()
+      
+      if(graph.header.varname == "module"){headers.v <- toupper(headers.v)}
      
       #Factor vector with levels in order they will need to be to get column/bar ordering right
         #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() 
@@ -410,14 +454,6 @@ source("utils_wnf.r")
       return(graph.final)
   }
   
-#GRAPH CREATION FUNCTION: uses all functions above
-  #Test Inputs
-    #dat = graphdata.df.g
-    
-  CreateGraph <- function(
-    dat
-  ){
-   
-  }
+
     
   

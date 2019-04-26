@@ -28,11 +28,8 @@ source("utils_wnf.r")
     #loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3") 
     #manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3")
     #collate.varnames = c("slide.section.1","slide.section.2","slide.section.3")
-    #source.data = resp.long.tb  
+    #source.data = resp.long.tb.b  
 
-  
-  #TODO: make so can handle recursive loops, sections, ordering
-  
   loop.expander.fun <- function(
     configs, 
     loop.varnames, 
@@ -40,7 +37,7 @@ source("utils_wnf.r")
     collate.varnames, 
     source.data
   ){
-    
+    if(nrow(source.data) == 0){stop("Loop Expander Fun: Source Data has 0 rows.")}
     output.ls <- list()
     
     #c = 2 #LOOP TESTER: NO LOOPS
