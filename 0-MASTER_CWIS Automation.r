@@ -1249,9 +1249,9 @@
     maxrow.h <- sapply(config.slides.ls.b, dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     printed.reports.ls <- list()
   
-  h <- 1 #LOOP TESTER
+  #h <- 1 #LOOP TESTER
   #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
-  #for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
+  for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
     
     #Reading 'Cadre' so it can be added to file name
       #cadre.h <- 
@@ -1303,7 +1303,7 @@
     #Set up report-level inputs
       config.graphs.df.h <- 
         config.graphs.ls.b[[h]] %>%
-        mutate(row.i = config.graphs.ls.b[[h]] %>% .[,ncol(config.graphs.ls.b[[h]])] %>% seq_along(.))
+        mutate(graph.id = 1:nrow(config.graphs.ls.b[[h]]))#config.graphs.ls.b[[h]] %>% .[,ncol(config.graphs.ls.b[[h]])] %>% seq_along(.))
       
       config.tables.df.h <- config.tables.ls.b[[h]]
       
@@ -1335,17 +1335,46 @@
       #ADD GRAPHS
       
         #Graph Loop Inputs
-          config.graphs.df.i <- config.graphs.df.h %>% 
-            filter(slide.type.id == slide.type.id.i)
-        
-        if(dim(config.graphs.df.i)[1] !=0 && !is.na(config.graphs.df.i$graph.type.id)){
+          loop.varnames <- 
+            config.graphs.df.h %>% 
+            filter(config.graphs.df.h$slide.type.id == slide.type.id.i) %>%
+            select(names(config.slide.df.i)[grep("loop", names(config.slide.df.i))]) %>%
+            apply(., 2, unique) %>%
+            unlist %>% as.vector %>% RemoveNA
           
-          if(is.na(config.slide.df.i$module)){
-            config.graphs.df.i <- config.graphs.df.i[is.na(config.graphs.df.i$module),]
-          }else{
-            config.graphs.df.i <- config.graphs.df.i[config.graphs.df.i$module == config.slide.df.i$module,]
+          config.graphs.df.i <-
+            config.graphs.df.h %>%
+            filter(config.graphs.df.h$slide.type.id == slide.type.id.i)
+         
+          if(length(loop.varnames) >= 1){
+            config.graphs.df.i <- 
+              config.graphs.df.i %>%
+              filter(
+                config.graphs.df.i %>% 
+                select(loop.varnames[1]) %>% 
+                equals(config.slide.df.i[,loop.varnames[1]] %>% unlist)
+              )
           }
           
+          if(length(loop.varnames) >= 2){
+            config.graphs.df.i <- 
+              config.graphs.df.i %>%
+              filter(
+                config.graphs.df.i %>% 
+                select(loop.varnames[2]) %>% 
+                equals(config.slide.df.i[,loop.varnames[2]] %>% unlist)
+              )
+          }
+          
+          if(length(loop.varnames) >= 3){
+            config.graphs.df.i <- 
+              config.graphs.df.i %>%
+              filter(
+                config.graphs.df.i %>% 
+                select(loop.varnames[3]) %>% 
+                equals(config.slide.df.i[,loop.varnames[3]] %>% unlist)
+              )
+          }
           
           ###                   ###    
 #         ### LOOP "k" BY GRAPH ###
@@ -1359,7 +1388,7 @@
               next()
             }
             
-            graph.k <- graphs.ls.h[config.graphs.df.i$row.i[k]]
+            graph.k <- graphs.ls.h[config.graphs.df.i$graph.id[k]]
             ppt.h <- 
               addPlot(
                 ppt.h,
@@ -1372,7 +1401,7 @@
               )
             
           } # END OF LOOP "k" BY GRAPH
-        }
+        
         
       #ADD TABLES
         {
