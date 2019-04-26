@@ -763,7 +763,7 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    #d <- which(config.graphs.df.c$graph.type.id == "i")[1]
+    #d <- which(config.graphs.df.c$graph.type.id == "a")[1]
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:nrow(config.graphs.df.c)){
       
@@ -782,7 +782,7 @@
         unlist
       
       #Form Graph Data Table
-        graphdata.ls <-
+        graphdata1.ls <-
           list(
             axis.cat.labels =  #Define category names that will go along axis of bar graph - module, practice
               DefineAxisCategories(
@@ -815,7 +815,7 @@
           )
         
         graphdata.df.d <- 
-          Reduce(function(x,y){left_join(x,y, by = group_by.d)}, graphdata.ls) %>%
+          Reduce(function(x,y){left_join(x,y, by = group_by.d)}, graphdata1.ls) %>%
           ReplaceNames(
             df = ., 
             current.names = names(.), 
@@ -922,9 +922,9 @@
     graphs.ls.f <- list()
     #tables.ls.f <- list()
   
-  #f <- 2 #LOOP TESTER
+  f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  for(f in 1:length(unit.ids.sample)){
+  #for(f in 1:length(unit.ids.sample)){
     
     #Loop units  
       unit.id.f <- unit.ids.sample[f]
@@ -948,10 +948,10 @@
     graphs.ls.g <- list()
     maxrow.g <- length(graphdata.ls.f)
     
-    #g <- 11 #LOOP TESTER
+    g <- which(config.graphs.df.f$graph.type.id == "i")[1] #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    for(g in 1:length(graphdata.ls.f))
-      local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
+    #for(g in 1:length(graphdata.ls.f))
+      #local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         
         #Redefine necessary objects in local environment
           g<-g #same as above
@@ -981,9 +981,25 @@
             graph.header.varname <- x.varnames.g[1]
             graph.group.by.varnames <- if(length(x.varnames.g)==1){NULL}else{x.varnames.g[2:length(x.varnames.g)]}
             
+          #Inserting corrected scale for graphs that have Answer Options along the bottom
+            if(!is.null(graph.group.by.varnames) && "answer" %in% names(graphdata.df.g)){
+              graphdata.df.g <- 
+                left_join(graphdata.df.g,config.ans.opt.tb, by = c("answer" = "ans.num"))
+              
+              if(config.graphs.df.g$module %in% c("lead","pd")){
+                graphdata.df.g <- 
+                  graphdata.df.g %>% 
+                  select(graph.group.by.varnames, ans.text.agreement.num, measure, avg)
+                graph.header.varname <- "ans.text.agreement.num"
+              }else{
+                graphdata.df.g <- 
+                  graphdata.df.g %>% 
+                  select(graph.group.by.varnames, ans.text.freq.num, measure, avg)
+                graph.header.varname <- "ans.text.freq.num"
+              }
+            }
+            
           #Capitalize headers in graphdata.df.g, all-caps for module, upper-case first letter for everything else
-          
-            #if(grepl("module",names(graphdata.df.g)) %>% any){
              graphdata.df.g[,
                 names(graphdata.df.g)[!names(graphdata.df.g) %in% c("module","answer","measure","avg")]
               ] <- 
@@ -997,23 +1013,7 @@
                graphdata.df.g[names(graphdata.df.g) == "module"] %>%
                apply(., c(1:2), toupper)
           
-          #Inserting corrected scale for graphs that have Answer Options along the bottom
-            if(!is.null(graph.group.by.varnames) && "answer" %in% graph.group.by.varnames){
-              graphdata.df.g <- 
-                left_join(graphdata.df.g,config.ans.opt.tb, by = c("answer" = "ans.num"))
-              
-              if(config.graphs.df.g$module %in% c("LEAD","PD")){
-                graphdata.df.g <- 
-                  graphdata.df.g %>% 
-                  select(graph.group.by.varnames, ans.text.agreement, measure, avg)
-                graph.cat.varname <- "ans.text.agreement"
-              }else{
-                graphdata.df.g <- 
-                  graphdata.df.g %>% 
-                  select(graph.group.by.varnames, ans.text.agreement, measure, avg)
-                graph.cat.varname <- "ans.text.freq"
-              }
-            }
+         
         
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
         
@@ -1463,6 +1463,7 @@
                 config.pot.i$content.static[j],
                 ""
               ),
+              " ",
               ifelse(
                 !is.na(config.pot.i$content.dynamic[j]),
                 eval(parse(text=config.pot.i$content.dynamic[j])),
