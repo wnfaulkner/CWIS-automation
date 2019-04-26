@@ -129,6 +129,7 @@ source("utils_wnf.r")
     
     #Test Inputs
       #tb = resp.long.tb
+      #graph.type.id = config.graphs.df.d$graph.type.id
       #group.varnames = group_by.d
       #summarize.varname = config.graphs.df.d$summarize.varname %>% unlist %>% as.vector
       #summarize.fun = config.graphs.df.d$summarize.fun %>% unlist %>% as.vector
@@ -137,49 +138,73 @@ source("utils_wnf.r")
     
     GroupedAveragesByLevel <- function(
       tb, #source data table
+      graph.type.id, #STUPID type c making this function not abstracted because have to add a grouping by building. Might be able to generalize later using loop variables
       group.varnames, #varnames on which averages will be grouped
       summarize.varname,
       summarize.fun,
       avg.level = NULL, #name of the variable for filtering data (if necessary)
       tb.restriction.value = NULL #value to match in avg.level variable to restrict data (if necessary)
     ){
+      
       if(is.na(avg.level)){
         avg.level <- NULL
-      }else{
-        if(!is.null(avg.level) && !any(grepl(avg.level, names(tb)))){ #make avg.level NULL if not in names of table that will be filtered
-          avg.level <- NULL
-        }
       }
       
-      if(!is.null(avg.level)){ #If avg.level is relevant, restrict data to rows where avg.level var == tb.restriction.value
-        tb <- tb[tb[,names(tb) ==avg.level] == tb.restriction.value,]
-      }
-      
-      if(!grepl("mean",summarize.fun)){
-        output1.tb <- 
-          SummarizeDataByGroups(
-            tb = tb,
-            group.varnames = c("unit.id",group.varnames),
-            summarize.varname = summarize.varname,
-            summarize.fun = summarize.fun
-          )
-        result <- 
-          SummarizeDataByGroups(
-            tb = output1.tb,
-            group.varnames = c(group.varnames),
-            summarize.varname = "measure",
-            summarize.fun = "mean(x)"
-          )
-      }else{
-        result <- 
+      if(is.null(avg.level)){
+        result <-
           SummarizeDataByGroups(
             tb = tb,
             group.varnames = c(group.varnames),
-            summarize.varname = summarize.varname,
-            summarize.fun = summarize.fun
-          )
+            summarize.varname = "answer",
+            summarize.fun = "length(x)"
+          ) %>% 
+          select(group.varnames) %>%
+          mutate(avg = NA)
+        return(result)
       }
       
+      #Form avg. tables under different scenarios
+      
+        #When summary function is length(unique(x)) 'count.unique'
+          #if(graph.type.id == "c"){
+          #  group.varnames <- c("building.id",group.varnames)
+          #}
+            
+          if(avg.level == "district"){ #If avg.level is relevant, restrict data to rows where avg.level var == tb.restriction.value
+            tb <- tb[tb[,names(tb) ==avg.level] == tb.restriction.value,]
+          } #when avg.level is district, restrict source data table to matching district
+          
+          if(grepl("length\\(unique\\(x",summarize.fun)){
+            output1.tb <- 
+              SummarizeDataByGroups(
+                tb = tb,
+                group.varnames = c("district",if(graph.type.id == "c"){"building.id"}, group.varnames),
+                summarize.varname = summarize.varname,
+                summarize.fun = summarize.fun
+              ) 
+            
+            result <- 
+              SummarizeDataByGroups(
+                tb = output1.tb,
+                group.varnames = c(group.varnames[]),
+                summarize.varname = "measure",
+                summarize.fun = "mean(x)"
+              ) %>% 
+              ReplaceNames(., current.names = "measure", new.names = "avg")
+          }
+          
+        #When summary function is mean(x) 'mean'
+          if(grepl("mean\\(x",summarize.fun)){
+            result <- 
+              SummarizeDataByGroups(
+                tb = tb,
+                group.varnames = c(group.varnames),
+                summarize.varname = "answer",
+                summarize.fun = summarize.fun
+              ) %>% 
+              ReplaceNames(., current.names = "measure", new.names = "avg")
+          }
+        
       return(result)
     } 
 

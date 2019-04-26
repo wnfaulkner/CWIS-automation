@@ -728,7 +728,7 @@
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     c.loop.startime <- Sys.time()
     
-  #c <- 1 #LOOP TESTER 
+  #c <- 2 #LOOP TESTER 
   #for(c in slider.unit.ids.sample){   #LOOP TESTER
   for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
     
@@ -763,7 +763,7 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    #d <- which(config.graphs.df.c$graph.type.id == "a")[1]
+    #d <- which(config.graphs.df.c$graph.type.id == "d")[1]
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:nrow(config.graphs.df.c)){
       
@@ -806,21 +806,27 @@
             graph.avgs.d = #Averages (using average.level from configs)
               GroupedAveragesByLevel(
                 tb = resp.long.tb,
+                graph.type.id = config.graphs.df.d$graph.type.id,
                 group.varnames = group_by.d,
                 summarize.varname = config.graphs.df.d$summarize.varname %>% unlist %>% as.vector,
                 summarize.fun = config.graphs.df.d$summarize.fun %>% unlist %>% as.vector,
                 avg.level = config.graphs.df.d$avg.level,
                 tb.restriction.value = district.c
-              )
+              ) 
           )
         
+        graphdata2.ls <- 
+          graphdata1.ls %>% lapply(., function(x) !is.null(x)) %>% 
+          unlist %>% as.vector %>% graphdata1.ls[.]
+        
         graphdata.df.d <- 
-          Reduce(function(x,y){left_join(x,y, by = group_by.d)}, graphdata1.ls) %>%
-          ReplaceNames(
-            df = ., 
-            current.names = names(.), 
-            new.names = c(names(.)[1:(length(names(.))-2)],"measure","avg")
-          )
+          Reduce(function(x,y){left_join(x,y, by = group_by.d)}, graphdata2.ls) 
+          #ReplaceNames(
+          #  df = ., 
+          #  current.names = names(.), 
+          #  new.names = c(names(.)[1:(length(names(.))-2)],"measure","avg")
+          #) %>% 
+          
       
       #Store Results  
         graphdata.ls.d[[d]] <- graphdata.df.d
