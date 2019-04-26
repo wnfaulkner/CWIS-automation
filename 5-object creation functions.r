@@ -21,10 +21,10 @@ source("utils_wnf.r")
         axis.text.x = element_text(size = 13, color = "#5a6b63"),
         axis.text.y = element_blank(),
         axis.ticks = element_blank(),
-        axis.title = element_blank(),
-        legend.position = "top",
-        legend.title = element_blank(),
-        legend.text = element_text(size = 12)
+        axis.title = element_blank()#,
+        #legend.position = "top",
+        #legend.title = element_blank(),
+        #legend.text = element_text(size = 12)
       )
     
     return(graph.base)
@@ -77,15 +77,24 @@ source("utils_wnf.r")
           base.graph.input +
           
           geom_bar(
-            aes(x = dat[,names(dat) == graph.header.varname] %>% unlist %>% as.vector, 
-                y = measure %>% as.numeric
+            aes(
+              x = dat[,names(dat) == graph.header.varname] %>% unlist %>% as.vector, 
+              y = measure %>% as.numeric,
+              fill = time.period
             ),
-            fill = graph.fill,
             alpha = 1,
             position = "dodge", 
-            stat = "identity",
-            show.legend = FALSE
-          )
+            stat = "identity"
+          ) +
+          
+          scale_fill_manual(
+            values = graph.fill,
+            name = "",
+            labels = dat$time.period %>% unique %>% as.vector
+          ) +
+          
+          theme(legend.position = "top")
+          
       }else{ #TODO: WILL LIKELY NEED EDITING WHEN NEED TO PRODUCE STACKED BAR/COLUMN CHARTS AGAIN
         graph.w.cols <-
           base.graph.input +
@@ -93,13 +102,21 @@ source("utils_wnf.r")
           geom_bar(
             aes(x = dat[,names(dat) == graph.header.varname] %>% unlist %>% as.vector(), 
                 y = dat$measure %>% as.numeric,
-                group = dat %>% select(graph.group.by.varnames[1]) %>% unlist %>% as.vector %>% factor 
+                group = dat %>% select(graph.group.by.varnames[1]) %>% unlist %>% as.vector %>% factor,
+                fill = time.period
             ),
-            fill = graph.fill,
             alpha = 1,
             position = "dodge", 
             stat = "identity"
-          )
+          )+
+          
+          scale_fill_manual(
+            values = graph.fill,
+            name = "",
+            labels = dat$time.period %>% unique %>% as.vector
+          ) +
+          
+          theme(legend.position = "top")
       }
     
     #Return/Print Results  
