@@ -18,7 +18,7 @@ source("utils_wnf.r")
         panel.background = element_blank(),
         panel.grid.major.y = element_blank(),
         panel.grid.major.x = element_blank(),
-        axis.text.x = element_text(size = 11, color = "#5a6b63"),
+        axis.text.x = element_text(size = 12, color = "#5a6b63"),
         axis.text.y = element_blank(),
         axis.ticks = element_blank(),
         axis.title = element_blank(),
@@ -452,7 +452,7 @@ source("utils_wnf.r")
           theme(
             axis.text.x = element_blank(),
             axis.text.y = element_text(
-              size = 11, 
+              size = 12, 
               #family = "Century Gothic",
               color = "#5a6b63",
               hjust = 1)
