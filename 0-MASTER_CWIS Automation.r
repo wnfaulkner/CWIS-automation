@@ -954,7 +954,7 @@
     graphs.ls.g <- list()
     maxrow.g <- length(graphdata.ls.f)
     
-    #g <- which(config.graphs.df.f$graph.type.id == "e")[1] #LOOP TESTER
+    #g <- which(config.graphs.df.f$graph.type.id == "c")[1] #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.f))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -1051,7 +1051,7 @@
                   graph.fill = graph.fill.g,
                   print.graph = FALSE
                 )
-        
+              
           #Add data labels 
           
             #Graph label data frame
@@ -1073,14 +1073,26 @@
                   dat.labels = graph.labels.df,
                   label.font.size = 4,
                   print.graph = FALSE
-                )  
+                )
+              
+          #Manually order x-axis according to configs
+            graph.4 <-
+              GraphManualOrder(
+                base.graph.input = graph.3,
+                dat = graphdata.df.g,
+                graph.header.varname = graph.header.varname,
+                graph.group.by.varnames = graph.group.by.varnames,
+                dat.configs = config.graphs.df.g,
+                print.graph = FALSE
+              )
+              
             
           #Add Graph Averages (as error bar)
             #NOTE: does not depend on config.graphs.df.g - taken care of with if statement outside function
             if(!is.na(config.graphs.df.g$avg.level)){
-              graph.4 <-
+              graph.5 <-
                 AddGraphAverages(
-                  base.graph.input = graph.3,
+                  base.graph.input = graph.4,
                   dat = graphdata.df.g,
                   graph.header.varname = graph.header.varname,
                   graph.group.by.varnames = graph.group.by.varnames,
@@ -1089,19 +1101,14 @@
                   print.graph = FALSE 
                 )
             }else{
-              graph.4 <- graph.3
+              graph.5 <- graph.4
             }
           
-          #Final graph formatting & edits: correct category order, finalize orientation as column or bar
-            #NOTE: depends on config.graphs.df.g (used within function to decide whether to flip to bar)
+          #Final step: graph orientation - flip for bar charts
             graph.g <- 
-              FinalGraphFormatting(
-                base.graph.input = graph.4,
-                dat = graphdata.df.g,
-                graph.header.varname = graph.header.varname,
-                graph.group.by.varnames = graph.group.by.varnames,
-                dat.configs = config.graphs.df.g,
-                print.graph = FALSE
+              GraphOrientation(
+                base.graph.input = graph.5,
+                graph.orientation = config.graphs.df.g$graph.type.orientation
               )
               
         graphs.ls.g[[g]] <<- graph.g

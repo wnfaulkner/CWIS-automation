@@ -95,7 +95,7 @@ source("utils_wnf.r")
           
           theme(legend.position = "top")
           
-      }else{ #TODO: WILL LIKELY NEED EDITING WHEN NEED TO PRODUCE STACKED BAR/COLUMN CHARTS AGAIN
+      }else{ 
         graph.w.cols <-
           base.graph.input +
           
@@ -137,12 +137,12 @@ source("utils_wnf.r")
       #object 'config.graphs.df.g' not found"
   
   #Test Inputs
-    #dat = graphdata.df.g
-    #dat.measure.varname = "measure"
-    #height.ratio.threshold = 8.2
-    #dat.configs = config.graphs.df.g
+    dat = graphdata.df.g
+    dat.measure.varname = "measure"
+    height.ratio.threshold = 8.2
+    dat.configs = config.graphs.df.g
   
-  create.graph.labels.fun <- function(
+  AddLabelsToGraphData <- function(
     dat, 
     dat.measure.varname, 
     height.ratio.threshold,
@@ -183,7 +183,6 @@ source("utils_wnf.r")
         graph.labels.heights.v[graph.labels.heights.v == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
           min(var[!above.label.vectorposition])/2
         graph.labels.heights.v[which(is.na(var))] <- max/3  #"No Responses" labels at max/3 height
-        
       }
       
     #Label Text
@@ -195,7 +194,7 @@ source("utils_wnf.r")
           var %>% 
           as.numeric %>% 
           round( ., 1) %>% 
-          sprintf("%.1f",.) %>% 
+          sprintf("%.0f",.) %>% 
           trimws(., which = "both") 
       }
       graph.labels.text.v[
@@ -205,7 +204,7 @@ source("utils_wnf.r")
           as.vector(.,mode = "numeric") %>% 
           is.na(.) %>% 
           which
-      ] <- "No Responses"
+      ] <- "N"
     }
   
     #Label visibility
@@ -214,22 +213,26 @@ source("utils_wnf.r")
     
     #Label color for graph.type.e
       
-      if(dat.configs$graph.type.id == "e"){
-        graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(dat[,1])/2) %>% rev
-      }else{
-        graph.labels.color.v <- rep("#FFFFFF",100)[1:length(dat[,1])]
-      }
-      graph.labels.color.v[which(graph.labels.text.v %in% c("0%", "No Responses"))] <- "#000000"
-      graph.labels.color.v[which(above.label.vectorposition)] <- "#000000"
-      graph.labels.color.v <- graph.labels.color.v %>% rev
+      #if(dat.configs$graph.type.id == "e"){
+      #  graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(dat[,1])/2) %>% rev
+      #}else{
+        graph.labels.color.v <- rep("#000000",nrow(dat))
+      #}
+      graph.labels.color.v[which(above.label.vectorposition)] <- "#c2ccb9"
+      graph.labels.color.v[which(graph.labels.text.v %in% c("0%", ""))] <- "#000000"
+      #graph.labels.color.v <- graph.labels.color.v %>% rev
       
-      result <- data.frame(
+      graphlabels.df <- data.frame(
         graph.labels.text = graph.labels.text.v,
         graph.labels.heights = graph.labels.heights.v,
+        above.label = above.label.vectorposition,
         graph.labels.alpha.v = graph.labels.alpha.v,
         graph.labels.color = graph.labels.color.v,
         stringsAsFactors = FALSE
       )
+      
+      result <- 
+        cbind(dat, graphlabels.df)
     
     #print(paste("Graph Label Heights: ",paste(graph.labels.heights.v, collapse = ", "),sep=""))
     return(result)
@@ -278,7 +281,7 @@ source("utils_wnf.r")
               label = dat.labels$graph.labels.text
             ),
             alpha = dat.labels$graph.labels.alpha.v,
-            color = dat.labels$graph.labels.color,
+            color = dat.labels$graph.labels.color %>% rev,
             size = label.font.size,
             fontface = "bold",
             position = position_dodge(width = 1),
@@ -399,7 +402,7 @@ source("utils_wnf.r")
   
   
     
-#Final graph formatting & edits: correct category order, finalize orientation as column or bar
+#Graph manual category order, finalize orientation as column or bar
   #Test Inputs
     #base.graph.input = graph.4
     #dat = graphdata.df.g
@@ -408,14 +411,13 @@ source("utils_wnf.r")
     #dat.configs = config.graphs.df.g
     #print.graph = TRUE
   
-  FinalGraphFormatting <- function(
+  GraphManualOrder <- function(
     base.graph.input,
     dat,
     graph.header.varname,
     graph.group.by.varnames,
     dat.configs,
     print.graph = FALSE
-    
   ){
     #Create factor vector for ordering axis
       order.ls <-
@@ -461,10 +463,24 @@ source("utils_wnf.r")
         base.graph.input + 
         scale_x_discrete(limits=levels(graph.order.g))
     
-    #GRAPH ORIENTATION
-      if(dat.configs$graph.type.orientation == "bar"){
-        graph.final <- 
-          graph.w.orderedaxis +
+     #Return/Print Results  
+      if(print.graph){
+        windows()
+        print(graph.w.orderedaxis)
+      }
+      
+      return(graph.w.orderedaxis)
+  }
+  
+#GRAPH ORIENTATION
+  GraphOrientation <- 
+    function(
+      base.graph.input,
+      graph.orientation
+    ){
+      if(graph.orientation == "bar"){
+        graph.oriented <- 
+          base.graph.input +
           coord_flip() +
           theme(
             axis.text.x = element_blank(),
@@ -475,17 +491,10 @@ source("utils_wnf.r")
               hjust = 1)
           )
       }else{
-        graph.final <- graph.w.orderedaxis
+        graph.oriented <- base.graph.input
       }
-    
-     #Return/Print Results  
-      if(print.graph){
-        windows()
-        print(graph.final)
-      }
-      
-      return(graph.final)
-  }
+      return(graph.oriented)
+    }
   
 
     
