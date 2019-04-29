@@ -455,7 +455,7 @@
         #replacement.vals.colname = "ans.num"
         #na.replacement = NULL
       
-      RecodeIndexMatch <- 
+      IndexMatchRecode <- 
         function(
           tb, 
           lookup.tb, 

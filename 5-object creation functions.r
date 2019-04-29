@@ -32,12 +32,12 @@ source("utils_wnf.r")
 
 #Add columns to graph: 
   #Test Inputs
-    #base.graph.input = graph.1
-    #dat = graphdata.df.g
-    #graph.header.varname = graph.header.varname
-    #graph.group.by.varnames = graph.group.by.varnames
-    #graph.fill = graph.fill.g
-    #print.graph = TRUE
+    base.graph.input = graph.1
+    dat = graphdata.df.g
+    graph.header.varname = graph.header.varname
+    graph.group.by.varnames = graph.group.by.varnames
+    graph.fill = graph.fill.g
+    print.graph = TRUE
   
   AddColsToGraph <- function(
     base.graph.input, #a base graph ggplot object with data and alpha defined (e.g. resulting from function above)
@@ -103,12 +103,12 @@ source("utils_wnf.r")
             aes(x = dat[,names(dat) == graph.header.varname] %>% unlist %>% as.vector(), 
                 y = dat$measure %>% as.numeric,
                 group = dat %>% select(graph.group.by.varnames[1]) %>% unlist %>% as.vector %>% factor,
-                fill = time.period
+                fill = graph.fill
             ),
             alpha = 1,
             position = "dodge", 
             stat = "identity"
-          )+
+          ) +
           
           scale_fill_manual(
             values = graph.fill,
@@ -137,12 +137,12 @@ source("utils_wnf.r")
       #object 'config.graphs.df.g' not found"
   
   #Test Inputs
-    dat = graphdata.df.g
-    dat.measure.varname = "measure"
-    height.ratio.threshold = 8.2
-    dat.configs = config.graphs.df.g
+    #dat = graphdata.df.g
+    #dat.measure.varname = "measure"
+    #height.ratio.threshold = 8.2
+    #dat.configs = config.graphs.df.g
   
-  AddLabelsToGraphData <- function(
+  CreateGraphLabels <- function(
     dat, 
     dat.measure.varname, 
     height.ratio.threshold,
@@ -204,7 +204,7 @@ source("utils_wnf.r")
             as.vector(.,mode = "numeric") %>% 
             is.na(.) %>% 
             which
-        ] <- "N"
+        ] <- ""
     }
   
     #Label visibility
@@ -213,10 +213,10 @@ source("utils_wnf.r")
     
     #Label color for graph.type.e
       
-      graph.labels.color.v <- rep("#000000",nrow(dat))
-      graph.labels.color.v[which(above.label.vectorposition)] <- "#c2ccb9"
-      graph.labels.color.v[which(graph.labels.text.v %in% c("0%", ""))] <- "#000000"
-      #graph.labels.color.v <- graph.labels.color.v %>% rev
+      graph.labels.color.v <- rep("#ffffff",nrow(dat))
+      graph.labels.color.v[which(above.label.vectorposition)] <- "#000000"
+      graph.labels.color.v[which(graph.labels.text.v %in% c("0%", ""))] <- "#ffffff"
+      graph.labels.color.v <- graph.labels.color.v %>% rev
       
       graphlabels.df <- data.frame(
         graph.labels.text = graph.labels.text.v,
@@ -400,9 +400,9 @@ source("utils_wnf.r")
     
 #Graph manual category order, finalize orientation as column or bar
   #Test Inputs
-    vector = config.graphs.df.g$x.var.order
-    list.level.split.char = ";"
-    within.element.split.char = ","
+    #vector = config.graphs.df.g$x.var.order
+    #list.level.split.char = ";"
+    #within.element.split.char = ","
   
   StringSplitVectorIntoList <- function(
     vector,
@@ -431,16 +431,6 @@ source("utils_wnf.r")
       #  
       #  names(order.ls)[grep("answer",names(order.ls))] <- graph.header.varname
       #}
-      
-      order.ls <- 
-        lapply(
-          order.ls,
-          function(x) {
-            x %>% unlist %>% as.vector %>%
-            FirstLetterCap_MultElements()
-          }
-        )
-      
      
       #Factor vector with levels in order they will need to be to get column/bar ordering right
         #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() 

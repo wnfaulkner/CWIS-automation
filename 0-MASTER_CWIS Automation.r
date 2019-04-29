@@ -385,14 +385,14 @@
           #TODO: turn into custom CWIS function
             
           recode.addnums.tb <- #add numbers to text variables
-            RecodeIndexMatch(
+            IndexMatchRecode(
               tb = SelectColsIn(resp10.tb, "IN", c("resp.id", cwis.varnames.unbranched)),
               lookup.tb = config.ans.opt.tb,
               match.colname = "ans.text.freq",
               replacement.vals.colname = "ans.text.freq.num",
               na.replacement = ""
             ) %>%
-            RecodeIndexMatch(
+            IndexMatchRecode(
               tb = .,
               lookup.tb = config.ans.opt.tb,
               match.colname = "ans.text.agreement",
@@ -401,13 +401,13 @@
             )
       
           recode.num.tb <- #convert to integer
-            RecodeIndexMatch(
+            IndexMatchRecode(
               tb = recode.addnums.tb,
               lookup.tb = config.ans.opt.tb,
               match.colname = "ans.text.freq.num",
               replacement.vals.colname = "ans.num"
             ) %>%
-            RecodeIndexMatch(
+            IndexMatchRecode(
               tb = .,
               lookup.tb = config.ans.opt.tb,
               match.colname = "ans.text.agreement.num",
@@ -954,21 +954,12 @@
     graphs.ls.g <- list()
     maxrow.g <- length(graphdata.ls.f)
     
-    g <- which(config.graphs.df.f$graph.type.id == "c")[1] #LOOP TESTER
+    #g <- which(config.graphs.df.f$graph.type.id == "c")[1] #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    #for(g in 1:length(graphdata.ls.f))
-      #local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
+    for(g in 1:length(graphdata.ls.f))
+      local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         
-        #Redefine necessary objects in local environment
-          g<-g #same as above
-        
-        #GRAPH DATA & CONFIGS DATA FRAMES
-          
-          #Select tables from lists produced in previous sections
-            graphdata.df.g <- graphdata.ls.f[[g]]
-            config.graphs.df.g <- config.graphs.df.f[g,] %>% as.data.frame()
-          
-          #Print loop messages for bug checking
+        #Print loop messages for bug checking
             #print(
             #  paste0(
             #    "LOOP 'g' -- Loop num: ", g,
@@ -978,16 +969,48 @@
             #cprint(graphdata.df.g)
             #print(config.graphs.df.g)
         
-        #CLEANING DATA & CONFIGS
-            
+        #Redefine necessary objects in local environment
+          g<-g #same as above
+        
+        #CONFIG DATA TABLE
+          config.graphs.df.g <- config.graphs.df.f[g,] %>% as.data.frame()
+          
           #Making new [shortened] objects that will get a lot of use in graph formation; 
             x.varnames.g <- 
               config.graphs.df.g$x.varnames %>% strsplit(., ",") %>% unlist
             
             graph.header.varname <- x.varnames.g[1]
             graph.group.by.varnames <- if(length(x.varnames.g)==1){NULL}else{x.varnames.g[2:length(x.varnames.g)]}
+           
+        #GRAPH DATA TABLE
+          graphdata.df.g <- graphdata.ls.f[[g]]
+          
+          #Manual ordering of graphdata.df.g
+            order.ls <- 
+              StringSplitVectorIntoList(
+                vector = config.graphs.df.g$x.var.order,
+                list.element.names = strsplit(config.graphs.df.g$x.varnames, ",") %>% unlist,
+                list.level.split.char = ";",
+                within.element.split.char = ","
+              )
             
-          #Inserting corrected scale for graphs that have Answer Options along the bottom
+            #Special cases - formatting text so matches exactly for module and answer option
+              order.ls[names(order.ls) == "module"] <- #module names to all caps
+                order.ls[names(order.ls == "module")] %>% toupper
+              
+              
+              order.ls[names(order.ls) == "answer"] <-
+                order.ls[names(order.ls) == "answer"] %>% unlist %>% as.numeric %>% list
+            
+            #Order graph data table by result  
+              graphdata.df.g <-
+                ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable(
+                  tb = graphdata.df.g,
+                  tb.order.varnames = names(order.ls),
+                  ordering.vectors.list = order.ls
+                )
+            
+           #Inserting corrected scale for graphs that have Answer Options along the bottom
             if(!is.null(graph.group.by.varnames) && "answer" %in% names(graphdata.df.g)){
               graphdata.df.g <- 
                 left_join(graphdata.df.g,config.ans.opt.tb, by = c("answer" = "ans.num"))
@@ -1004,46 +1027,22 @@
                 graph.header.varname <- "ans.text.freq.num"
               }
             }
-            
-          #Capitalize headers in graphdata.df.g, all-caps for module, upper-case first letter for everything else
-             graphdata.df.g[,
-                names(graphdata.df.g)[!names(graphdata.df.g) %in% c("module","answer","measure","avg")]
-              ] <- 
-                graphdata.df.g %>% 
-                select(
-                  names(graphdata.df.g)[!names(graphdata.df.g) %in% c("module","answer","measure","avg")]
-                ) %>% 
+           
+            #Capitalize headers in graphdata.df.g, all-caps for module, upper-case first letter for everything else
+             graphdata.df.g[,!names(graphdata.df.g) %in% c("module","answer","measure","avg")] <- 
+                graphdata.df.g[,!names(graphdata.df.g) %in% c("module","answer","measure","avg")] %>% 
                 apply(., c(1,2), FirstLetterCap_MultElements)
              
              graphdata.df.g[names(graphdata.df.g) == "module"] <- 
                graphdata.df.g[names(graphdata.df.g) == "module"] %>%
                apply(., c(1:2), toupper)
-           
-          #Manual ordering of graphdata.df.g
-            order.ls <- 
-              StringSplitVectorIntoList(
-                vector = config.graphs.df.g$x.var.order,
-                list.element.names = strsplit(config.graphs.df.g$x.varnames, ",") %>% unlist,
-                list.level.split.char = ";",
-                within.element.split.char = ","
-              )
-            
-            order.ls[names(order.ls) == "module"] <-
-              order.ls[names(order.ls == "module")] %>% toupper
-            
-            graphdata.df.g <-
-              ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable(
-                tb = graphdata.df.g,
-                tb.order.varnames = c("role","time.period"),
-                ordering.vectors.list = order.ls
-              )
         
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
         
           #Base Graph
             graph.1 <- 
               FormBaseGraphObject.DataAndTheme( 
-                dat = x 
+                dat = graphdata.df.g 
               )
 
           #Adding Columns (Clustered or Non-Clustered)
@@ -1067,7 +1066,7 @@
               graph.2 <- 
                 AddColsToGraph(
                   base.graph.input = graph.1,
-                  dat = x,
+                  dat = graphdata.df.g,
                   graph.header.varname = graph.header.varname,
                   graph.group.by.varnames = graph.group.by.varnames,
                   graph.fill = graph.fill.g,
@@ -1075,7 +1074,6 @@
                 )
               
           #Manually order x-axis according to configs
-  
             graph.3 <- 
               graph.2 + 
               scale_x_discrete(
@@ -1091,7 +1089,7 @@
           
             #Graph label data frame
               graph.labels.df <- 
-                create.graph.labels.fun(
+                CreateGraphLabels(
                   dat = graphdata.df.g, 
                   dat.measure.varname = "measure", 
                   height.ratio.threshold = 8.2,
@@ -1099,9 +1097,9 @@
                 )
           
             #Add Data labels to graph
-              graph.3 <-
+              graph.4 <-
                 AddGraphDataLabels(
-                  base.graph.input = graph.2,
+                  base.graph.input = graph.3,
                   dat = graphdata.df.g,
                   graph.header.varname = graph.header.varname,
                   graph.group.by.varnames = graph.group.by.varnames,
