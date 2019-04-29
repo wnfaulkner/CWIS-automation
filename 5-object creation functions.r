@@ -32,12 +32,12 @@ source("utils_wnf.r")
 
 #Add columns to graph: 
   #Test Inputs
-    base.graph.input = graph.1
-    dat = graphdata.df.g
-    graph.header.varname = graph.header.varname
-    graph.group.by.varnames = graph.group.by.varnames
-    graph.fill = graph.fill.g
-    print.graph = TRUE
+    #base.graph.input = graph.1
+    #dat = graphdata.df.g
+    #graph.header.varname = graph.header.varname
+    #graph.group.by.varnames = graph.group.by.varnames
+    #graph.fill = graph.fill.g
+    #print.graph = TRUE
   
   AddColsToGraph <- function(
     base.graph.input, #a base graph ggplot object with data and alpha defined (e.g. resulting from function above)

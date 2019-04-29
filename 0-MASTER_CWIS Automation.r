@@ -1079,8 +1079,10 @@
               scale_x_discrete(
                 limits = levels(
                   factor(
-                    order.ls[names(order.ls) == graph.header.varname] %>% unlist %>% as.vector, 
-                    levels = order.ls[names(order.ls) == graph.header.varname] %>% unlist %>% as.vector %>% rev
+                    graphdata.df.g[,names(graphdata.df.g) == graph.header.varname] %>% 
+                      unlist %>% unique %>% as.vector, 
+                    levels = graphdata.df.g[,names(graphdata.df.g) == graph.header.varname] %>% 
+                      unlist %>% unique %>% as.vector %>% rev
                   )
                 )
               )
