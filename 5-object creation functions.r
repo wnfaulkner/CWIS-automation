@@ -137,10 +137,10 @@ source("utils_wnf.r")
       #object 'config.graphs.df.g' not found"
   
   #Test Inputs
-    dat = graphdata.df.g
-    dat.measure.varname = "measure"
-    height.ratio.threshold = 8.2
-    dat.configs = config.graphs.df.g
+    #dat = graphdata.df.g
+    #dat.measure.varname = "measure"
+    #height.ratio.threshold = 8.2
+    #dat.configs = config.graphs.df.g
   
   AddLabelsToGraphData <- function(
     dat, 

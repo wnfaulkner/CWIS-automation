@@ -928,9 +928,9 @@
     graphs.ls.f <- list()
     #tables.ls.f <- list()
   
-  #f <- 1 #LOOP TESTER
+  f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  for(f in 1:length(unit.ids.sample)){
+  #for(f in 1:length(unit.ids.sample)){
     
     #Loop units  
       unit.id.f <- unit.ids.sample[f]
@@ -954,10 +954,10 @@
     graphs.ls.g <- list()
     maxrow.g <- length(graphdata.ls.f)
     
-    #g <- which(config.graphs.df.f$graph.type.id == "c")[1] #LOOP TESTER
+    g <- which(config.graphs.df.f$graph.type.id == "c")[1] #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
-    for(g in 1:length(graphdata.ls.f))
-      local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
+    #for(g in 1:length(graphdata.ls.f))
+      #local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
         
         #Redefine necessary objects in local environment
           g<-g #same as above
@@ -1018,14 +1018,23 @@
              graphdata.df.g[names(graphdata.df.g) == "module"] <- 
                graphdata.df.g[names(graphdata.df.g) == "module"] %>%
                apply(., c(1:2), toupper)
-   
+           
+          #Manual ordering of graphdata.df.g
+            graphdata.df.g <-
+              ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable(
+                tb = graphdata.df.g,
+                tb.order.varnames = c("role","time.period"),
+                ordering.vectors.list = headers.ls
+                
+              )
+              
         
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
         
           #Base Graph
             graph.1 <- 
               FormBaseGraphObject.DataAndTheme( 
-                dat = graphdata.df.g 
+                dat = x 
               )
 
           #Adding Columns (Clustered or Non-Clustered)
@@ -1045,12 +1054,34 @@
               graph.2 <- 
                 AddColsToGraph(
                   base.graph.input = graph.1,
-                  dat = graphdata.df.g,
+                  dat = x,
                   graph.header.varname = graph.header.varname,
                   graph.group.by.varnames = graph.group.by.varnames,
                   graph.fill = graph.fill.g,
                   print.graph = FALSE
                 )
+              
+          #Manually order x-axis according to configs
+          
+          #Graph category axis ordering
+            graph.w.orderedaxis <- 
+              base.graph.input + 
+              scale_x_discrete(
+                limits = levels(
+                #
+                )
+              )
+              
+            graph.3 <-
+              GraphManualOrder(
+                base.graph.input = graph.2,
+                dat = x,
+                graph.header.varname = graph.header.varname,
+                graph.group.by.varnames = graph.group.by.varnames,
+                dat.configs = config.graphs.df.g,
+                print.graph = FALSE
+              )
+              
               
           #Add data labels 
           
@@ -1074,18 +1105,6 @@
                   label.font.size = 4,
                   print.graph = FALSE
                 )
-              
-          #Manually order x-axis according to configs
-            graph.4 <-
-              GraphManualOrder(
-                base.graph.input = graph.3,
-                dat = graphdata.df.g,
-                graph.header.varname = graph.header.varname,
-                graph.group.by.varnames = graph.group.by.varnames,
-                dat.configs = config.graphs.df.g,
-                print.graph = FALSE
-              )
-              
             
           #Add Graph Averages (as error bar)
             #NOTE: does not depend on config.graphs.df.g - taken care of with if statement outside function

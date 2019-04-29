@@ -510,7 +510,7 @@
     
     ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable <- function(
       tb, #table to order
-      tb.order.varnames, #names of variable in table with values corresponding to vector 
+      tb.order.varnames, #names of variables in table with values corresponding to vector 
       ordering.vectors.list, #vectors with ordered values
       ...
     ){
