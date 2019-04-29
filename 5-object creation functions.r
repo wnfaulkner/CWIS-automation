@@ -34,14 +34,17 @@ source("utils_wnf.r")
   #Test Inputs
     #base.graph.input = graph.1
     #dat = graphdata.df.g
+    #graph.orientation = config.graphs.df.g$graph.type.orientation
     #graph.header.varname = graph.header.varname
     #graph.group.by.varnames = graph.group.by.varnames
+    #graph.orientation = 
     #graph.fill = graph.fill.g
     #print.graph = TRUE
   
   AddColsToGraph <- function(
     base.graph.input, #a base graph ggplot object with data and alpha defined (e.g. resulting from function above)
     dat, #the graph data frame with x-axis labels in column 1 and bar heights in a column named 'measure'
+    graph.orientation,
     graph.header.varname,
     graph.group.by.varnames, #[for stacked graphs only] a data frame of the grouping variable extracted from input data earlier in code
     graph.fill, #a vector of hex color values with same length as nrow(dat)
@@ -70,9 +73,10 @@ source("utils_wnf.r")
           )
         )
       }
-
+    
     #Produce Final Result  
       if(is.null(graph.group.by.varnames)){
+        
         graph.w.cols <-
           base.graph.input +
           
@@ -80,22 +84,24 @@ source("utils_wnf.r")
             aes(
               x = dat[,names(dat) == graph.header.varname] %>% unlist %>% as.vector, 
               y = measure %>% as.numeric,
-              fill = time.period
+              fill = graph.fill
             ),
             alpha = 1,
             position = "dodge", 
-            stat = "identity"
+            stat = "identity",
+            na.rm = TRUE
           ) +
           
           scale_fill_manual(
-            values = graph.fill,
+            values = graph.fill %>% rev,
             name = "",
-            labels = dat$time.period %>% unique %>% as.vector
+            labels = dat$time.period %>% unique %>% as.vector %>% rev
           ) +
           
           theme(legend.position = "top")
           
-      }else{ 
+      }else{
+        
         graph.w.cols <-
           base.graph.input +
           
@@ -103,15 +109,16 @@ source("utils_wnf.r")
             aes(x = dat[,names(dat) == graph.header.varname] %>% unlist %>% as.vector(), 
                 y = dat$measure %>% as.numeric,
                 group = dat %>% select(graph.group.by.varnames[1]) %>% unlist %>% as.vector %>% factor,
-                fill = graph.fill
+                fill = graph.fill %>% rev #this controls ordering of columns (which series they correspond to)
             ),
             alpha = 1,
             position = "dodge", 
-            stat = "identity"
+            stat = "identity",
+            na.rm = TRUE
           ) +
           
           scale_fill_manual(
-            values = graph.fill,
+            values = graph.fill, #this controls ordering of fill color
             name = "",
             labels = dat$time.period %>% unique %>% as.vector
           ) +
@@ -213,9 +220,9 @@ source("utils_wnf.r")
     
     #Label color for graph.type.e
       
-      graph.labels.color.v <- rep("#ffffff",nrow(dat))
+      graph.labels.color.v <- rep("#000000",nrow(dat))
       graph.labels.color.v[which(above.label.vectorposition)] <- "#000000"
-      graph.labels.color.v[which(graph.labels.text.v %in% c("0%", ""))] <- "#ffffff"
+      graph.labels.color.v[which(graph.labels.text.v %in% c("0%", ""))] <- "#000000"
       graph.labels.color.v <- graph.labels.color.v %>% rev
       
       graphlabels.df <- data.frame(
@@ -236,10 +243,11 @@ source("utils_wnf.r")
 
 #Add data labels to columns in graph
   #Test Inputs
-    #base.graph.input = graph.2
+    #base.graph.input = graph.3
     #dat = graphdata.df.g
     #graph.header.varname = graph.header.varname
     #graph.group.by.varnames = graph.group.by.varnames
+    #graph.orientation = config.graphs.df.g$graph.type.orientation
     #dat.labels = graph.labels.df
     #label.font.size = 4
     #print.graph = TRUE
@@ -249,6 +257,7 @@ source("utils_wnf.r")
     dat,
     graph.header.varname,
     graph.group.by.varnames,
+    graph.orientation,
     dat.labels,
     label.font.size,
     print.graph = FALSE
@@ -265,19 +274,29 @@ source("utils_wnf.r")
       }
     
       label.font.size <- as.numeric(label.font.size)
-   
+      
+      if(graph.orientation == "bar"){
+        graph.color <- dat.labels$graph.labels.color %>% rev
+      }else{
+        graph.color <- dat.labels$graph.labels.color
+      }
+      
     #Produce Final Result  
       if(is.null(graph.group.by.varnames)){
         graph.w.datalabels <- 
           base.graph.input +
-          geom_text( 
+          geom_label( 
             aes(                                                          
               y = dat.labels$graph.labels.heights, 
               x = dat[,names(dat) == graph.header.varname] %>% unlist %>% as.vector,
               label = dat.labels$graph.labels.text
             ),
             alpha = dat.labels$graph.labels.alpha.v,
-            color = dat.labels$graph.labels.color %>% rev,
+            fill = "#ffffff",
+            label.size = NA,
+            label.padding = unit(0.20, "lines"),
+            label.r = unit(0.5, "lines"),
+            color = graph.color,
             size = label.font.size,
             fontface = "bold",
             position = position_dodge(width = 1),
@@ -286,7 +305,7 @@ source("utils_wnf.r")
       }else{
         graph.w.datalabels <- 
           base.graph.input +
-          geom_text( 
+          geom_label( 
             aes(                                                          
               y = dat.labels$graph.labels.heights, 
               x = dat[,names(dat) == graph.header.varname] %>% unlist %>% as.vector,
@@ -294,8 +313,13 @@ source("utils_wnf.r")
               group = dat[,
                 names(dat) == graph.group.by.varnames
               ] %>% unlist %>% as.vector
+              #color = graph.color
             ),
             alpha = dat.labels$graph.labels.alpha.v,
+            fill = "#ffffff",
+            label.size = NA,
+            label.padding = unit(0.2, "lines"),
+            label.r = unit(0.5, "lines"),
             color = dat.labels$graph.labels.color,
             size = label.font.size,
             fontface = "bold",
@@ -303,6 +327,7 @@ source("utils_wnf.r")
             show.legend = FALSE
           )
       }
+    
     #Return/Print Results  
       if(print.graph){
         windows()
@@ -360,7 +385,8 @@ source("utils_wnf.r")
               color = avg.bar.color, 
               width = 1,
               size = 2,
-              show.legend = FALSE
+              show.legend = FALSE,
+              na.rm = TRUE
             )
         }else{
           graph.w.averages <- 
@@ -382,7 +408,8 @@ source("utils_wnf.r")
               color = avg.bar.color, 
               width = 1,
               size = 2,
-              show.legend = FALSE
+              show.legend = FALSE,
+              na.rm = TRUE
             )
         }
       }

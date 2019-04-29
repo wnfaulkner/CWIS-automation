@@ -928,9 +928,9 @@
     graphs.ls.f <- list()
     #tables.ls.f <- list()
   
-  f <- 1 #LOOP TESTER
+  #f <- 1 #LOOP TESTER
   #for(f in 1:2){ #LOOP TESTER
-  #for(f in 1:length(unit.ids.sample)){
+  for(f in 1:length(unit.ids.sample)){
     
     #Loop units  
       unit.id.f <- unit.ids.sample[f]
@@ -954,7 +954,7 @@
     graphs.ls.g <- list()
     maxrow.g <- length(graphdata.ls.f)
     
-    #g <- which(config.graphs.df.f$graph.type.id == "c")[1] #LOOP TESTER
+    #g <- which(config.graphs.df.f$graph.type.id == "e")[1] #LOOP TESTER
     #for(g in 1:2) #LOOP TESTER
     for(g in 1:length(graphdata.ls.f))
       local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
@@ -995,9 +995,8 @@
               )
             
             #Special cases - formatting text so matches exactly for module and answer option
-              order.ls[names(order.ls) == "module"] <- #module names to all caps
-                order.ls[names(order.ls == "module")] %>% toupper
-              
+              #order.ls[names(order.ls) == "module"] <- #module names to all caps
+                #order.ls[names(order.ls) == "module"] %>% lapply(., toupper)
               
               order.ls[names(order.ls) == "answer"] <-
                 order.ls[names(order.ls) == "answer"] %>% unlist %>% as.numeric %>% list
@@ -1058,7 +1057,7 @@
               }else{
                 graph.fill.g <- 
                   strsplit(config.graphs.df.g$graph.fill, ",") %>% 
-                  unlist %>% trimws %>% rev %>% 
+                  unlist %>% trimws %>% rev %>%
                   rep(., nrow(graphdata.df.g)/2)
               }
 
@@ -1067,9 +1066,10 @@
                 AddColsToGraph(
                   base.graph.input = graph.1,
                   dat = graphdata.df.g,
+                  graph.orientation = config.graphs.df.g$graph.type.orientation,
                   graph.header.varname = graph.header.varname,
                   graph.group.by.varnames = graph.group.by.varnames,
-                  graph.fill = graph.fill.g,
+                  graph.fill = c("#c7b7c7","#603356") %>% rep(., nrow(graphdata.df.g)/2),
                   print.graph = FALSE
                 )
               
@@ -1086,7 +1086,24 @@
                   )
                 )
               )
-              
+          
+          #Add Graph Averages (as error bar)
+            #NOTE: does not depend on config.graphs.df.g - taken care of with if statement outside function
+            if(!is.na(config.graphs.df.g$avg.level)){
+              graph.4 <-
+                AddGraphAverages(
+                  base.graph.input = graph.3,
+                  dat = graphdata.df.g,
+                  graph.header.varname = graph.header.varname,
+                  graph.group.by.varnames = graph.group.by.varnames,
+                  avg.bar.color = config.graphs.df.g$avg.bar.color,
+                  dat.configs = config.graphs.df.g,
+                  print.graph = FALSE 
+                )
+            }else{
+              graph.4 <- graph.3
+            }
+            
           #Add data labels 
           
             #Graph label data frame
@@ -1097,36 +1114,20 @@
                   height.ratio.threshold = 8.2,
                   dat.configs = config.graphs.df.g
                 )
-          
+            
             #Add Data labels to graph
-              graph.4 <-
+              graph.5 <-
                 AddGraphDataLabels(
-                  base.graph.input = graph.3,
+                  base.graph.input = graph.4,
                   dat = graphdata.df.g,
                   graph.header.varname = graph.header.varname,
                   graph.group.by.varnames = graph.group.by.varnames,
+                  graph.orientation = config.graphs.df.g$graph.type.orientation,
                   dat.labels = graph.labels.df,
                   label.font.size = 4,
                   print.graph = FALSE
                 )
             
-          #Add Graph Averages (as error bar)
-            #NOTE: does not depend on config.graphs.df.g - taken care of with if statement outside function
-            if(!is.na(config.graphs.df.g$avg.level)){
-              graph.5 <-
-                AddGraphAverages(
-                  base.graph.input = graph.4,
-                  dat = graphdata.df.g,
-                  graph.header.varname = graph.header.varname,
-                  graph.group.by.varnames = graph.group.by.varnames,
-                  avg.bar.color = config.graphs.df.g$avg.bar.color,
-                  dat.configs = config.graphs.df.g,
-                  print.graph = FALSE 
-                )
-            }else{
-              graph.5 <- graph.4
-            }
-          
           #Final step: graph orientation - flip for bar charts
             graph.g <- 
               GraphOrientation(
@@ -1316,9 +1317,10 @@
       }else{
         file.name.h <- 
           paste(
-            #cadre.h,
-            #"_",
-            unit.ids.sample[h],
+            "CWIS Repeated Meas_",
+            FirstLetterCap_MultElements(unit.ids.sample[h]),
+            "_",
+            gsub(":",".",Sys.Date()),
             sep = ""
           )
       }
@@ -1498,7 +1500,7 @@
                 config.pot.i$content.static[j],
                 ""
               ),
-              " ",
+              ifelse(!is.na(config.pot.i$content.dynamic[j])," ",""),
               ifelse(
                 !is.na(config.pot.i$content.dynamic[j]),
                 eval(parse(text=config.pot.i$content.dynamic[j])),
