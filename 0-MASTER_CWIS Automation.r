@@ -1020,14 +1020,23 @@
                apply(., c(1:2), toupper)
            
           #Manual ordering of graphdata.df.g
+            order.ls <- 
+              StringSplitVectorIntoList(
+                vector = config.graphs.df.g$x.var.order,
+                list.element.names = strsplit(config.graphs.df.g$x.varnames, ",") %>% unlist,
+                list.level.split.char = ";",
+                within.element.split.char = ","
+              )
+            
+            order.ls[names(order.ls) == "module"] <-
+              order.ls[names(order.ls == "module")] %>% toupper
+            
             graphdata.df.g <-
               ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable(
                 tb = graphdata.df.g,
                 tb.order.varnames = c("role","time.period"),
-                ordering.vectors.list = headers.ls
-                
+                ordering.vectors.list = order.ls
               )
-              
         
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
         
@@ -1038,8 +1047,12 @@
               )
 
           #Adding Columns (Clustered or Non-Clustered)
+            
             #Define Fill Values
-              if(strsplit(config.graphs.df.g$graph.fill, ",") %>% unlist %>% trimws %>% length %>% equals(1)){
+              if(
+                strsplit(config.graphs.df.g$graph.fill, ",") %>% 
+                  unlist %>% trimws %>% length %>% equals(1)
+              ){
                 graph.fill.g <- 
                   config.graphs.df.g$graph.fill %>% 
                   rep(., nrow(graphdata.df.g))
@@ -1062,26 +1075,17 @@
                 )
               
           #Manually order x-axis according to configs
-          
-          #Graph category axis ordering
-            graph.w.orderedaxis <- 
-              base.graph.input + 
+  
+            graph.3 <- 
+              graph.2 + 
               scale_x_discrete(
                 limits = levels(
-                #
+                  factor(
+                    order.ls[names(order.ls) == graph.header.varname] %>% unlist %>% as.vector, 
+                    levels = order.ls[names(order.ls) == graph.header.varname] %>% unlist %>% as.vector %>% rev
+                  )
                 )
               )
-              
-            graph.3 <-
-              GraphManualOrder(
-                base.graph.input = graph.2,
-                dat = x,
-                graph.header.varname = graph.header.varname,
-                graph.group.by.varnames = graph.group.by.varnames,
-                dat.configs = config.graphs.df.g,
-                print.graph = FALSE
-              )
-              
               
           #Add data labels 
           

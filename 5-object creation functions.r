@@ -137,10 +137,10 @@ source("utils_wnf.r")
       #object 'config.graphs.df.g' not found"
   
   #Test Inputs
-    #dat = graphdata.df.g
-    #dat.measure.varname = "measure"
-    #height.ratio.threshold = 8.2
-    #dat.configs = config.graphs.df.g
+    dat = graphdata.df.g
+    dat.measure.varname = "measure"
+    height.ratio.threshold = 8.2
+    dat.configs = config.graphs.df.g
   
   AddLabelsToGraphData <- function(
     dat, 
@@ -160,51 +160,51 @@ source("utils_wnf.r")
       above.label.vectorposition <- rep(TRUE, length(var)) #Defines color to make label
     }else{
     
-    #Label Heights
-    
-      min <- min(var, na.rm = TRUE)
-      max <- max(var, na.rm = TRUE)
-      height.ratio.threshold <- height.ratio.threshold
-      height.ratio <- ifelse(max == 0, 0, max/min)
-    
-      #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
-    
-      if(height.ratio < height.ratio.threshold){ 
-        graph.labels.heights.v <- rep(min/2, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
-        above.label.vectorposition <- max/var > height.ratio.threshold
-      }
+      #Label Heights
       
-      if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
-        graph.labels.heights.v <- vector(length = length(var), mode = "numeric")
-        above.label.vectorposition <- max/var > height.ratio.threshold
-        above.label.vectorposition[is.na(above.label.vectorposition)] <- TRUE
-        graph.labels.heights.v[above.label.vectorposition] <-   #labels for columns below threshold, position is height of bar plus 1/10 of max bar height 
-          var[above.label.vectorposition] + max/10
-        graph.labels.heights.v[graph.labels.heights.v == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
-          min(var[!above.label.vectorposition])/2
-        graph.labels.heights.v[which(is.na(var))] <- max/3  #"No Responses" labels at max/3 height
-      }
+        min <- min(var, na.rm = TRUE)
+        max <- max(var, na.rm = TRUE)
+        height.ratio.threshold <- height.ratio.threshold
+        height.ratio <- ifelse(max == 0, 0, max/min)
       
-    #Label Text
+        #print(paste("Max: ",max,"  Min: ",min,"  Ratio: ", height.ratio, "  Ratio threshold: ",height.ratio.threshold,sep = ""))
       
-      if(grepl("mean",dat.configs$summarize.fun)){
-        graph.labels.text.v <- as.character(100*var %>% round(., 2)) %>% paste(.,"%",sep="")
-      }else{
-        graph.labels.text.v <- 
-          var %>% 
-          as.numeric %>% 
-          round( ., 1) %>% 
-          sprintf("%.0f",.) %>% 
-          trimws(., which = "both") 
-      }
-      graph.labels.text.v[
-        dat[,
-          names(dat) == dat.measure.varname] %>% 
-          as.matrix %>% 
-          as.vector(.,mode = "numeric") %>% 
-          is.na(.) %>% 
-          which
-      ] <- "N"
+        if(height.ratio < height.ratio.threshold){ 
+          graph.labels.heights.v <- rep(min/2, length(var)) #if ratio between min and max height below threshold, all labels are minimum height divided by 2
+          above.label.vectorposition <- max/var > height.ratio.threshold
+        }
+        
+        if((min == 0 && max !=0) | height.ratio >= height.ratio.threshold){
+          graph.labels.heights.v <- vector(length = length(var), mode = "numeric")
+          above.label.vectorposition <- max/var > height.ratio.threshold
+          above.label.vectorposition[is.na(above.label.vectorposition)] <- TRUE
+          graph.labels.heights.v[above.label.vectorposition] <-   #labels for columns below threshold, position is height of bar plus 1/10 of max bar height 
+            var[above.label.vectorposition] + max/10
+          graph.labels.heights.v[graph.labels.heights.v == 0] <-    #labels for columns above threshold, position is height of smallest bar divided by 2
+            min(var[!above.label.vectorposition])/2
+          graph.labels.heights.v[which(is.na(var))] <- max/3  #"No Responses" labels at max/3 height
+        }
+        
+      #Label Text
+        
+        if(grepl("mean",dat.configs$summarize.fun)){
+          graph.labels.text.v <- as.character(100*var %>% round(., 2)) %>% paste(.,"%",sep="")
+        }else{
+          graph.labels.text.v <- 
+            var %>% 
+            as.numeric %>% 
+            round( ., 1) %>% 
+            sprintf("%.0f",.) %>% 
+            trimws(., which = "both") 
+        }
+        graph.labels.text.v[
+          dat[,
+            names(dat) == dat.measure.varname] %>% 
+            as.matrix %>% 
+            as.vector(.,mode = "numeric") %>% 
+            is.na(.) %>% 
+            which
+        ] <- "N"
     }
   
     #Label visibility
@@ -213,11 +213,7 @@ source("utils_wnf.r")
     
     #Label color for graph.type.e
       
-      #if(dat.configs$graph.type.id == "e"){
-      #  graph.labels.color.v <- rep(c("#000000","#FFFFFF"),length(dat[,1])/2) %>% rev
-      #}else{
-        graph.labels.color.v <- rep("#000000",nrow(dat))
-      #}
+      graph.labels.color.v <- rep("#000000",nrow(dat))
       graph.labels.color.v[which(above.label.vectorposition)] <- "#c2ccb9"
       graph.labels.color.v[which(graph.labels.text.v %in% c("0%", ""))] <- "#000000"
       #graph.labels.color.v <- graph.labels.color.v %>% rev
@@ -404,72 +400,76 @@ source("utils_wnf.r")
     
 #Graph manual category order, finalize orientation as column or bar
   #Test Inputs
-    #base.graph.input = graph.4
-    #dat = graphdata.df.g
-    #graph.header.varname = graph.header.varname
-    #graph.group.by.varnames = graph.group.by.varnames
-    #dat.configs = config.graphs.df.g
-    #print.graph = TRUE
+    vector = config.graphs.df.g$x.var.order
+    list.level.split.char = ";"
+    within.element.split.char = ","
   
-  GraphManualOrder <- function(
-    base.graph.input,
-    dat,
-    graph.header.varname,
-    graph.group.by.varnames,
-    dat.configs,
-    print.graph = FALSE
+  StringSplitVectorIntoList <- function(
+    vector,
+    list.element.names,
+    list.level.split.char,
+    within.element.split.char
   ){
     #Create factor vector for ordering axis
       order.ls <-
-        strsplit(dat.configs$x.var.order, ";") %>% 
+        strsplit(vector, ";") %>% 
         unlist   %>% strsplit(., ",")
       
-      names(order.ls) <- 
-        dat.configs$x.varnames %>% strsplit(., ",") %>% unlist 
+      names(order.ls) <- list.element.names
       
-      if("answer" %in% names(order.ls)){
-        order.ls[grepl("answer",names(order.ls))] <-
-          order.ls[grepl("answer",names(order.ls))] %>% unlist %>% as.numeric %>%
-          IndexMatchToVectorFromTibble(
-            vector = .,
-            lookup.tb = config.ans.opt.tb,
-            match.colname = "ans.num",
-            replacement.vals.colname = graph.header.varname,
-            mult.replacements.per.cell = FALSE,
-            print.matches = FALSE
-          ) %>% list
-        
-        names(order.ls)[grep("answer",names(order.ls))] <- graph.header.varname
-      }
+      #if("answer" %in% names(order.ls)){
+      #  order.ls[grepl("answer",names(order.ls))] <-
+      #    order.ls[grepl("answer",names(order.ls))] %>% unlist %>% as.numeric %>%
+      #    IndexMatchToVectorFromTibble(
+      #      vector = .,
+      #      lookup.tb = config.ans.opt.tb,
+      #      match.colname = "ans.num",
+      #      replacement.vals.colname = graph.header.varname,
+      #      mult.replacements.per.cell = FALSE,
+      #      print.matches = FALSE
+      #    ) %>% list
+      #  
+      #  names(order.ls)[grep("answer",names(order.ls))] <- graph.header.varname
+      #}
       
-      headers.v <- 
-        order.ls[names(order.ls)==graph.header.varname] %>% 
-        unlist %>% as.vector %>%
-        FirstLetterCap_MultElements()
+      order.ls <- 
+        lapply(
+          order.ls,
+          function(x) {
+            x %>% unlist %>% as.vector %>%
+            FirstLetterCap_MultElements()
+          }
+        )
       
-      if(graph.header.varname == "module"){headers.v <- toupper(headers.v)}
      
       #Factor vector with levels in order they will need to be to get column/bar ordering right
         #When graphs are bar as opposed to columns, have to reverse order because the coord_flip() 
         #command does a mirror image
-        if(dat.configs$graph.type.orientation == "bar"){
-          graph.order.g <- factor(headers.v, levels = headers.v %>% rev) 
-        }else{
-          graph.order.g <- factor(headers.v, levels = headers.v)       
-        }
+        #graph.order.ls <-
+          
+        #if(dat.configs$graph.type.orientation == "bar"){
+        #  graph.order.g <- factor(headers.v, levels = headers.v %>% rev) 
+        #}else{
+        #  graph.order.g <- factor(headers.v, levels = headers.v)       
+        #}
     
-    #Graph category axis ordering
-      graph.w.orderedaxis <- 
-        base.graph.input + 
-        scale_x_discrete(limits=levels(graph.order.g))
+    #Ordering graph data table
+      #dat.output <- 
+      #  dat[
+      #    order(
+      #      match(dat$role,graph.order.g)
+      #      #TODO: build out so graph.order.g is a list so can order by multiple variables.
+      #    ),]
+      
+    
     
      #Return/Print Results  
-      if(print.graph){
-        windows()
-        print(graph.w.orderedaxis)
-      }
+      #if(print.graph){
+      #  windows()
+      #  print(graph.w.orderedaxis)
+      #}
       
-      return(graph.w.orderedaxis)
+      return(order.ls)
   }
   
 #GRAPH ORIENTATION
