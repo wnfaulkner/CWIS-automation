@@ -95,7 +95,8 @@ source("utils_wnf.r")
           scale_fill_manual(
             values = graph.fill %>% rev,
             name = "",
-            labels = dat$time.period %>% unique %>% as.vector %>% rev
+            labels = dat$time.period %>% unique %>% as.vector %>% rev#,
+            #breaks = c("Baseline","2018-19 Spring")
           ) +
           
           theme(legend.position = "top")
