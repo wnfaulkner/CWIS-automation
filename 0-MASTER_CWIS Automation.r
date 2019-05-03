@@ -333,7 +333,8 @@
             resp8.tb,
             buildings.tb %>% select(building.id,building.level),
             by = c("building.id")
-          )
+          ) 
+        resp9.tb$building.level[resp9.tb$building == "other"] <- "other"
         
       #Unbranch columns
          
@@ -728,9 +729,9 @@
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     c.loop.startime <- Sys.time()
     
-  #c <- 2 #LOOP TESTER 
+  c <- 59 #LOOP TESTER 
   #for(c in slider.unit.ids.sample){   #LOOP TESTER
-  for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
+  #for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
     
     #Loop Inputs (both graphs and tables)
       unit.id.c <- unit.ids.sample[c]
@@ -763,9 +764,9 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    #d <- which(config.graphs.df.c$graph.type.id == "d")[1]
+    d <- 10# which(config.graphs.df.c$graph.type.id == "a")[1]
     #for(d in 1:2){ #LOOP TESTER
-    for(d in 1:nrow(config.graphs.df.c)){
+    #for(d in 1:nrow(config.graphs.df.c)){
       
       #Print loop messages
         #print(
