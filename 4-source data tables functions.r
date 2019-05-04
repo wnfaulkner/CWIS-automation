@@ -93,15 +93,15 @@ source("utils_wnf.r")
   
   #Data Summarize GRAPHS - participation vs. implementation vs. performance 
     #Test inputs
-      #tb = 
-      #  GraphDataRestriction(
-      #      tb =  resp.long.tb.c,
-      #      id.varname = "answer.id",
-      #      tb.config = config.graphs.df.d
-      #    )
-      #group.varnames = group_by.d
-      #summarize.varname = config.graphs.df.d$summarize.varname %>% unlist %>% as.vector
-      #summarize.fun = config.graphs.df.d$summarize.fun %>% unlist %>% as.vector
+      tb = 
+        GraphDataRestriction(
+            tb =  resp.long.tb.c,
+            id.varname = "answer.id",
+            tb.config = config.graphs.df.d
+          )
+      group.varnames = group_by.d
+      summarize.varname = config.graphs.df.d$summarize.varname %>% unlist %>% as.vector
+      summarize.fun = config.graphs.df.d$summarize.fun %>% unlist %>% as.vector
     
     SummarizeDataByGroups <- 
       function(

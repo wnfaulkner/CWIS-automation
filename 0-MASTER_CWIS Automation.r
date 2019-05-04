@@ -323,10 +323,12 @@
               grep("resp.id|unit.id", names(resp7.tb)),
               which(!grepl("resp.id|unit.id", names(resp7.tb)))
             )
-          ]
+          ]  %>%
+          mutate(row.id = 1:nrow(.))
       
       #Add variables for: building.id, school.level
-        resp8.tb$building.id <- paste(resp8.tb$district, "_", resp8.tb$building, sep = "")
+        resp8.tb$building.id <- 
+          paste(resp8.tb$district, "_", resp8.tb$building, sep = "")
         
         resp9.tb <-
           left_join(
@@ -451,7 +453,7 @@
                 SelectNamesIn(
                   resp.wide.tb,
                   "NOT.IN", 
-                  c(cwis.varnames.unbranched, paste0(cwis.varnames.unbranched, "_num"))
+                  c(cwis.varnames.unbranched)#, paste0(cwis.varnames.unbranched, "_num"))
                 ),
               variable.name = "question",
               value.name = "answer",
@@ -729,9 +731,9 @@
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     c.loop.startime <- Sys.time()
     
-  c <- 59 #LOOP TESTER 
+  #c <- 31 #LOOP TESTER 
   #for(c in slider.unit.ids.sample){   #LOOP TESTER
-  #for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
+  for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
     
     #Loop Inputs (both graphs and tables)
       unit.id.c <- unit.ids.sample[c]
@@ -764,9 +766,9 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    d <- 10# which(config.graphs.df.c$graph.type.id == "a")[1]
+    #d <- which(config.graphs.df.c$graph.type.id == "i")[2]
     #for(d in 1:2){ #LOOP TESTER
-    #for(d in 1:nrow(config.graphs.df.c)){
+    for(d in 1:nrow(config.graphs.df.c)){
       
       #Print loop messages
         #print(
