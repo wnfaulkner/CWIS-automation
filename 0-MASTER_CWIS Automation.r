@@ -766,7 +766,7 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    #d <- which(config.graphs.df.c$graph.type.id == "i")[2]
+    #d <- which(config.graphs.df.c$graph.type.id == "b")[1]
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:nrow(config.graphs.df.c)){
       
