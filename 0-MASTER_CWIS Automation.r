@@ -731,7 +731,7 @@
     maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     c.loop.startime <- Sys.time()
     
-  #c <- 31 #LOOP TESTER 
+  #c <- 2 #LOOP TESTER 
   #for(c in slider.unit.ids.sample){   #LOOP TESTER
   for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
     
@@ -766,7 +766,7 @@
       config.graphs.df.c <- config.graphs.ls.b[[c]]
       graphdata.ls.d <- list()
     
-    #d <- which(config.graphs.df.c$graph.type.id == "b")[1]
+    #d <- which(config.graphs.df.c$graph.type.id == "h")[1]
     #for(d in 1:2){ #LOOP TESTER
     for(d in 1:nrow(config.graphs.df.c)){
       
