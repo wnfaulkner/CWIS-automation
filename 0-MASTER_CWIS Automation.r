@@ -27,7 +27,7 @@
   # ESTABLISH BASE DIRECTORIES
   
     #M900
-      working.dir <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-04 CWIS Auto Phase 8"
+      working.dir <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-06 District Dashboards"
       rproj.dir <- "C:\\Users\\willi\\Documents\\GIT PROJECTS\\CWIS-automation"
 
     #Thinkpad T470
@@ -65,32 +65,6 @@
     #install.packages('miniUI')
     
     LoadCommonPackages()
-    library(pander)
-    library(proftools)
-    library(jsonlite)
-    library(rlang)
-    library(extrafont)
-    extrafont::loadfonts(device="win")
-    
-    #Special for ReporteRs package because it has been archived (https://stackoverflow.com/questions/24194409/how-do-i-install-a-package-that-has-been-archived-from-cran)
-      
-      #Install Dependencies
-        if( !require( rJava ) ) install.packages("rJava")
-        if( !require( ggplot2 ) ) install.packages("ggplot2")
-        if( !require( base64 ) ) install.packages("base64")
-        if( !require( highlight ) ) install.packages("highlight")
-        if( !require( devtools ) ) install.packages("devtools")
-        if( !require( rvg ) ) install.packages("rvg")
-        if( !require( gdtools ) ) install.packages("gdtools")
-        if( !require( png ) ) install.packages("png")
-        if( !require( R.Utils ) ) install.packages("R.utils")
-        if( !require( ReporteRsjars ) ) install.packages("ReporteRsjars")
-        if( !require( jsonlite ) ) install.packages("jsonlite")
-        if( !require( rlang ) ) install.packages("rlang")
-      
-      #Install Archived Packages: ReporteRsjars & ReporteRs  
-        if( !require( ReporteRsjars ) ) devtools::install_github("davidgohel/ReporteRsjars")
-        if( !require( ReporteRs ) ) devtools::install_github("davidgohel/ReporteRs")
     
     #Section Clocking
       section0.duration <- Sys.time() - section0.starttime
