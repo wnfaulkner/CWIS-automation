@@ -14,13 +14,6 @@
     
     
     #Section & Code Clocking
-      #TODO: MAKE UTILS FUNCTIONS THAT 
-        #(A) DESIGNATE SYS.TIME() 'BOOKMARKS' OR 'WAYPOINTS'
-        #(B) PRINT A TABLE OF WAYPOINTS IN ROWS AND COLUMNS REPRESENTING
-          #(1) TIME SINCE MOST RECENT WAYPOINT
-          #(2) CUMULATIVE TIME SINCE FIRST WAYPOINT
-          #(3) TIME SINCE MOST RECENT WAYPOINT/TIME SINCE FIRST WAYPOINT (PERCENTAGE)
-    
       sections.all.starttime <- Sys.time()
       section0.starttime <- sections.all.starttime
   
@@ -65,6 +58,8 @@
     #install.packages('miniUI')
     
     LoadCommonPackages()
+    library(flextable)
+    library(XLConnect)
     
     #Section Clocking
       section0.duration <- Sys.time() - section0.starttime
@@ -86,7 +81,7 @@
     source("1-import_functions.r")
   
   #Import Config Tables
-    configs.ss <- gs_key("1wukfxVKxx8vXq1ZsU1_eqr3Yh0e00u8WLqepOe9I9YU",verbose = TRUE) 
+    configs.ss <- gs_key("1dWVAe2AjWLFQzbfOTpnUon02UdTYU7xaOl3m1UtWjGc",verbose = TRUE) 
     
     #Import all tables from config google sheet as tibbles
       all.configs.ls <- GoogleSheetLoadAllWorksheets(configs.ss)
@@ -96,21 +91,21 @@
                                           #their respective sheet names with ".tb" appended
     
   #Extract global configs from tibble as their own character objects
-    TibbleToCharObjects(config.global.tb)
-    sample.print <- #Convert sample.print to TRUE/FALSE
-      ifelse(
-        sample.print == "true",
-        TRUE,
-        FALSE
-      )
+    #TibbleToCharObjects(config.global.tb)
+    #sample.print <- #Convert sample.print to TRUE/FALSE
+    #  ifelse(
+    #    sample.print == "true",
+    #    TRUE,
+    #    FALSE
+    #  )
 
   #Import Responses table (main data, imported as data frame)
-    setwd(source.tables.dir)
+    #setwd(source.tables.dir)
     
     resp1.tb <- read.csv(
       file =  
         MostRecentlyModifiedFilename(
-          title.string.match = main.data.file.name.character.string,
+          title.string.match = "response",
           file.type = "csv",
           dir = source.tables.dir
         ),
@@ -152,44 +147,104 @@
     cleaning.source.dir <- paste(rproj.dir,"2-Cleaning/", sep = "")
     setwd(rproj.dir)
     source("2-cleaning_functions.r")
-  
-  #config.graph.types.tb
-    config.graph.types.tb <- AddSlideTypeCols(config.graph.types.tb) #Add slide.type columns via inner-join
     
-  #config.table.types.tb
-    config.table.types.tb <- AddSlideTypeCols(config.table.types.tb) #Add slide.type columns via inner-join
-    
-  #config.pot.tb
-    config.pot.types.tb <- AddSlideTypeCols(config.pot.types.tb) #Add slide.type columns via inner-join
-    config.pot.types.tb$color <- config.pot.types.tb$color %>% gsub("x","",.)  #Removing 'x' from colors #TODO: 
-    
-  #buildings.tb
-    buildings.tb <- LowerCaseCharVars(buildings.tb) #Lower-case all content 
-  
-  #config.ans.opt.tb
-    config.ans.opt.tb <- LowerCaseCharVars(config.ans.opt.tb)
     
   #RESPONSES (round 1)  
-    resp1.tb <- LowerCaseNames(resp1.tb)  #Lower-case all variable names
+    domains <- c("etl","cfa","dbdm","lead","pd")
+    resp1.tb <- 
+      LowerCaseNames(resp1.tb) %>%  #Lower-case all variable names
+      ReplaceNames(., "school", "building") %>% #Replace "school" with "building" in column names
+      ReplaceNames(., "dist.school", "unit.id") %>%
+      ReplaceNames(., "id", "resp.id") %>%
+      as_tibble()
+    
+    names(resp1.tb) <- 
+      mgsub(
+          pattern = paste("c",domains, sep = ""), 
+          replacement = domains, 
+          x = names(resp1.tb), 
+          print.replacements = FALSE
+        )
+    
     names(resp1.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(resp1.tb), char = ".")
     resp1.tb <- LowerCaseCharVars(resp1.tb) #Lower-case all data
-    data.from.qualtrics.logical <- #Define whether data coming in through Qualtrics or SurveyGizmo
-      ifelse(names(resp1.tb)[1] == "startdate", TRUE, FALSE)
+  
+  #Filter out district office & blank schools
+    resp2.tb <- 
+      resp1.tb %>% 
+      #filter(!grepl("district office", building)) %>%
+      filter(building != "")
+    
+  #CWIS Variable names
+    cwis.varnames <- FilterVector(grepl(paste0(domains, collapse = "|"), names(resp2.tb)), names(resp2.tb))
+  
+  
+    resp3.tb <-
+      melt( #Melt to long data frame for all cwis vars
+        resp2.tb,
+        id.vars = names(resp2.tb)[!names(resp2.tb) %in% cwis.varnames], 
+        measure.vars = cwis.varnames
+      ) %>% 
+      filter(!is.na(value)) %>% #remove rows with no answer for cwis vars
+      MoveColsLeft(., c("resp.id","unit.id")) %>% #Rearrange columns: resp.id and unit.id at the front
+      as_tibble()
+    
+  #Add 'module' variable
+    resp4.tb <- 
+      left_join(
+        x = resp3.tb,
+        y = questions.tb %>% select(var.id, module),
+        by = c("variable"="var.id")
+      )
+   
+  #Add variables for: building.id, school.level
+    #resp8.tb$building.id <- 
+    #  paste(resp8.tb$district, "_", resp8.tb$building, sep = "")
+    
+    #resp9.tb <-
+    #  left_join(
+    #    resp8.tb,
+    #    buildings.tb %>% select(building.id,building.level),
+    #    by = c("building.id")
+    #  ) 
+    #resp9.tb$building.level[resp9.tb$building == "other"] <- "other" 
+
+#ADDITIONAL PRESERVED CODE
+  {
+    
+  #config.graph.types.tb
+    #config.graph.types.tb <- AddSlideTypeCols(config.graph.types.tb) #Add slide.type columns via inner-join
+    
+  #config.table.types.tb
+    #config.table.types.tb <- AddSlideTypeCols(config.table.types.tb) #Add slide.type columns via inner-join
+    
+  #config.pot.tb
+    #config.pot.types.tb <- AddSlideTypeCols(config.pot.types.tb) #Add slide.type columns via inner-join
+    #config.pot.types.tb$color <- config.pot.types.tb$color %>% gsub("x","",.)  #Removing 'x' from colors #TODO: 
+    
+  #buildings.tb
+    #buildings.tb <- LowerCaseCharVars(buildings.tb) #Lower-case all content 
+  
+  #config.ans.opt.tb
+    #config.ans.opt.tb <- LowerCaseCharVars(config.ans.opt.tb)
+    
+    #data.from.qualtrics.logical <- #Define whether data coming in through Qualtrics or SurveyGizmo
+    #  ifelse(names(resp1.tb)[1] == "startdate", TRUE, FALSE)
     
   #q.branched.tb (round 1)
-    q.branched.tb <- LowerCaseNames(questions.tb)    #Lower-case all variable names
-    names(q.branched.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(q.branched.tb), char = ".") #Replace any number of repeated periods with a single period
-    q.branched.tb <- LowerCaseCharVars(q.branched.tb)  #Lower-case all content
+    #q.branched.tb <- LowerCaseNames(questions.tb)    #Lower-case all variable names
+    #names(q.branched.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(q.branched.tb), char = ".") #Replace any number of repeated periods with a single period
+    #q.branched.tb <- LowerCaseCharVars(q.branched.tb)  #Lower-case all content
     
-    q.branched.tb <- #Restrict to rows for questions for this year/semester 
-      q.branched.tb[ 
-        as.character(q.branched.tb$year) == data.year & #year
-        tolower(q.branched.tb$semester) == data.semester #semester
-        ,]
+    #q.branched.tb <- #Restrict to rows for questions for this year/semester 
+    #  q.branched.tb[ 
+    #    as.character(q.branched.tb$year) == data.year & #year
+    #    tolower(q.branched.tb$semester) == data.semester #semester
+    #    ,]
    
     #SURVEYGIZMO-SPECIFIC
       #Set up variable 'raw.var.id' so can replace response variable names with short names
-      q.branched.tb$raw.var.id <- SubRepeatedCharWithSingleChar(string.vector = q.branched.tb$raw.var.id, char = ".")  
+      #q.branched.tb$raw.var.id <- SubRepeatedCharWithSingleChar(string.vector = q.branched.tb$raw.var.id, char = ".")  
     
     #QUALTRICS: add 'x' to questions so match export exactly
       #TODO: couldn't just remove it from column names? Wouldn't that be more efficient?
@@ -198,13 +253,13 @@
     
     #QUALTRICS-SPECIFIC: 
       #Remove extra header rows
-        resp2.tb <- 
-          RemoveExtraHeaderRowsBasedOnStartChar(
-            tb = resp1.tb, 
-            header.rownum = 1,
-            search.colname = names(resp1.tb)[1],
-            search.char = "{"
-          )
+      #  resp2.tb <- 
+      #    RemoveExtraHeaderRowsBasedOnStartChar(
+      #      tb = resp1.tb, 
+      #      header.rownum = 1,
+      #      search.colname = names(resp1.tb)[1],
+      #      search.char = "{"
+      #    )
       
       #TODO:Slider vars:
         #convert to integer (based on min/max, e.g. cutoff points at 1.5, 2.5, 3.5)
@@ -213,141 +268,111 @@
         
     #SURVEYGIZMO-SPECIFIC: 
       #Replace names of resp1.df with short names from q.branched.tb
-        names(resp2.tb) <- 
-          IndexMatchToVectorFromTibble(
-            vector = names(resp2.tb),
-            lookup.tb = q.branched.tb,
-            match.colname = "raw.var.id",
-            replacement.vals.colname = "var.id",
-            mult.replacements.per.cell = FALSE
-          )
+      #  names(resp2.tb) <- 
+      #    IndexMatchToVectorFromTibble(
+      #      vector = names(resp2.tb),
+      #      lookup.tb = q.branched.tb,
+      #      match.colname = "raw.var.id",
+      #      replacement.vals.colname = "var.id",
+      #      mult.replacements.per.cell = FALSE
+      #    )
 
     #BOTH DATA SOURCES
       #Add id column which is either unique district name or unique building_district combo &
         #filter out rows with nothing in columns necessary to define unit.id 
         #(e.g. district and building)
         
-        resp3.tb <- CreateUnitIDCol(
-          tb = resp2.tb,
-          id.unit = report.unit,
-          remove.blanks = "ANY.MISSING",
-          paste.char = "_"
-        )
+        #resp3.tb <- CreateUnitIDCol(
+        #  tb = resp2.tb,
+        #  id.unit = report.unit,
+        #  remove.blanks = "ANY.MISSING",
+        #  paste.char = "_"
+        #)
       
-      #Filter out district office & blank schools
-        resp4.tb <- 
-          resp3.tb %>% 
-          filter(!grepl("district office", building)) %>%
-          filter(building != "")
-        
-        output.ls <- list()
        
-      #Filter out units with no answers for cwis vars 
-        for(i in 1:length(resp4.tb$unit.id %>% unique)){
-          unit.id.i <- unique(resp4.tb$unit.id)[i]
-          empty.cwis.answers <- 
-            resp4.tb %>% 
-            filter(unit.id == unit.id.i) %>% 
-            select(cwis.varnames.branched) %>%
-            apply(., 2, function(x){all(is.na(x))}) %>% 
-            all
-          output.ls[[i]] <- c(unit.id.i, empty.cwis.answers)
-        }  
-        
-        empty.cwis.unit.ids <- do.call(rbind, output.ls) %>% as_tibble %>% filter(V2 == TRUE)
-        resp4.tb <- resp4.tb %>% filter(!unit.id %in% empty.cwis.unit.ids)
-        
+        #output.ls <- list()
+
       #Restrict Data to sample of user-defined size if doing sample print
-         resp5.tb <- 
-          RestrictDataToSample(
-            tb = resp4.tb,
-            report.unit = report.unit,
-            sample.print = sample.print,
-            sample.group.unit = sample.group.unit,
-            sample.size = sample.size
-          )
+         #resp5.tb <- 
+        #  RestrictDataToSample(
+        #    tb = resp4.tb,
+        #    report.unit = report.unit,
+        #    sample.print = sample.print,
+        #    sample.group.unit = sample.group.unit,
+        #    sample.size = sample.size
+        #  )
 
       #Restrict columns to those necessary in final data
-        necessary.colnames <- 
-          q.branched.tb %>% 
-          filter(tolower(necessary.in.final.data) == "yes") %>%
-          select(var.id) %>%
-          unlist %>%
-          RemoveNA %>% 
-          c(., "unit.id")
+        #necessary.colnames <- 
+        #  q.branched.tb %>% 
+        #  filter(tolower(necessary.in.final.data) == "yes") %>%
+        #  select(var.id) %>%
+        #  unlist %>%
+        #  RemoveNA %>% 
+        #  c(., "unit.id")
          
-         resp6.tb <-
-           SelectColsIn(resp5.tb, "IN", necessary.colnames)
+        #resp6.tb <-
+        #  SelectColsIn(resp5.tb, "IN", necessary.colnames)
           
       #Rearrange columns
-        cwis.varnames.branched <- #CWIS response variables to right, all others first
-          names(resp6.tb)[names(resp6.tb) %in% q.branched.tb$var.id[!is.na(q.branched.tb$module)]]
+        #cwis.varnames.branched <- #CWIS response variables to right, all others first
+        #  names(resp6.tb)[names(resp6.tb) %in% q.branched.tb$var.id[!is.na(q.branched.tb$module)]]
          
-        resp7.tb <-
-          resp6.tb[ ,
-                   c(
-                     which(!(names(resp6.tb) %in% cwis.varnames.branched)),
-                     which((names(resp6.tb) %in% cwis.varnames.branched))
-                   )
-          ]
+        #resp7.tb <-
+        #  resp6.tb[ ,
+        #           c(
+        #             which(!(names(resp6.tb) %in% cwis.varnames.branched)),
+        #             which((names(resp6.tb) %in% cwis.varnames.branched))
+        #           )
+        #  ]
         
-        resp8.tb <-  #'resp.id' and 'id' in first column 
-          resp7.tb[ ,
-            c(
-              grep("resp.id|unit.id", names(resp7.tb)),
-              which(!grepl("resp.id|unit.id", names(resp7.tb)))
-            )
-          ]  %>%
-          mutate(row.id = 1:nrow(.))
+        #resp8.tb <-  #'resp.id' and 'id' in first column 
+        #  resp7.tb[ ,
+        #    c(
+        #      grep("resp.id|unit.id", names(resp7.tb)),
+        #      which(!grepl("resp.id|unit.id", names(resp7.tb)))
+        #    )
+        #  ]  %>%
+        #  mutate(row.id = 1:nrow(.))
       
-      #Add variables for: building.id, school.level
-        resp8.tb$building.id <- 
-          paste(resp8.tb$district, "_", resp8.tb$building, sep = "")
-        
-        resp9.tb <-
-          left_join(
-            resp8.tb,
-            buildings.tb %>% select(building.id,building.level),
-            by = c("building.id")
-          ) 
-        resp9.tb$building.level[resp9.tb$building == "other"] <- "other"
+    
         
       #Unbranch columns
          
-        if(q.branched.tb$unbranched.var.id %>% is.na %>% all){
+        #if(q.branched.tb$unbranched.var.id %>% is.na %>% all){
           
-          resp10.tb <- resp9.tb
-          q.unbranched.tb <- q.branched.tb
-          cwis.varnames.unbranched <- cwis.varnames.branched
+        #  resp10.tb <- resp9.tb
+        #  q.unbranched.tb <- q.branched.tb
+        #  cwis.varnames.unbranched <- cwis.varnames.branched
           
-        }else{
+        #}else{
           
           #Response data
-            resp10.tb <- 
-              Unbranch(
-                data.tb = resp9.tb,
-                data.id.varname = "resp.id",
-                var.guide.tb = q.branched.tb,
-                current.names.colname = "var.id",
-                unbranched.names.colname = "unbranched.var.id"
-              ) %>% .[[1]] 
+        #    resp10.tb <- 
+        #      Unbranch(
+        #        data.tb = resp9.tb,
+        #        data.id.varname = "resp.id",
+        #        var.guide.tb = q.branched.tb,
+        #        current.names.colname = "var.id",
+        #        unbranched.names.colname = "unbranched.var.id"
+        #      ) %>% .[[1]] 
             
           #Unbranched Questions table  
-            q.unbranched.tb <- 
-              Unbranch(
-                data.tb = resp9.tb,
-                data.id.varname = "resp.id",
-                var.guide.tb = q.branched.tb,
-                current.names.colname = "var.id",
-                unbranched.names.colname = "unbranched.var.id"
-              ) %>% .[[2]] %>%
-              filter(., necessary.in.final.data == "yes") #filter to questions necessary to final data
+            #q.unbranched.tb <- 
+            #  Unbranch(
+            #    data.tb = resp9.tb,
+            #    data.id.varname = "resp.id",
+            #    var.guide.tb = q.branched.tb,
+            #    current.names.colname = "var.id",
+            #    unbranched.names.colname = "unbranched.var.id"
+            #  ) %>% .[[2]] %>%
+            #  filter(., necessary.in.final.data == "yes") #filter to questions necessary to final data
           
-            cwis.varnames.unbranched <- 
-              q.unbranched.tb$var.id[!is.na(q.unbranched.tb$module)]
-        }
-          
-      #Data type conversions for CWIS vars
+            #cwis.varnames.unbranched <- 
+            #  q.unbranched.tb$var.id[!is.na(q.unbranched.tb$module)]
+        #}
+    
+          #Data type conversions for CWIS vars
         #Text vars (freq & agreement): 
           #Preserve text; add numbers (e.g. "Always" becomes "1. Always")
             #TODO: Turn this into a function that applies a concatenation according to a lookup table
@@ -361,38 +386,38 @@
           #3. compile non-cwis, cwis text, & cwis integer vars into one tibble
           #TODO: turn into custom CWIS function
             
-          recode.addnums.tb <- #add numbers to text variables
-            IndexMatchRecode(
-              tb = SelectColsIn(resp10.tb, "IN", c("resp.id", cwis.varnames.unbranched)),
-              lookup.tb = config.ans.opt.tb,
-              match.colname = "ans.text.freq",
-              replacement.vals.colname = "ans.text.freq.num",
-              na.replacement = ""
-            ) %>%
-            IndexMatchRecode(
-              tb = .,
-              lookup.tb = config.ans.opt.tb,
-              match.colname = "ans.text.agreement",
-              replacement.vals.colname = "ans.text.agreement.num",
-              na.replacement = ""
-            )
+          #recode.addnums.tb <- #add numbers to text variables
+          #  IndexMatchRecode(
+          #    tb = SelectColsIn(resp10.tb, "IN", c("resp.id", cwis.varnames.unbranched)),
+          #    lookup.tb = config.ans.opt.tb,
+          #    match.colname = "ans.text.freq",
+          #    replacement.vals.colname = "ans.text.freq.num",
+          #    na.replacement = ""
+          #  ) %>%
+          #  IndexMatchRecode(
+          #    tb = .,
+          #    lookup.tb = config.ans.opt.tb,
+          #    match.colname = "ans.text.agreement",
+          #    replacement.vals.colname = "ans.text.agreement.num",
+          #    na.replacement = ""
+          #  )
       
-          recode.num.tb <- #convert to integer
-            IndexMatchRecode(
-              tb = recode.addnums.tb,
-              lookup.tb = config.ans.opt.tb,
-              match.colname = "ans.text.freq.num",
-              replacement.vals.colname = "ans.num"
-            ) %>%
-            IndexMatchRecode(
-              tb = .,
-              lookup.tb = config.ans.opt.tb,
-              match.colname = "ans.text.agreement.num",
-              replacement.vals.colname = "ans.num"
-            ) 
+          #recode.num.tb <- #convert to integer
+          #  IndexMatchRecode(
+          #    tb = recode.addnums.tb,
+          #    lookup.tb = config.ans.opt.tb,
+          #    match.colname = "ans.text.freq.num",
+          #    replacement.vals.colname = "ans.num"
+          #  ) %>%
+          #  IndexMatchRecode(
+          #    tb = .,
+          #    lookup.tb = config.ans.opt.tb,
+          #    match.colname = "ans.text.agreement.num",
+          #    replacement.vals.colname = "ans.num"
+          #  ) 
           
-          names(recode.num.tb)[!(names(recode.num.tb) %in% "resp.id")] <-
-            paste(SelectNamesIn(recode.num.tb, "NOT.IN", "resp.id"), "_num", sep = "")
+          #names(recode.num.tb)[!(names(recode.num.tb) %in% "resp.id")] <-
+          #  paste(SelectNamesIn(recode.num.tb, "NOT.IN", "resp.id"), "_num", sep = "")
             
           #TODO: convert to binary - move to table formation?
           #TODO: 1. use external config.ans.opt to allow adding new scales
@@ -400,148 +425,91 @@
               #number of allowed answer options.
           
         #Complete Questions Table for Long Data (adding "_num" vars)
-          q.long1.tb <- q.unbranched.tb[q.unbranched.tb$var.id %in% cwis.varnames.unbranched,]
-          q.long1.tb$var.id <- paste0(q.long1.tb$var.id, "_num")
-          q.long.tb <- rbind(q.unbranched.tb, q.long1.tb) %>% as_tibble()
+          #q.long1.tb <- q.unbranched.tb[q.unbranched.tb$var.id %in% cwis.varnames.unbranched,]
+          #q.long1.tb$var.id <- paste0(q.long1.tb$var.id, "_num")
+          #q.long.tb <- rbind(q.unbranched.tb, q.long1.tb) %>% as_tibble()
           
       #Synthesize final response data tables 
         
         #Wide table for export
-          resp.wide.tb <- 
-            left_join(
-              SelectColsIn(resp10.tb, "NOT.IN", cwis.varnames.unbranched),
-              recode.addnums.tb,
-              by = "resp.id"
-            ) %>%
-            left_join(
-              ., 
-              recode.num.tb,
-              by = "resp.id"
-            )
+          #resp.wide.tb <- 
+          #  left_join(
+          #    SelectColsIn(resp10.tb, "NOT.IN", cwis.varnames.unbranched),
+          #    recode.addnums.tb,
+          #    by = "resp.id"
+          #  ) %>%
+          #  left_join(
+          #    ., 
+          #    recode.num.tb,
+          #    by = "resp.id"
+          #  )
         
         #Long table
-          resp.long1.tb <- 
-            melt( #reshape cwis vars (numeric and text) from wide to long
-              data = resp.wide.tb,
-              id.vars = 
-                SelectNamesIn(
-                  resp.wide.tb,
-                  "NOT.IN", 
-                  c(cwis.varnames.unbranched)#, paste0(cwis.varnames.unbranched, "_num"))
-                ),
-              variable.name = "question",
-              value.name = "answer",
-              stringsAsFactors = FALSE,
-              na.rm = TRUE
-            ) %>%
-            .[,names(.) %in% #filter out columns unnecessary for analysis 
-              c(
-                "question",
-                "answer",
-                "unit.id",
-                "building.id",
-                "building.level",
-                q.unbranched.tb %>% 
-                  filter(q.unbranched.tb$necessary.for.reports == "yes") %>% 
-                  select(var.id) %>% 
-                  unlist
-              )
-            ] %>%
-            as_tibble()
+          #resp.long1.tb <- 
+          #  melt( #reshape cwis vars (numeric and text) from wide to long
+          #    data = resp.wide.tb,
+          #    id.vars = 
+          #      SelectNamesIn(
+          #        resp.wide.tb,
+          #        "NOT.IN", 
+          #        c(cwis.varnames.unbranched)#, paste0(cwis.varnames.unbranched, "_num"))
+          #      ),
+          #    variable.name = "question",
+          #    value.name = "answer",
+          #    stringsAsFactors = FALSE,
+          #    na.rm = TRUE
+          #  ) %>%
+          #  .[,names(.) %in% #filter out columns unnecessary for analysis 
+          #    c(
+          #      "question",
+          #      "answer",
+          #      "unit.id",
+          #      "building.id",
+          #      "building.level",
+          #      q.unbranched.tb %>% 
+          #        filter(q.unbranched.tb$necessary.for.reports == "yes") %>% 
+          #        select(var.id) %>% 
+          #        unlist
+          #    )
+          #  ] %>%
+          #  as_tibble()
                  
           #Add module and practice variables for looping 
-            resp.long.tb <-
-              left_join(
-                resp.long1.tb,
-                q.long.tb %>% select(var.id, module, practice),
-                by = c("question" = "var.id")
-              )
-            
+          #  resp.long.tb <-
+          #    left_join(
+          #      resp.long1.tb,
+          #      q.long.tb %>% select(var.id, module, practice),
+          #      by = c("question" = "var.id")
+          #    )
+          #  
           #Split Col Reshape on Module column so don't have "cfa,etlp" values
-            resp.long.tb <-
-              SplitColReshape.ToLong(
-                df = resp.long.tb,
-                id.varname = "resp.id",
-                split.varname = "module",
-                split.char = ","
-              ) 
+          #  resp.long.tb <-
+          #    SplitColReshape.ToLong(
+          #      df = resp.long.tb,
+          #      id.varname = "resp.id",
+          #      split.varname = "module",
+          #      split.char = ","
+          #    ) 
             
           #Convert answer column to numeric
-            resp.long.tb$answer <- resp.long.tb$answer %>% substr(., 1,1) %>% as.numeric()
+          #  resp.long.tb$answer <- resp.long.tb$answer %>% substr(., 1,1) %>% as.numeric()
             
           #Filter out rows with no answer
-            resp.long.tb <- 
-              resp.long.tb %>% 
-              filter(!is.na(answer)) %>% 
-              filter(answer != "") %>% 
-              as_tibble
+          #  resp.long.tb <- 
+          #    resp.long.tb %>% 
+          #    filter(!is.na(answer)) %>% 
+          #    filter(answer != "") %>% 
+          #    as_tibble
             
           #Add answer.id variable to be able to distinguish each row
-            resp.long.tb$answer.id <-
-              1:nrow(resp.long.tb)
+          #  resp.long.tb$answer.id <-
+          #    1:nrow(resp.long.tb)
               
           #Create variable to permit pivoting comparing one district with the rest
             #isolate.district.name
             #resp.long.tb$special.district <-
             #  ifelse(grepl(isolate.district.name,resp.long.tb$district),isolate.district.name,"other")
-              
-              
-        #Establish Outputs Directory
-          if(sample.print){
-            outputs.dir <- 
-              paste(
-                working.dir,
-                "\\4_outputs\\",
-                gsub(":",".",Sys.time()), 
-                sep = ""
-              )
-          }else{
-            outputs.dir <- 
-              paste(
-                working.dir,
-                "\\4_outputs\\",
-                gsub(":",".",Sys.time()),
-                "_FULL PRINT",
-                sep = ""
-              )
-          }
-          
-          dir.create(
-            outputs.dir,
-            recursive = TRUE
-          )
-          
-          setwd(outputs.dir)
-          
-        #Write Wide Data to CSV File
-          widedata.file.name <- 
-            paste( 
-              "widedata_",
-              gsub(":",".",Sys.time()),
-              ".csv", 
-              sep=""
-            )
-          
-          write.csv(
-            resp.wide.tb,
-            file = widedata.file.name,
-            row.names = FALSE
-          )
-          
-        #Write Long Data to CSV File
-          longdata.file.name <- 
-            paste( 
-              "longdata_",
-              gsub(":",".",Sys.time()),
-              ".csv", 
-              sep=""
-            )
-          
-          write.csv(
-            resp.long.tb,
-            file = longdata.file.name,
-            row.names = FALSE
-          )
+ }       
           
   #Section Clocking
     section2.duration <- Sys.time() - section2.starttime
@@ -564,6 +532,171 @@
     #config.ans.opt.tb
     #config.global.tb
     #config.slide.types.tb
+    
+# 2.5-TEST TABLE OUTPUTS ------------------   
+  
+  #Table 1: Average Response by Domain
+    building.module.mean.value.tb <- 
+      resp4.tb %>%
+      dcast(
+        ., 
+        formula = building ~ module, 
+        value.var = "value", 
+        fun.aggregate = function(x){mean(x, na.rm = TRUE) %>% round(., digits = 1)}
+      ) %>%
+      .[,names(.)!= "NA"]
+      
+    module.district.mean.value.v <-
+      resp4.tb %>%
+      group_by(., module) %>%
+      summarize(x = mean(value)) %>%
+      select(x) %>%
+      unlist %>% as.vector %>%
+      round(., digits = 1) %>%
+      as.matrix() %>% t
+    
+    module.state.mean.value.v <- 
+      module.district.mean.value.v + 
+      rnorm(length(module.district.mean.value.v), mean = 0, sd = sd(module.district.mean.value.v)) %>%
+      round(., digits = 1) %>%
+      as.matrix() %>% t
+  
+  #Table 3: Average Response by Practice (CFA)
+  
+    building.cfa.practice..mean.value.tb <-
+      resp4.tb %>%
+      filter(module == "cfa") %>%
+      dcast(
+        .,
+        formula = building ~ variable,
+        value.var = "value",
+        fun.aggregate = function(x){mean(x, na.rm = TRUE) %>% round(., digits = 1)}
+      )
+    
+    practice.cfa.district.mean.value.v <-
+      resp4.tb %>%
+      filter(module == "cfa") %>%
+      group_by(., variable) %>%
+      summarize(x = mean(value)) %>%
+      select(x) %>%
+      unlist %>% as.vector %>%
+      round(., digits = 1) %>%
+      as.matrix() %>% t
+    
+    practice.cfa.state.mean.value.v <- 
+      practice.cfa.district.mean.value.v + 
+      rnorm(length(practice.cfa.district.mean.value.v), mean = 0, sd = sd(practice.cfa.district.mean.value.v)) %>%
+      round(., digits = 1) %>%
+      as.matrix() %>% t
+  
+    
+  #Establish Outputs Directory
+    outputs.dir <- 
+      paste(
+        working.dir,
+        "\\4_outputs\\",
+        gsub(":",".",Sys.time()), 
+        sep = ""
+      )
+          
+      dir.create(
+        outputs.dir,
+        recursive = TRUE
+      )
+      
+      setwd(outputs.dir)
+              
+  #Set up target file
+    template.file <- 
+      paste(
+        source.tables.dir,
+        "dashboard_template.xlsx",
+        sep = ""
+      )
+    
+    file.name.h <- 
+      paste(
+        "test.output_",
+        gsub(":",".",Sys.time()),
+        ".xlsx",
+        sep = ""
+      )
+      
+    target.path.h <- 
+      paste(
+        outputs.dir,
+        "\\",
+        file.name.h,
+        sep=""
+      ) 
+    
+    file.copy(template.file, target.path.h)
+
+  #Write table to file
+    setwd(outputs.dir)
+    wb <- loadWorkbook(file.name.h, create = FALSE)
+    setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
+    
+    #Table 1
+      writeWorksheet(
+        object = wb, 
+        data = building.module.mean.value.tb,
+        sheet = "District Overview (vs district)",
+        startRow = 3,
+        startCol = 1,
+        header = TRUE
+      )
+      
+      writeWorksheet(
+        object = wb, 
+        data = module.district.mean.value.v,
+        sheet = "District Overview (vs district)",
+        startRow = 19,
+        startCol = 2,
+        header = FALSE
+      )
+      
+      writeWorksheet(
+        object = wb, 
+        data = module.state.mean.value.v,
+        sheet = "District Overview (vs district)",
+        startRow = 20,
+        startCol = 2,
+        header = FALSE
+      )
+      
+    #Table 3
+      writeWorksheet(
+        object = wb, 
+        data = building.cfa.practice..mean.value.tb,
+        sheet = "District Overview (vs district)",
+        startRow = 3,
+        startCol = 20,
+        header = TRUE
+      )
+      
+      writeWorksheet(
+        object = wb, 
+        data = practice.cfa.district.mean.value.v,
+        sheet = "District Overview (vs district)",
+        startRow = 19,
+        startCol = 21,
+        header = FALSE
+      )
+      
+      writeWorksheet(
+        object = wb, 
+        data = practice.cfa.state.mean.value.v,
+        sheet = "District Overview (vs district)",
+        startRow = 20,
+        startCol = 21,
+        header = FALSE
+      )
+    
+    
+  saveWorkbook(wb)
+    
+      
     
 # 3-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) ------------------
   

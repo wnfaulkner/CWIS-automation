@@ -12,6 +12,11 @@
       #(1) TIME SINCE MOST RECENT WAYPOINT
       #(2) CUMULATIVE TIME SINCE FIRST WAYPOINT
       #(3) TIME SINCE MOST RECENT WAYPOINT/TIME SINCE FIRST WAYPOINT (PERCENTAGE)
+  
+ #TODO: MAKE UTILS MEMORY FUNCTIONS
+    #MEASURE MEMORY USAGE OF OBJECTS
+    #FUNCTION TO LIST MEMORY USAGE OF LARGEST OBJECTS IN CURRENT ENVIRONMENT
+    #WARN WHEN APPROACHING DEFINED MEMORY USAGE LIMITS AND, IF INSIDE OF A LOOP, BREAK THE LOOP
 
 #FUNCTIONS FOR ERROR HANDLING --------------------
   #Return TRUE/FALSE if expression throws an error
@@ -73,11 +78,11 @@
       library(tidyr)
       library(googlesheets)
       library(stringr)
-      library(officer)
+      #library(officer)
       library(magrittr)
       library(reshape2)
       library(ggplot2)
-      library(xlsx)
+      #library(xlsx)
       #library(styler)
     }
 
@@ -184,12 +189,12 @@
       num.replacements <- vector()
       
       for (i in 1:n) {
-        result[grep(pattern[i], x)] <- replacement[i]
+        result[grep(pattern[i], x)] <- gsub(pattern[i], replacement[i], result[grep(pattern[i], x)])
         num.replacements[i] <- length(grep(pattern[i], x))
       }
       
       if(!missing(print.replacements)){
-        print.replacements <- match.arg(print.replacements)
+        #print.replacements <- match.arg(print.replacements)
         if(print.replacements){print(cbind(pattern,replacement,num.replacements))}
       }
       
