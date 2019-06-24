@@ -631,7 +631,15 @@
       ) 
     
     file.copy(template.file, target.path.h)
-
+  
+  #1-Time Export of Long Data to do timed experiment for creating dashboard
+    setwd(outputs.dir) 
+    
+    write.csv(
+      resp4.tb,
+      file = "farmington_longdata.csv",
+    )
+    
   #Write table to file
     setwd(outputs.dir)
     wb <- loadWorkbook(file.name.h, create = FALSE)
@@ -692,8 +700,7 @@
         startCol = 21,
         header = FALSE
       )
-    
-    
+      
   saveWorkbook(wb)
     
       
