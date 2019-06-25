@@ -71,7 +71,7 @@
   #rproj.dir: directory for R project; also contains source data, additional function scripts, and config tables.
   #source.tables.dir: directory with raw data, configs, etc.
 
-# 1-IMPORT -----------------------------------------
+# 1-IMPORT & CONFIGS -----------------------------------------
   
   #Section Clocking
     section1.starttime <- Sys.time()
@@ -91,21 +91,19 @@
                                           #their respective sheet names with ".tb" appended
     
   #Extract global configs from tibble as their own character objects
-    #TibbleToCharObjects(config.global.tb)
-    #sample.print <- #Convert sample.print to TRUE/FALSE
-    #  ifelse(
-    #    sample.print == "true",
-    #    TRUE,
-    #    FALSE
-    #  )
-
+    TibbleToCharObjects(config.global.tb)
+    sample.print <- #Convert sample.print to TRUE/FALSE
+      ifelse(sample.print == "true", TRUE, FALSE)
+  
+    domains <- strsplit(domains, ",") %>% unlist %>% as.vector
+    
   #Import Responses table (main data, imported as data frame)
-    #setwd(source.tables.dir)
+    setwd(source.tables.dir)
     
     resp1.tb <- read.csv(
       file =  
         MostRecentlyModifiedFilename(
-          title.string.match = "response",
+          title.string.match = main.data.file.name.character.string,
           file.type = "csv",
           dir = source.tables.dir
         ),
@@ -150,54 +148,82 @@
     
     
   #RESPONSES (round 1)  
-    domains <- c("etl","cfa","dbdm","lead","pd")
-    resp1.tb <- 
-      LowerCaseNames(resp1.tb) %>%  #Lower-case all variable names
-      ReplaceNames(., "school", "building") %>% #Replace "school" with "building" in column names
-      ReplaceNames(., "dist.school", "unit.id") %>%
-      ReplaceNames(., "id", "resp.id") %>%
-      as_tibble()
     
-    names(resp1.tb) <- 
-      mgsub(
-          pattern = paste("c",domains, sep = ""), 
-          replacement = domains, 
-          x = names(resp1.tb), 
-          print.replacements = FALSE
+    #Names/Column Headers
+      resp2.tb <- 
+        LowerCaseNames(resp1.tb) %>%  #Lower-case all variable names
+        ReplaceNames(., "school", "building") %>% #Replace "school" with "building" in column names
+        ReplaceNames(., "ï..year", "year") %>%
+        ReplaceNames(., "id", "resp.id") %>%
+        as_tibble()
+      
+      names(resp2.tb) <- #replace domain names that have 'c' in front of them for stome reason with regular domain names
+        mgsub(
+            pattern = paste("c",domains, sep = ""), 
+            replacement = domains, 
+            x = names(resp2.tb), 
+            print.replacements = FALSE
+          )
+      
+      names(resp2.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(resp2.tb), char = ".")
+      resp2.tb <- LowerCaseCharVars(resp2.tb) #Lower-case all character variable data
+    
+    #Add variables: building.id 
+      resp2.tb %<>%
+        mutate(
+          building.id = paste(district,building,sep=".") %>% gsub(" |\\/", ".", .)
         )
+      
+      
+    #Row Filters
+      
+      #Filter out blank schools
+        resp3.tb <- 
+          resp2.tb %>% 
+          filter(building != "")
+        
+      #Building Restrictions
+        low.response.nums.filter.tb <- #Filter out building-periods with less than 6 responses at baseline
+          resp3.tb %>%
+          group_by(building.id,year) %>%
+          summarize(x = length(resp.id)) %>%
+          mutate(
+            filter.baseline = ifelse(year == "baseline" & x < 6, FALSE, TRUE),
+            filter.201718 = ifelse(year == "2017-2018" & x < 6, FALSE, TRUE),
+            filter.201819 = ifelse(year == "2018-2019" & x < 6, FALSE, TRUE),
+            filter.combined = all(filter.baseline, filter.201718, filter.201819)
+          )
+        
+        resp4.tb <- 
+          left_join(resp3.tb, low.response.nums.filter.tb %>% select(building.id, filter.combined), by = "building.id") %>%
+          filter(filter.combined)
+          
+          select(x) %>%
+          unlist %>% as.vector %>%
+          round(., digits = 1) %>%
+          as.matrix() %>% t
     
-    names(resp1.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(resp1.tb), char = ".")
-    resp1.tb <- LowerCaseCharVars(resp1.tb) #Lower-case all data
-  
-  #Filter out district office & blank schools
-    resp2.tb <- 
-      resp1.tb %>% 
-      #filter(!grepl("district office", building)) %>%
-      filter(building != "")
-    
-  #CWIS Variable names
-    cwis.varnames <- FilterVector(grepl(paste0(domains, collapse = "|"), names(resp2.tb)), names(resp2.tb))
-  
-  
-    resp3.tb <-
-      melt( #Melt to long data frame for all cwis vars
-        resp2.tb,
-        id.vars = names(resp2.tb)[!names(resp2.tb) %in% cwis.varnames], 
-        measure.vars = cwis.varnames
-      ) %>% 
-      filter(!is.na(value)) %>% #remove rows with no answer for cwis vars
-      MoveColsLeft(., c("resp.id","unit.id")) %>% #Rearrange columns: resp.id and unit.id at the front
-      as_tibble()
-    
-  #Add 'module' variable
-    resp4.tb <- 
-      left_join(
-        x = resp3.tb,
-        y = questions.tb %>% select(var.id, module),
-        by = c("variable"="var.id")
-      )
+    #Reshape to Long Data by response to CWIS question
+      cwis.varnames <- FilterVector(grepl(paste0(domains, collapse = "|"), names(resp3.tb)), names(resp3.tb))
+      resp4.tb <-
+        melt( #Melt to long data frame for all cwis vars
+          resp3.tb,
+          id.vars = names(resp3.tb)[!names(resp3.tb) %in% cwis.varnames], 
+          measure.vars = cwis.varnames
+        ) %>% 
+        filter(!is.na(value)) %>% #remove rows with no answer for cwis vars
+        MoveColsLeft(., c("resp.id","unit.id")) %>% #Rearrange columns: resp.id and unit.id at the front
+        as_tibble()
+      
+      #Add 'domain' variable
+        resp5.tb <- 
+          left_join(
+            x = resp4.tb,
+            y = questions.tb %>% select(var.id, domain),
+            by = c("variable"="var.id")
+          )
    
-  #Add variables for: building.id, school.level
+  #TODO: Add variables for: building.id, school.level
     #resp8.tb$building.id <- 
     #  paste(resp8.tb$district, "_", resp8.tb$building, sep = "")
     
@@ -282,7 +308,7 @@
         #filter out rows with nothing in columns necessary to define unit.id 
         #(e.g. district and building)
         
-        #resp3.tb <- CreateUnitIDCol(
+        #resp4.tb <- CreateUnitIDCol(
         #  tb = resp2.tb,
         #  id.unit = report.unit,
         #  remove.blanks = "ANY.MISSING",
@@ -295,7 +321,7 @@
       #Restrict Data to sample of user-defined size if doing sample print
          #resp5.tb <- 
         #  RestrictDataToSample(
-        #    tb = resp4.tb,
+        #    tb = resp5.tb,
         #    report.unit = report.unit,
         #    sample.print = sample.print,
         #    sample.group.unit = sample.group.unit,
@@ -316,7 +342,7 @@
           
       #Rearrange columns
         #cwis.varnames.branched <- #CWIS response variables to right, all others first
-        #  names(resp6.tb)[names(resp6.tb) %in% q.branched.tb$var.id[!is.na(q.branched.tb$module)]]
+        #  names(resp6.tb)[names(resp6.tb) %in% q.branched.tb$var.id[!is.na(q.branched.tb$domain)]]
          
         #resp7.tb <-
         #  resp6.tb[ ,
@@ -369,7 +395,7 @@
             #  filter(., necessary.in.final.data == "yes") #filter to questions necessary to final data
           
             #cwis.varnames.unbranched <- 
-            #  q.unbranched.tb$var.id[!is.na(q.unbranched.tb$module)]
+            #  q.unbranched.tb$var.id[!is.na(q.unbranched.tb$domain)]
         #}
     
           #Data type conversions for CWIS vars
@@ -474,20 +500,20 @@
           #  ] %>%
           #  as_tibble()
                  
-          #Add module and practice variables for looping 
+          #Add domain and practice variables for looping 
           #  resp.long.tb <-
           #    left_join(
           #      resp.long1.tb,
-          #      q.long.tb %>% select(var.id, module, practice),
+          #      q.long.tb %>% select(var.id, domain, practice),
           #      by = c("question" = "var.id")
           #    )
           #  
-          #Split Col Reshape on Module column so don't have "cfa,etlp" values
+          #Split Col Reshape on domain column so don't have "cfa,etlp" values
           #  resp.long.tb <-
           #    SplitColReshape.ToLong(
           #      df = resp.long.tb,
           #      id.varname = "resp.id",
-          #      split.varname = "module",
+          #      split.varname = "domain",
           #      split.char = ","
           #    ) 
             
@@ -536,36 +562,36 @@
 # 2.5-TEST TABLE OUTPUTS ------------------   
   
   #Table 1: Average Response by Domain
-    building.module.mean.value.tb <- 
-      resp4.tb %>%
+    building.domain.mean.value.tb <- 
+      resp5.tb %>%
       dcast(
         ., 
-        formula = building ~ module, 
+        formula = building ~ domain, 
         value.var = "value", 
         fun.aggregate = function(x){mean(x, na.rm = TRUE) %>% round(., digits = 1)}
       ) %>%
       .[,names(.)!= "NA"]
       
-    module.district.mean.value.v <-
-      resp4.tb %>%
-      group_by(., module) %>%
+    domain.district.mean.value.v <-
+      resp5.tb %>%
+      group_by(., domain) %>%
       summarize(x = mean(value)) %>%
       select(x) %>%
       unlist %>% as.vector %>%
       round(., digits = 1) %>%
       as.matrix() %>% t
     
-    module.state.mean.value.v <- 
-      module.district.mean.value.v + 
-      rnorm(length(module.district.mean.value.v), mean = 0, sd = sd(module.district.mean.value.v)) %>%
+    domain.state.mean.value.v <- 
+      domain.district.mean.value.v + 
+      rnorm(length(domain.district.mean.value.v), mean = 0, sd = sd(domain.district.mean.value.v)) %>%
       round(., digits = 1) %>%
       as.matrix() %>% t
   
   #Table 3: Average Response by Practice (CFA)
   
     building.cfa.practice..mean.value.tb <-
-      resp4.tb %>%
-      filter(module == "cfa") %>%
+      resp5.tb %>%
+      filter(domain == "cfa") %>%
       dcast(
         .,
         formula = building ~ variable,
@@ -574,8 +600,8 @@
       )
     
     practice.cfa.district.mean.value.v <-
-      resp4.tb %>%
-      filter(module == "cfa") %>%
+      resp5.tb %>%
+      filter(domain == "cfa") %>%
       group_by(., variable) %>%
       summarize(x = mean(value)) %>%
       select(x) %>%
@@ -636,7 +662,7 @@
     setwd(outputs.dir) 
     
     write.csv(
-      resp4.tb,
+      resp5.tb,
       file = "farmington_longdata.csv",
     )
     
@@ -648,7 +674,7 @@
     #Table 1
       writeWorksheet(
         object = wb, 
-        data = building.module.mean.value.tb,
+        data = building.domain.mean.value.tb,
         sheet = "District Overview (vs district)",
         startRow = 3,
         startCol = 1,
@@ -657,7 +683,7 @@
       
       writeWorksheet(
         object = wb, 
-        data = module.district.mean.value.v,
+        data = domain.district.mean.value.v,
         sheet = "District Overview (vs district)",
         startRow = 19,
         startCol = 2,
@@ -666,7 +692,7 @@
       
       writeWorksheet(
         object = wb, 
-        data = module.state.mean.value.v,
+        data = domain.state.mean.value.v,
         sheet = "District Overview (vs district)",
         startRow = 20,
         startCol = 2,
@@ -901,7 +927,7 @@
       #Form Graph Data Table
         graphdata1.ls <-
           list(
-            axis.cat.labels =  #Define category names that will go along axis of bar graph - module, practice
+            axis.cat.labels =  #Define category names that will go along axis of bar graph - domain, practice
               DefineAxisCategories(
                 tb = resp.long.tb,
                 cat.colnames = 
@@ -996,7 +1022,7 @@
         
       } ### END OF LOOP "d" BY TABLE ###
       
-      names(tabledata.ls.d) <- config.tables.df.c$module %>% RemoveNA() %>% as.character %>% c("role",.)
+      names(tabledata.ls.d) <- config.tables.df.c$domain %>% RemoveNA() %>% as.character %>% c("role",.)
       tabledata.ls.c[[c]] <- tabledata.ls.d
     
     } ### END OF LOOP "d" BY TABLE
@@ -1111,9 +1137,9 @@
                 within.element.split.char = ","
               )
             
-            #Special cases - formatting text so matches exactly for module and answer option
-              #order.ls[names(order.ls) == "module"] <- #module names to all caps
-                #order.ls[names(order.ls) == "module"] %>% lapply(., toupper)
+            #Special cases - formatting text so matches exactly for domain and answer option
+              #order.ls[names(order.ls) == "domain"] <- #domain names to all caps
+                #order.ls[names(order.ls) == "domain"] %>% lapply(., toupper)
               
               order.ls[names(order.ls) == "answer"] <-
                 order.ls[names(order.ls) == "answer"] %>% unlist %>% as.numeric %>% list
@@ -1131,7 +1157,7 @@
               graphdata.df.g <- 
                 left_join(graphdata.df.g,config.ans.opt.tb, by = c("answer" = "ans.num"))
               
-              if(config.graphs.df.g$module %in% c("lead","pd")){
+              if(config.graphs.df.g$domain %in% c("lead","pd")){
                 graphdata.df.g <- 
                   graphdata.df.g %>% 
                   select(graph.group.by.varnames, ans.text.agreement.num, measure, avg)
@@ -1144,13 +1170,13 @@
               }
             }
            
-            #Capitalize headers in graphdata.df.g, all-caps for module, upper-case first letter for everything else
-             graphdata.df.g[,!names(graphdata.df.g) %in% c("module","answer","measure","avg")] <- 
-                graphdata.df.g[,!names(graphdata.df.g) %in% c("module","answer","measure","avg")] %>% 
+            #Capitalize headers in graphdata.df.g, all-caps for domain, upper-case first letter for everything else
+             graphdata.df.g[,!names(graphdata.df.g) %in% c("domain","answer","measure","avg")] <- 
+                graphdata.df.g[,!names(graphdata.df.g) %in% c("domain","answer","measure","avg")] %>% 
                 apply(., c(1,2), FirstLetterCap_MultElements)
              
-             graphdata.df.g[names(graphdata.df.g) == "module"] <- 
-               graphdata.df.g[names(graphdata.df.g) == "module"] %>%
+             graphdata.df.g[names(graphdata.df.g) == "domain"] <- 
+               graphdata.df.g[names(graphdata.df.g) == "domain"] %>%
                apply(., c(1:2), toupper)
         
         ### BASE GRAPH FORMATION WITH GGPLOT2 ###
@@ -1335,7 +1361,7 @@
         
     #} ### END OF LOOP "g" BY TABLE ###
   
-    #names(tables.ls.g) <- c("role","etlp","cfa","dbdm","pd","lead") #TODO:WAS CAUSING PROBLEMS WITH ORDERING OF TABLES ON SLIDES BECAUSE HAD NOT BEEN UPDATED TO NEW ORDER OF MODULES
+    #names(tables.ls.g) <- c("role","etlp","cfa","dbdm","pd","lead") #TODO:WAS CAUSING PROBLEMS WITH ORDERING OF TABLES ON SLIDES BECAUSE HAD NOT BEEN UPDATED TO NEW ORDER OF domainS
     #tables.ls.f[[f]] <- tables.ls.g
     }
       
@@ -1565,16 +1591,16 @@
         
         #if(dim(config.tables.df.i)[1] != 0 && !is.na(config.tables.df.i$table.type.id)){
           
-        #  if(is.na(config.slide.df.i$module)){
-        #    config.tables.df.i <- config.tables.df.i[is.na(config.tables.df.i$module),]
+        #  if(is.na(config.slide.df.i$domain)){
+        #    config.tables.df.i <- config.tables.df.i[is.na(config.tables.df.i$domain),]
         #  }else{
-        #    config.tables.df.i <- config.tables.df.i[config.tables.df.i$module == config.slide.df.i$module,]
+        #    config.tables.df.i <- config.tables.df.i[config.tables.df.i$domain == config.slide.df.i$domain,]
         #  }
           
         #  if(i == 2){
         #    ft.i <- tables.ls.f[[h]][[1]]
         #  }else{
-        #    ft.i <- tables.ls.f[[h]][[which(names(tables.ls.f[[h]])==config.tables.df.i$module)]]
+        #    ft.i <- tables.ls.f[[h]][[which(names(tables.ls.f[[h]])==config.tables.df.i$domain)]]
         #  }
         #  
         #  ppt.h <- addFlexTable(ppt.h, 
@@ -1595,8 +1621,8 @@
         
         config.pot.i <- config.pot.types.tb[config.pot.types.tb$slide.type.id == slide.type.id.i,]
         
-        if(any(!is.na(config.pot.i$module))){
-          config.pot.i <- filter(config.pot.i, grepl(as.character(config.slide.df.i$module), config.pot.i$module))
+        if(any(!is.na(config.pot.i$domain))){
+          config.pot.i <- filter(config.pot.i, grepl(as.character(config.slide.df.i$domain), config.pot.i$domain))
         }  
         
         #j <- 1 #LOOP TESTER
