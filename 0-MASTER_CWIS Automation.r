@@ -156,7 +156,7 @@
         ReplaceNames(., "ï..year", "year") %>%
         ReplaceNames(., "id", "resp.id") %>%
         as_tibble()
-      
+
       names(resp2.tb) <- #replace domain names that have 'c' in front of them for stome reason with regular domain names
         mgsub(
             pattern = paste("c",domains, sep = ""), 
@@ -215,7 +215,7 @@
           measure.vars = cwis.varnames
         ) %>% 
         filter(!is.na(value)) %>% #remove rows with no answer for cwis vars
-        MoveColsLeft(., c("resp.id","district")) %>% #Rearrange columns: resp.id and unit.id at the front
+        MoveColsLeft(., c("resp.id","district")) %>% #Rearrange columns: resp.id and district at the front
         as_tibble()
       
       #Add domain variables
@@ -241,11 +241,13 @@
             sample.size = sample.size
           )
         
+        names(resp7.tb)[names(resp7.tb) == as.vector(report.unit)] <- "unit.id"
+
         resp.long.tb <- resp7.tb
         
         unit.ids.sample <-
           resp7.tb %>%
-          select(report.unit) %>%
+          select(unit.id) %>%
           unique %>%
           unlist %>% as.vector
         
@@ -560,16 +562,15 @@
     setwd(rproj.dir)
     source("3-configs_functions.r")
    
-  #EXPAND CONFIG TABLES FOR EACH DISTRICT ACCORDING TO LOOPING VARIABLES
+  #EXPAND CONFIG TABLES FOR EACH unit.id ACCORDING TO LOOPING VARIABLES
   
   ###                          ###    
 # ### LOOP "b" BY REPORT.UNIT  ###
   ###                          ###
     
   #Loop Outputs 
-    #config.graphs.ls.b <- list()
-    config.tables.ls.b <- list()
-    config.tabs.ls.b <- list()
+    config.tables.ls <- list()
+    config.tabs.ls <- list()
   
   #Loop Measurement - progress bar & timing
     progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
@@ -594,51 +595,30 @@
       #  )
       #)
     
-    #Create data frames for this loop - restrict to district id i  
+    #Create data frames for this loop - restrict to unit.id id i  
       resp.long.tb.b <- 
         resp.long.tb %>% filter(unit.id == unit.id.b)
-    
-    #Graphs config table for this report unit
-      if(nrow(config.graph.types.tb) == 0){
-        config.graphs.ls.b[[b]] <- NA
-      }else{
-        config.graphs.ls.b[[b]] <- 
-          loop.expander.fun(
-            configs = config.graph.types.tb, 
-            loop.varnames = c("tab.loop.var.1","tab.loop.var.2","tab.loop.var.3"), 
-            manual.order.varnames = c("tab.order.1","tab.order.2","tab.order.3"),
-            collate.varnames = c("tab.section.1","tab.section.2","tab.section.3"),
-            source.data = resp.long.tb.b
-          )
-      }
-      #config.graphs.ls.b[[b]] <- remove.district.office.fun(config.graphs.df)
-    
-    #Tables config table for this report unit
-      if(nrow(config.table.types.tb) == 0){
-        config.tables.ls.b[[b]] <- NA
-      }else{
-        config.tables.ls.b[[b]] <-
-          loop.expander.fun(
-            configs =  config.table.types.tb, 
-            loop.varnames = c("tab.loop.var.1","tab.loop.var.2","tab.loop.var.3"), 
-            manual.order.varnames = c("tab.order.1","tab.order.2","tab.order.3"),
-            collate.varnames = c("tab.section.1","tab.section.2","tab.section.3"),
-            source.data = resp.long.tb.b
-          )
-      }
-    
-    #tab config table for this report unit
-      config.tabs.ls.b[[b]] <- 
-        loop.expander.fun(
-          configs = config.tab.types.tb,
-          loop.varnames = c("tab.loop.var.1","tab.loop.var.2","tab.loop.var.3"), 
-          manual.order.varnames = c("tab.order.1","tab.order.2","tab.order.3"),
-          collate.varnames = c("tab.section.1","tab.section.2","tab.section.3"),
-          source.data = resp.long.tb.b
+      
+    #Tab config table for this report unit
+      config.tabs.ls[[b]] <-
+        tibble(
+          tab.type.id = 4,
+          tab.type.name = "Building Overview",
+          loop.id = resp.long.tb.b$building.id %>% unique
+        ) %>%
+        rbind(
+          config.tab.types.tb %>% filter(tab.type.id != 4) %>% select(tab.type.id, tab.type.name) %>% mutate(loop.id = NA),
+          .
         )
-    
-      #config.tabs.ls.b[[b]] <- remove.district.office.fun(config.tabs.df)
-    
+         
+    #Tables config table for this report unit
+      config.tables.ls[[b]] <- 
+        full_join(
+          config.tabs.ls[[b]],
+          config.table.types.tb,
+          by = "tab.type.id"
+        )
+      
     setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
     
   } # END OF LOOP 'b' BY REPORT.UNIT
@@ -655,17 +635,13 @@
 
 # 3-CONFIGS (tab, GRAPH, AND TABLE CONFIG TABLES) OUTPUTS ------------------
   #unit.ids.sample: vector with all report unit names in resp.long.tb (length = 19 for baseline data)
-  #config.tabs.ls.b
+  #config.tabs.ls
     #[[report.unit]]
       #data frame where each line represents a tab
-  #config.tables.ls.b
+  #config.tables.ls
     #[[report.unit]]
       #data frame where each line represents a table
-  #config.graphs.ls.b
-    #[[report.unit]]
-      #data frame where each line represents a graph
-
-
+ 
 # 2.5-TEST TABLE OUTPUTS ------------------   
   
   #Table 1: Average Response by Domain
