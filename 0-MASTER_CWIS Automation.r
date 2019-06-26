@@ -168,12 +168,20 @@
       names(resp2.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(resp2.tb), char = ".")
       resp2.tb <- LowerCaseCharVars(resp2.tb) #Lower-case all character variable data
     
-    #Add variables: building.id 
+    #Add variables: building.id, building.level 
+      resp2.tb %<>% mutate(building.id = paste(district,building,sep=".") %>% gsub(" |\\/", ".", .))
+        
       resp2.tb %<>%
         mutate(
-          building.id = paste(district,building,sep=".") %>% gsub(" |\\/", ".", .)
+          building.level = 
+            left_join(
+              resp2.tb %>% select(building.id),
+              buildings.tb %>% select(building.id, building.level),
+              by = "building.id"
+            ) %>% 
+            select(building.level) %>%
+            unlist %>% as.vector %>% tolower
         )
-      
       
     #Row Filters
       
@@ -197,43 +205,50 @@
         resp4.tb <- 
           left_join(resp3.tb, low.response.nums.filter.tb %>% select(building.id, filter.combined), by = "building.id") %>%
           filter(filter.combined)
-          
-          select(x) %>%
-          unlist %>% as.vector %>%
-          round(., digits = 1) %>%
-          as.matrix() %>% t
     
     #Reshape to Long Data by response to CWIS question
       cwis.varnames <- FilterVector(grepl(paste0(domains, collapse = "|"), names(resp3.tb)), names(resp3.tb))
-      resp4.tb <-
+      resp5.tb <-
         melt( #Melt to long data frame for all cwis vars
-          resp3.tb,
-          id.vars = names(resp3.tb)[!names(resp3.tb) %in% cwis.varnames], 
+          resp4.tb,
+          id.vars = names(resp4.tb)[!names(resp4.tb) %in% cwis.varnames], 
           measure.vars = cwis.varnames
         ) %>% 
         filter(!is.na(value)) %>% #remove rows with no answer for cwis vars
-        MoveColsLeft(., c("resp.id","unit.id")) %>% #Rearrange columns: resp.id and unit.id at the front
+        MoveColsLeft(., c("resp.id","district")) %>% #Rearrange columns: resp.id and unit.id at the front
         as_tibble()
       
-      #Add 'domain' variable
-        resp5.tb <- 
+      #Add domain variables
+        resp6.tb <- 
           left_join(
-            x = resp4.tb,
+            x = resp5.tb,
             y = questions.tb %>% select(var.id, domain),
             by = c("variable"="var.id")
+          ) %>%
+          left_join(
+            x = ., 
+            y = domains.tb,
+            by = c("domain" = "domain.id")
           )
-   
-  #TODO: Add variables for: building.id, school.level
-    #resp8.tb$building.id <- 
-    #  paste(resp8.tb$district, "_", resp8.tb$building, sep = "")
-    
-    #resp9.tb <-
-    #  left_join(
-    #    resp8.tb,
-    #    buildings.tb %>% select(building.id,building.level),
-    #    by = c("building.id")
-    #  ) 
-    #resp9.tb$building.level[resp9.tb$building == "other"] <- "other" 
+        
+      #Restrict Data to sample of user-defined size if doing sample print
+        resp7.tb <- 
+          RestrictDataToSample(
+            tb = resp6.tb,
+            report.unit = report.unit,
+            sample.print = sample.print,
+            sample.group.unit = sample.group.unit,
+            sample.size = sample.size
+          )
+        
+        resp.long.tb <- resp7.tb
+        
+        unit.ids.sample <-
+          resp7.tb %>%
+          select(report.unit) %>%
+          unique %>%
+          unlist %>% as.vector
+        
 
 #ADDITIONAL PRESERVED CODE
   {
@@ -318,15 +333,6 @@
        
         #output.ls <- list()
 
-      #Restrict Data to sample of user-defined size if doing sample print
-         #resp5.tb <- 
-        #  RestrictDataToSample(
-        #    tb = resp5.tb,
-        #    report.unit = report.unit,
-        #    sample.print = sample.print,
-        #    sample.group.unit = sample.group.unit,
-        #    sample.size = sample.size
-        #  )
 
       #Restrict columns to those necessary in final data
         #necessary.colnames <- 
@@ -543,30 +549,131 @@
     Sys.time() - sections.all.starttime
 
 # 2-CLEANING OUTPUTS ------------------          
-  #config.ans.opt.tb
-  #config.global.tb
-  #config.slide.types.tb
-  #config.graph.types.tb
-  #config.table.types.tb
-  #config.pot.types.tb
-  #config.ans.opt.tb
-  #buildings.tb
-  #resp.wide.tb
   #resp.long.tb
-  
-  #NO CHANGES
-    #config.ans.opt.tb
-    #config.global.tb
-    #config.slide.types.tb
     
+# 3-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) ------------------
+  
+  #Section Clocking
+    section3.startime <- Sys.time()
+          
+  #Load Configs Functions
+    setwd(rproj.dir)
+    source("3-configs_functions.r")
+   
+  #EXPAND CONFIG TABLES FOR EACH DISTRICT ACCORDING TO LOOPING VARIABLES
+  
+  ###                          ###    
+# ### LOOP "b" BY REPORT.UNIT  ###
+  ###                          ###
+    
+  #Loop Outputs 
+    #config.graphs.ls.b <- list()
+    config.tables.ls.b <- list()
+    config.tabs.ls.b <- list()
+  
+  #Loop Measurement - progress bar & timing
+    progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
+    maxrow.b <- length(unit.ids.sample)
+    b.loop.startime <- Sys.time()
+  
+  #b <- 1 #LOOP TESTER (19 = "Raytown C-2")
+  #for(b in c(1,2)){   #LOOP TESTER
+  for(b in 1:length(unit.ids.sample)){   #START OF LOOP BY REPORT UNIT
+  
+    loop.start.time.b <- Sys.time()
+    
+    #Create unit.id.b (for this iteration)
+      unit.id.b <- unit.ids.sample[b]
+    
+    #Print loop messages
+      if(b == 1){print("FORMING TAB, GRAPH, AND TABLE CONFIG TABLES...")}
+      #print(
+      #  paste(
+      #    "Loop num: ", b,", Report id: ",unit.id.b,
+      #    ", Pct. complete:", round(100*b/length(unit.ids.sample), 2), "%"
+      #  )
+      #)
+    
+    #Create data frames for this loop - restrict to district id i  
+      resp.long.tb.b <- 
+        resp.long.tb %>% filter(unit.id == unit.id.b)
+    
+    #Graphs config table for this report unit
+      if(nrow(config.graph.types.tb) == 0){
+        config.graphs.ls.b[[b]] <- NA
+      }else{
+        config.graphs.ls.b[[b]] <- 
+          loop.expander.fun(
+            configs = config.graph.types.tb, 
+            loop.varnames = c("tab.loop.var.1","tab.loop.var.2","tab.loop.var.3"), 
+            manual.order.varnames = c("tab.order.1","tab.order.2","tab.order.3"),
+            collate.varnames = c("tab.section.1","tab.section.2","tab.section.3"),
+            source.data = resp.long.tb.b
+          )
+      }
+      #config.graphs.ls.b[[b]] <- remove.district.office.fun(config.graphs.df)
+    
+    #Tables config table for this report unit
+      if(nrow(config.table.types.tb) == 0){
+        config.tables.ls.b[[b]] <- NA
+      }else{
+        config.tables.ls.b[[b]] <-
+          loop.expander.fun(
+            configs =  config.table.types.tb, 
+            loop.varnames = c("tab.loop.var.1","tab.loop.var.2","tab.loop.var.3"), 
+            manual.order.varnames = c("tab.order.1","tab.order.2","tab.order.3"),
+            collate.varnames = c("tab.section.1","tab.section.2","tab.section.3"),
+            source.data = resp.long.tb.b
+          )
+      }
+    
+    #tab config table for this report unit
+      config.tabs.ls.b[[b]] <- 
+        loop.expander.fun(
+          configs = config.tab.types.tb,
+          loop.varnames = c("tab.loop.var.1","tab.loop.var.2","tab.loop.var.3"), 
+          manual.order.varnames = c("tab.order.1","tab.order.2","tab.order.3"),
+          collate.varnames = c("tab.section.1","tab.section.2","tab.section.3"),
+          source.data = resp.long.tb.b
+        )
+    
+      #config.tabs.ls.b[[b]] <- remove.district.office.fun(config.tabs.df)
+    
+    setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
+    
+  } # END OF LOOP 'b' BY REPORT.UNIT
+  
+  #Loop Measurement - progress bar & timing
+    b.loop.duration <- Sys.time() - b.loop.startime
+    close(progress.bar.b)
+    #b.loop.duration
+    
+  #Section Clocking
+    section3.duration <- Sys.time() - section3.startime
+    section3.duration
+    Sys.time() - sections.all.starttime
+
+# 3-CONFIGS (tab, GRAPH, AND TABLE CONFIG TABLES) OUTPUTS ------------------
+  #unit.ids.sample: vector with all report unit names in resp.long.tb (length = 19 for baseline data)
+  #config.tabs.ls.b
+    #[[report.unit]]
+      #data frame where each line represents a tab
+  #config.tables.ls.b
+    #[[report.unit]]
+      #data frame where each line represents a table
+  #config.graphs.ls.b
+    #[[report.unit]]
+      #data frame where each line represents a graph
+
+
 # 2.5-TEST TABLE OUTPUTS ------------------   
   
   #Table 1: Average Response by Domain
     building.domain.mean.value.tb <- 
-      resp5.tb %>%
+      resp6.tb %>%
       dcast(
         ., 
-        formula = building ~ domain, 
+        formula = building.id ~ domain, 
         value.var = "value", 
         fun.aggregate = function(x){mean(x, na.rm = TRUE) %>% round(., digits = 1)}
       ) %>%
@@ -728,126 +835,6 @@
       )
       
   saveWorkbook(wb)
-    
-      
-    
-# 3-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) ------------------
-  
-  #Section Clocking
-    section3.startime <- Sys.time()
-          
-  #Load Configs Functions
-    setwd(rproj.dir)
-    source("3-configs_functions.r")
-   
-  #Expand Config Tables for each district according to looping variables
-  
-  ###                          ###    
-# ### LOOP "b" BY REPORT.UNIT  ###
-  ###                          ###
-  
-  #Loop Inputs
-    unit.ids.sample <- resp.long.tb$unit.id %>% unique 
-    
-  #Loop Outputs 
-    config.graphs.ls.b <- list()
-    config.tables.ls.b <- list()
-    config.slides.ls.b <- list()
-  
-  #Loop Measurement - progress bar & timing
-    progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
-    maxrow.b <- length(unit.ids.sample)
-    b.loop.startime <- Sys.time()
-  
-  #b <- 1 #LOOP TESTER (19 = "Raytown C-2")
-  #for(b in c(1,2)){   #LOOP TESTER
-  for(b in 1:length(unit.ids.sample)){   #START OF LOOP BY REPORT UNIT
-  
-    loop.start.time.b <- Sys.time()
-    
-    #Create unit.id.b (for this iteration)
-      unit.id.b <- unit.ids.sample[b]
-    
-    #Print loop messages
-      if(b == 1){print("FORMING SLIDE, GRAPH, AND TABLE CONFIG TABLES...")}
-      #print(
-      #  paste(
-      #    "Loop num: ", b,", Report id: ",unit.id.b,
-      #    ", Pct. complete:", round(100*b/length(unit.ids.sample), 2), "%"
-      #  )
-      #)
-    
-    #Create data frames for this loop - restrict to district id i  
-      resp.long.tb.b <- 
-        resp.long.tb %>% filter(unit.id == unit.id.b)
-    
-    #Graphs config table for this report unit
-      if(nrow(config.graph.types.tb) == 0){
-        config.graphs.ls.b[[b]] <- NA
-      }else{
-        config.graphs.ls.b[[b]] <- 
-          loop.expander.fun(
-            configs = config.graph.types.tb, 
-            loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
-            manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3"),
-            collate.varnames = c("slide.section.1","slide.section.2","slide.section.3"),
-            source.data = resp.long.tb.b
-          )
-      }
-      #config.graphs.ls.b[[b]] <- remove.district.office.fun(config.graphs.df)
-    
-    #Tables config table for this report unit
-      if(nrow(config.table.types.tb) == 0){
-        config.tables.ls.b[[b]] <- NA
-      }else{
-        config.tables.ls.b[[b]] <-
-          loop.expander.fun(
-            configs =  config.table.types.tb, 
-            loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
-            manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3"),
-            collate.varnames = c("slide.section.1","slide.section.2","slide.section.3"),
-            source.data = resp.long.tb.b
-          )
-      }
-    
-    #Slide config table for this report unit
-      config.slides.ls.b[[b]] <- 
-        loop.expander.fun(
-          configs = config.slide.types.tb,
-          loop.varnames = c("slide.loop.var.1","slide.loop.var.2","slide.loop.var.3"), 
-          manual.order.varnames = c("slide.order.1","slide.order.2","slide.order.3"),
-          collate.varnames = c("slide.section.1","slide.section.2","slide.section.3"),
-          source.data = resp.long.tb.b
-        )
-    
-      #config.slides.ls.b[[b]] <- remove.district.office.fun(config.slides.df)
-    
-    setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
-    
-  } # END OF LOOP 'b' BY REPORT.UNIT
-  
-  #Loop Measurement - progress bar & timing
-    b.loop.duration <- Sys.time() - b.loop.startime
-    close(progress.bar.b)
-    #b.loop.duration
-    
-  #Section Clocking
-    section3.duration <- Sys.time() - section3.startime
-    section3.duration
-    Sys.time() - sections.all.starttime
-
-# 3-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) OUTPUTS ------------------
-  #unit.ids.sample: vector with all report unit names in resp.long.tb (length = 19 for baseline data)
-  #config.slides.ls.b
-    #[[report.unit]]
-      #data frame where each line represents a slide
-  #config.tables.ls.b
-    #[[report.unit]]
-      #data frame where each line represents a table
-  #config.graphs.ls.b
-    #[[report.unit]]
-      #data frame where each line represents a graph
-
 
 # 4-SOURCE DATA TABLES --------------------------------------------
   
@@ -872,7 +859,7 @@
     c.loop.startime <- Sys.time()
     
   #c <- 2 #LOOP TESTER 
-  #for(c in slider.unit.ids.sample){   #LOOP TESTER
+  #for(c in tabr.unit.ids.sample){   #LOOP TESTER
   for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
     
     #Loop Inputs (both graphs and tables)
