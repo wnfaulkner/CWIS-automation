@@ -553,7 +553,7 @@
 # 2-CLEANING OUTPUTS ------------------          
   #resp.long.tb
     
-# 3-CONFIGS (SLIDE, GRAPH, AND TABLE CONFIG TABLES) ------------------
+# 3-CONFIGS (TAB AND TABLE CONFIG TABLES) ------------------
   
   #Section Clocking
     section3.startime <- Sys.time()
@@ -633,7 +633,7 @@
     section3.duration
     Sys.time() - sections.all.starttime
 
-# 3-CONFIGS (tab, GRAPH, AND TABLE CONFIG TABLES) OUTPUTS ------------------
+# 3-CONFIGS (TAB AND TABLE CONFIG TABLES) OUTPUTS ------------------
   #unit.ids.sample: vector with all report unit names in resp.long.tb (length = 19 for baseline data)
   #config.tabs.ls
     #[[report.unit]]
@@ -642,176 +642,6 @@
     #[[report.unit]]
       #data frame where each line represents a table
  
-# 2.5-TEST TABLE OUTPUTS ------------------   
-  
-  #Table 1: Average Response by Domain
-    building.domain.mean.value.tb <- 
-      resp6.tb %>%
-      dcast(
-        ., 
-        formula = building.id ~ domain, 
-        value.var = "value", 
-        fun.aggregate = function(x){mean(x, na.rm = TRUE) %>% round(., digits = 1)}
-      ) %>%
-      .[,names(.)!= "NA"]
-      
-    domain.district.mean.value.v <-
-      resp5.tb %>%
-      group_by(., domain) %>%
-      summarize(x = mean(value)) %>%
-      select(x) %>%
-      unlist %>% as.vector %>%
-      round(., digits = 1) %>%
-      as.matrix() %>% t
-    
-    domain.state.mean.value.v <- 
-      domain.district.mean.value.v + 
-      rnorm(length(domain.district.mean.value.v), mean = 0, sd = sd(domain.district.mean.value.v)) %>%
-      round(., digits = 1) %>%
-      as.matrix() %>% t
-  
-  #Table 3: Average Response by Practice (CFA)
-  
-    building.cfa.practice..mean.value.tb <-
-      resp5.tb %>%
-      filter(domain == "cfa") %>%
-      dcast(
-        .,
-        formula = building ~ variable,
-        value.var = "value",
-        fun.aggregate = function(x){mean(x, na.rm = TRUE) %>% round(., digits = 1)}
-      )
-    
-    practice.cfa.district.mean.value.v <-
-      resp5.tb %>%
-      filter(domain == "cfa") %>%
-      group_by(., variable) %>%
-      summarize(x = mean(value)) %>%
-      select(x) %>%
-      unlist %>% as.vector %>%
-      round(., digits = 1) %>%
-      as.matrix() %>% t
-    
-    practice.cfa.state.mean.value.v <- 
-      practice.cfa.district.mean.value.v + 
-      rnorm(length(practice.cfa.district.mean.value.v), mean = 0, sd = sd(practice.cfa.district.mean.value.v)) %>%
-      round(., digits = 1) %>%
-      as.matrix() %>% t
-  
-    
-  #Establish Outputs Directory
-    outputs.dir <- 
-      paste(
-        working.dir,
-        "\\4_outputs\\",
-        gsub(":",".",Sys.time()), 
-        sep = ""
-      )
-          
-      dir.create(
-        outputs.dir,
-        recursive = TRUE
-      )
-      
-      setwd(outputs.dir)
-              
-  #Set up target file
-    template.file <- 
-      paste(
-        source.tables.dir,
-        "dashboard_template.xlsx",
-        sep = ""
-      )
-    
-    file.name.h <- 
-      paste(
-        "test.output_",
-        gsub(":",".",Sys.time()),
-        ".xlsx",
-        sep = ""
-      )
-      
-    target.path.h <- 
-      paste(
-        outputs.dir,
-        "\\",
-        file.name.h,
-        sep=""
-      ) 
-    
-    file.copy(template.file, target.path.h)
-  
-  #1-Time Export of Long Data to do timed experiment for creating dashboard
-    setwd(outputs.dir) 
-    
-    write.csv(
-      resp5.tb,
-      file = "farmington_longdata.csv",
-    )
-    
-  #Write table to file
-    setwd(outputs.dir)
-    wb <- loadWorkbook(file.name.h, create = FALSE)
-    setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
-    
-    #Table 1
-      writeWorksheet(
-        object = wb, 
-        data = building.domain.mean.value.tb,
-        sheet = "District Overview (vs district)",
-        startRow = 3,
-        startCol = 1,
-        header = TRUE
-      )
-      
-      writeWorksheet(
-        object = wb, 
-        data = domain.district.mean.value.v,
-        sheet = "District Overview (vs district)",
-        startRow = 19,
-        startCol = 2,
-        header = FALSE
-      )
-      
-      writeWorksheet(
-        object = wb, 
-        data = domain.state.mean.value.v,
-        sheet = "District Overview (vs district)",
-        startRow = 20,
-        startCol = 2,
-        header = FALSE
-      )
-      
-    #Table 3
-      writeWorksheet(
-        object = wb, 
-        data = building.cfa.practice..mean.value.tb,
-        sheet = "District Overview (vs district)",
-        startRow = 3,
-        startCol = 20,
-        header = TRUE
-      )
-      
-      writeWorksheet(
-        object = wb, 
-        data = practice.cfa.district.mean.value.v,
-        sheet = "District Overview (vs district)",
-        startRow = 19,
-        startCol = 21,
-        header = FALSE
-      )
-      
-      writeWorksheet(
-        object = wb, 
-        data = practice.cfa.state.mean.value.v,
-        sheet = "District Overview (vs district)",
-        startRow = 20,
-        startCol = 21,
-        header = FALSE
-      )
-      
-  saveWorkbook(wb)
-
 # 4-SOURCE DATA TABLES --------------------------------------------
   
   #Section Clocking
@@ -826,27 +656,26 @@
   ###                          ###
   
   #Loop outputs
-    graphdata.ls.c <- list()
-    tabledata.ls.c <- list()
+    tabledata.ls <- list()
   
   #Loop Measurement - progress bar & timing
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
-    maxrow.c <- config.graphs.ls.b %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
+    maxrow.c <- config.tables.ls %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
     c.loop.startime <- Sys.time()
     
-  #c <- 2 #LOOP TESTER 
+  c <- 1 #LOOP TESTER 
   #for(c in tabr.unit.ids.sample){   #LOOP TESTER
-  for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
+  #for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
     
     #Loop Inputs (both graphs and tables)
       unit.id.c <- unit.ids.sample[c]
-      district.c <- 
-        resp.long.tb %>% 
-        filter(unit.id == unit.id.c) %>% 
-        select(district) %>% 
-        unique %>% 
-        unlist %>% 
-        RemoveNA()
+      #district.c <- 
+      #  resp.long.tb %>% 
+      #  filter(unit.id == unit.id.c) %>% 
+      #  select(district) %>% 
+      #  unique %>% 
+      #  unlist %>% 
+      #  RemoveNA()
       
       resp.long.tb.c <- 
         resp.long.tb %>%
@@ -862,107 +691,20 @@
       #)
     
     ###                    ###
-#   ### LOOP "d" BY GRAPH  ###
-    ###                    ###
-    
-    #Loop Inputs
-      config.graphs.df.c <- config.graphs.ls.b[[c]]
-      graphdata.ls.d <- list()
-    
-    #d <- which(config.graphs.df.c$graph.type.id == "h")[1]
-    #for(d in 1:2){ #LOOP TESTER
-    for(d in 1:nrow(config.graphs.df.c)){
-      
-      #Print loop messages
-        #print(
-        #  paste(
-        #    "LOOP 'D' GRAPH -- Loop num: ", d,
-        #    ", Pct. complete:", round(100*d/dim(config.graphs.df.c)[1], 2), "%"
-        #  )
-        #)
-      
-      config.graphs.df.d <- config.graphs.df.c[d,]
-      
-      group_by.d <- config.graphs.df.d$x.varnames %>% 
-        strsplit(., ",") %>% 
-        unlist
-      
-      #Form Graph Data Table
-        graphdata1.ls <-
-          list(
-            axis.cat.labels =  #Define category names that will go along axis of bar graph - domain, practice
-              DefineAxisCategories(
-                tb = resp.long.tb,
-                cat.colnames = 
-                  config.graphs.df.d %>% select("x.varnames") %>% unlist %>% as.character %>%
-                  strsplit(., ",") %>% unlist %>% as.character
-              ),
-            graphtable.d =  #Data table with measurements
-              GraphDataRestriction(
-                tb =  resp.long.tb.c,
-                id.varname = "answer.id",
-                tb.config = config.graphs.df.d
-              ) %>%
-              SummarizeDataByGroups(
-                tb = .,
-                group.varnames = group_by.d,
-                summarize.varname = config.graphs.df.d$summarize.varname %>% unlist %>% as.vector,
-                summarize.fun = config.graphs.df.d$summarize.fun %>% unlist %>% as.vector
-              ),
-            graph.avgs.d = #Averages (using average.level from configs)
-              GroupedAveragesByLevel(
-                tb = resp.long.tb,
-                graph.type.id = config.graphs.df.d$graph.type.id,
-                group.varnames = group_by.d,
-                summarize.varname = config.graphs.df.d$summarize.varname %>% unlist %>% as.vector,
-                summarize.fun = config.graphs.df.d$summarize.fun %>% unlist %>% as.vector,
-                avg.level = config.graphs.df.d$avg.level,
-                tb.restriction.value = district.c
-              ) 
-          )
-        
-        graphdata2.ls <- 
-          graphdata1.ls %>% lapply(., function(x) !is.null(x)) %>% 
-          unlist %>% as.vector %>% graphdata1.ls[.]
-        
-        graphdata.df.d <- 
-          Reduce(function(x,y){left_join(x,y, by = group_by.d)}, graphdata2.ls) 
-          #ReplaceNames(
-          #  df = ., 
-          #  current.names = names(.), 
-          #  new.names = c(names(.)[1:(length(names(.))-2)],"measure","avg")
-          #) %>% 
-          
-      
-      #Store Results  
-        graphdata.ls.d[[d]] <- graphdata.df.d
-        names(graphdata.ls.d)[[d]] <- config.graphs.df.d$graph.type.name
-      
-      #Progress Bar
-        setTxtProgressBar(
-          progress.bar.c, 
-          100*(d + config.graphs.ls.b[1:(c-1)] %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum)/maxrow.c
-        )
-      
-    } ### END OF LOOP "d" BY GRAPH ###
-    
-    graphdata.ls.c[[c]] <- graphdata.ls.d
-  
-    ###                    ###
 #   ### LOOP "d" BY TABLE  ###
     ###                    ###
     
     #Loop Inputs
-      config.tables.df.c <- config.tables.ls.b[[c]]
+      config.tables.df.c <- config.tables.ls[[c]]
       tabledata.ls.d <- list()
     
-    if(is.na(config.tables.df.c)){
+    #if(all(is.na(config.tables.df.c))){
       
     }else{
       
-      #d <- 2
-      #for(d in 1:2){ #LOOP TESTER
-      for(d in 1:dim(config.tables.df.c)[1]){
+      d <- 2
+      #for(d in 1:3){ #LOOP TESTER
+      #for(d in 1:nrow(config.tables.df.c)){
         
         #Print loop messages
           #print(
@@ -974,19 +716,53 @@
         
         config.tables.df.d <- config.tables.df.c[d,]
         
-        #Form final data frame
-          tabledata.df.d <-  
-            resp.long.tb.c %>%
-            table.data.filter.fun(dat = ., config.input = config.tables.df.d) %>%
-            summarize.table.fun(dat = ., config.input = config.tables.df.d) %>%
-            FirstTableOperations(tb = ., iterations = c(1))
+        #Define table aggregation formula
+          row.header.formula <- 
+            strsplit(config.tables.df.d$row.header.varname, ",") %>% unlist %>% as.vector %>% 
+            {if(is.na(.)) "." else .} %>%
+            {if(length(.)==1) . else paste(., collapse = "+")}
         
+          col.header.formula <- 
+            strsplit(config.tables.df.d$col.header.varname, ",") %>% unlist %>% as.vector %>% 
+            {if(is.na(.)) "." else .} %>%
+            {if(length(.)==1) . else paste(., collapse = "+")}
+          
+          table.formula.d <- 
+            paste(
+              row.header.formula,
+              "~",
+              col.header.formula,
+              sep = ""
+            ) %>% 
+            as.formula
+
+        
+        #Form final data frame
+           resp.long.tb.c %>%
+            dcast(
+              ., 
+              formula = table.formula.d, 
+              value.var = "value", 
+              fun.aggregate = function(x){mean(x, na.rm = TRUE) %>% round(., digits = 1)}
+            ) %>%
+            .[,names(.)!= "NA"] %>% print
+           
+           
+           #tabledata.df.d <-  
+            #resp.long.tb.c %>%
+            #table.data.filter.fun(dat = ., config.input = config.tables.df.d) %>%
+            #summarize.table.fun(dat = ., config.input = config.tables.df.d) %>%
+            #FirstTableOperations(tb = ., iterations = c(1))
+        
+      }   
+         
+          
         tabledata.ls.d[[d]] <- tabledata.df.d
         
       } ### END OF LOOP "d" BY TABLE ###
       
       names(tabledata.ls.d) <- config.tables.df.c$domain %>% RemoveNA() %>% as.character %>% c("role",.)
-      tabledata.ls.c[[c]] <- tabledata.ls.d
+      tabledata.ls[[c]] <- tabledata.ls.d
     
     } ### END OF LOOP "d" BY TABLE
       
@@ -1007,7 +783,7 @@
   #graphdata.ls.c
     #[[report unit]]
     #data frame where each line represents a graph
-  #tabledata.ls.c
+  #tabledata.ls
     #[[report.unit]]
     #data frame where each line represents a table
 
@@ -1257,21 +1033,21 @@
     
     #g <- 1 #LOOP TESTER
     #for(g in 1:2){ #LOOP TESTER
-    #for(g in 1:length(tabledata.ls.c[[f]])){
+    #for(g in 1:length(tabledata.ls[[f]])){
       
       #Prep Loop Inputs
-        #if(dim(tabledata.ls.c[[f]][[g]])[1] == 0){
-        #  tabledata.ls.c[[f]][[g]][1,] <- rep(0, dim(tabledata.ls.c[[f]][[g]])[2]) 
+        #if(dim(tabledata.ls[[f]][[g]])[1] == 0){
+        #  tabledata.ls[[f]][[g]][1,] <- rep(0, dim(tabledata.ls[[f]][[g]])[2]) 
         #}
         
-        #tabledata.df.g <- tabledata.ls.c[[f]][[g]]
+        #tabledata.df.g <- tabledata.ls[[f]][[g]]
         #config.tables.df.g <- config.tables.df.c[g,]
     
       #Print loop messages for bug checking
         #print(
         #  paste0(
         #    "LOOP 'g' -- Loop num: ", g,
-        #    ", Pct. complete:", round(100*g/length(tabledata.ls.c[[f]]), 2), "%"
+        #    ", Pct. complete:", round(100*g/length(tabledata.ls[[f]]), 2), "%"
         #  )
         #)
         #print(tabledata.df.g)
@@ -1349,7 +1125,7 @@
       #FlexTable object
 
 
-# 6-POWERPOINTS & EXPORT -----------------------------------------------
+# 6-EXPORT -----------------------------------------------
   
   #Code Clocking
     section6.starttime <- Sys.time()
@@ -1448,7 +1224,7 @@
         config.graphs.ls.b[[h]] %>%
         mutate(graph.id = 1:nrow(config.graphs.ls.b[[h]]))#config.graphs.ls.b[[h]] %>% .[,ncol(config.graphs.ls.b[[h]])] %>% seq_along(.))
       
-      config.tables.df.h <- config.tables.ls.b[[h]]
+      config.tables.df.h <- config.tables.ls[[h]]
       
       unit.id.h <- unit.ids.sample[h]
       district.h <- strsplit(unit.id.h, "_") %>% unlist %>% .[1] %>% toupper()
@@ -1673,3 +1449,173 @@
 windows()        
 
 
+
+# 2.5-TEST TABLE OUTPUTS ------------------   
+  
+  #Table 1: Average Response by Domain
+    building.domain.mean.value.tb <- 
+      resp6.tb %>%
+      dcast(
+        ., 
+        formula = building.id ~ domain, 
+        value.var = "value", 
+        fun.aggregate = function(x){mean(x, na.rm = TRUE) %>% round(., digits = 1)}
+      ) %>%
+      .[,names(.)!= "NA"]
+      
+    domain.district.mean.value.v <-
+      resp5.tb %>%
+      group_by(., domain) %>%
+      summarize(x = mean(value)) %>%
+      select(x) %>%
+      unlist %>% as.vector %>%
+      round(., digits = 1) %>%
+      as.matrix() %>% t
+    
+    domain.state.mean.value.v <- 
+      domain.district.mean.value.v + 
+      rnorm(length(domain.district.mean.value.v), mean = 0, sd = sd(domain.district.mean.value.v)) %>%
+      round(., digits = 1) %>%
+      as.matrix() %>% t
+  
+  #Table 3: Average Response by Practice (CFA)
+  
+    building.cfa.practice..mean.value.tb <-
+      resp5.tb %>%
+      filter(domain == "cfa") %>%
+      dcast(
+        .,
+        formula = building ~ variable,
+        value.var = "value",
+        fun.aggregate = function(x){mean(x, na.rm = TRUE) %>% round(., digits = 1)}
+      )
+    
+    practice.cfa.district.mean.value.v <-
+      resp5.tb %>%
+      filter(domain == "cfa") %>%
+      group_by(., variable) %>%
+      summarize(x = mean(value)) %>%
+      select(x) %>%
+      unlist %>% as.vector %>%
+      round(., digits = 1) %>%
+      as.matrix() %>% t
+    
+    practice.cfa.state.mean.value.v <- 
+      practice.cfa.district.mean.value.v + 
+      rnorm(length(practice.cfa.district.mean.value.v), mean = 0, sd = sd(practice.cfa.district.mean.value.v)) %>%
+      round(., digits = 1) %>%
+      as.matrix() %>% t
+  
+    
+  #Establish Outputs Directory
+    outputs.dir <- 
+      paste(
+        working.dir,
+        "\\4_outputs\\",
+        gsub(":",".",Sys.time()), 
+        sep = ""
+      )
+          
+      dir.create(
+        outputs.dir,
+        recursive = TRUE
+      )
+      
+      setwd(outputs.dir)
+              
+  #Set up target file
+    template.file <- 
+      paste(
+        source.tables.dir,
+        "dashboard_template.xlsx",
+        sep = ""
+      )
+    
+    file.name.h <- 
+      paste(
+        "test.output_",
+        gsub(":",".",Sys.time()),
+        ".xlsx",
+        sep = ""
+      )
+      
+    target.path.h <- 
+      paste(
+        outputs.dir,
+        "\\",
+        file.name.h,
+        sep=""
+      ) 
+    
+    file.copy(template.file, target.path.h)
+  
+  #1-Time Export of Long Data to do timed experiment for creating dashboard
+    setwd(outputs.dir) 
+    
+    write.csv(
+      resp5.tb,
+      file = "farmington_longdata.csv",
+    )
+    
+  #Write table to file
+    setwd(outputs.dir)
+    wb <- loadWorkbook(file.name.h, create = FALSE)
+    setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
+    
+    #Table 1
+      writeWorksheet(
+        object = wb, 
+        data = building.domain.mean.value.tb,
+        sheet = "District Overview (vs district)",
+        startRow = 3,
+        startCol = 1,
+        header = TRUE
+      )
+      
+      writeWorksheet(
+        object = wb, 
+        data = domain.district.mean.value.v,
+        sheet = "District Overview (vs district)",
+        startRow = 19,
+        startCol = 2,
+        header = FALSE
+      )
+      
+      writeWorksheet(
+        object = wb, 
+        data = domain.state.mean.value.v,
+        sheet = "District Overview (vs district)",
+        startRow = 20,
+        startCol = 2,
+        header = FALSE
+      )
+      
+    #Table 3
+      writeWorksheet(
+        object = wb, 
+        data = building.cfa.practice..mean.value.tb,
+        sheet = "District Overview (vs district)",
+        startRow = 3,
+        startCol = 20,
+        header = TRUE
+      )
+      
+      writeWorksheet(
+        object = wb, 
+        data = practice.cfa.district.mean.value.v,
+        sheet = "District Overview (vs district)",
+        startRow = 19,
+        startCol = 21,
+        header = FALSE
+      )
+      
+      writeWorksheet(
+        object = wb, 
+        data = practice.cfa.state.mean.value.v,
+        sheet = "District Overview (vs district)",
+        startRow = 20,
+        startCol = 21,
+        header = FALSE
+      )
+      
+  saveWorkbook(wb)
