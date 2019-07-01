@@ -222,7 +222,7 @@
         resp6.tb <- 
           left_join(
             x = resp5.tb,
-            y = questions.tb %>% select(var.id, domain),
+            y = questions.tb %>% select(var.id, domain, practice),
             by = c("variable"="var.id")
           ) %>%
           left_join(
@@ -375,14 +375,7 @@
     
     #Loop Inputs (both graphs and tables)
       unit.id.c <- unit.ids.sample[c]
-      #district.c <- 
-      #  resp.long.tb %>% 
-      #  filter(unit.id == unit.id.c) %>% 
-      #  select(district) %>% 
-      #  unique %>% 
-      #  unlist %>% 
-      #  RemoveNA()
-      
+
       resp.long.tb.c <- 
         resp.long.tb %>%
         filter(unit.id == unit.id.c)
@@ -442,19 +435,34 @@
             ) %>% 
             as.formula
 
-        
+        #Define table filtering vector
+          
+          #TODO: adjust for state averages - either calculate once and insert into all or add a way to tell
+          #code to pull in full dataset, not just district data (default inside look)
+          
+          if(is.na(config.tables.df.d$filter.varname)){
+            table.filter.vector <- rep(TRUE, nrow(resp.long.tb.c))
+          }else{
+            table.filter.vector <- 
+              resp.long.tb.c %>%
+              select(config.tables.df.d$filter.varname) %>%
+              unlist %>% as.vector %>%
+              grepl(config.tables.df.d$filter.values, .)
+          }
+          
         #Form final data frame
-           resp.long.tb.c %>%
+          table.d <-  
+            resp.long.tb.c %>%
+            filter(table.filter.vector) %>%
             dcast(
               ., 
               formula = table.formula.d, 
               value.var = "value", 
               fun.aggregate = function(x){mean(x, na.rm = TRUE) %>% round(., digits = 1)}
             ) %>%
-            .[,names(.)!= "NA"] %>% print
+            .[,names(.)!= "NA"]
            
-           
-           #tabledata.df.d <-  
+          #tabledata.df.d <-  
             #resp.long.tb.c %>%
             #table.data.filter.fun(dat = ., config.input = config.tables.df.d) %>%
             #summarize.table.fun(dat = ., config.input = config.tables.df.d) %>%
