@@ -146,110 +146,172 @@
     setwd(rproj.dir)
     source("2-cleaning_functions.r")
     
-    
-  #RESPONSES (round 1)  
-    
-    #Names/Column Headers
-      resp2.tb <- 
-        LowerCaseNames(resp1.tb) %>%  #Lower-case all variable names
-        ReplaceNames(., "school", "building") %>% #Replace "school" with "building" in column names
-        ReplaceNames(., "ï..year", "year") %>%
-        ReplaceNames(., "id", "resp.id") %>%
-        as_tibble()
+  #Names/Column Headers
+    resp2.tb <- 
+      LowerCaseNames(resp1.tb) %>%  #Lower-case all variable names
+      ReplaceNames(., "school", "building") %>% #Replace "school" with "building" in column names
+      ReplaceNames(., "ï..year", "year") %>%
+      ReplaceNames(., "id", "resp.id") %>%
+      as_tibble()
 
-      names(resp2.tb) <- #replace domain names that have 'c' in front of them for stome reason with regular domain names
-        mgsub(
-            pattern = paste("c",domains, sep = ""), 
-            replacement = domains, 
-            x = names(resp2.tb), 
-            print.replacements = FALSE
-          )
-      
-      names(resp2.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(resp2.tb), char = ".")
-      resp2.tb <- LowerCaseCharVars(resp2.tb) #Lower-case all character variable data
+    names(resp2.tb) <- #replace domain names that have 'c' in front of them for stome reason with regular domain names
+      mgsub(
+          pattern = paste("c",domains, sep = ""), 
+          replacement = domains, 
+          x = names(resp2.tb), 
+          print.replacements = FALSE
+        )
     
-    #Add variables: building.id, building.level 
-      resp2.tb %<>% mutate(building.id = paste(district,building,sep=".") %>% gsub(" |\\/", ".", .))
-        
-      resp2.tb %<>%
+    resp2.tb %<>% 
+      ReplaceNames(
+        ., 
+        current.names = names(resp2.tb)[names(resp2.tb) == as.vector(report.unit)], 
+        new.names =  "unit.id"
+      )
+    
+    names(resp2.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(resp2.tb), char = ".")
+    
+  #Lower-case all character variable data
+    resp2.tb <- LowerCaseCharVars(resp2.tb)
+  
+  #Add variables: building.id, building.name building.level 
+    resp2.tb %<>% mutate(building.id.raw = paste(unit.id,building,sep=".") %>% gsub(" |\\/", ".", .))
+    
+    resp2.tb <-
+      left_join(
+        resp2.tb,
+        buildings.tb %>% select(building.id.raw, building.id, building.name, building.level),
+        by = "building.id.raw"
+      )
+    
+  #Row Filters
+    
+    #Filter out blank schools
+      resp3.tb <- 
+        resp2.tb %>% 
+        filter(building != "")
+      
+    #Building Restrictions
+      low.response.nums.filter.tb <- #Filter out building-periods with less than 6 responses at baseline
+        resp3.tb %>%
+        group_by(building.id,year) %>%
+        summarize(x = length(resp.id)) %>%
         mutate(
-          building.level = 
-            left_join(
-              resp2.tb %>% select(building.id),
-              buildings.tb %>% select(building.id, building.level),
-              by = "building.id"
-            ) %>% 
-            select(building.level) %>%
-            unlist %>% as.vector %>% tolower
+          filter.baseline = ifelse(year == "baseline" & x < 6, FALSE, TRUE),
+          filter.201718 = ifelse(year == "2017-2018" & x < 6, FALSE, TRUE),
+          filter.201819 = ifelse(year == "2018-2019" & x < 6, FALSE, TRUE),
+          filter.combined = all(filter.baseline, filter.201718, filter.201819)
         )
       
-    #Row Filters
+      resp4.tb <- 
+        inner_join(
+          resp3.tb, 
+          low.response.nums.filter.tb %>% select(building.id, year, filter.combined), 
+          by = c("year","building.id")
+        ) %>%
+        filter(filter.combined)
       
-      #Filter out blank schools
-        resp3.tb <- 
-          resp2.tb %>% 
-          filter(building != "")
-        
-      #Building Restrictions
-        low.response.nums.filter.tb <- #Filter out building-periods with less than 6 responses at baseline
-          resp3.tb %>%
-          group_by(building.id,year) %>%
-          summarize(x = length(resp.id)) %>%
-          mutate(
-            filter.baseline = ifelse(year == "baseline" & x < 6, FALSE, TRUE),
-            filter.201718 = ifelse(year == "2017-2018" & x < 6, FALSE, TRUE),
-            filter.201819 = ifelse(year == "2018-2019" & x < 6, FALSE, TRUE),
-            filter.combined = all(filter.baseline, filter.201718, filter.201819)
-          )
-        
-        resp4.tb <- 
-          left_join(resp3.tb, low.response.nums.filter.tb %>% select(building.id, filter.combined), by = "building.id") %>%
-          filter(filter.combined)
+  #Column Filters (only columns necessary for producing reports)
     
-    #Reshape to Long Data by response to CWIS question
-      cwis.varnames <- FilterVector(grepl(paste0(domains, collapse = "|"), names(resp3.tb)), names(resp3.tb))
-      resp5.tb <-
-        melt( #Melt to long data frame for all cwis vars
-          resp4.tb,
-          id.vars = names(resp4.tb)[!names(resp4.tb) %in% cwis.varnames], 
-          measure.vars = cwis.varnames
-        ) %>% 
-        filter(!is.na(value)) %>% #remove rows with no answer for cwis vars
-        MoveColsLeft(., c("resp.id","district")) %>% #Rearrange columns: resp.id and district at the front
-        as_tibble()
+    resp5.tb <-
+      resp4.tb %>%
+      SelectColsIn(
+        ., 
+        "NOT.IN",
+        questions.tb %>% filter(necessary.in.final.data == 0) %>% select(var.id) %>% unlist %>% as.vector
+      )
+  
+  #Reshape to Long Data by response to CWIS question
+    cwis.varnames <- FilterVector(grepl(paste0(domains, collapse = "|"), names(resp3.tb)), names(resp3.tb))
+    resp6.tb <-
+      melt( #Melt to long data frame for all cwis vars
+        resp5.tb,
+        id.vars = names(resp5.tb)[!names(resp5.tb) %in% cwis.varnames], 
+        measure.vars = cwis.varnames
+      ) %>% 
+      filter(!is.na(value)) %>% #remove rows with no answer for cwis vars
+      MoveColsLeft(., c("resp.id","unit.id")) %>% #Rearrange columns: resp.id and unit.id at the front
+      as_tibble()
+    
+  #ADDING NEW USEFUL VARIABLES ----
+    
+    #Add domain variables
+      resp7.tb <- 
+        left_join(
+          x = resp6.tb,
+          y = questions.tb %>% select(var.id, domain, practice),
+          by = c("variable"="var.id")
+        ) %>%
+        left_join(
+          x = ., 
+          y = domains.tb,
+          by = c("domain" = "domain.id")
+        )
+    
+    #Add proficiency dummy variable
+      resp8.tb <- 
+        resp7.tb %>%
+        mutate(
+          is.proficient = ifelse(value >= 4, 1, 0)
+        )
       
-      #Add domain variables
-        resp6.tb <- 
-          left_join(
-            x = resp5.tb,
-            y = questions.tb %>% select(var.id, domain, practice),
-            by = c("variable"="var.id")
-          ) %>%
-          left_join(
-            x = ., 
-            y = domains.tb,
-            by = c("domain" = "domain.id")
+    #Add variable for baseline, most recent, and next-to-most-recent years for each unit.id
+      resp8.tb$year[resp8.tb$year == "baseline"] <- "0000"
+      
+#FUNCTION - could be made into function to designate alphabetic first/last/penultimate by group
+      year.var.helper.tb <-
+        resp8.tb %>%
+        select(year, unit.id) %>%
+        unique 
+      
+      year.var.helper.ls <- list()
+      
+      for(i in 1:length(unique(year.var.helper.tb$unit.id))){
+        unit.id.i <- unique(year.var.helper.tb$unit.id)[i]
+        year.var.helper.tb.i <- 
+          year.var.helper.tb %>% 
+          filter(unit.id == unit.id.i) %>%
+          arrange(year) %>% 
+          mutate(
+            num.measurements = nrow(.),
+            is.baseline = 0,
+            is.most.recent = 0, 
+            is.current = 0
           )
         
-      #Restrict Data to sample of user-defined size if doing sample print
-        resp7.tb <- 
-          RestrictDataToSample(
-            tb = resp6.tb,
-            report.unit = report.unit,
-            sample.print = sample.print,
-            sample.group.unit = sample.group.unit,
-            sample.size = sample.size
-          )
+        year.var.helper.tb.i$is.baseline[1] <- 1
+        year.var.helper.tb.i$is.current[nrow(year.var.helper.tb.i)] <- 1
+        year.var.helper.tb.i$is.most.recent[nrow(year.var.helper.tb.i)-1] <- 1
         
-        names(resp7.tb)[names(resp7.tb) == as.vector(report.unit)] <- "unit.id"
+        year.var.helper.ls[[i]] <- year.var.helper.tb.i
+      }
+      
+      year.var.helper.tb <- do.call(rbind, year.var.helper.ls)
+      
+      resp9.tb <- 
+        left_join(
+          resp8.tb,
+          year.var.helper.tb,
+          by = c("year", "unit.id")
+        )
 
-        resp.long.tb <- resp7.tb
-        
-        unit.ids.sample <-
-          resp7.tb %>%
-          select(unit.id) %>%
-          unique %>%
-          unlist %>% as.vector
+  #RESTRICT DATA TO SAMPLE OF USER-DEFINED SIZE IF DOING SAMPLE PRINT ----
+    resp10.tb <- 
+      RestrictDataToSample(
+        tb = resp9.tb,
+        report.unit = "unit.id",
+        sample.print = sample.print,
+        sample.group.unit = "unit.id",
+        sample.size = sample.size
+      )
+
+    resp.long.tb <- resp10.tb
+    
+    unit.ids.sample <-
+      resp.long.tb %>%
+      select(unit.id) %>%
+      unique %>%
+      unlist %>% as.vector
           
   #Section Clocking
     section2.duration <- Sys.time() - section2.starttime
@@ -362,26 +424,22 @@
   ###                          ###
   
   #Loop outputs
-    tabledata.ls <- list()
+    tables.ls <- list()
   
   #Loop Measurement - progress bar & timing
     progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
-    maxrow.c <- config.tables.ls %>% sapply(., dim) %>% sapply(`[[`,1) %>% unlist %>% sum
+    maxrow.c <- length(unit.ids.sample)
     c.loop.startime <- Sys.time()
     
-  c <- 1 #LOOP TESTER 
+  #c <- 1 #LOOP TESTER 
   #for(c in tabr.unit.ids.sample){   #LOOP TESTER
-  #for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY DISTRICT
+  for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY unit.id
     
     #Loop Inputs (both graphs and tables)
       unit.id.c <- unit.ids.sample[c]
-
-      resp.long.tb.c <- 
-        resp.long.tb %>%
-        filter(unit.id == unit.id.c)
     
     #Print loop messages
-      if(c == 1){print("Forming input data tables for graphs...")}
+      if(c == 1){print("Forming tables for export...")}
       #print(
       #  paste(
       #    "LOOP 'C' -- Loop num: ", c,", Report id: ",unit.id.c,
@@ -394,91 +452,84 @@
     ###                    ###
     
     #Loop Inputs
-      config.tables.df.c <- config.tables.ls[[c]]
-      tabledata.ls.d <- list()
-    
-    #if(all(is.na(config.tables.df.c))){
+      config.tables.df.c <- config.tables.ls[[c]] %>% filter(!is.na(table.type.id))
+      tables.ls.d <- list()
       
-    }else{
-      
-      d <- 2
-      #for(d in 1:3){ #LOOP TESTER
-      #for(d in 1:nrow(config.tables.df.c)){
+      #d <- 4
+      #for(d in 1:3){ #Loop Tester
+      for(d in 1:nrow(config.tables.df.c)){ ### START OF LOOP "d" BY TABLE ###
         
-        #Print loop messages
-          #print(
-          #  paste(
-          #    "LOOP 'D' TABLE -- Loop num: ", d,
-          #    ", Pct. complete:", round(100*d/dim(config.tables.df.c)[1], 2), "%"
-          #  )
-          #)
+        print(
+          paste(
+            "LOOP 'd' -- Loop num: ", d,", Report id: ",unit.id.c,
+            ", Pct. complete:", round(100*d/nrow(config.tables.df.c), 2), "%"
+          )
+        )
+        
         
         config.tables.df.d <- config.tables.df.c[d,]
         
         #Define table aggregation formula
-          row.header.formula <- 
-            strsplit(config.tables.df.d$row.header.varname, ",") %>% unlist %>% as.vector %>% 
-            {if(is.na(.)) "." else .} %>%
-            {if(length(.)==1) . else paste(., collapse = "+")}
-        
-          col.header.formula <- 
-            strsplit(config.tables.df.d$col.header.varname, ",") %>% unlist %>% as.vector %>% 
-            {if(is.na(.)) "." else .} %>%
-            {if(length(.)==1) . else paste(., collapse = "+")}
-          
-          table.formula.d <- 
-            paste(
-              row.header.formula,
-              "~",
-              col.header.formula,
-              sep = ""
-            ) %>% 
-            as.formula
+          table.formula.d <-
+            DefineTableRowColFormula(
+              row.header.varnames = strsplit(config.tables.df.d$row.header.varname, ",") %>% unlist %>% as.vector,
+              col.header.varnames = strsplit(config.tables.df.d$col.header.varname, ",") %>% unlist %>% as.vector
+            )
 
         #Define table filtering vector
+          table.filter.v <-
+            DefineTableFilterVector(
+              filter.varnames = config.tables.df.d$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector,
+              filter.values = config.tables.df.d$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
+            )
           
-          #TODO: adjust for state averages - either calculate once and insert into all or add a way to tell
-          #code to pull in full dataset, not just district data (default inside look)
-          
-          if(is.na(config.tables.df.d$filter.varname)){
-            table.filter.vector <- rep(TRUE, nrow(resp.long.tb.c))
-          }else{
-            table.filter.vector <- 
-              resp.long.tb.c %>%
-              select(config.tables.df.d$filter.varname) %>%
-              unlist %>% as.vector %>%
-              grepl(config.tables.df.d$filter.values, .)
-          }
+        #Define Table Aggregation Function
+          table.aggregation.function <-
+            function(x){
+              if(config.tables.df.d$aggregate.function == "length"){
+                result <- length(x)
+              }
+              
+              if(config.tables.df.d$aggregate.function == "mean"){
+                result <- mean(x, na.rm = TRUE)
+              }
+              
+              return(result)
+            }
           
         #Form final data frame
           table.d <-  
-            resp.long.tb.c %>%
-            filter(table.filter.vector) %>%
+            resp.long.tb %>%
+            filter(table.filter.v) %>%
             dcast(
               ., 
               formula = table.formula.d, 
-              value.var = "value", 
-              fun.aggregate = function(x){mean(x, na.rm = TRUE) %>% round(., digits = 1)}
+              value.var = config.tables.df.d$value.varname, 
+              fun.aggregate = table.aggregation.function
             ) %>%
             .[,names(.)!= "NA"]
-           
-          #tabledata.df.d <-  
-            #resp.long.tb.c %>%
-            #table.data.filter.fun(dat = ., config.input = config.tables.df.d) %>%
-            #summarize.table.fun(dat = ., config.input = config.tables.df.d) %>%
-            #FirstTableOperations(tb = ., iterations = c(1))
-        
-      }   
-         
-          
-        tabledata.ls.d[[d]] <- tabledata.df.d
+      
+        tables.ls.d[[d]] <- table.d
         
       } ### END OF LOOP "d" BY TABLE ###
       
-      names(tabledata.ls.d) <- config.tables.df.c$domain %>% RemoveNA() %>% as.character %>% c("role",.)
-      tabledata.ls[[c]] <- tabledata.ls.d
-    
-    } ### END OF LOOP "d" BY TABLE
+      names(tables.ls.d) <- 
+        paste(
+          rep(unit.id.c, length(tables.ls.d)),
+          ".",
+          c(1:length(tables.ls.d)),
+          ".",
+          config.tables.df.c$table.type.name, 
+          sep = ""
+        ) %>%
+        gsub("-", " ", .) %>%
+        gsub(" ", ".", .) %>%
+        SubRepeatedCharWithSingleChar(., ".") %>%
+        tolower
+      
+      tables.ls[[c]] <- tables.ls.d
+      
+      setTxtProgressBar(progress.bar.c, 100*c/maxrow.c)
       
   } ### END OF LOOP "c" BY REPORT UNIT     
   
@@ -497,7 +548,7 @@
   #graphdata.ls.c
     #[[report unit]]
     #data frame where each line represents a graph
-  #tabledata.ls
+  #tables.ls
     #[[report.unit]]
     #data frame where each line represents a table
 
@@ -747,21 +798,21 @@
     
     #g <- 1 #LOOP TESTER
     #for(g in 1:2){ #LOOP TESTER
-    #for(g in 1:length(tabledata.ls[[f]])){
+    #for(g in 1:length(tables.ls[[f]])){
       
       #Prep Loop Inputs
-        #if(dim(tabledata.ls[[f]][[g]])[1] == 0){
-        #  tabledata.ls[[f]][[g]][1,] <- rep(0, dim(tabledata.ls[[f]][[g]])[2]) 
+        #if(dim(tables.ls[[f]][[g]])[1] == 0){
+        #  tables.ls[[f]][[g]][1,] <- rep(0, dim(tables.ls[[f]][[g]])[2]) 
         #}
         
-        #tabledata.df.g <- tabledata.ls[[f]][[g]]
+        #tabledata.df.g <- tables.ls[[f]][[g]]
         #config.tables.df.g <- config.tables.df.c[g,]
     
       #Print loop messages for bug checking
         #print(
         #  paste0(
         #    "LOOP 'g' -- Loop num: ", g,
-        #    ", Pct. complete:", round(100*g/length(tabledata.ls[[f]]), 2), "%"
+        #    ", Pct. complete:", round(100*g/length(tables.ls[[f]]), 2), "%"
         #  )
         #)
         #print(tabledata.df.g)
