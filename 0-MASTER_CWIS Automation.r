@@ -553,343 +553,6 @@
     #data frame where each line represents a table
 
 
-# 5-OBJECT CREATION (GRAPHS & TABLES) ------------------------------------
-  
-  #Code Clocking
-    section5.starttime <- Sys.time()
-    
-  #Load Configs Functions
-    setwd(rproj.dir)
-    source("5-object creation functions.r")
-  
-  
-  ###                       ###    
-# ### LOOP "f" BY DISTRICT  ###
-  ###                       ###
-  
-  #Loop Progress Tracking
-    progress.bar.f <- txtProgressBar(min = 0, max = 100, style = 3)
-    maxrow.f <- length(unit.ids.sample)
-    
-  #Loop Outputs
-    graphs.ls.f <- list()
-    #tables.ls.f <- list()
-  
-  #f <- 1 #LOOP TESTER
-  #for(f in 1:2){ #LOOP TESTER
-  for(f in 1:length(unit.ids.sample)){
-    
-    #Loop units  
-      unit.id.f <- unit.ids.sample[f]
-      config.graphs.df.f <- config.graphs.ls.b[[f]]
-      graphdata.ls.f <- graphdata.ls.c[[f]]
-    
-    #Print loop messages
-      if(f == 1){print("FORMING GRAPHS & TABLES IN GGPLOT...")}
-      #print(
-      #  paste(
-      #    "LOOP 'F' -- Loop num: ", f,", Loop id: ",unit.id.f,
-      #    ", Pct. complete:", round(100*f/length(unit.ids.sample), 2), "%"
-      #  )
-      #)
-    
-    ###                       ###    
-#   ### LOOP "g" BY GRAPH     ###
-    ###                       ###
-    
-    #Loop output object(s)
-    graphs.ls.g <- list()
-    maxrow.g <- length(graphdata.ls.f)
-    
-    #g <- which(config.graphs.df.f$graph.type.id == "e")[1] #LOOP TESTER
-    #for(g in 1:2) #LOOP TESTER
-    for(g in 1:length(graphdata.ls.f))
-      local({ #Necessary to avoid annoying and confusing ggplot lazy evaluation problem (see journal)
-        
-        #Print loop messages for bug checking
-            #print(
-            #  paste0(
-            #    "LOOP 'g' -- Loop num: ", g,
-            #    ", Pct. complete:", round(100*g/length(graphdata.ls.f), 2), "%"
-            #  )
-            #)
-            #cprint(graphdata.df.g)
-            #print(config.graphs.df.g)
-        
-        #Redefine necessary objects in local environment
-          g<-g #same as above
-        
-        #CONFIG DATA TABLE
-          config.graphs.df.g <- config.graphs.df.f[g,] %>% as.data.frame()
-          
-          #Making new [shortened] objects that will get a lot of use in graph formation; 
-            x.varnames.g <- 
-              config.graphs.df.g$x.varnames %>% strsplit(., ",") %>% unlist
-            
-            graph.header.varname <- x.varnames.g[1]
-            graph.group.by.varnames <- if(length(x.varnames.g)==1){NULL}else{x.varnames.g[2:length(x.varnames.g)]}
-           
-        #GRAPH DATA TABLE
-          graphdata.df.g <- graphdata.ls.f[[g]]
-          
-          #Manual ordering of graphdata.df.g
-            order.ls <- 
-              StringSplitVectorIntoList(
-                vector = config.graphs.df.g$x.var.order,
-                list.element.names = strsplit(config.graphs.df.g$x.varnames, ",") %>% unlist,
-                list.level.split.char = ";",
-                within.element.split.char = ","
-              )
-            
-            #Special cases - formatting text so matches exactly for domain and answer option
-              #order.ls[names(order.ls) == "domain"] <- #domain names to all caps
-                #order.ls[names(order.ls) == "domain"] %>% lapply(., toupper)
-              
-              order.ls[names(order.ls) == "answer"] <-
-                order.ls[names(order.ls) == "answer"] %>% unlist %>% as.numeric %>% list
-            
-            #Order graph data table by result  
-              graphdata.df.g <-
-                ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable(
-                  tb = graphdata.df.g,
-                  tb.order.varnames = names(order.ls),
-                  ordering.vectors.list = order.ls
-                )
-            
-           #Inserting corrected scale for graphs that have Answer Options along the bottom
-            if(!is.null(graph.group.by.varnames) && "answer" %in% names(graphdata.df.g)){
-              graphdata.df.g <- 
-                left_join(graphdata.df.g,config.ans.opt.tb, by = c("answer" = "ans.num"))
-              
-              if(config.graphs.df.g$domain %in% c("lead","pd")){
-                graphdata.df.g <- 
-                  graphdata.df.g %>% 
-                  select(graph.group.by.varnames, ans.text.agreement.num, measure, avg)
-                graph.header.varname <- "ans.text.agreement.num"
-              }else{
-                graphdata.df.g <- 
-                  graphdata.df.g %>% 
-                  select(graph.group.by.varnames, ans.text.freq.num, measure, avg)
-                graph.header.varname <- "ans.text.freq.num"
-              }
-            }
-           
-            #Capitalize headers in graphdata.df.g, all-caps for domain, upper-case first letter for everything else
-             graphdata.df.g[,!names(graphdata.df.g) %in% c("domain","answer","measure","avg")] <- 
-                graphdata.df.g[,!names(graphdata.df.g) %in% c("domain","answer","measure","avg")] %>% 
-                apply(., c(1,2), FirstLetterCap_MultElements)
-             
-             graphdata.df.g[names(graphdata.df.g) == "domain"] <- 
-               graphdata.df.g[names(graphdata.df.g) == "domain"] %>%
-               apply(., c(1:2), toupper)
-        
-        ### BASE GRAPH FORMATION WITH GGPLOT2 ###
-        
-          #Base Graph
-            graph.1 <- 
-              FormBaseGraphObject.DataAndTheme( 
-                dat = graphdata.df.g 
-              )
-
-          #Adding Columns (Clustered or Non-Clustered)
-            
-            #Define Fill Values
-              if(
-                strsplit(config.graphs.df.g$graph.fill, ",") %>% 
-                  unlist %>% trimws %>% length %>% equals(1)
-              ){
-                graph.fill.g <- 
-                  config.graphs.df.g$graph.fill %>% 
-                  rep(., nrow(graphdata.df.g))
-              }else{
-                graph.fill.g <- 
-                  strsplit(config.graphs.df.g$graph.fill, ",") %>% 
-                  unlist %>% trimws %>% rev %>%
-                  rep(., nrow(graphdata.df.g)/2)
-              }
-
-            #Add columns
-              graph.2 <- 
-                AddColsToGraph(
-                  base.graph.input = graph.1,
-                  dat = graphdata.df.g,
-                  graph.orientation = config.graphs.df.g$graph.type.orientation,
-                  graph.header.varname = graph.header.varname,
-                  graph.group.by.varnames = graph.group.by.varnames,
-                  graph.fill = c("#c7b7c7","#603356") %>% rep(., nrow(graphdata.df.g)/2),
-                  print.graph = FALSE
-                )
-              
-          #Manually order x-axis according to configs
-            graph.3 <- 
-              graph.2 + 
-              scale_x_discrete(
-                limits = levels(
-                  factor(
-                    graphdata.df.g[,names(graphdata.df.g) == graph.header.varname] %>% 
-                      unlist %>% unique %>% as.vector, 
-                    levels = graphdata.df.g[,names(graphdata.df.g) == graph.header.varname] %>% 
-                      unlist %>% unique %>% as.vector %>% rev
-                  )
-                )
-              )
-          
-          #Add Graph Averages (as error bar)
-            #NOTE: does not depend on config.graphs.df.g - taken care of with if statement outside function
-            if(!is.na(config.graphs.df.g$avg.level)){
-              graph.4 <-
-                AddGraphAverages(
-                  base.graph.input = graph.3,
-                  dat = graphdata.df.g,
-                  graph.header.varname = graph.header.varname,
-                  graph.group.by.varnames = graph.group.by.varnames,
-                  avg.bar.color = config.graphs.df.g$avg.bar.color,
-                  dat.configs = config.graphs.df.g,
-                  print.graph = FALSE 
-                )
-            }else{
-              graph.4 <- graph.3
-            }
-            
-          #Add data labels 
-          
-            #Graph label data frame
-              graph.labels.df <- 
-                CreateGraphLabels(
-                  dat = graphdata.df.g, 
-                  dat.measure.varname = "measure", 
-                  height.ratio.threshold = 8.2,
-                  dat.configs = config.graphs.df.g
-                )
-            
-            #Add Data labels to graph
-              graph.5 <-
-                AddGraphDataLabels(
-                  base.graph.input = graph.4,
-                  dat = graphdata.df.g,
-                  graph.header.varname = graph.header.varname,
-                  graph.group.by.varnames = graph.group.by.varnames,
-                  graph.orientation = config.graphs.df.g$graph.type.orientation,
-                  dat.labels = graph.labels.df,
-                  label.font.size = 4,
-                  print.graph = FALSE
-                )
-            
-          #Final step: graph orientation - flip for bar charts
-            graph.g <- 
-              GraphOrientation(
-                base.graph.input = graph.5,
-                graph.orientation = config.graphs.df.g$graph.type.orientation
-              )
-              
-        graphs.ls.g[[g]] <<- graph.g
-       
-        
-      })  ### END OF LOOP "g" BY GRAPH ###
-
-      graphs.ls.f[[f]] <- graphs.ls.g
-    
-    ###                       ###    
-#   ### LOOP "g" BY TABLE     ###
-    ###                       ###
-    {
-    #Loop output object(s)
-      #tables.ls.g <- list()
-    
-    #g <- 1 #LOOP TESTER
-    #for(g in 1:2){ #LOOP TESTER
-    #for(g in 1:length(tables.ls[[f]])){
-      
-      #Prep Loop Inputs
-        #if(dim(tables.ls[[f]][[g]])[1] == 0){
-        #  tables.ls[[f]][[g]][1,] <- rep(0, dim(tables.ls[[f]][[g]])[2]) 
-        #}
-        
-        #tabledata.df.g <- tables.ls[[f]][[g]]
-        #config.tables.df.g <- config.tables.df.c[g,]
-    
-      #Print loop messages for bug checking
-        #print(
-        #  paste0(
-        #    "LOOP 'g' -- Loop num: ", g,
-        #    ", Pct. complete:", round(100*g/length(tables.ls[[f]]), 2), "%"
-        #  )
-        #)
-        #print(tabledata.df.g)
-        #print(config.tables.df.g)
-        
-      #Create FlexTable Object
-         #ft.g <- FlexTable(
-          #data = tabledata.df.g,
-          #header.columns = TRUE,
-          #add.rownames = FALSE,
-          
-          #header.cell.props = cellProperties(background.color = "#5F3356", border.style = "none"), #TODO:Should put into configs instead of specifying in code
-          #header.text.props = textProperties(
-          #  color = "white", 
-          #  font.size = 15,
-          #  font.family = "Century Gothic",
-          #  font.weight = "bold"),
-          #header.par.props = parProperties(text.align = "center"),
-          #body.cell.props = cellProperties(background.color = "white", border.style = "none"),
-          #body.text.props = textProperties(
-          #  color = "#515151",
-          #  font.size = 15,
-          #  font.family = "Century Gothic"
-          #)
-        #)
-        
-        #if(g == 1){
-          #ft.g[dim(tabledata.df.g)[1],] <- 
-            #chprop(
-              #textProperties(
-                #font.weight = "bold",
-                #font.size = 18,
-                #font.family = "Century Gothic"
-              #)
-            #) #Bold text on last line (totals)
-          #ft.g[,1] <- chprop(parProperties(text.align = "center"))
-          #ft.g <- setFlexTableWidths(ft.g, widths = c(4, rep(6,dim(tabledata.df.g)[2]-1)))      
-          
-        #}
-        
-        #if(g != 1){
-        #  ft.g[,1] <- chprop(parProperties(text.align = "right"))
-        #}
-        
-        #ft.g[1:dim(tabledata.df.g)[1],2:dim(tabledata.df.g)[2]] <- #Center align numbers in all but first column
-        #  chprop(parProperties(text.align = "center")) 
-        #ft.g <- setZebraStyle(ft.g, odd = "#D0ABD6", even = "white" ) 
-        
-        #tables.ls.g[[g]] <- ft.g
-        
-    #} ### END OF LOOP "g" BY TABLE ###
-  
-    #names(tables.ls.g) <- c("role","etlp","cfa","dbdm","pd","lead") #TODO:WAS CAUSING PROBLEMS WITH ORDERING OF TABLES ON SLIDES BECAUSE HAD NOT BEEN UPDATED TO NEW ORDER OF domainS
-    #tables.ls.f[[f]] <- tables.ls.g
-    }
-      
-    setTxtProgressBar(progress.bar.f, 100*f/maxrow.f)
-    
-  } ### END OF LOOP "f" BY REPORT.UNIT
-  close(progress.bar.f)
-    
-   #Section Clocking
-    section5.duration <- Sys.time() - section5.starttime
-    section5.duration
-    Sys.time() - sections.all.starttime
-
-
-
-# 5-OBJECT CREATION (GRAPHS & TABLES) OUTPUTS ------------------------------------
-  #graphs.ls.f
-    #[[report.unit]]
-      #ggplot object
-  #tables.ls.f
-    #[[report.unit]]
-      #FlexTable object
-
-
 # 6-EXPORT -----------------------------------------------
   
   #Code Clocking
@@ -898,30 +561,42 @@
   #Load Configs Functions
     setwd(rproj.dir)
     source("6-powerpoints export functions.r")
-  
-  
-  # POWERPOINT GLOBAL CONFIGURATIONS
-  
-    #Useful colors
-      titlegreen <- rgb(118,153,48, maxColorValue=255)
-      notesgrey <- rgb(131,130,105, maxColorValue=255)
-      graphlabelsgrey <- "#5a6b63"
-      graphgridlinesgrey <- "#e6e6e6"
-      purpleshade <- "#d0abd6"
-      purpleheader <- "#3d2242"
-      purplegraphshade <- "#402339"
-      backgroundgreen <- "#94c132"
-      subtextgreen <- "#929e78"
-      
-      bar_series_fill.cols <- c("#800080","#ff33ff")
     
-    #Text formatting
-      title.format <- textProperties(color = titlegreen, font.size = 48, font.weight = "bold", font.family = "Century Gothic")
-      title.format.small <- textProperties(color = titlegreen, font.size = 40, font.weight = "bold", font.family = "Century Gothic")
-      subtitle.format <- textProperties(color = notesgrey, font.size = 28, font.weight = "bold", font.family = "Century Gothic")
-      section.title.format <- textProperties(color = "white", font.size = 48, font.weight = "bold", font.family = "Century Gothic")
-      notes.format <- textProperties(color = notesgrey, font.size = 14, font.family = "Century Gothic")
-      setwd(source.tables.dir)
+  #Establish Outputs Directory
+    outputs.dir <- 
+      paste(
+        working.dir,
+        "\\4_outputs\\",
+        gsub(":",".",Sys.time()), 
+        sep = ""
+      )
+          
+      dir.create(
+        outputs.dir,
+        recursive = TRUE
+      )
+      
+      setwd(outputs.dir)
+  
+  #Export of Long Data (if in global configs)
+    if(export.long.data){
+      
+      setwd(outputs.dir) 
+      
+      data.output.filename <- 
+         paste(
+          "longdata_",
+          gsub(":",".",Sys.time()),
+          ".csv",
+          sep = ""
+        )
+      
+      write.csv(
+        resp.long.tb,
+        file = data.output.filename
+      )
+    
+    }
   
   ###                          ###    
 # ### LOOP "h" BY REPORT UNIT  ###
@@ -1215,79 +890,9 @@ windows()
 
 
 
-# 2.5-TEST TABLE OUTPUTS ------------------   
-  
-  #Table 1: Average Response by Domain
-    building.domain.mean.value.tb <- 
-      resp6.tb %>%
-      dcast(
-        ., 
-        formula = building.id ~ domain, 
-        value.var = "value", 
-        fun.aggregate = function(x){mean(x, na.rm = TRUE) %>% round(., digits = 1)}
-      ) %>%
-      .[,names(.)!= "NA"]
-      
-    domain.district.mean.value.v <-
-      resp5.tb %>%
-      group_by(., domain) %>%
-      summarize(x = mean(value)) %>%
-      select(x) %>%
-      unlist %>% as.vector %>%
-      round(., digits = 1) %>%
-      as.matrix() %>% t
     
-    domain.state.mean.value.v <- 
-      domain.district.mean.value.v + 
-      rnorm(length(domain.district.mean.value.v), mean = 0, sd = sd(domain.district.mean.value.v)) %>%
-      round(., digits = 1) %>%
-      as.matrix() %>% t
   
-  #Table 3: Average Response by Practice (CFA)
-  
-    building.cfa.practice..mean.value.tb <-
-      resp5.tb %>%
-      filter(domain == "cfa") %>%
-      dcast(
-        .,
-        formula = building ~ variable,
-        value.var = "value",
-        fun.aggregate = function(x){mean(x, na.rm = TRUE) %>% round(., digits = 1)}
-      )
-    
-    practice.cfa.district.mean.value.v <-
-      resp5.tb %>%
-      filter(domain == "cfa") %>%
-      group_by(., variable) %>%
-      summarize(x = mean(value)) %>%
-      select(x) %>%
-      unlist %>% as.vector %>%
-      round(., digits = 1) %>%
-      as.matrix() %>% t
-    
-    practice.cfa.state.mean.value.v <- 
-      practice.cfa.district.mean.value.v + 
-      rnorm(length(practice.cfa.district.mean.value.v), mean = 0, sd = sd(practice.cfa.district.mean.value.v)) %>%
-      round(., digits = 1) %>%
-      as.matrix() %>% t
-  
-    
-  #Establish Outputs Directory
-    outputs.dir <- 
-      paste(
-        working.dir,
-        "\\4_outputs\\",
-        gsub(":",".",Sys.time()), 
-        sep = ""
-      )
-          
-      dir.create(
-        outputs.dir,
-        recursive = TRUE
-      )
-      
-      setwd(outputs.dir)
-              
+                
   #Set up target file
     template.file <- 
       paste(
@@ -1314,13 +919,7 @@ windows()
     
     file.copy(template.file, target.path.h)
   
-  #1-Time Export of Long Data to do timed experiment for creating dashboard
-    setwd(outputs.dir) 
-    
-    write.csv(
-      resp5.tb,
-      file = "farmington_longdata.csv",
-    )
+  
     
   #Write table to file
     setwd(outputs.dir)
