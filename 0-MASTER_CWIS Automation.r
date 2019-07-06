@@ -19,20 +19,26 @@
   
   # ESTABLISH BASE DIRECTORIES
   
-    #M900
-      working.dir <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-06 District Dashboards"
-      rproj.dir <- "C:\\Users\\willi\\Documents\\GIT PROJECTS\\CWIS-automation"
-
-    #Thinkpad T470
-      #working.dir <- "G:\\My Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. Missouri - GDRIVE\\8. CWIS\\2018-12 Green Reports Phase 6"
-      #rproj.dir <- "C:\\Users\\WNF\\Documents\\Git Projects\\CWIS-automation"
+      # Figure out what machine code is running on
+      if(dir.exists("C:\\Users\\willi")){m900 <- TRUE}else{m900 <- FALSE}
+      
+      # Set Working Directory and R Project Directory
+      if(m900){  
+        #M900
+        wd <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-06 District Dashboards\\"
+        rproj.dir <- "C:\\Users\\willi\\Documents\\GIT PROJECTS\\CWIS-automatoin\\"
+      }else{
+        #Thinkpad T470
+        wd <- "G:\\My Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-06 District Dashboards\\"
+        rproj.dir <- "C:\\Users\\WNF\\Documents\\GIT PROJECTS\\CWIS-automation\\"
+      }
     
     #Check Directories
-      working.dir <- if(!dir.exists(working.dir)){choose.dir()}else{working.dir}
+      wd <- if(!dir.exists(wd)){choose.dir()}else{wd}
       rproj.dir <- if(!dir.exists(rproj.dir)){choose.dir()}else{rproj.dir}
     
     #Source Tables Directory (raw data, configs, etc.)
-      source.tables.dir <- paste(working.dir,"\\3_source_tables\\", sep = "")
+      source.tables.dir <- paste(wd,"\\3_source_tables\\", sep = "")
       if(dir.exists(source.tables.dir)){ 
         print("source.tables.dir exists.")
       }else{
@@ -67,7 +73,7 @@
 
 # 0-SETUP OUTPUTS -----------------------------------------------------------
   #start_time: sys.time for code
-  #working.dir: working directory - Google Drive folder "2018-08 Green Reports"
+  #wd: working directory - Google Drive folder "2018-08 Green Reports"
   #rproj.dir: directory for R project; also contains source data, additional function scripts, and config tables.
   #source.tables.dir: directory with raw data, configs, etc.
 
@@ -484,6 +490,7 @@
         #Define table filtering vector
           table.filter.v <-
             DefineTableFilterVector(
+              tb = resp.long.tb,
               filter.varnames = config.tables.df.d$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector,
               filter.values = config.tables.df.d$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
             )
@@ -491,8 +498,12 @@
         #Define Table Aggregation Function
           table.aggregation.function <-
             function(x){
-              if(config.tables.df.d$aggregate.function == "length"){
+              if(config.tables.df.d$aggregate.function == "count"){
                 result <- length(x)
+              }
+              
+              if(config.tables.df.d$aggregate.function == "count.unique"){
+                result <- length(unique(x))
               }
               
               if(config.tables.df.d$aggregate.function == "mean"){
@@ -564,30 +575,31 @@
 
 # 6-EXPORT -----------------------------------------------
   
-  #Code Clocking
-    section6.starttime <- Sys.time()
-    
-  #Load Configs Functions
-    setwd(rproj.dir)
-    source("6-powerpoints export functions.r")
-    
-  #Establish Outputs Directory
-    outputs.dir <- 
-      paste(
-        working.dir,
-        "\\4_outputs\\",
-        gsub(":",".",Sys.time()), 
-        sep = ""
-      )
-          
-      dir.create(
-        outputs.dir,
-        recursive = TRUE
-      )
+  #Export Setup ----
+    #Code Clocking
+      section6.starttime <- Sys.time()
       
-      setwd(outputs.dir)
-  
-  #Export of Long Data (if in global configs)
+    #Load Configs Functions
+      setwd(rproj.dir)
+      source("6-powerpoints export functions.r")
+      
+    #Establish Outputs Directory
+      outputs.dir <- 
+        paste(
+          wd,
+          "\\4_outputs\\",
+          gsub(":",".",Sys.time()), 
+          sep = ""
+        )
+            
+        dir.create(
+          outputs.dir,
+          recursive = TRUE
+        )
+        
+        setwd(outputs.dir)
+    
+  #Export of Long Data (if in global configs) ----
     if(export.long.data %>% as.logical){
       
       setwd(outputs.dir) 
@@ -607,90 +619,116 @@
     
     }
   
-  ###                          ###    
-# ### LOOP "h" BY REPORT UNIT  ###
-  ###                          ###
-  
-  #Progress Bar
-    progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
-    maxrow.h <- tables.ls %>% lengths %>% sum
-    #printed.reports.ls <- list()
-  
-  h <- 1 #LOOP TESTER
-  #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
-  #for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
-    
-    unit.id.h <- unit.ids.sample[h]  
-                  
-    #Set up target file
-      template.file <- 
-        paste(
-          source.tables.dir,
-          "dashboard_template.xlsx",
-          sep = ""
-        )
-      
-      if(sample.print){
+  #Export Loop 'h' by report unit ----
         
-        file.name.h <- 
-           paste(
-            "district dashboard_",
-            unit.id.h,
-            ".xlsx",
+    ###                          ###    
+  # ### LOOP "h" BY REPORT UNIT  ###
+    ###                          ###
+    
+    #Progress Bar
+      progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
+      maxrow.h <- tables.ls %>% lengths %>% sum
+      #printed.reports.ls <- list()
+    
+    h <- 1 #LOOP TESTER
+    #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
+    #for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
+      
+      unit.id.h <- unit.ids.sample[h]  
+                    
+      #Set up target file
+        template.file <- 
+          paste(
+            source.tables.dir,
+            "dashboard_template.xlsx",
             sep = ""
           )
         
-      }else{
+        if(sample.print){
+          
+          file.name.h <- 
+             paste(
+              "district dashboard_",
+              unit.id.h,
+              "_",
+              gsub(":",".",Sys.time()),
+              ".xlsx",
+              sep = ""
+            )
+          
+        }else{
+          
+           file.name.h <- 
+            paste(
+              "district dashboard_",
+              unit.id.h,
+              ".xlsx",
+              sep = ""
+            )
+          
+        }
         
-         file.name.h <- 
-          paste(
-            "district dashboard_",
-            unit.id.h,
-            "_",
-            gsub(":",".",Sys.time()),
-            ".xlsx",
-            sep = ""
-          )
+        target.path.h <- 
+            paste(
+              outputs.dir,
+              "\\",
+              file.name.h,
+              sep=""
+            ) 
         
-      }
+        file.copy(template.file, target.path.h)
       
-      target.path.h <- 
-          paste(
-            outputs.dir,
-            "\\",
-            file.name.h,
-            sep=""
-          ) 
+  
+      ###                     ###    
+  #   ###   LOOP "i" BY TAB   ###
+      ###                     ###
       
-      file.copy(template.file, target.path.h)
-    
-
-    ###                     ###    
-#   ###   LOOP "i" BY TAB   ###
-    ###                     ###
-    
-    config.tables.ls.h <- config.tables.ls[[h]] #split(config.tables.ls[[h]], f = config.tables.ls[[h]]$tab.type.id)  
-      
-    #i <- 1 #LOOP TESTER
-    #for(i in 1:4){ #LOOP TESTER
-    for(i in 1:length(tables.ls[[h]])){
-      
+      config.tables.ls.h <- config.tables.ls[[h]] #split(config.tables.ls[[h]], f = config.tables.ls[[h]]$tab.type.id)  
       setwd(outputs.dir)
       wb <- loadWorkbook(file.name.h, create = FALSE)
       setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
       
-      writeWorksheet(
-        object = wb, 
-        data = tables.ls[[h]][[i]],
-        sheet = config.tables.ls.h$tab.type.name[i],
-        startRow = config.tables.ls.h$startrow[i],
-        startCol = config.tables.ls.h$startcol[i],
-        header = config.tables.ls.h$header[i]
-      )
+      #i <- 1 #LOOP TESTER
+      #for(i in 1:4){ #LOOP TESTER
+      for(i in 1:length(tables.ls[[h]])){  
+        
+        print(
+          paste(
+            "Loop: ",
+            i,
+            ". Tab name: ",
+            config.tables.ls.h$tab.type.name[i],
+            ". Table name: ",
+            names(tables.ls[[h]])[i],
+            sep = ""
+          )
+        )
+        
+        writeWorksheet(
+          object = wb, 
+          data = tables.ls[[h]][[i]],
+          sheet = config.tables.ls.h$tab.type.name[i],
+          startRow = config.tables.ls.h$startrow[i],
+          startCol = config.tables.ls.h$startcol[i],
+          header = config.tables.ls.h$header[i],
+          rownames = config.tables.ls.h$row.header[i]
+        )
+        
+      }
+        
+      saveWorkbook(wb)
       
-    }
-      
-      config.slide.df.i <- config.slides.ls.b[[h]] %>% .[i,]
+    
+    
+    
+    
+    
+    
+    
+# EXTRA CODE ---------------------------------------------------    
+    
+    
+    config.slide.df.i <- config.slides.ls.b[[h]] %>% .[i,]
       slide.type.id.i <- config.slide.df.i$slide.type.id
       layout.i <- config.slide.df.i$slide.layout
       
@@ -767,14 +805,14 @@
  
       setTxtProgressBar(progress.bar.h, 100*h/length(unit.ids.sample))
       
-    } #END OF LOOP "i" BY SLIDE
+    #} #END OF LOOP "i" BY SLIDE
     
     writeDoc(ppt.h, file = target.path.h) #Write complete pptx object to file
     
     print(h)
     printed.reports.ls[[h]] <- unit.ids.sample[h]
   
-  } # END OF LOOP "h" BY REPORT.UNIT      
+  #} # END OF LOOP "h" BY REPORT.UNIT      
   
   close(progress.bar.h)      
 
