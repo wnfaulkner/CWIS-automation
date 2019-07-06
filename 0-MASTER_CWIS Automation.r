@@ -630,9 +630,9 @@
       maxrow.h <- tables.ls %>% lengths %>% sum
       #printed.reports.ls <- list()
     
-    h <- 1 #LOOP TESTER
-    #for(h in ceiling(runif(5,1,length(config.slides.ls.b)))){
-    #for(h in 1:length(config.slides.ls.b)){ #LOOP TESTER
+    #h <- 1 #LOOP TESTER
+    #for(h in ceiling(runif(5,1,length(unit.ids.sample)))){
+    for(h in 1:length(unit.ids.sample)){ 
       
       unit.id.h <- unit.ids.sample[h]  
                     
@@ -680,7 +680,7 @@
       
   
       ###                     ###    
-  #   ###   LOOP "i" BY TAB   ###
+  #   ###   LOOP "i" BY TABLE   ###
       ###                     ###
       
       config.tables.ls.h <- config.tables.ls[[h]] #split(config.tables.ls[[h]], f = config.tables.ls[[h]]$tab.type.id)  
@@ -690,7 +690,7 @@
       
       #i <- 1 #LOOP TESTER
       #for(i in 1:4){ #LOOP TESTER
-      for(i in 1:length(tables.ls[[h]])){  
+      for(i in 1:nrow(config.tables.ls[[h]] %>% filter(tab.type.id < 4))){  
         
         print(
           paste(
@@ -714,9 +714,11 @@
           rownames = config.tables.ls.h$row.header[i]
         )
         
-      }
+      } # END OF LOOP 'i' BY TABLE
         
       saveWorkbook(wb)
+      
+    } # END OF LOOP 'h' BY REPORT UNIT
       
     
     
