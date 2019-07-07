@@ -14,15 +14,15 @@ source("utils_wnf.r")
       ){
         row.header.formula <- 
           row.header.varnames %>% 
-          {if(is.na(.)) "." else .} %>%
+          {if(all(is.na(.))) "." else .} %>%
           {if(length(.)==1) . else paste(., collapse = "+")}
       
         col.header.formula <- 
           col.header.varnames %>% 
-          {if(is.na(.)) "." else .} %>%
+          {if(all(is.na(.))) "." else .} %>%
           {if(length(.)==1) . else paste(., collapse = "+")}
         
-        table.formula.d <- 
+        table.formula <- 
           paste(
             row.header.formula,
             "~",
@@ -31,7 +31,7 @@ source("utils_wnf.r")
           ) %>% 
           as.formula
         
-        return(table.formula.d)
+        return(table.formula)
       }
   
   #Define Filtering Vector

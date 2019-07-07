@@ -126,6 +126,17 @@
     
 #FUNCTIONS FOR MANIPULATING VECTORS & COLUMNS --------------------
   
+  #Capitalize first letter of each word in string
+    proper <- function(s, strict = FALSE) {
+      cap <- function(s) 
+        paste(
+          toupper(substring(s, 1, 1)),
+          {s <- substring(s, 2); if(strict) tolower(s) else s},
+          sep = "", collapse = " " 
+        )
+      sapply(strsplit(s, split = " "), cap, USE.NAMES = !is.null(names(s)))
+    }
+    
   #Filter Vector based on condition
     FilterVector <- function(condition,vector.input){
       vector.input[condition]
@@ -545,6 +556,35 @@
         }
 
 #FUNCTIONS FOR MANIPULATING DATA FRAMES & TABLES --------------------
+  
+  #Transpose table with correct column & row names
+    TransposeTable <- function(
+      table,
+      keep.first.colname = c(TRUE,FALSE)
+    ){
+      
+      result.rownames <- names(table)
+      
+      result1.tb <- table %>% t %>% as_tibble %>% mutate(x = result.rownames)
+      
+      result.colnames <- result1.tb[1,] %>% unlist %>% as.vector
+      
+      result2.tb <- 
+        result1.tb[-1,] %>% 
+        ReplaceNames(., names(.), result.colnames) %>%
+        MoveColsLeft(., colnames = names(.)[ncol(.)])
+        
+      if(missing(keep.first.colname)){keep.first.colname <- FALSE}
+      
+      if(!keep.first.colname){
+        names(result2.tb)[1] <- ""
+      }
+      
+      return(result2.tb)
+    }
+      
+        
+    
   
   #Output variable names in data frame which can be converted to numeric       
     NumericVarnames <- function(df) {
