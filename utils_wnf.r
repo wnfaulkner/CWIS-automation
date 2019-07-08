@@ -557,15 +557,26 @@
 
 #FUNCTIONS FOR MANIPULATING DATA FRAMES & TABLES --------------------
   
+  #Replace value in table (table form of gsub)
+    TableGsub <- 
+      function(
+        tb, 
+        value, 
+        replacement.value
+      ){
+        result <- apply(tb, c(1:2), function(x){ifelse(x == value, replacement.value, x)})
+        return(result)
+      }
+        
   #Transpose table with correct column & row names
     TransposeTable <- function(
-      table,
+      tb,
       keep.first.colname = c(TRUE,FALSE)
     ){
       
-      result.rownames <- names(table)
+      result.rownames <- names(tb)
       
-      result1.tb <- table %>% t %>% as_tibble %>% mutate(x = result.rownames)
+      result1.tb <- tb %>% t %>% as_tibble %>% mutate(x = result.rownames)
       
       result.colnames <- result1.tb[1,] %>% unlist %>% as.vector
       
@@ -583,9 +594,6 @@
       return(result2.tb)
     }
       
-        
-    
-  
   #Output variable names in data frame which can be converted to numeric       
     NumericVarnames <- function(df) {
         result <- 

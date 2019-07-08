@@ -285,7 +285,8 @@
             is.baseline = 0,
             is.most.recent = 0, 
             is.current = 0,
-            is.current.or.most.recent = 0
+            is.current.or.most.recent = 0,
+            is.current.or.baseline = 0
           )
         
         year.var.helper.tb.i$is.baseline[1] <- 1
@@ -293,7 +294,10 @@
         year.var.helper.tb.i$is.most.recent[nrow(year.var.helper.tb.i)-1] <- 1
         year.var.helper.tb.i$is.current.or.most.recent[
           year.var.helper.tb.i$is.current == 1 | year.var.helper.tb.i$is.most.recent ==1
-        ] <- 1 
+        ] <- 1
+        year.var.helper.tb.i$is.current.or.baseline[
+          year.var.helper.tb.i$is.current == 1 | year.var.helper.tb.i$is.baseline ==1
+          ] <- 1
         
         year.var.helper.ls[[i]] <- year.var.helper.tb.i
       }
@@ -401,11 +405,16 @@
         resp.long.tb %>% filter(unit.id == unit.id.b)
       
     #Tab config table for this report unit
+      tab4.loopvarname <- 
+        config.tab.types.tb %>% 
+        select(tab.loop.var.1) %>% 
+        unlist %>% unique %>% RemoveNA
+      
       config.tabs.ls[[b]] <-
         tibble(
           tab.type.id = 4,
           tab.type.name = "Building Overview",
-          loop.id = resp.long.tb.b$building.id %>% unique
+          loop.id = resp.long.tb.b %>% select(tab4.loopvarname) %>% unlist %>% unique 
         ) %>%
         rbind(
           config.tab.types.tb %>% select(tab.type.id, tab.type.name) %>% mutate(loop.id = NA),
@@ -467,155 +476,152 @@
   #Building Level Order
     building.level.order.v <- c("Elem.","High","Middle","Technology Ctr.","Other")
     
-  c <- 1 #LOOP TESTER 
+  #c <- 1 #LOOP TESTER 
   #for(c in tabr.unit.ids.sample){   #LOOP TESTER
-  #for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY unit.id
+  for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY unit.id
     
     #Loop Inputs (both graphs and tables)
       unit.id.c <- unit.ids.sample[c]
     
     #Print loop messages
       if(c == 1){print("Forming tables for export...")}
-      #print(
-      #  paste(
-      #    "LOOP 'C' -- Loop num: ", c,", Report id: ",unit.id.c,
-      #    ", Pct. complete:", round(100*c/length(unit.ids.sample), 2), "%"
-      #  )
-      #)
     
-    ###                                   ###
-#   ### LOOP "d" BY TABLE FOR TABS 1 & 2  ###
-    ###                                   ###
-    
-    #Loop Inputs
-      config.tables.input.tb <- 
-        config.tables.ls[[c]] %>% 
-        filter(!is.na(table.type.id)) %>%
-        filter(tab.type.id %in% c(1,2))
-      tables.ls.d <- list()
-      
-      #d <- 4
-      #for(d in 1:3){ #Loop Tester
-      for(d in 1:nrow(config.tables.input.tb)){ ### START OF LOOP "d" BY TABLE ###
-        
-        config.tables.tb.d <- config.tables.input.tb[d,]
-        
-        #print(
-        #  paste(
-        #    "LOOP 'd' -- Loop num: ", d,
-        #    ", Report id: ",unit.id.c,
-        #    ", Tab: ", config.tables.tb.d$tab.type.name[d],
-        #    ", Table: ", config.tables.tb.d$table.type.name[d],
-        #    ", Pct. complete: ", round(100*d/nrow(config.tables.tb.d), 2), "%",
-        #    sep = ""
-        #  )
-        #)
-        
-        
-        #Define table aggregation formula
-          table.formula.d <-
-            DefineTableRowColFormula(
-              row.header.varnames = strsplit(config.tables.tb.d$row.header.varname, ",") %>% unlist %>% as.vector,
-              col.header.varnames = strsplit(config.tables.tb.d$col.header.varname, ",") %>% unlist %>% as.vector
-            )
-        
-        #Define table filtering vector
-          table.filter.v <-
-            DefineTableFilterVector(
-              tb = resp.long.tb,
-              filter.varnames = config.tables.tb.d$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector,
-              filter.values = config.tables.tb.d$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
-            )
-          
-        #Define Table Aggregation Function
-          table.aggregation.function <-
-            function(x){
-              if(config.tables.tb.d$aggregate.function == "count"){
-                result <- length(x)
-              }
-              
-              if(config.tables.tb.d$aggregate.function == "count.unique"){
-                result <- length(unique(x))
-              }
-              
-              if(config.tables.tb.d$aggregate.function == "mean"){
-                result <- mean(x, na.rm = TRUE)
-              }
-              
-              return(result)
-            }
-          
-        #Form final data frame
-          table.d <-  
-            resp.long.tb %>%
-            filter(table.filter.v) %>%
-            dcast(
-              ., 
-              formula = table.formula.d, 
-              value.var = config.tables.tb.d$value.varname, 
-              fun.aggregate = table.aggregation.function
-            ) %>%
-            .[,names(.)!= "NA"]
-          
-        #Modifications for specific tables
-          
-          if(grepl("building.level", table.formula.d) %>% any){
-            table.d <- 
-              left_join(
-                building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
-                table.d,
-                by = "building.level"
-              )
-          }
-          
-          if(!config.tables.tb.d$row.header){  #when don't want row labels
-            table.d <- table.d %>% select(names(table.d)[-1])
-          }
-          
-         
-      
-        tables.ls.d[[d]] <- table.d
-        
-        
-        progress.bar.value.c <- 
-          ifelse(c==1, 0, 1) %>%
-          rep(., nrows.c[1:(c-1)] %>% length) %>%
-          multiply_by(nrows.c[1:(c-1)]) %>%
-          add(d) %>% 
-          divide_by(sum(nrows.c)) %>% 
-          multiply_by(100) 
-          
-        setTxtProgressBar(progress.bar.c, progress.bar.value.c)
-        
-      } ### END OF LOOP "d" BY TABLE ###
-      
-      names(tables.ls.d) <- 
-        paste(
-          rep(unit.id.c, length(tables.ls.d)),
-          ".",
-          c(1:length(tables.ls.d)),
-          ".",
-          config.tables.tb.d$table.type.name, 
-          sep = ""
-        ) %>%
-        gsub("-", " ", .) %>%
-        gsub(" ", ".", .) %>%
-        SubRepeatedCharWithSingleChar(., ".") %>%
-        tolower
-      
-      ###                              ###
-      ### LOOP "e" BY TABLE FOR TAB 3  ###
-      ###                              ###
+    #Tabs 1 & 2 ----
+      ###                                   ###
+  #   ### LOOP "d" BY TABLE FOR TABS 1 & 2  ###
+      ###                                   ###
       
       #Loop Inputs
         config.tables.input.tb <- 
           config.tables.ls[[c]] %>% 
           filter(!is.na(table.type.id)) %>%
-          filter(tab.type.id %in% c(3))
-        tables.ls.e <- list()
+          filter(tab.type.id %in% c(1,2))
+        tables.tab12.ls <- list()
+        
+        #d <- 4
+        #for(d in 1:3){ #Loop Tester
+        for(d in 1:nrow(config.tables.input.tb)){ ### START OF LOOP "d" BY TABLE ###
+          
+          config.tables.tb.d <- config.tables.input.tb[d,]
+          
+          #print(
+          #  paste(
+          #    "LOOP 'd' -- Loop num: ", d,
+          #    ", Report id: ",unit.id.c,
+          #    ", Tab: ", config.tables.tb.d$tab.type.name[d],
+          #    ", Table: ", config.tables.tb.d$table.type.name[d],
+          #    ", Pct. complete: ", round(100*d/nrow(config.tables.tb.d), 2), "%",
+          #    sep = ""
+          #  )
+          #)
+          
+          
+          #Define table aggregation formula
+            table.formula.d <-
+              DefineTableRowColFormula(
+                row.header.varnames = strsplit(config.tables.tb.d$row.header.varname, ",") %>% unlist %>% as.vector,
+                col.header.varnames = strsplit(config.tables.tb.d$col.header.varname, ",") %>% unlist %>% as.vector
+              )
+          
+          #Define table filtering vector
+            table.filter.v <-
+              DefineTableFilterVector(
+                tb = resp.long.tb,
+                filter.varnames = config.tables.tb.d$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector,
+                filter.values = config.tables.tb.d$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
+              )
+            
+          #Define Table Aggregation Function
+            table.aggregation.function <-
+              function(x){
+                if(config.tables.tb.d$aggregate.function == "count"){
+                  result <- length(x)
+                }
+                
+                if(config.tables.tb.d$aggregate.function == "count.unique"){
+                  result <- length(unique(x))
+                }
+                
+                if(config.tables.tb.d$aggregate.function == "mean"){
+                  result <- mean(x, na.rm = TRUE)
+                }
+                
+                return(result)
+              }
+            
+          #Form final data frame
+            table.d <-  
+              resp.long.tb %>%
+              filter(table.filter.v) %>%
+              dcast(
+                ., 
+                formula = table.formula.d, 
+                value.var = config.tables.tb.d$value.varname, 
+                fun.aggregate = table.aggregation.function
+              ) %>%
+              .[,names(.)!= "NA"]
+            
+          #Modifications for specific tables
+            
+            if(grepl("building.level", table.formula.d) %>% any){
+              table.d <- 
+                left_join(
+                  building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
+                  table.d,
+                  by = "building.level"
+                )
+            }
+            
+            if(!config.tables.tb.d$row.header){  #when don't want row labels
+              table.d <- table.d %>% select(names(table.d)[-1])
+            }
+            
+           
+        
+          tables.tab12.ls[[d]] <- table.d
+          
+          
+          progress.bar.value.c <- 
+            ifelse(c==1, 0, 1) %>%
+            rep(., nrows.c[1:(c-1)] %>% length) %>%
+            multiply_by(nrows.c[1:(c-1)]) %>%
+            add(d) %>% 
+            divide_by(sum(nrows.c)) %>% 
+            multiply_by(100) 
+            
+          setTxtProgressBar(progress.bar.c, progress.bar.value.c)
+          
+        } ### END OF LOOP "d" BY TABLE ###
+        
+        names(tables.tab12.ls) <- 
+          paste(
+            rep(unit.id.c, length(tables.tab12.ls)),
+            ".",
+            c(1:length(tables.tab12.ls)),
+            ".",
+            config.tables.tb.d$table.type.name, 
+            sep = ""
+          ) %>%
+          gsub("-", " ", .) %>%
+          gsub(" ", ".", .) %>%
+          SubRepeatedCharWithSingleChar(., ".") %>%
+          tolower
+      
+    #Tab 3 ----
+        
+      ###                              ###
+      ### LOOP "e" BY TABLE FOR TAB 3  ###
+      ###                              ###
+      
+      #Loop Inputs
+        #config.tables.input.tb <- 
+        #  config.tables.ls[[c]] %>% 
+        #  filter(!is.na(table.type.id)) %>%
+        #  filter(tab.type.id %in% c(3))
+        tables.tab3.ls <- list()
       
       #State Average Table - Last School Year vs. Current
-        state.avg.tb <-
+        tables.tab3.ls[[1]] <-
           resp.long.tb %>% 
           filter(
             unit.id == unit.id.c & 
@@ -635,12 +641,15 @@
             value.var = "value"
           ) %>%
           mutate(
-            trend = .[,2] - .[,3]
+            Trend = .[,2] - .[,3]
           ) %>%
           TransposeTable(., keep.first.colname = FALSE)
+        
+        tables.tab3.ls[[1]][1,1] <- "Previous School Year"
+          
       
       #Building Average Table - Last School year vs. Current  
-        building.trends.by.domain.tb <- 
+        tables.tab3.ls[[2]] <- 
           resp.long.tb %>% 
           filter(
             unit.id == unit.id.c & 
@@ -660,7 +669,7 @@
             value.var = "value"
           ) %>%
           mutate(
-            trend = .[,3] - .[,4]
+            Trend = .[,3] - .[,4]
           ) %>%
           melt(
             ., 
@@ -670,13 +679,18 @@
             ., 
             formula = building.name + variable ~ domain
           )
-          
+        
+        #tables.tab3.ls[[2]][1,1] <- "Previous School Year"
+        tables.tab3.ls[[2]]$variable %<>%
+          as.character %>%
+          gsub("0000", "Prev. School Year", .)
+
       #State Average Table - Baseline vs. Current
-        state.avg.tb <-
+        tables.tab3.ls[[3]] <-
           resp.long.tb %>% 
           filter(
             unit.id == unit.id.c & 
-              is.current.or.most.recent == 1
+              is.current.or.baseline == 1
           ) %>%
           SplitColReshape.ToLong(
             df = ., 
@@ -692,16 +706,18 @@
             value.var = "value"
           ) %>%
           mutate(
-            trend = .[,2] - .[,3]
+            Trend = .[,2] - .[,3]
           ) %>%
           TransposeTable(., keep.first.colname = FALSE)
         
+        tables.tab3.ls[[3]][1,1] <- "Baseline"
+        
       #Building Average Table - Baseline year vs. Current  
-        building.trends.by.domain.tb <- 
+        tables.tab3.ls[[4]] <- 
           resp.long.tb %>% 
           filter(
             unit.id == unit.id.c & 
-              is.current.or.most.recent == 1
+              is.current.or.baseline == 1
           ) %>%
           SplitColReshape.ToLong(
             df = ., 
@@ -717,7 +733,7 @@
             value.var = "value"
           ) %>%
           mutate(
-            trend = .[,3] - .[,4]
+            Trend = .[,3] - .[,4]
           ) %>%
           melt(
             ., 
@@ -728,118 +744,121 @@
             formula = building.name + variable ~ domain
           )
         
+        tables.tab3.ls[[4]]$variable %<>%
+          as.character %>%
+          gsub("0000", "Baseline", .)
+      
+    #Tab 4+ (Building Summaries) ----
+        ###                                   ###
+    #   ### LOOP "e" BY TABLE FOR TABs 4+  ###
+        ###                                   ###
         
-      e <- 3
-      #for(d in 1:3){ #Loop Tester
-      #for(e in 1:nrow(config.tables.input.tb)){ ### START OF LOOP "d" BY TABLE ###
-        
-        config.tables.tb.e <- config.tables.input.tb[e,]
-        
-        print(
-          paste(
-            "LOOP 'e' -- Loop num: ", e,
-            ", Report id: ",unit.id.c,
-            ", Tab: ", config.tables.tb.e$tab.type.name[e],
-            ", Table: ", config.tables.tb.e$table.type.name[e],
-            ", Pct. complete: ", round(100*e/nrow(config.tables.input.tb), 2), "%",
-            sep = ""
-          )
-        )
-        
-        #Define table aggregation formula
-        table.formula <-
-          DefineTableRowColFormula(
-            row.header.varnames = strsplit(config.tables.tb.e$row.header.varname, ";") %>% unlist %>% as.vector,
-            col.header.varnames = strsplit(config.tables.tb.e$col.header.varname, ";") %>% unlist %>% as.vector
-          )
-        
-        #Define table filtering vector
-        table.filter.v <-
-          DefineTableFilterVector(
-            tb = resp.long.tb,
-            filter.varnames = config.tables.tb.e$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector,
-            filter.values = config.tables.tb.e$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
-          )
-        
-        #Define Table Aggregation Function
-        table.aggregation.function <-
-          function(x){
-            if(config.tables.tb.e$aggregate.function == "count"){
-              result <- length(x)
+        #Loop Inputs
+          config.tables.input.tb <- 
+            config.tables.ls[[c]] %>% 
+            filter(!is.na(table.type.id)) %>%
+            filter(tab.type.id %in% c(4)) %>%
+            filter(!is.na(loop.id))
+          tables.tab4.ls <- list()
+          
+        #e <- 1
+        for(e in 1:nrow(config.tables.input.tb)){ ### START OF LOOP "e" BY TABLE ###
+          
+          config.tables.tb.e <- config.tables.input.tb[e,]
+          
+          #print(
+          #  paste(
+          #    "LOOP 'd' -- Loop num: ", d,
+          #    ", Report id: ",unit.id.c,
+          #    ", Tab: ", config.tables.tb.d$tab.type.name[d],
+          #    ", Table: ", config.tables.tb.d$table.type.name[d],
+          #    ", Pct. complete: ", round(100*d/nrow(config.tables.tb.d), 2), "%",
+          #    sep = ""
+          #  )
+          #)
+          
+          
+          #Define table aggregation formula
+            table.formula.e <-
+              DefineTableRowColFormula(
+                row.header.varnames = strsplit(config.tables.tb.e$row.header.varname, ",") %>% unlist %>% as.vector,
+                col.header.varnames = strsplit(config.tables.tb.e$col.header.varname, ",") %>% unlist %>% as.vector
+              )
+          
+          #Define table filtering vector
+            loop.id.e <- config.tables.tb.e$loop.id
+            table.filter.v <-
+              DefineTableFilterVector(
+                tb = resp.long.tb,
+                filter.varnames = config.tables.tb.e$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector,
+                filter.values = config.tables.tb.e$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
+              )
+            
+            if(table.filter.v %>% not %>% all){
+              tables.tab4.ls[[e]] <- ""
+              next()
             }
             
-            if(config.tables.tb.e$aggregate.function == "count.unique"){
-              result <- length(unique(x))
+          #Define Table Aggregation Function
+            table.aggregation.function <-
+              function(x){
+                if(config.tables.tb.e$aggregate.function == "count"){
+                  result <- length(x)
+                }
+                
+                if(config.tables.tb.e$aggregate.function == "count.unique"){
+                  result <- length(unique(x))
+                }
+                
+                if(config.tables.tb.e$aggregate.function == "mean"){
+                  result <- mean(x, na.rm = TRUE)
+                }
+                
+                return(result)
+              }
+          
+          #Form final data frame
+            table.e <-  
+              resp.long.tb %>%
+              filter(table.filter.v) %>%
+              dcast(
+                ., 
+                formula = table.formula.e, 
+                value.var = config.tables.tb.e$value.varname, 
+                fun.aggregate = table.aggregation.function
+              ) %>%
+              .[,names(.)!= "NA"]
+          
+          #Modifications for specific tables
+            if(grepl("building.level", table.formula.e) %>% any){
+              table.e <- 
+                left_join(
+                  building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
+                  table.e,
+                  by = "building.level"
+                )
             }
             
-            if(config.tables.tb.e$aggregate.function == "mean"){
-              result <- mean(x, na.rm = TRUE)
+            if(!config.tables.tb.e$row.header){  #when don't want row labels
+              table.e <- table.e %>% select(names(table.e)[-1])
             }
             
-            return(result)
-          }
-        
-        #Form final data frame
-        table.e <-  
-          resp.long.tb %>%
-          filter(table.filter.v) %>%
-          dcast(
-            ., 
-            formula = table.formula, 
-            value.var = config.tables.tb.e$value.varname, 
-            fun.aggregate = table.aggregation.function
-          ) %>%
-          .[,names(.)!= "NA"]
-        
-        #Modifications for specific tables
-        
-        if(grepl("building.level", table.formula.e) %>% any){
-          table.d <- 
-            left_join(
-              building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
-              table.d,
-              by = "building.level"
-            )
-        }
-        
-        if(!config.tables.tb.e$row.header){  #when don't want row labels
-          table.d <- table.d %>% select(names(table.d)[-1])
-        }
-        
-        
-        
-        tables.ls.e[[e]] <- table.e
-        
-        
-        progress.bar.value.c <- 
-          ifelse(c==1, 0, 1) %>%
-          rep(., nrows.c[1:(c-1)] %>% length) %>%
-          multiply_by(nrows.c[1:(c-1)]) %>%
-          add(d) %>% 
-          divide_by(sum(nrows.c)) %>% 
-          multiply_by(100) 
-        
-        setTxtProgressBar(progress.bar.c, progress.bar.value.c)
-        
-      } ### END OF LOOP "e" BY TABLE ###
+            tables.tab4.ls[[e]] <- table.e
+          
+          
+          progress.bar.value.c <- 
+            ifelse(c==1, 0, 1) %>%
+            rep(., nrows.c[1:(c-1)] %>% length) %>%
+            multiply_by(nrows.c[1:(c-1)]) %>%
+            add(d) %>% 
+            divide_by(sum(nrows.c)) %>% 
+            multiply_by(100) 
+          
+          setTxtProgressBar(progress.bar.c, progress.bar.value.c)
+          
+        } ### END OF LOOP "e" BY TABLE ###
       
-      names(tables.ls.e) <- 
-        paste(
-          rep(unit.id.c, length(tables.ls.e)),
-          ".",
-          c(1:length(tables.ls.e)),
-          ".",
-          config.tables.tb.e$table.type.name, 
-          sep = ""
-        ) %>%
-        gsub("-", " ", .) %>%
-        gsub(" ", ".", .) %>%
-        SubRepeatedCharWithSingleChar(., ".") %>%
-        tolower
-      
-      tables.ls[[c]] <- tables.ls.d
-      
-      setTxtProgressBar(progress.bar.c, 100*c/maxrow.c)
+    tables.ls[[c]] <- c(tables.tab12.ls, tables.tab3.ls, tables.tab4.ls)
       
   } ### END OF LOOP "c" BY REPORT UNIT     
   
@@ -969,30 +988,29 @@
         file.copy(template.file, target.path.h)
       
   
-      ###                     ###    
-  #   ###   LOOP "i" BY TABLE   ###
-      ###                     ###
+      ###                                   ###    
+  #   ###   LOOP "i" BY TABLE FOR TABS 1-3  ###
+      ###                                   ###
       
-      config.tables.ls.h <- config.tables.ls[[h]] #split(config.tables.ls[[h]], f = config.tables.ls[[h]]$tab.type.id)  
+      config.tables.ls.h <- config.tables.ls[[h]]   
       setwd(outputs.dir)
       wb <- loadWorkbook(file.name.h, create = FALSE)
       setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
       
-      #i <- 1 #LOOP TESTER
-      #for(i in 1:4){ #LOOP TESTER
+      #i <- 79 #LOOP TESTER
       for(i in 1:nrow(config.tables.ls[[h]] %>% filter(tab.type.id < 4))){  
         
-        print(
-          paste(
-            "Loop: ",
-            i,
-            ". Tab name: ",
-            config.tables.ls.h$tab.type.name[i],
-            ". Table name: ",
-            names(tables.ls[[h]])[i],
-            sep = ""
-          )
-        )
+        #print(
+        #  paste(
+        #    "Loop: ",
+        #    i,
+        #    ". Tab name: ",
+        #    config.tables.ls.h$tab.type.name[i],
+        #    ". Table name: ",
+        #    names(tables.ls[[h]])[i],
+        #    sep = ""
+        #  )
+        #)
         
         writeWorksheet(
           object = wb, 
@@ -1006,8 +1024,39 @@
         
       } # END OF LOOP 'i' BY TABLE
         
-      saveWorkbook(wb)
       
+      
+      ###                                               ###    
+  #   ###   LOOP "j" BY TABLE FOR BUILDING SUMMARY TABS ###
+      ###                                               ###
+      
+      configs.tab4.tb <- 
+        config.tables.ls[[h]] %>% 
+        filter(tab.type.id == 4 & !is.na(loop.id))
+      
+      for(j in 1:nrow(configs.tab4.tb)){
+        
+        if(!existsSheet(wb, configs.tab4.tb$loop.id[j])){
+          cloneSheet(
+            wb,
+            sheet = "Building Summary",
+            name = configs.tab4.tb$loop.id[j]
+          )
+        }
+        
+        writeWorksheet(
+          object = wb, 
+          data = tables.ls[[h]][[i+j]],
+          sheet = configs.tab4.tb$loop.id[j],
+          startRow = configs.tab4.tb$startrow[j],
+          startCol = configs.tab4.tb$startcol[j],
+          header = configs.tab4.tb$header[j],
+          rownames = configs.tab4.tb$row.header[j]
+        )
+        
+      }
+      
+      saveWorkbook(wb)
     } # END OF LOOP 'h' BY REPORT UNIT
       
     

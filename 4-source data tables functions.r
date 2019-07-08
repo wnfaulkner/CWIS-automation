@@ -52,7 +52,7 @@ source("utils_wnf.r")
           
           filter.value.e <- 
             ifelse(
-              filter.varname.e == "unit.id",
+              grepl("\\.id", filter.values[e]),
               as.object(filter.values[e]),
               filter.values[e]
             )
@@ -70,6 +70,18 @@ source("utils_wnf.r")
             select(filter.varname.e) %>%
             unlist %>% as.vector %>%
             grepl(filter.value.e, .)
+          
+          if(table.filters.ls[[e]] %>% not %>% all){
+            warning(
+              paste(
+                "Filtering variable '",
+                filter.varname.e, 
+                "' for value '",
+                filter.value.e,
+                "' returning no rows."
+              )
+            )
+          }
         }
         
         table.filter.v <- 
@@ -77,6 +89,8 @@ source("utils_wnf.r")
           mutate(table.filter.v = apply(., 1, function(x){x %>% equals(TRUE) %>% all})) %>%
           select(table.filter.v) %>%
           unlist %>% as.vector()
+        
+        if(table.filter.v %>% not %>% all){warning("Table filter returning no rows.")}
         
         return(table.filter.v)
       }
