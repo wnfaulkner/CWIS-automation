@@ -25,12 +25,12 @@
       # Set Working Directory and R Project Directory
       if(m900){  
         #M900
-        wd <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-06 District Dashboards\\"
-        rproj.dir <- "C:\\Users\\willi\\Documents\\GIT PROJECTS\\CWIS-automatoin\\"
+          wd <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-06 District Dashboards\\"
+          rproj.dir <- "C:\\Users\\willi\\Documents\\GIT PROJECTS\\CWIS-automation\\"
       }else{
         #Thinkpad T470
-        wd <- "G:\\My Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-06 District Dashboards\\"
-        rproj.dir <- "C:\\Users\\WNF\\Documents\\GIT PROJECTS\\CWIS-automation\\"
+          wd <- "G:\\My Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-06 District Dashboards\\"
+          rproj.dir <- "C:\\Users\\WNF\\Documents\\GIT PROJECTS\\CWIS-automation\\"
       }
     
     #Check Directories
@@ -369,7 +369,7 @@
    
   #EXPAND CONFIG TABLES FOR EACH unit.id ACCORDING TO LOOPING VARIABLES
   
-  ###                          ###    
+  ###                          ###
 # ### LOOP "b" BY REPORT.UNIT  ###
   ###                          ###
     
@@ -761,7 +761,7 @@
             filter(!is.na(loop.id))
           tables.tab4.ls <- list()
           
-        #e <- 1
+        #e <- 2
         for(e in 1:nrow(config.tables.input.tb)){ ### START OF LOOP "e" BY TABLE ###
           
           config.tables.tb.e <- config.tables.input.tb[e,]
@@ -874,9 +874,6 @@
 
 
 # 4-SOURCE DATA TABLES OUTPUTS --------------------------------------------
-  #graphdata.ls.c
-    #[[report unit]]
-    #data frame where each line represents a graph
   #tables.ls
     #[[report.unit]]
     #data frame where each line represents a table
@@ -884,7 +881,7 @@
 
 # 5-EXPORT -----------------------------------------------
   
-  #Export Setup ----
+  #EXPORT SETUP: CLOCKING, LOAD FUNCTIONS, ESTABLISH OUTPUTS DIRECTORY ----
     #Code Clocking
       section6.starttime <- Sys.time()
       
@@ -939,9 +936,9 @@
       maxrow.h <- tables.ls %>% lengths %>% sum
       #printed.reports.ls <- list()
     
-    #h <- 1 #LOOP TESTER
+    h <- 1 #LOOP TESTER
     #for(h in ceiling(runif(5,1,length(unit.ids.sample)))){
-    for(h in 1:length(unit.ids.sample)){ 
+    #for(h in 1:length(unit.ids.sample)){ 
       
       unit.id.h <- unit.ids.sample[h]  
                     
@@ -1024,8 +1021,7 @@
         
       } # END OF LOOP 'i' BY TABLE
         
-      
-      
+
       ###                                               ###    
   #   ###   LOOP "j" BY TABLE FOR BUILDING SUMMARY TABS ###
       ###                                               ###
@@ -1034,28 +1030,59 @@
         config.tables.ls[[h]] %>% 
         filter(tab.type.id == 4 & !is.na(loop.id))
       
+      #j = 2 #LOOP TESTER
       for(j in 1:nrow(configs.tab4.tb)){
+####
+        loop.id.j <- configs.tab4.tb$loop.id[j]
+        allowed.buildings <- configs.tab4.tb$loop.id %>% unique %>% .[1:2]
+        if(!loop.id.j %in% allowed.buildings){next()} #TODO: REMOVE ONCE FINISHED WITH BUILDING OVERVIEW SHEETS
+####    
+        #Change sheet name to building name if it doesn't exist already
+          if(!existsSheet(wb, configs.tab4.tb$loop.id[j])){
+            
+            building.base.sheetname <- 
+              getSheets(wb) %>% 
+              .[grepl("Building Summary", .)] %>% 
+              .[1]
+            
+            building.final.sheetname <- configs.tab4.tb$loop.id[j]
+            
+            renameSheet(
+              object = wb,
+              sheet = building.base.sheetname,
+              newName = building.final.sheetname
+            )
+            #cloneSheet(
+            #  wb,
+            #  sheet = "Building Summary",
+            #  name = configs.tab4.tb$loop.id[j]
+            #)
+          }
         
-        if(!existsSheet(wb, configs.tab4.tb$loop.id[j])){
-          cloneSheet(
-            wb,
-            sheet = "Building Summary",
-            name = configs.tab4.tb$loop.id[j]
+        #Write tables to building worksheet
+          writeWorksheet(
+            object = wb, 
+            data = tables.ls[[h]][[i+j]],
+            sheet = configs.tab4.tb$loop.id[j],
+            startRow = configs.tab4.tb$startrow[j],
+            startCol = configs.tab4.tb$startcol[j],
+            header = configs.tab4.tb$header[j],
+            rownames = configs.tab4.tb$row.header[j]
+          )
+        
+      } #END OF LOOP 'j' BY TABLE & TAB OF BUILDING OVERVIEW TABS (TYPE 4)
+      
+      #Delete any extra building summary tabs
+        extra.building.tabnames <- getSheets(wb) %>% .[grepl("Building Summary", .)]
+        
+        for(k in 1:length(extra.building.tabnames)){
+          removeSheet(
+            object = wb, 
+            sheet = extra.building.tabnames[k]
           )
         }
-        
-        writeWorksheet(
-          object = wb, 
-          data = tables.ls[[h]][[i+j]],
-          sheet = configs.tab4.tb$loop.id[j],
-          startRow = configs.tab4.tb$startrow[j],
-          startCol = configs.tab4.tb$startcol[j],
-          header = configs.tab4.tb$header[j],
-          rownames = configs.tab4.tb$row.header[j]
-        )
-        
-      }
-      
+          
+
       saveWorkbook(wb)
     } # END OF LOOP 'h' BY REPORT UNIT
       

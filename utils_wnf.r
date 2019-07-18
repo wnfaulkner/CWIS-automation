@@ -19,6 +19,7 @@
     #WARN WHEN APPROACHING DEFINED MEMORY USAGE LIMITS AND, IF INSIDE OF A LOOP, BREAK THE LOOP
 
 #FUNCTIONS FOR ERROR HANDLING --------------------
+  
   #Return TRUE/FALSE if expression throws an error
     IsError <- function(.expr){
       result <-
@@ -86,9 +87,53 @@
       #library(styler)
     }
 
-  #Select right 'n' characters of string
-    substrRight <- function(x, n){
-      substr(x, nchar(x)-n+1, nchar(x))
+  #Load all worksheets from a Google Sheet Object
+    #Test Inputs
+    #gs <- configs.ss
+    
+    GoogleSheetLoadAllWorksheets <- function(gs) {
+      
+      ws_num <- gs$n_ws
+      ws_names <- gs$ws %>% select(ws_title) %>% unlist
+      
+      result.ls <- list()
+      
+      for(i in 1:ws_num){
+        result.ls[[i]] <- 
+          gs_read(
+            gs, 
+            ws = ws_names[i], 
+            range = NULL,
+            literal = TRUE
+          )
+        
+        names(result.ls[[i]]) <- names(result.ls[[i]]) %>% tolower
+        
+      }
+      
+      names(result.ls) <- ws_names
+      
+      return(result.ls)
+      
+    } 
+    
+  #Assign all elements in a list into separate tibble objects, assigning them names of their respective list elements  
+    #Test Inputs
+    #list <- configs.ls
+    
+    ListToTibbleObjects <- function(list){
+      for(i in 1:length(list)){
+        
+        object.name.i <- paste(names(list)[i], ".tb", sep = "")
+        
+        assign(
+          object.name.i,
+          list[[i]],
+          pos = 1
+        )
+        
+        print(paste(i, ": ", object.name.i, sep = ""))
+      }
     }
     
   #Find most recently modified file in a directory
@@ -110,7 +155,7 @@
           grepl(  #match file type
             tolower(file.type), 
             sapply(tolower(list.files()), 
-            function(x){substrRight(x, nchar(file.type))})
+            function(x){SubstrRight(x, nchar(file.type))})
           ) &           
           !grepl("\\~\\$", list.files())       #restrict to non-temporary files
         ]
@@ -126,8 +171,8 @@
     
 #FUNCTIONS FOR MANIPULATING VECTORS & COLUMNS --------------------
   
-  #Capitalize first letter of each word in string
-    proper <- function(s, strict = FALSE) {
+  #Excel 'proper' function - capitalize first letter of each word in string
+    Proper <- function(s, strict = FALSE) {
       cap <- function(s) 
         paste(
           toupper(substring(s, 1, 1)),
@@ -135,6 +180,11 @@
           sep = "", collapse = " " 
         )
       sapply(strsplit(s, split = " "), cap, USE.NAMES = !is.null(names(s)))
+    }
+  
+  #Select right 'n' characters of string
+    SubstrRight <- function(x, n){
+      substr(x, nchar(x)-n+1, nchar(x))
     }
     
   #Filter Vector based on condition
