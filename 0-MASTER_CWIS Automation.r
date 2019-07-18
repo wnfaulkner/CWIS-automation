@@ -190,7 +190,7 @@
         by = "building.id.raw"
       )
     
-    resp2.tb$building.level <- proper(resp2.tb$building.level)
+    resp2.tb$building.level <- Proper(resp2.tb$building.level)
     
   #Row Filters
     
@@ -230,7 +230,7 @@
       )
   
   #Reshape to Long Data by response to CWIS question
-    cwis.varnames <- FilterVector(grepl(paste0(domains, collapse = "|"), names(resp3.tb)), names(resp3.tb))
+    cwis.varnames <- FilterVector(grepl(paste0(domains, collapse = "|"), names(resp5.tb)), names(resp5.tb))
     resp6.tb <-
       melt( #Melt to long data frame for all cwis vars
         resp5.tb,
@@ -936,9 +936,9 @@
       maxrow.h <- tables.ls %>% lengths %>% sum
       #printed.reports.ls <- list()
     
-    h <- 1 #LOOP TESTER
+    #h <- 1 #LOOP TESTER
     #for(h in ceiling(runif(5,1,length(unit.ids.sample)))){
-    #for(h in 1:length(unit.ids.sample)){ 
+    for(h in 1:length(unit.ids.sample)){ 
       
       unit.id.h <- unit.ids.sample[h]  
                     
@@ -1037,43 +1037,50 @@
         allowed.buildings <- configs.tab4.tb$loop.id %>% unique %>% .[1:2]
         if(!loop.id.j %in% allowed.buildings){next()} #TODO: REMOVE ONCE FINISHED WITH BUILDING OVERVIEW SHEETS
 ####    
-        #Change sheet name to building name if it doesn't exist already
-          if(!existsSheet(wb, configs.tab4.tb$loop.id[j])){
+        
+        building.num <- configs.tab4.tb$loop.id %>% unique %>% equals(configs.tab4.tb$loop.id[j]) %>% which
+        
+        building.base.sheetname <- 
+          getSheets(wb) %>% 
+          .[grepl("Building Summary", .)] %>% 
+          .[building.num]
+        
+          #if(!existsSheet(wb, configs.tab4.tb$loop.id[j])){
             
-            building.base.sheetname <- 
-              getSheets(wb) %>% 
-              .[grepl("Building Summary", .)] %>% 
-              .[1]
-            
-            building.final.sheetname <- configs.tab4.tb$loop.id[j]
-            
-            renameSheet(
-              object = wb,
-              sheet = building.base.sheetname,
-              newName = building.final.sheetname
-            )
             #cloneSheet(
             #  wb,
             #  sheet = "Building Summary",
             #  name = configs.tab4.tb$loop.id[j]
             #)
-          }
+          #}
         
         #Write tables to building worksheet
           writeWorksheet(
             object = wb, 
             data = tables.ls[[h]][[i+j]],
-            sheet = configs.tab4.tb$loop.id[j],
+            sheet = building.base.sheetname,
             startRow = configs.tab4.tb$startrow[j],
             startCol = configs.tab4.tb$startcol[j],
             header = configs.tab4.tb$header[j],
             rownames = configs.tab4.tb$row.header[j]
           )
+          
+        #Change sheet name to building name
+          #building.final.sheetname <- configs.tab4.tb$loop.id[j]
+          
+          #renameSheet(
+          #  object = wb,
+          #  sheet = building.base.sheetname,
+          #  newName = building.final.sheetname
+          #)
         
       } #END OF LOOP 'j' BY TABLE & TAB OF BUILDING OVERVIEW TABS (TYPE 4)
       
       #Delete any extra building summary tabs
-        extra.building.tabnames <- getSheets(wb) %>% .[grepl("Building Summary", .)]
+        extra.building.summary.tabnames <- getSheets(wb) %>% .[grepl("Building Summary", .)] %>% .[1:length(configs.tab4.tb$loop.id %>% unique)] %>%
+####
+        .[1:2] #TODO: REMOVE ONCE FINISHED WITH BUIDLING OVERVIEW SHEETS
+####
         
         for(k in 1:length(extra.building.tabnames)){
           removeSheet(
