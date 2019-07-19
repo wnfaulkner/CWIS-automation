@@ -77,7 +77,7 @@
   #rproj.dir: directory for R project; also contains source data, additional function scripts, and config tables.
   #source.tables.dir: directory with raw data, configs, etc.
 
-# 1-IMPORT & CONFIGS -----------------------------------------
+# 1-IMPORT -----------------------------------------
   
   #Section Clocking
     section1.starttime <- Sys.time()
@@ -116,6 +116,73 @@
       stringsAsFactors = FALSE,
       header = TRUE
     ) %>% as_tibble(.)
+    
+  #Establish Outputs Directory
+    outputs.parent.folder <- 
+      paste(
+        wd,
+        "4_outputs\\",
+        sep  = ""
+      )
+    
+    if(sample.print){
+      outputs.dir <- 
+        paste(
+          outputs.parent.folder,
+          gsub(":",".",Sys.time()), 
+          sep = ""
+        )
+      
+      dir.create(
+        outputs.dir,
+        recursive = TRUE
+      )
+    }
+    
+    if(!sample.print){
+      setwd(outputs.parent.folder)
+      
+      most.recent.output.folder <-
+        list.dirs()[grepl("FULL PRINT",list.dirs())] %>%
+        .[order(.)] %>%
+        .[length(.)]
+    }
+    
+    if(!sample.print & grepl(Sys.Date(), most.recent.output.folder)){ #Set same outputs directory as before if most recent full print output 
+      #is from the same date and has some reports already in it
+      setwd(most.recent.output.folder)
+      
+      districts.that.already.have.reports <-
+        list.files()[!grepl("desktop.ini", list.files())] %>%
+        str_split(., "_") %>%
+        lapply(., `[[`, 2) %>%
+        unlist
+      
+      outputs.dir <- 
+        paste(
+          outputs.parent.folder,
+          most.recent.output.folder,
+          sep = ""
+        )
+      
+    }else{ #If from different day, start full print over
+      
+      districts.that.already.have.reports <- ""
+      
+      outputs.dir <- 
+        paste(
+          wd,
+          "\\4_outputs\\",
+          gsub(":",".",Sys.time()),
+          sep  = ""
+        )
+      
+      dir.create(
+        outputs.dir,
+        recursive = TRUE
+      )
+      
+    }
     
   #Section Clocking
     section1.duration <- Sys.time() - section1.starttime
@@ -313,33 +380,42 @@
         filter(num.measurements > 1)
 
   #RESTRICT DATA TO SAMPLE OF USER-DEFINED SIZE IF DOING SAMPLE PRINT ----
-    is.valid.sample <- FALSE
-    while(!is.valid.sample){
-      
+    if(sample.print){
+      is.valid.sample <- FALSE
+      while(!is.valid.sample){
+        
+        resp10.tb <- 
+          RestrictDataToSample(
+            tb = resp9.tb,
+            report.unit = "unit.id",
+            sample.print = sample.print,
+            sample.group.unit = "unit.id",
+            sample.size = sample.size
+          )
+        
+        is.valid.sample <- 
+          ifelse(
+            dcast(
+              data = resp10.tb, 
+              formula = unit.id ~ .,
+              fun.aggregate = function(x){length(unique(x))},
+              value.var = "building.id"
+            ) %>% 
+            select(".") %>%
+            unlist %>% as.vector %>%
+            is_weakly_less_than(max.building.count) %>% 
+            all,
+            TRUE,
+            FALSE
+          )
+      }
+    }
+    
+    if(!sample.print){
       resp10.tb <- 
-        RestrictDataToSample(
-          tb = resp9.tb,
-          report.unit = "unit.id",
-          sample.print = sample.print,
-          sample.group.unit = "unit.id",
-          sample.size = sample.size
-        )
-      
-      is.valid.sample <- 
-        ifelse(
-          dcast(
-            data = resp10.tb, 
-            formula = unit.id ~ .,
-            fun.aggregate = function(x){length(unique(x))},
-            value.var = "building.id"
-          ) %>% 
-          select(".") %>%
-          unlist %>% as.vector %>%
-          is_weakly_less_than(max.building.count) %>% 
-          all,
-          TRUE,
-          FALSE
-        )
+        resp9.tb %>%
+        filter(!unit.id %in% districts.that.already.have.reports) %>%
+        filter(unit.id %in% (unit.id %>% unique %>% .[5]))
     }
 
     resp.long.tb <- resp10.tb
@@ -675,15 +751,7 @@
       
     #Tab 3 ----
         
-      ###                              ###
-      ### LOOP "e" BY TABLE FOR TAB 3  ###
-      ###                              ###
-      
       #Loop Inputs
-        #config.tables.input.tb <- 
-        #  config.tables.ls[[c]] %>% 
-        #  filter(!is.na(table.type.id)) %>%
-        #  filter(tab.type.id %in% c(3))
         tables.tab3.ls <- list()
       
       #State Average Table - Last School Year vs. Current
@@ -711,6 +779,18 @@
           ) %>%
           TransposeTable(., keep.first.colname = FALSE)
         
+        tables.tab3.ls[[1]] %<>%
+          apply(
+            X = tables.tab3.ls[[1]][,2:ncol(tables.tab3.ls[[1]])], 
+            MARGIN = 2, 
+            FUN = as.numeric
+          ) %>%
+          cbind(
+            tables.tab3.ls[[1]][,1],
+            .
+          ) %>%
+          ReplaceNames(., "Var.1", "")
+        
         tables.tab3.ls[[1]][1,1] <- "Previous School Year"
           
       
@@ -735,7 +815,7 @@
             value.var = "value"
           ) %>%
           mutate(
-            Trend = .[,3] - .[,4]
+            Trend = .[,4] - .[,3]
           ) %>%
           melt(
             ., 
@@ -772,9 +852,21 @@
             value.var = "value"
           ) %>%
           mutate(
-            Trend = .[,2] - .[,3]
+            Trend = .[,3] - .[,2]
           ) %>%
           TransposeTable(., keep.first.colname = FALSE)
+        
+        tables.tab3.ls[[3]] %<>%
+          apply(
+            X = tables.tab3.ls[[3]][,2:ncol(tables.tab3.ls[[3]])], 
+            MARGIN = 2, 
+            FUN = as.numeric
+          ) %>%
+          cbind(
+            tables.tab3.ls[[3]][,1],
+            .
+          ) %>%
+          ReplaceNames(., "Var.1", "")
         
         tables.tab3.ls[[3]][1,1] <- "Baseline"
         
@@ -799,7 +891,7 @@
             value.var = "value"
           ) %>%
           mutate(
-            Trend = .[,3] - .[,4]
+            Trend = .[,4] - .[,3]
           ) %>%
           melt(
             ., 
@@ -831,18 +923,6 @@
         for(e in 1:nrow(config.tables.input.tb)){ ### START OF LOOP "e" BY TABLE ###
           
           config.tables.tb.e <- config.tables.input.tb[e,]
-          
-          #print(
-          #  paste(
-          #    "LOOP 'd' -- Loop num: ", d,
-          #    ", Report id: ",unit.id.c,
-          #    ", Tab: ", config.tables.tb.d$tab.type.name[d],
-          #    ", Table: ", config.tables.tb.d$table.type.name[d],
-          #    ", Pct. complete: ", round(100*d/nrow(config.tables.tb.d), 2), "%",
-          #    sep = ""
-          #  )
-          #)
-          
           
           #Define table aggregation formula
             table.formula.e <-
@@ -895,7 +975,7 @@
               ) %>%
               .[,names(.)!= "NA"] %>%
               mutate(
-                Trend = `2018-2019` - `0000`
+                Trend = .[,3] - .[,2]
               )
           
           #Modifications for specific tables
@@ -957,22 +1037,6 @@
     #Load Configs Functions
       setwd(rproj.dir)
       source("6-powerpoints export functions.r")
-      
-    #Establish Outputs Directory
-      outputs.dir <- 
-        paste(
-          wd,
-          "\\4_outputs\\",
-          gsub(":",".",Sys.time()), 
-          sep = ""
-        )
-            
-        dir.create(
-          outputs.dir,
-          recursive = TRUE
-        )
-        
-        setwd(outputs.dir)
     
   #EXPORT OF LONG DATA (if in global configs) ----
     if(export.long.data %>% as.logical){
