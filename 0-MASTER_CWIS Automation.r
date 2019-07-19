@@ -335,7 +335,7 @@
           ) %>% 
           select(".") %>%
           unlist %>% as.vector %>%
-          is_weakly_less_than(15) %>% 
+          is_weakly_less_than(max.building.count) %>% 
           all,
           TRUE,
           FALSE
@@ -358,7 +358,7 @@
 # 2-CLEANING OUTPUTS ------------------          
   #resp.long.tb
     
-# 3-CONFIGS (TAB AND TABLE CONFIG TABLES) ------------------
+# 3-CONFIGS (TAB, TABLE, TEXT CONFIG TABLES) ------------------
   
   #Section Clocking
     section3.startime <- Sys.time()
@@ -395,19 +395,21 @@
     
     #Print loop messages
       if(b == 1){print("FORMING TAB, GRAPH, AND TABLE CONFIG TABLES...")}
-      #print(
-      #  paste(
-      #    "Loop num: ", b,", Report id: ",unit.id.b,
-      #    ", Pct. complete:", round(100*b/length(unit.ids.sample), 2), "%"
-      #  )
-      #)
     
     #Create data frames for this loop - restrict to unit.id id i  
       resp.long.tb.b <- 
         resp.long.tb %>% filter(unit.id == unit.id.b)
       
     #Other useful inputs for forming config tables
-      district.name <- resp.long.tb.b$unit.id %>% unique %>% unlist %>% as.vector
+      district.name.v <- 
+        resp.long.tb.b$unit.id %>% unique %>% unlist %>% as.vector %>%
+        str_split(., "-") %>% lapply(., Proper) %>% unlist %>% as.vector
+      
+      if(length(district.name.v) > 1){
+        district.name.v[length(district.name.v)] <- district.name.v[length(district.name.v)] %>% toupper()
+      }
+      
+      district.name <- district.name.v %>% paste(., collapse = "-")
       
       tab4.loopvarname <- 
         config.tab.types.tb %>% 
@@ -472,7 +474,8 @@
         mutate(
           text.value = 
             ifelse(text.type == "building", loop.id, text.value)
-        )
+        ) %>%
+        mutate(text.value = Proper(text.value))
         
     setTxtProgressBar(progress.bar.b, 100*b/maxrow.b)
     
@@ -488,7 +491,7 @@
     section3.duration
     Sys.time() - sections.all.starttime
 
-# 3-CONFIGS (TAB AND TABLE CONFIG TABLES) OUTPUTS ------------------
+# 3-CONFIGS (TAB, TABLE, TEXT CONFIG TABLES) OUTPUTS ------------------
   #unit.ids.sample: vector with all report unit names in resp.long.tb (length = 19 for baseline data)
   #config.tabs.ls
     #[[report.unit]]
@@ -704,7 +707,7 @@
             value.var = "value"
           ) %>%
           mutate(
-            Trend = .[,2] - .[,3]
+            Trend = .[,3] - .[,2]
           ) %>%
           TransposeTable(., keep.first.colname = FALSE)
         
@@ -1002,9 +1005,9 @@
       maxrow.h <- tables.ls %>% lengths %>% sum
       #printed.reports.ls <- list()
     
-    h <- 1 #LOOP TESTER
+    #h <- 1 #LOOP TESTER
     #for(h in ceiling(runif(5,1,length(unit.ids.sample)))){
-    #for(h in 1:length(unit.ids.sample)){ 
+    for(h in 1:length(unit.ids.sample)){ 
       
       unit.id.h <- unit.ids.sample[h]  
                     
@@ -1029,7 +1032,6 @@
             )
           
         }else{
-          
            file.name.h <- 
             paste(
               "district dashboard_",
@@ -1037,7 +1039,6 @@
               ".xlsx",
               sep = ""
             )
-          
         }
         
         target.path.h <- 
@@ -1175,46 +1176,31 @@
           )
         }
         
-        ###                     ###    
-    #   ###   LOOP "m" BY TEXT  ###
-        ###                     ###
+        ###                           ###
+    #   ###   LOOP "m" BY TEXT ITEM   ###
+        ###                           ###
         
         config.text.h <- config.text.ls[[h]]
         
         #m = 2 #LOOP TESTER
         for(m in 1:nrow(config.text.h)){
           
-          building.num <- config.text.h$loop.id %>% unique %>% equals(config.text.h$loop.id[j]) %>% which
-          
-          building.base.sheetname <- 
-            getSheets(wb) %>% 
-            .[grepl("Building Summary", .)] %>% 
-            .[building.num]
-          
           #Write tables to building worksheet
             writeWorksheet(
-              object = wb, 
+              object = wb,
               data = config.text.h$text.value[m],
-              sheet = building.base.sheetname,
-              startRow = config.text.h$startrow[j],
-              startCol = config.text.h$startcol[j],
-              header = config.text.h$header[j],
-              rownames = config.text.h$row.header[j]
+              sheet = config.text.h$tab.name[m],
+              startRow = config.text.h$row.num[m],
+              startCol = config.text.h$col.num[m],
+              header = FALSE,
+              rownames = FALSE
             )
           
-          #Change sheet name to building name
-          #building.final.sheetname <- config.text.h$loop.id[j]
-          
-          #renameSheet(
-          #  object = wb,
-          #  sheet = building.base.sheetname,
-          #  newName = building.final.sheetname
-          #)
-          
-        } #END OF LOOP 'j' BY TABLE & TAB OF BUILDING OVERVIEW TABS (TYPE 4)
+        } #END OF LOOP 'm' BY TEXT ITEM
         
       saveWorkbook(wb)
     } # END OF LOOP 'h' BY REPORT UNIT
-      
-    
+
+#SIGNAL CODE IS FINISHED BY OPENING A NEW WINDOW      
+  windows()
     
