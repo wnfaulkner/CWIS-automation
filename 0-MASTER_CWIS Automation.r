@@ -397,7 +397,7 @@
       }
       
     #Scenario 2 - full print (fresh, not adding to previous full print)  
-      if(!sample.print & add.to.last.full.print){
+      if(!sample.print & !add.to.last.full.print){
         resp10.tb <- 
           resp9.tb #%>%
         #filter(!unit.id %in% districts.that.already.have.reports) %>%
@@ -566,8 +566,8 @@
 # 4-SOURCE DATA TABLES --------------------------------------------
   
   #Section Clocking
-    section4.starttime <- Sys.time()
-    
+    tic("Section 4 duration")
+        
   #Load Configs Functions
     setwd(rproj.dir)
     source("4-source data tables functions.r")
@@ -658,7 +658,7 @@
           tic("Tabs 1 & 2 loop iteration:", d)
         
         #Print loop messages
-          print(paste("TABS 1 & 2 LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.tab12.input.tb), sep = ""))
+          #print(paste("TABS 1 & 2 LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.tab12.input.tb), sep = ""))
         
         config.tables.tb.d <- config.tables.tab12.input.tb[d,]
         
@@ -1006,8 +1006,21 @@
       
     tables.ls[[c]] <- c(tables.tab12.ls, tables.tab3.ls, tables.tab4.ls)
     
-    toc()  
+    toc(log = TRUE, quiet = TRUE)  
   } ### END OF LOOP "c" BY REPORT UNIT     
+  
+  #Loop c timing
+    log.txt <- tic.log(format = TRUE)
+    log.lst <- tic.log(format = FALSE)
+    tic.clearlog()
+    loop.c.duration.v <- unlist(lapply(log.lst, function(x) x$toc - x$tic))
+    mean.loop.c.duration <- loop.c.duration.v %>% mean
+    
+    #total.num.tables <- resp9.tb$unit.id %>% unique %>% length() %>% multiply_by(nrow(config.tables.tab12.input.tb))
+    implied.print.time.per.report.in.min <- mean.loop.c.duration %>% divide_by(60)
+    implied.full.print.time.in.min <- mean.loop.c.duration %>% multiply_by(resp9.tb$unit.id %>% unique %>% length) %>% divide_by(60) 
+    print(paste("Implied avg. calculation time per report in min: ", implied.print.time.per.report.in.min, sep = ""))
+    print(paste("Implied full print time in min: ", implied.full.print.time.in.min, sep = ""))
   
   #Loop Measurement - progress bar & timing
     c.loop.duration <- Sys.time() - c.loop.startime
@@ -1015,8 +1028,7 @@
     #c.loop.duration
       
   #Section Clocking
-    section4.duration <- Sys.time() - section4.starttime
-    section4.duration
+    toc(log = TRUE, quiet = FALSE)
     Sys.time() - sections.all.starttime
 
 
@@ -1028,7 +1040,7 @@
       
     #Load Configs Functions
       setwd(rproj.dir)
-      source("6-powerpoints export functions.r")
+      #source("6-powerpoints export functions.r")
       
     #Create Outputs Directory
       if(sample.print){
