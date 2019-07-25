@@ -751,10 +751,18 @@
         print("Tab 3 calculations begun...")
         
       #Loop Inputs
+        config.tab3.tb <-   
+          config.tables.ls[[c]] %>% 
+          filter(!is.na(table.type.id)) %>%
+          filter(grepl("3", tab.type.id)) %>%
+          OrderDfByVar(., order.by.varname = "table.type.id", rev = FALSE)
+        
         tables.tab3.ls <- list()
       
       #State Average Table - Last School Year vs. Current
-        tables.tab3.ls[[1]] <-
+        tables.tab3.ls[[1]] <- list()
+        tables.tab3.ls[[1]]$configs <- config.tab3.tb[1,]
+        tables.tab3.ls[[1]]$table <-
           resp.long.tb %>% 
           filter(
             unit.id == unit.id.c & 
@@ -778,23 +786,25 @@
           ) %>%
           TransposeTable(., keep.first.colname = FALSE)
         
-        tables.tab3.ls[[1]] %<>%
+        tables.tab3.ls[[1]]$table %<>%
           apply(
-            X = tables.tab3.ls[[1]][,2:ncol(tables.tab3.ls[[1]])], 
+            X = tables.tab3.ls[[1]]$table[,2:ncol(tables.tab3.ls[[1]]$table)], 
             MARGIN = 2, 
             FUN = as.numeric
           ) %>%
           cbind(
-            tables.tab3.ls[[1]][,1],
+            tables.tab3.ls[[1]]$table[,1],
             .
           ) %>%
           ReplaceNames(., "Var.1", "")
         
-        tables.tab3.ls[[1]][1,1] <- "Previous School Year"
+        tables.tab3.ls[[1]]$table[1,1] <- "Previous School Year"
           
       
       #Building Average Table - Last School year vs. Current  
-        tables.tab3.ls[[2]] <- 
+        tables.tab3.ls[[2]] <- list()
+        tables.tab3.ls[[2]]$configs <- config.tab3.tb[2,]
+        tables.tab3.ls[[2]]$table <- 
           resp.long.tb %>% 
           filter(
             unit.id == unit.id.c & 
@@ -825,13 +835,14 @@
             formula = building.name + variable ~ domain
           )
         
-        #tables.tab3.ls[[2]][1,1] <- "Previous School Year"
-        tables.tab3.ls[[2]]$variable %<>%
+        tables.tab3.ls[[2]]$table$variable %<>%
           as.character %>%
           gsub("0000", "Prev. School Year", .)
 
       #State Average Table - Baseline vs. Current
-        tables.tab3.ls[[3]] <-
+        tables.tab3.ls[[3]] <- list()
+        tables.tab3.ls[[3]]$configs <- config.tab3.tb[3,]
+        tables.tab3.ls[[3]]$table <-
           resp.long.tb %>% 
           filter(
             unit.id == unit.id.c & 
@@ -855,22 +866,24 @@
           ) %>%
           TransposeTable(., keep.first.colname = FALSE)
         
-        tables.tab3.ls[[3]] %<>%
+        tables.tab3.ls[[3]]$table %<>%
           apply(
-            X = tables.tab3.ls[[3]][,2:ncol(tables.tab3.ls[[3]])], 
+            X = tables.tab3.ls[[3]]$table[,2:ncol(tables.tab3.ls[[3]]$table)], 
             MARGIN = 2, 
             FUN = as.numeric
           ) %>%
           cbind(
-            tables.tab3.ls[[3]][,1],
+            tables.tab3.ls[[3]]$table[,1],
             .
           ) %>%
           ReplaceNames(., "Var.1", "")
         
-        tables.tab3.ls[[3]][1,1] <- "Baseline"
+        tables.tab3.ls[[3]]$table[1,1] <- "Baseline"
         
       #Building Average Table - Baseline year vs. Current  
-        tables.tab3.ls[[4]] <- 
+        tables.tab3.ls[[4]] <- list()
+        tables.tab3.ls[[4]]$configs <- config.tab3.tb[4,]
+        tables.tab3.ls[[4]]$table <- 
           resp.long.tb %>% 
           filter(
             unit.id == unit.id.c & 
@@ -901,7 +914,7 @@
             formula = building.name + variable ~ domain
           )
         
-        tables.tab3.ls[[4]]$variable %<>%
+        tables.tab3.ls[[4]]$table$variable %<>%
           as.character %>%
           gsub("0000", "Baseline", .)
       
@@ -982,7 +995,10 @@
               table.e <- table.e %>% select(names(table.e)[-1])
             }
             
-            tables.tab4.ls[[e]] <- table.e
+          #Table storage
+            tables.tab4.ls[[e]] <- list()
+            tables.tab4.ls[[e]]$configs <- config.tables.tb.e
+            tables.tab4.ls[[e]]$table <- table.e
           
         } ### END OF LOOP "e" BY TABLE ###
       
@@ -1015,7 +1031,6 @@
 
 
 # 5-EXPORT -----------------------------------------------
-  
   #EXPORT SETUP: CLOCKING, LOAD FUNCTIONS, ESTABLISH OUTPUTS DIRECTORY ----
     #Code Clocking
       section6.starttime <- Sys.time()
@@ -1133,18 +1148,6 @@
       #i <- 79 #LOOP TESTER
       for(i in 1:nrow.tabs.1.through.3){  
         
-        #print(
-        #  paste(
-        #    "Loop: ",
-        #    i,
-        #    ". Tab name: ",
-        #    config.tables.ls.h$tab.type.name[i],
-        #    ". Table name: ",
-        #    names(tables.ls[[h]])[i],
-        #    sep = ""
-        #  )
-        #)
-        
         setTxtProgressBar(
           progress.bar.h, 
           i %>% divide_by(nrow.tabs.1.through.3 + nrow.tab.4) %>% multiply_by(100)
@@ -1152,12 +1155,12 @@
         
         writeWorksheet(
           object = wb, 
-          data = tables.ls[[h]][[i]],
-          sheet = config.tables.ls.h$tab.type.name[i],
-          startRow = config.tables.ls.h$startrow[i],
-          startCol = config.tables.ls.h$startcol[i],
-          header = config.tables.ls.h$header[i],
-          rownames = config.tables.ls.h$row.header[i]
+          data = tables.ls[[h]][[i]]$table,
+          sheet = tables.ls[[h]][[i]]$configs$tab.name,
+          startRow = tables.ls[[h]][[i]]$configs$startrow,
+          startCol = tables.ls[[h]][[i]]$configs$startcol,
+          header = tables.ls[[h]][[i]]$configs$header,
+          rownames = tables.ls[[h]][[i]]$configs$row.header
         )
         
       } # END OF LOOP 'i' BY TABLE
