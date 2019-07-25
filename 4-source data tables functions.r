@@ -46,6 +46,7 @@ source("utils_wnf.r")
         
         table.filters.ls <- list()
         
+        #tic("Loop total duration")
         for(e in 1:length(filter.varnames)){
           
           filter.varname.e <- filter.varnames[e]
@@ -57,13 +58,13 @@ source("utils_wnf.r")
               filter.values[e]
             )
           
-          if(
-            !is.na(filter.varname.e) && 
-            is.na(filter.value.e)
-          ){
-            print(paste("ERROR: filter variable specified but missing filter values. c = ", c, "; d = ", d, ". Skipping to next loop iteration."))
-            next()
-          }
+          #if(
+          #  !is.na(filter.varname.e) && 
+          #  is.na(filter.value.e)
+          #){
+          #  print(paste("ERROR: filter variable specified but missing filter values. c = ", c, "; d = ", d, ". Skipping to next loop iteration."))
+          #  next()
+          #}
           
           table.filters.ls[[e]] <- #regular filter for unit.id data based on filter column and value(s)
             tb %>%
@@ -71,24 +72,27 @@ source("utils_wnf.r")
             unlist %>% as.vector %>%
             grepl(filter.value.e, .)
           
-          if(table.filters.ls[[e]] %>% not %>% all){
-            warning(
-              paste(
-                "Filtering variable '",
-                filter.varname.e, 
-                "' for value '",
-                filter.value.e,
-                "' returning no rows."
-              )
-            )
-          }
+          #if(table.filters.ls[[e]] %>% not %>% all){
+          #  warning(
+          #    paste(
+          #      "Filtering variable '",
+          #      filter.varname.e, 
+          #      "' for value '",
+          #      filter.value.e,
+          #      "' returning no rows."
+          #    )
+          #  )
+          #}
         }
+        #toc(log = TRUE, quiet = FALSE)
         
+        #tic("Final creation of filtor vector")
         table.filter.v <- 
           do.call(cbind, table.filters.ls) %>% as_tibble() %>%
-          mutate(table.filter.v = apply(., 1, function(x){x %>% equals(TRUE) %>% all})) %>%
+          mutate(table.filter.v = apply(., 1, function(x){all(x)})) %>%
           select(table.filter.v) %>%
           unlist %>% as.vector()
+        #toc(log = TRUE, quiet = FALSE)
         
         if(table.filter.v %>% not %>% all){warning("Table filter returning no rows.")}
         
