@@ -63,6 +63,7 @@
     #install.packages('shiny')
     #install.packages('miniUI')
     
+    library(rJava)
     LoadCommonPackages()
     library(flextable)
     library(XLConnect)
@@ -94,8 +95,11 @@
     TibbleToCharObjects(config.global.tb)
     sample.print <- #Convert sample.print to TRUE/FALSE
       ifelse(sample.print == "true", TRUE, FALSE)
-  
-    domains <- strsplit(domains, ",") %>% unlist %>% as.vector
+    
+    add.to.last.full.print <-
+      ifelse(add.to.last.full.print == "true", TRUE, FALSE)
+    
+      domains <- strsplit(domains, ",") %>% unlist %>% as.vector
     
   #Import Responses table (main data, imported as data frame)
     setwd(source.tables.dir)
@@ -119,32 +123,43 @@
         sep  = ""
       )
     
-    if(sample.print){
+    setwd(outputs.parent.folder)
+    
+    most.recent.output.folder <-
+      list.dirs() %>%
+      .[order(.)] %>%
+      .[length(.)]
+    
+    if(sample.print){  #scenario 1 - sample print
       outputs.dir <- 
         paste(
           outputs.parent.folder,
           gsub(":",".",Sys.time()), 
           sep = ""
         )
-      
-      dir.create(
-        outputs.dir,
-        recursive = TRUE
-      )
     }
     
-    if(!sample.print){
+    if(!sample.print & !add.to.last.full.print){  #scenario 2 - full print not adding to last full print
       setwd(outputs.parent.folder)
       
-      most.recent.output.folder <-
-        list.dirs()[grepl("FULL PRINT",list.dirs())] %>%
-        .[order(.)] %>%
-        .[length(.)]
+      outputs.dir <- 
+        paste(
+          outputs.parent.folder,
+          gsub(":",".",Sys.time()), 
+          "_FULL",
+          sep = ""
+        )
     }
     
-    if(!sample.print & grepl(Sys.Date(), most.recent.output.folder)){ #Set same outputs directory as before if most recent full print output 
-      #is from the same date and has some reports already in it
-      setwd(most.recent.output.folder)
+    if(!sample.print & add.to.last.full.print){ #scenario 3 - ful#is from the same date and has some reports already in it
+      
+      most.recent.full.output.folder <-
+        list.dirs() %>%
+        .[grepl("FULL", list.dirs())] %>%
+        .[order(.)] %>%
+        .[length(.)]
+      
+      setwd(most.recent.full.output.folder)
       
       districts.that.already.have.reports <-
         list.files()[!grepl("desktop.ini", list.files())] %>%
@@ -159,23 +174,6 @@
           sep = ""
         )
       
-    }else{ #If from different day, start full print over
-      
-      districts.that.already.have.reports <- ""
-      
-      outputs.dir <- 
-        paste(
-          wd,
-          "\\4_outputs\\",
-          gsub(":",".",Sys.time()),
-          sep  = ""
-        )
-      
-      dir.create(
-        outputs.dir,
-        recursive = TRUE
-      )
-      
     }
     
   #Section Clocking
@@ -183,7 +181,7 @@
     section1.duration
     Sys.time() - sections.all.starttime
 
-# 2-CLEANING --------
+# 2-CLEANING -----------------------------------------
   
   #Section Clocking
     section2.starttime <- Sys.time()
@@ -354,60 +352,82 @@
         filter(num.measurements > 1)
 
   #RESTRICT DATA TO SAMPLE OF USER-DEFINED SIZE IF DOING SAMPLE PRINT ----
-    if(sample.print){
-      is.valid.sample <- FALSE
-      while(!is.valid.sample){
-        
-        resp10.tb <- 
-          RestrictDataToSample(
-            tb = resp9.tb,
-            report.unit = "unit.id",
-            sample.print = sample.print,
-            sample.group.unit = "unit.id",
-            sample.size = sample.size
-          )
-        
-        is.valid.sample <- 
-          ifelse(
-            dcast(
-              data = resp10.tb, 
-              formula = unit.id ~ .,
-              fun.aggregate = function(x){length(unique(x))},
-              value.var = "building.id"
-            ) %>% 
-            select(".") %>%
-            unlist %>% as.vector %>%
-            is_weakly_less_than(max.building.count) %>% 
-            all,
-            TRUE,
-            FALSE
-          )
-      }
-    }
     
-    if(!sample.print){
-      resp10.tb <- 
-        resp9.tb %>%
-        filter(!unit.id %in% districts.that.already.have.reports) %>%
-        filter(unit.id %in% (unit.id %>% unique %>% .[1:5]))
-    }
+    #Scenario 1 - sample print
+      if(sample.print){ 
+        is.valid.sample <- FALSE
+        while(!is.valid.sample){
+          
+          resp10.tb <- 
+            RestrictDataToSample(
+              tb = resp9.tb,
+              report.unit = "unit.id",
+              sample.print = sample.print,
+              sample.group.unit = "unit.id",
+              sample.size = sample.size
+            )
+          
+          is.valid.sample <- 
+            ifelse(
+              dcast(
+                data = resp10.tb, 
+                formula = unit.id ~ .,
+                fun.aggregate = function(x){length(unique(x))},
+                value.var = "building.id"
+              ) %>% 
+              select(".") %>%
+              unlist %>% as.vector %>%
+              is_weakly_less_than(max.building.count) %>% 
+              all,
+              TRUE,
+              FALSE
+            )
+        }
+        
+        unit.ids.sample <-
+          resp10.tb %>%
+          select(unit.id) %>%
+          unique %>%
+          unlist %>% as.vector
+        
+      }
+      
+    #Scenario 2 - full print (fresh, not adding to previous full print)  
+      if(!sample.print & add.to.last.full.print){
+        resp10.tb <- 
+          resp9.tb #%>%
+        #filter(!unit.id %in% districts.that.already.have.reports) %>%
+        #filter(unit.id %in% (unit.id %>% unique %>% .[1:5]))
+        
+        unit.ids.sample <-
+          resp10.tb %>%
+          select(unit.id) %>%
+          unique %>%
+          unlist %>% as.vector
+        
+      }
+      
+    #Scenario 3 - full print (adding to previous full print)  
+      if(!sample.print & add.to.last.full.print){
+        resp10.tb <- 
+          resp9.tb
+        
+        unit.ids.sample <-
+          resp10.tb %>%
+          filter(!unit.id %in% districts.that.already.have.reports) %>%
+          select(unit.id) %>%
+          unique %>%
+          unlist %>% as.vector
+        
+      }
 
     resp.long.tb <- resp10.tb
     
-    unit.ids.sample <-
-      resp.long.tb %>%
-      select(unit.id) %>%
-      unique %>%
-      unlist %>% as.vector
-          
   #Section Clocking
     section2.duration <- Sys.time() - section2.starttime
     section2.duration
     Sys.time() - sections.all.starttime
 
-# 2-CLEANING OUTPUTS ------------------          
-  #resp.long.tb
-    
 # 3-CONFIGS (TAB, TABLE, TEXT CONFIG TABLES) ------------------
   
   #Section Clocking
@@ -541,15 +561,6 @@
     section3.duration
     Sys.time() - sections.all.starttime
 
-# 3-CONFIGS (TAB, TABLE, TEXT CONFIG TABLES) OUTPUTS ------------------
-  #unit.ids.sample: vector with all report unit names in resp.long.tb (length = 19 for baseline data)
-  #config.tabs.ls
-    #[[report.unit]]
-      #data frame where each line represents a tab
-  #config.tables.ls
-    #[[report.unit]]
-      #data frame where each line represents a table
- 
 # 4-SOURCE DATA TABLES --------------------------------------------
   
   #Section Clocking
@@ -583,14 +594,14 @@
     
     #Print loop messages
       if(c == 1){print("Forming tables for export...")}
+      print("REPORT LOOP")
+      print(paste("Loop #: ", c, " - Pct. Complete: ", 100*c/length(unit.ids.sample),sep = ""))
+      print(paste("Unit id: ", unit.ids.sample[c]))
     
     #Tabs 1 & 2 ----
-      ###                                   ###
-  #   ### LOOP "d" BY TABLE FOR TABS 1 & 2  ###
-      ###                                   ###
-      
+     
       #Loop Inputs
-        config.tables.input.tb <- 
+        config.tables.tab12.input.tb <- 
           config.tables.ls[[c]] %>% 
           filter(!is.na(table.type.id)) %>%
           filter(tab.type.id %in% c(1,2))
@@ -598,9 +609,12 @@
         
         #d <- 2
         #for(d in 1:3){ #Loop Tester
-        for(d in 1:nrow(config.tables.input.tb)){ ### START OF LOOP "d" BY TABLE ###
+        for(d in 1:nrow(config.tables.tab12.input.tb)){ ### START OF LOOP "d" BY TABLE ###
           
-          config.tables.tb.d <- config.tables.input.tb[d,]
+          #Print loop messages
+            print(paste("TABS 1 & 2 LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.tab12.input.tb), sep = ""))
+          
+          config.tables.tb.d <- config.tables.tab12.input.tb[d,]
           
           #Define table aggregation formula
             table.formula.d <-
@@ -680,20 +694,7 @@
               table.d <- table.d %>% select(names(table.d)[-1])
             }
             
-           
-        
           tables.tab12.ls[[d]] <- table.d
-          
-          
-          #progress.bar.value.c <- 
-            #ifelse(c==1, 0, 1) %>%
-            #rep(., nrows.c[1:(c-1)] %>% length) %>%
-            #multiply_by(nrows.c[1:(c-1)]) %>%
-            #add(d) %>% 
-            #divide_by(sum(nrows.c)) %>% 
-            #multiply_by(100) 
-            
-          #setTxtProgressBar(progress.bar.c, progress.bar.value.c)
           
         } ### END OF LOOP "d" BY TABLE ###
         
@@ -869,12 +870,9 @@
           gsub("0000", "Baseline", .)
       
     #Tab 4+ (Building Summaries) ----
-        ###                                   ###
-    #   ### LOOP "e" BY TABLE FOR TABs 4+  ###
-        ###                                   ###
         
         #Loop Inputs
-          config.tables.input.tb <- 
+          config.tables.tab4.input.tb <- 
             config.tables.ls[[c]] %>% 
             filter(!is.na(table.type.id)) %>%
             filter(tab.type.id %in% c(4)) %>%
@@ -882,7 +880,11 @@
           tables.tab4.ls <- list()
           
         #e <- 3
-        for(e in 1:nrow(config.tables.input.tb)){ ### START OF LOOP "e" BY TABLE ###
+        for(e in 1:nrow(config.tables.tab4.input.tb)){ ### START OF LOOP "e" BY TABLE ###
+          
+          #Print loop messages
+            print(paste("TAB 4 LOOP - Loop #: ", e, " - Pct. Complete: ", 100*e/nrow(config.tables.tab4.input.tb), sep = ""))
+
           
           config.tables.tb.e <- config.tables.input.tb[e,]
           
@@ -961,17 +963,6 @@
             
             tables.tab4.ls[[e]] <- table.e
           
-          
-          progress.bar.value.c <- 
-            ifelse(c==1, 0, 1) %>%
-            rep(., nrows.c[1:(c-1)] %>% length) %>%
-            multiply_by(nrows.c[1:(c-1)]) %>%
-            add(d) %>% 
-            divide_by(sum(nrows.c)) %>% 
-            multiply_by(100) 
-          
-          setTxtProgressBar(progress.bar.c, progress.bar.value.c)
-          
         } ### END OF LOOP "e" BY TABLE ###
       
     tables.ls[[c]] <- c(tables.tab12.ls, tables.tab3.ls, tables.tab4.ls)
@@ -989,12 +980,6 @@
     Sys.time() - sections.all.starttime
 
 
-# 4-SOURCE DATA TABLES OUTPUTS --------------------------------------------
-  #tables.ls
-    #[[report.unit]]
-    #data frame where each line represents a table
-
-
 # 5-EXPORT -----------------------------------------------
   
   #EXPORT SETUP: CLOCKING, LOAD FUNCTIONS, ESTABLISH OUTPUTS DIRECTORY ----
@@ -1004,6 +989,21 @@
     #Load Configs Functions
       setwd(rproj.dir)
       source("6-powerpoints export functions.r")
+      
+    #Create Outputs Directory
+      if(sample.print){
+        outputs.dir <- 
+          paste(
+            outputs.parent.folder,
+            gsub(":",".",Sys.time()), 
+            sep = ""
+          )
+        
+        dir.create(
+          outputs.dir,
+          recursive = TRUE
+        )
+      }
     
   #EXPORT OF LONG DATA (if in global configs) ----
     if(export.long.data %>% as.logical){
