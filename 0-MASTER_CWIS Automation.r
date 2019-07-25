@@ -38,7 +38,7 @@
       rproj.dir <- if(!dir.exists(rproj.dir)){choose.dir()}else{rproj.dir}
     
     #Source Tables Directory (raw data, configs, etc.)
-      source.tables.dir <- paste(wd,"\\3_source_tables\\", sep = "")
+      source.tables.dir <- paste(wd,"3_source_tables\\", sep = "")
       if(dir.exists(source.tables.dir)){ 
         print("source.tables.dir exists.")
       }else{
@@ -70,12 +70,6 @@
     #Section Clocking
       section0.duration <- Sys.time() - section0.starttime
       section0.duration
-
-# 0-SETUP OUTPUTS -----------------------------------------------------------
-  #start_time: sys.time for code
-  #wd: working directory - Google Drive folder "2018-08 Green Reports"
-  #rproj.dir: directory for R project; also contains source data, additional function scripts, and config tables.
-  #source.tables.dir: directory with raw data, configs, etc.
 
 # 1-IMPORT -----------------------------------------
   
@@ -188,26 +182,6 @@
     section1.duration <- Sys.time() - section1.starttime
     section1.duration
     Sys.time() - sections.all.starttime
-
-# 1-IMPORT OUTPUTS -----------------------------------------
-  #config.global.tb
-    #Objects extracted from config.global.tb
-      #report.unit
-      #report.version
-      #data.year
-      #data.semester
-      #sample.print
-      #sample.size
-  #config.ans.opt.tb
-  #config.slide.types.tb
-  #config.graph.types.tb
-  #config.table.types.tb
-  #config.pot.tb
-  #buildings.tb
-  #questions.tb
-  #resp1.tb - main responses dataset which will need extensive cleaning and organization in next sections
-  #resp.comparison.tb - comparison time period response dataset
-
 
 # 2-CLEANING --------
   
