@@ -523,6 +523,7 @@
         )
          
     #Tables config table for this report unit
+      #config.table.types.tb
       config.tables.ls[[b]] <- 
         full_join(
           config.tabs.ls[[b]],
@@ -608,115 +609,112 @@
         config.tables.tab12.input.tb <- 
           config.tables.ls[[c]] %>% 
           filter(!is.na(table.type.id)) %>%
-          filter(tab.type.id %in% c(1,2))
+          filter(grepl("1|2", tab.type.id)) %>%
+          OrderDfByVar(., order.by.varname = "tab.type.id", rev = FALSE) %>%
+          as_tibble()
         tables.tab12.ls <- list()
-        
-        #Define Table Aggregation Function
-          table.aggregation.function <-
-            function(
-              x
-            ){
-              allowed.functions <- c("count", "count.unique", "mean", "display.unique")
-              
-              if(!config.tables.tb.d$aggregate.function %in% allowed.functions){
-                stop(
-                  paste(
-                    "Aggregate function must be one of allowed functions: ", 
-                    paste0(allowed.functions, collapse = ", "),
-                    sep = ""
-                  )
-                )
-              }
-              
-              if(config.tables.tb.d$aggregate.function == "count"){
-                result <- length(x)
-              }
-              
-              if(config.tables.tb.d$aggregate.function == "count.unique"){
-                result <- length(unique(x))
-              }
-              
-              if(config.tables.tb.d$aggregate.function == "mean"){
-                result <- mean(x, na.rm = TRUE)
-              }
-              
-              if(config.tables.tb.d$aggregate.function == "display.unique"){
-                result <- x %>% unique %>% unlist %>% as.vector
-              }
-              
-              return(result)
-            }
       
       #Loop d Timing
         #tic.clearlog()
       
-      #d <- 2
+      #d <- 41
       #for(d in 1:15){ #Loop Tester
       for(d in 1:nrow(config.tables.tab12.input.tb)){ ### START OF LOOP "d" BY TABLE ###
-      
+        
         #Loop timing
-          tic("Tabs 1 & 2 loop iteration:", d)
+          #tic("Tabs 1 & 2 loop iteration:", d)
         
         #Print loop messages
-          #print(paste("TABS 1 & 2 LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.tab12.input.tb), sep = ""))
+          print(paste("TABS 1 & 2 LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.tab12.input.tb), sep = ""))
         
-        config.tables.tb.d <- config.tables.tab12.input.tb[d,]
+        #Define table configs for loop
+          config.tables.tb.d <- config.tables.tab12.input.tb[d,]
         
-        #Define table aggregation formula
-          #tic("Table formula calculation")
-          table.formula.d <-
-            DefineTableRowColFormula(
-              row.header.varnames = strsplit(config.tables.tb.d$row.header.varname, ",") %>% unlist %>% as.vector,
-              col.header.varnames = strsplit(config.tables.tb.d$col.header.varname, ",") %>% unlist %>% as.vector
-            )
-          #toc(log = TRUE, quiet = TRUE)
+        #CREATE TABLE
+          if(config.tables.tb.d$tab.type.id == 1){
+            #Define table aggregation formula
+              #tic("Table formula calculation")
+              table.formula.d <-
+                DefineTableRowColFormula(
+                  row.header.varnames = strsplit(config.tables.tb.d$row.header.varname, ",") %>% unlist %>% as.vector,
+                  col.header.varnames = strsplit(config.tables.tb.d$col.header.varname, ",") %>% unlist %>% as.vector
+                )
+              #toc(log = TRUE, quiet = TRUE)
+            
+            #Define table filtering vector
+              #tic("Table filter calculation")
+              table.filter.v <-
+                DefineTableFilterVector(
+                  tb = resp.long.tb,
+                  filter.varnames = config.tables.tb.d$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector,
+                  filter.values = config.tables.tb.d$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
+                )
+              #toc(log = TRUE, quiet = TRUE)
+            
+            #Form final data frame
+              #tic("Table calculation")
+              table.d <-  
+                resp.long.tb %>%
+                filter(table.filter.v) %>%
+                dcast(
+                  ., 
+                  formula = table.formula.d, 
+                  value.var = config.tables.tb.d$value.varname, 
+                  fun.aggregate = table.aggregation.function
+                ) %>%
+                .[,names(.)!= "NA"]
+              #toc(log = TRUE, quiet = TRUE)
+            
+            #Modifications for specific tables
+              #tic("Table modifications")
+              if(grepl("building.level", table.formula.d) %>% any){
+                table.d <- 
+                  left_join(
+                    building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
+                    table.d,
+                    by = "building.level"
+                  )
+              }
+              
+              if(!config.tables.tb.d$row.header){  #when don't want row labels
+                table.d <- table.d %>% select(names(table.d)[-1])
+              }
+              #toc(log = TRUE, quiet = TRUE)
+          }
         
-        #Define table filtering vector
-          #tic("Table filter calculation")
-          table.filter.v <-
-            DefineTableFilterVector(
-              tb = resp.long.tb,
-              filter.varnames = config.tables.tb.d$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector,
-              filter.values = config.tables.tb.d$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
-            )
-          #toc(log = TRUE, quiet = TRUE)
-          
-        #Form final data frame
-          #tic("Table calculation")
-          table.d <-  
-            resp.long.tb %>%
-            filter(table.filter.v) %>%
-            dcast(
-              ., 
-              formula = table.formula.d, 
-              value.var = config.tables.tb.d$value.varname, 
-              fun.aggregate = table.aggregation.function
-            ) %>%
-            .[,names(.)!= "NA"]
-          #toc(log = TRUE, quiet = TRUE)
-          
-        #Modifications for specific tables
-          #tic("Table modifications")
-          if(grepl("building.level", table.formula.d) %>% any){
+          if(config.tables.tb.d$tab.type.id == 2){
             table.d <- 
-              left_join(
-                building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
-                table.d,
-                by = "building.level"
-              )
+              tables.tab12.ls[
+                tables.tab12.ls %>%
+                lapply(
+                  .,
+                  function(x){
+                    (
+                      x$configs$tab.type.id %>%
+                        unlist %>% as.vector %>%
+                        equals(1)
+                    ) &
+                      (
+                        x$configs$table.type.id %>%
+                          unlist %>% as.vector() %>%
+                          equals(config.tables.tb.d$table.type.id)
+                      )
+                  }
+                ) %>%
+                unlist %>% as.vector
+              ] %>%
+              .[[1]] %>% 
+              .[["table"]]
           }
-          
-          if(!config.tables.tb.d$row.header){  #when don't want row labels
-            table.d <- table.d %>% select(names(table.d)[-1])
-          }
-          #toc(log = TRUE, quiet = TRUE)
-          
-        #tic("Table storage")  
-        tables.tab12.ls[[d]] <- table.d
-        #toc(log = TRUE, quiet = TRUE)
+
+        #Table Storage
+          table.d.storage.index <- length(tables.tab12.ls) %>% add(1)
+          tables.tab12.ls[[table.d.storage.index]] <- list()
+          tables.tab12.ls[[table.d.storage.index]]$configs <- config.tables.tb.d
+          tables.tab12.ls[[table.d.storage.index]]$table <- table.d
         
         #tic.log(format = TRUE)
-        toc(log = TRUE, quiet = TRUE)
+        #toc(log = TRUE, quiet = TRUE)
         
       } ### END OF LOOP "d" BY TABLE ###
       
@@ -749,6 +747,8 @@
           tolower
       
     #Tab 3 ----
+      #Print status
+        print("Tab 3 calculations begun...")
         
       #Loop Inputs
         tables.tab3.ls <- list()
@@ -908,7 +908,7 @@
     #Tab 4+ (Building Summaries) ----
         
       #Loop timing
-        tic("Tab 4 duration:")  
+        #tic("Tab 4 duration:")  
         
       #Loop Inputs
         config.tables.tab4.input.tb <- 
@@ -925,7 +925,7 @@
             print(paste("TAB 4 LOOP - Loop #: ", e, " - Pct. Complete: ", 100*e/nrow(config.tables.tab4.input.tb), sep = ""))
 
           
-          config.tables.tb.e <- config.tables.input.tb[e,]
+          config.tables.tb.e <- config.tables.tab4.input.tb[e,]
           
           #Define table aggregation formula
             table.formula.e <-
@@ -947,24 +947,6 @@
               tables.tab4.ls[[e]] <- ""
               next()
             }
-            
-          #Define Table Aggregation Function
-            table.aggregation.function <-
-              function(x){
-                if(config.tables.tb.e$aggregate.function == "count"){
-                  result <- length(x)
-                }
-                
-                if(config.tables.tb.e$aggregate.function == "count.unique"){
-                  result <- length(unique(x))
-                }
-                
-                if(config.tables.tb.e$aggregate.function == "mean"){
-                  result <- mean(x, na.rm = TRUE)
-                }
-                
-                return(result)
-              }
           
           #Form final data frame
             table.e <-  

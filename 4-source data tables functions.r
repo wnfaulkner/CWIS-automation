@@ -99,5 +99,39 @@ source("utils_wnf.r")
         return(table.filter.v)
       }
 
-  
+  #Define Table Aggregation Function
+    table.aggregation.function <-
+      function(
+        x
+      ){
+        allowed.functions <- c("count", "count.unique", "mean", "display.unique")
+        
+        if(!config.tables.tb.d$aggregate.function %in% allowed.functions){
+          stop(
+            paste(
+              "Aggregate function must be one of allowed functions: ", 
+              paste0(allowed.functions, collapse = ", "),
+              sep = ""
+            )
+          )
+        }
+        
+        if(config.tables.tb.d$aggregate.function == "count"){
+          result <- length(x)
+        }
+        
+        if(config.tables.tb.d$aggregate.function == "count.unique"){
+          result <- length(unique(x))
+        }
+        
+        if(config.tables.tb.d$aggregate.function == "mean"){
+          result <- mean(x, na.rm = TRUE)
+        }
+        
+        if(config.tables.tb.d$aggregate.function == "display.unique"){
+          result <- x %>% unique %>% unlist %>% as.vector
+        }
+        
+        return(result)
+      }
   
