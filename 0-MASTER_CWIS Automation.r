@@ -460,8 +460,6 @@
   #b <- 1 #LOOP TESTER (19 = "Raytown C-2")
   #for(b in c(1,2)){   #LOOP TESTER
   for(b in 1:length(unit.ids.sample)){   #START OF LOOP BY REPORT UNIT
-  
-    loop.start.time.b <- Sys.time()
     
     #Create unit.id.b (for this iteration)
       unit.id.b <- unit.ids.sample[b]
@@ -555,10 +553,7 @@
     
   } # END OF LOOP 'b' BY REPORT.UNIT
   
-  #Loop Measurement - progress bar & timing
-    b.loop.duration <- Sys.time() - b.loop.startime
-    close(progress.bar.b)
-    #b.loop.duration
+  close(progress.bar.b)
     
   #Section Clocking
     toc()
@@ -1007,6 +1002,11 @@
     toc(log = TRUE, quiet = TRUE)  
   } ### END OF LOOP "c" BY REPORT UNIT     
   
+  #tables.ls[[1]][
+  #  tables.ls[[1]] %>%
+  #  lapply(., function(x){x$configs$loop.id})
+  #]
+  
   #Loop c timing
     log.txt <- tic.log(format = TRUE)
     log.lst <- tic.log(format = FALSE)
@@ -1085,9 +1085,9 @@
       maxrow.h <- tables.ls %>% lengths %>% sum
       #printed.reports.ls <- list()
     
-    #h <- 1 #LOOP TESTER
+    h <- 3 #LOOP TESTER
     #for(h in ceiling(runif(5,1,length(unit.ids.sample)))){
-    for(h in 1:length(unit.ids.sample)){ 
+    #for(h in 1:length(unit.ids.sample)){ 
       
       unit.id.h <- unit.ids.sample[h]  
                     
@@ -1142,26 +1142,45 @@
       setwd(outputs.dir)
       wb <- loadWorkbook(file.name.h, create = FALSE)
       setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
-      nrow.tabs.1.through.3 <- nrow(config.tables.ls[[h]] %>% filter(tab.type.id < 4))
-      nrow.tab.4 <- nrow(config.tables.ls[[h]] %>% filter(tab.type.id == 4))
+      #nrow.tabs.1.through.3 <- nrow(config.tables.ls[[h]] %>% filter(tab.type.id < 4))
+      #nrow.tab.4 <- nrow(config.tables.ls[[h]] %>% filter(tab.type.id == 4))
       
-      #i <- 79 #LOOP TESTER
+      #i <- 100 #LOOP TESTER
       for(i in 1:nrow.tabs.1.through.3){  
         
-        setTxtProgressBar(
-          progress.bar.h, 
-          i %>% divide_by(nrow.tabs.1.through.3 + nrow.tab.4) %>% multiply_by(100)
-        )
+        #Loop inputs
+          table.i <- tables.ls[[h]][[i]]$table
+          configs.i <- tables.ls[[h]][[i]]$configs
         
-        writeWorksheet(
-          object = wb, 
-          data = tables.ls[[h]][[i]]$table,
-          sheet = tables.ls[[h]][[i]]$configs$tab.name,
-          startRow = tables.ls[[h]][[i]]$configs$startrow,
-          startCol = tables.ls[[h]][[i]]$configs$startcol,
-          header = tables.ls[[h]][[i]]$configs$header,
-          rownames = tables.ls[[h]][[i]]$configs$row.header
-        )
+          if(configs.i$tab.type.id == 4){ #customize tab name if need be for building summaries
+            building.names.for.district <- tables.ls[[h]] %>% lapply(., `[[`, 1) %>% do.call(rbind, .) %>% select(loop.id) %>% unlist %>% unique %>% RemoveNA
+            building.num <- configs.i$loop.id %>% unique %>% equals(building.names.for.district) %>% which
+            
+            configs.i$tab.name <- 
+              getSheets(wb) %>% 
+              .[grepl("Building Summary", .)] %>% 
+              .[building.num]
+          }
+          
+        #Print loop messages
+          #setTxtProgressBar(
+          #  progress.bar.h, 
+          #  i %>% divide_by(nrow.tabs.1.through.3 + nrow.tab.4) %>% multiply_by(100)
+          #)
+          print(paste("Loop #: ", i, " - Table: ", configs.i$table.type.name, sep = ""))
+        
+        #Write Worksheets
+          
+         
+          writeWorksheet(
+            object = wb, 
+            data = table.i,
+            sheet = configs.i$tab.name,
+            startRow = configs.i$startrow,
+            startCol = configs.i$startcol,
+            header = configs.i$header,
+            rownames = configs.i$row.header
+          )
         
       } # END OF LOOP 'i' BY TABLE
         
@@ -1170,48 +1189,34 @@
   #   ###   LOOP "j" BY TABLE FOR BUILDING SUMMARY TABS ###
       ###                                               ###
       
-      config.tab4.tb <- 
-        config.tables.ls[[h]] %>% 
-        filter(tab.type.id == 4 & !is.na(loop.id))
+      #config.tab4.tb <- 
+      #  config.tables.ls[[h]] %>% 
+      #  filter(tab.type.id == 4 & !is.na(loop.id))
       
       #j = 2 #LOOP TESTER
-      for(j in 1:nrow(config.tab4.tb)){
-        setTxtProgressBar(
-          progress.bar.h, 
-          nrow.tabs.1.through.3 %>% add(j) %>% divide_by(nrow.tabs.1.through.3 + nrow.tab.4) %>% multiply_by(100)
-        )
+      #for(j in 1:nrow(config.tab4.tb)){
+      #  setTxtProgressBar(
+      #    progress.bar.h, 
+      #    nrow.tabs.1.through.3 %>% add(j) %>% divide_by(nrow.tabs.1.through.3 + nrow.tab.4) %>% multiply_by(100)
+      #  )
 ####
         #loop.id.j <- config.tab4.tb$loop.id[j]
         #allowed.buildings <- config.tab4.tb$loop.id %>% unique %>% .[1:2]
         #if(!loop.id.j %in% allowed.buildings){next()} #TODO: REMOVE ONCE FINISHED WITH BUILDING OVERVIEW SHEETS
 ####    
         
-        building.num <- config.tab4.tb$loop.id %>% unique %>% equals(config.tab4.tb$loop.id[j]) %>% which
         
-        building.base.sheetname <- 
-          getSheets(wb) %>% 
-          .[grepl("Building Summary", .)] %>% 
-          .[building.num]
-        
-          #if(!existsSheet(wb, config.tab4.tb$loop.id[j])){
-            
-            #cloneSheet(
-            #  wb,
-            #  sheet = "Building Summary",
-            #  name = config.tab4.tb$loop.id[j]
-            #)
-          #}
         
         #Write tables to building worksheet
-          writeWorksheet(
-            object = wb, 
-            data = tables.ls[[h]][[i+j]],
-            sheet = building.base.sheetname,
-            startRow = config.tab4.tb$startrow[j],
-            startCol = config.tab4.tb$startcol[j],
-            header = config.tab4.tb$header[j],
-            rownames = config.tab4.tb$row.header[j]
-          )
+        #  writeWorksheet(
+        #    object = wb, 
+        #    data = tables.ls[[h]][[i+j]],
+        #    sheet = building.base.sheetname,
+        #    startRow = config.tab4.tb$startrow[j],
+        #    startCol = config.tab4.tb$startcol[j],
+        #    header = config.tab4.tb$header[j],
+        #    rownames = config.tab4.tb$row.header[j]
+        #  )
           
         #Change sheet name to building name
           #building.final.sheetname <- config.tab4.tb$loop.id[j]
@@ -1222,7 +1227,7 @@
           #  newName = building.final.sheetname
           #)
         
-      } #END OF LOOP 'j' BY TABLE & TAB OF BUILDING OVERVIEW TABS (TYPE 4)
+      #} #END OF LOOP 'j' BY TABLE & TAB OF BUILDING OVERVIEW TABS (TYPE 4)
       
       #Delete any extra building summary tabs
         building.summary.tabs.with.data <- 
@@ -1233,9 +1238,6 @@
         
         extra.building.summary.tabnames <-
           building.summary.tabs[!building.summary.tabs %in% building.summary.tabs.with.data]
-####
-        #.[3] #TODO: REMOVE ONCE FINISHED WITH BUIDLING OVERVIEW SHEETS
-####
         
         for(k in 1:length(extra.building.summary.tabnames)){
           removeSheet(
