@@ -415,7 +415,7 @@
       resp10.tb <- 
         resp9.tb %>%
         filter(!unit.id %in% districts.that.already.have.reports) %>%
-        filter(unit.id %in% (unit.id %>% unique %>% .[5]))
+        filter(unit.id %in% (unit.id %>% unique %>% .[1:5]))
     }
 
     resp.long.tb <- resp10.tb
@@ -628,18 +628,6 @@
           
           config.tables.tb.d <- config.tables.input.tb[d,]
           
-          #print(
-          #  paste(
-          #    "LOOP 'd' -- Loop num: ", d,
-          #    ", Report id: ",unit.id.c,
-          #    ", Tab: ", config.tables.tb.d$tab.type.name[d],
-          #    ", Table: ", config.tables.tb.d$table.type.name[d],
-          #    ", Pct. complete: ", round(100*d/nrow(config.tables.tb.d), 2), "%",
-          #    sep = ""
-          #  )
-          #)
-          
-          
           #Define table aggregation formula
             table.formula.d <-
               DefineTableRowColFormula(
@@ -723,15 +711,15 @@
           tables.tab12.ls[[d]] <- table.d
           
           
-          progress.bar.value.c <- 
-            ifelse(c==1, 0, 1) %>%
-            rep(., nrows.c[1:(c-1)] %>% length) %>%
-            multiply_by(nrows.c[1:(c-1)]) %>%
-            add(d) %>% 
-            divide_by(sum(nrows.c)) %>% 
-            multiply_by(100) 
+          #progress.bar.value.c <- 
+            #ifelse(c==1, 0, 1) %>%
+            #rep(., nrows.c[1:(c-1)] %>% length) %>%
+            #multiply_by(nrows.c[1:(c-1)]) %>%
+            #add(d) %>% 
+            #divide_by(sum(nrows.c)) %>% 
+            #multiply_by(100) 
             
-          setTxtProgressBar(progress.bar.c, progress.bar.value.c)
+          #setTxtProgressBar(progress.bar.c, progress.bar.value.c)
           
         } ### END OF LOOP "d" BY TABLE ###
         
@@ -973,9 +961,14 @@
                 value.var = config.tables.tb.e$value.varname, 
                 fun.aggregate = table.aggregation.function
               ) %>%
-              .[,names(.)!= "NA"] %>%
-              mutate(
-                Trend = .[,3] - .[,2]
+              .[,names(.)!= ""]
+            
+            
+            table.e$trend <- 
+              ifelse(
+                IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]),
+                NA,
+                table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]
               )
           
           #Modifications for specific tables
