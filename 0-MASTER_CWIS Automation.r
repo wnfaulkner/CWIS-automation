@@ -62,7 +62,7 @@
     #install.packages('shiny')
     #install.packages('miniUI')
     
-    library(rJava)
+    #library(rJava)
     LoadCommonPackages()
     library(flextable)
     library(XLConnect)
@@ -70,8 +70,8 @@
     library(microbenchmark)
     
     #Section Clocking
-      section0.duration <- Sys.time() - section0.starttime
-      section0.duration
+      #section0.duration <- Sys.time() - section0.starttime
+      #section0.duration
 
 # 1-IMPORT -----------------------------------------
   
@@ -931,7 +931,6 @@
           #Print loop messages
             print(paste("TAB 4 LOOP - Loop #: ", e, " - Pct. Complete: ", 100*e/nrow(config.tables.tab4.input.tb), sep = ""))
 
-          
           config.tables.tb.e <- config.tables.tab4.input.tb[e,]
           
           #Define table aggregation formula
@@ -950,46 +949,48 @@
                 filter.values = config.tables.tb.e$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
               )
             
+          
+          #Create table itself
             if(table.filter.v %>% not %>% all){
-              tables.tab4.ls[[e]] <- ""
-              next()
+              table.e <- ""
             }
-          
-          #Form final data frame
-            table.e <-  
-              resp.long.tb %>%
-              filter(table.filter.v) %>%
-              dcast(
-                ., 
-                formula = table.formula.e, 
-                value.var = config.tables.tb.e$value.varname, 
-                fun.aggregate = table.aggregation.function
-              ) %>%
-              .[,names(.)!= ""]
             
-            
-            table.e$trend <- 
-              ifelse(
-                IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]),
-                NA,
-                table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]
-              )
-          
-          #Modifications for specific tables
-            if(grepl("building.level", table.formula.e) %>% any){
-              table.e <- 
-                left_join(
-                  building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
-                  table.e,
-                  by = "building.level"
+            if(table.filter.v %>% any){
+              table.e <-  
+                resp.long.tb %>%
+                filter(table.filter.v) %>%
+                dcast(
+                  ., 
+                  formula = table.formula.e, 
+                  value.var = config.tables.tb.e$value.varname, 
+                  fun.aggregate = table.aggregation.function
+                ) %>%
+                .[,names(.)!= ""]
+              
+              table.e$trend <- 
+                ifelse(
+                  IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]),
+                  NA,
+                  table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]
                 )
-            }
             
-            if(!config.tables.tb.e$row.header){  #when don't want row labels
-              table.e <- table.e %>% select(names(table.e)[-1])
+            #Modifications for specific tables
+              if(grepl("building.level", table.formula.e) %>% any){
+                table.e <- 
+                  left_join(
+                    building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
+                    table.e,
+                    by = "building.level"
+                  )
+              }
+              
+              if(!config.tables.tb.e$row.header){  #when don't want row labels
+                table.e <- table.e %>% select(names(table.e)[-1])
+              }
             }
             
           #Table storage
+            if(table.e == ""){print(e)}
             tables.tab4.ls[[e]] <- list()
             tables.tab4.ls[[e]]$configs <- config.tables.tb.e
             tables.tab4.ls[[e]]$table <- table.e
@@ -1001,11 +1002,7 @@
     toc(log = TRUE, quiet = TRUE)  
   } ### END OF LOOP "c" BY REPORT UNIT     
   
-  #tables.ls[[1]][
-  #  tables.ls[[1]] %>%
-  #  lapply(., function(x){x$configs$loop.id})
-  #]
-  
+
   #Loop c timing
     log.txt <- tic.log(format = TRUE)
     log.lst <- tic.log(format = FALSE)
@@ -1084,7 +1081,7 @@
       maxrow.h <- tables.ls %>% lengths %>% sum
       #printed.reports.ls <- list()
     
-    #h <- 3 #LOOP TESTER
+    #h <- 1 #LOOP TESTER
     #for(h in ceiling(runif(5,1,length(unit.ids.sample)))){
     for(h in 1:length(unit.ids.sample)){ 
       
@@ -1130,25 +1127,31 @@
         
         file.copy(template.file, target.path.h)
         
-        #print(file.name.h)
+        print(file.name.h)
       
   
       ###                       ###
   #   ###   LOOP "i" BY TABLE   ###
       ###                       ###
       
-      config.tables.ls.h <- config.tables.ls[[h]]   
+      config.tables.h <- tables.ls[[h]] %>% lapply(., `[[`, 1) %>% do.call(rbind, .)   
       setwd(outputs.dir)
       wb <- loadWorkbook(file.name.h, create = FALSE)
       setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
       
-      building.names.for.district <- tables.ls[[h]] %>% lapply(., `[[`, 1) %>% do.call(rbind, .) %>% select(loop.id) %>% unlist %>% unique %>% RemoveNA
+      building.names.for.district <- config.tables.h %>% select(loop.id) %>% unlist %>% unique %>% RemoveNA
       
-      #i <- 100 #LOOP TESTER
+      #i <- 1 #LOOP TESTER
       for(i in 1:length(tables.ls[[h]])){  
         
         #Loop inputs
-          table.i <- tables.ls[[h]][[i]]$table
+          if(
+            (tables.ls[[h]][[i]]$table %>% dim %>% length %>% equals(1)) && (tables.ls[[h]][[i]]$table %>% equals(""))
+          ){
+            table.i <- ""
+          }else{
+            table.i <- tables.ls[[h]][[i]]$table
+          }
           configs.i <- tables.ls[[h]][[i]]$configs
         
           if(configs.i$tab.type.id == 4){ #customize tab name if need be for building summaries
@@ -1161,11 +1164,7 @@
           }
           
         #Print loop messages
-          #setTxtProgressBar(
-          #  progress.bar.h, 
-          #  i %>% divide_by(nrow.tabs.1.through.3 + nrow.tab.4) %>% multiply_by(100)
-          #)
-          print(paste("Loop #: ", i, " - Table: ", configs.i$table.type.name, sep = ""))
+          print(paste("Loop i #: ", i, " - Table: ", configs.i$table.type.name, sep = ""))
         
         #Write Worksheets
           
@@ -1207,6 +1206,7 @@
         
         #m = 2 #LOOP TESTER
         for(m in 1:nrow(config.text.h)){
+          print(paste("Loop m #:", m, " - Pct. Complete: ", 100*m/nrow(config.text.h), sep = ""))
           
           #Write tables to building worksheet
             writeWorksheet(
@@ -1225,13 +1225,16 @@
       print(paste("Workbook saved. File: ", file.name.h, " - Pct. complete: ", 100*h/length(unit.ids.sample), sep = ""))
     } # END OF LOOP 'h' BY REPORT UNIT
 
+# 6-WRAP UP -----------------------------------------------
   #Code Clocking
     print(
-      "Total Runtime for ", 
-      length(unit.ids.sample), 
-      " reports: ", 
-      Sys.time() - sections.all.starttime,
-      sep = ""
+      paste(
+        "Total Runtime for ", 
+        length(unit.ids.sample), 
+        " reports: ", 
+        Sys.time() %>% subtract(sections.all.starttime) %>% round(., 2),
+        sep = ""
+      )
     )
     
 #SIGNAL CODE IS FINISHED BY OPENING A NEW WINDOW      
