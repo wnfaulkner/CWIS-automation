@@ -332,8 +332,13 @@
           )
         
         year.var.helper.tb.i$is.baseline[1] <- 1
-        year.var.helper.tb.i$is.current[nrow(year.var.helper.tb.i)] <- 1
-        year.var.helper.tb.i$is.most.recent[nrow(year.var.helper.tb.i)-1] <- 1
+        
+        year.var.helper.tb.i$is.current[nrow(year.var.helper.tb.i)] <- 
+          ifelse(unique(year.var.helper.tb.i$num.measurements) == 1, 0, 1)
+        
+        year.var.helper.tb.i$is.most.recent[nrow(year.var.helper.tb.i)-1] <- 
+          ifelse(unique(year.var.helper.tb.i$num.measurements) == 1, 0, 1)
+        
         year.var.helper.tb.i$is.current.or.most.recent[
           year.var.helper.tb.i$is.current == 1 | year.var.helper.tb.i$is.most.recent ==1
         ] <- 1
@@ -397,31 +402,68 @@
       
     #Scenario 2 - full print (fresh, not adding to previous full print)  
       if(!sample.print & !add.to.last.full.print){
-        resp10.tb <- 
-          resp9.tb #%>%
-        #filter(!unit.id %in% districts.that.already.have.reports) %>%
-        #filter(unit.id %in% (unit.id %>% unique %>% .[1:5]))
-        
-        unit.ids.sample <-
-          resp10.tb %>%
-          select(unit.id) %>%
-          unique %>%
-          unlist %>% as.vector
+          
+        is.valid.sample <- FALSE
+        while(!is.valid.sample){
+          
+          resp10.tb <- 
+            RestrictDataToSample(
+              tb = resp9.tb,
+              report.unit = "unit.id",
+              sample.print = TRUE,
+              sample.group.unit = "unit.id",
+              sample.size = sample.size
+            )
+          
+          unit.ids.sample <-
+            resp10.tb %>%
+            #filter(!unit.id %in% districts.that.already.have.reports) %>%
+            select(unit.id) %>%
+            unique %>%
+            unlist %>% as.vector
+          
+          is.valid.sample <- 
+            ifelse(
+              length(unit.ids.sample) == as.numeric(sample.size),
+              TRUE,
+              FALSE
+            )
+          
+          print(is.valid.sample)
+        }
         
       }
       
     #Scenario 3 - full print (adding to previous full print)  
       if(!sample.print & add.to.last.full.print){
-        resp10.tb <- 
-          resp9.tb
-        
-        unit.ids.sample <-
-          resp10.tb %>%
-          filter(!unit.id %in% districts.that.already.have.reports) %>%
-          select(unit.id) %>%
-          unique %>%
-          unlist %>% as.vector
-        
+        is.valid.sample <- FALSE
+        while(!is.valid.sample){
+          
+          resp10.tb <- 
+            RestrictDataToSample(
+              tb = resp9.tb,
+              report.unit = "unit.id",
+              sample.print = TRUE,
+              sample.group.unit = "unit.id",
+              sample.size = sample.size
+            )
+          
+          unit.ids.sample <-
+            resp10.tb %>%
+            filter(!unit.id %in% districts.that.already.have.reports) %>%
+            select(unit.id) %>%
+            unique %>%
+            unlist %>% as.vector
+          
+          is.valid.sample <- 
+            ifelse(
+              length(unit.ids.sample) == as.numeric(sample.size),
+              TRUE,
+              FALSE
+            )
+          
+          print(is.valid.sample)
+        }
       }
 
     resp.long.tb <- resp10.tb
@@ -755,7 +797,7 @@
         tables.tab3.ls[[1]] <- list()
         tables.tab3.ls[[1]]$configs <- config.tab3.tb[1,]
         tables.tab3.ls[[1]]$table <-
-          resp.long.tb %>% 
+          resp9.tb %>% 
           filter(
             is.current.or.most.recent == 1
           ) %>%
@@ -768,10 +810,11 @@
           as_tibble() %>%
           dcast(
             data = .,
-            formula = domain ~ year,
+            formula = domain ~ is.current,
             fun.aggregate = mean,
             value.var = "value"
           ) %>%
+          ReplaceNames(., current.names = c("0","1"), new.names = c("Previous School Year","2018-2019")) %>%
           mutate(
             Trend = .[,3] - .[,2]
           ) %>%
@@ -834,7 +877,7 @@
         tables.tab3.ls[[3]] <- list()
         tables.tab3.ls[[3]]$configs <- config.tab3.tb[3,]
         tables.tab3.ls[[3]]$table <-
-          resp.long.tb %>% 
+          resp9.tb %>% 
           filter(
             is.current.or.baseline == 1
           ) %>%
@@ -847,10 +890,11 @@
           as_tibble() %>%
           dcast(
             data = .,
-            formula = domain ~ year,
+            formula = domain ~ is.current,
             fun.aggregate = mean,
             value.var = "value"
           ) %>%
+          ReplaceNames(., current.names = c("0","1"), new.names = c("Baseline","2018-2019")) %>%
           mutate(
             Trend = .[,3] - .[,2]
           ) %>%
@@ -1000,21 +1044,21 @@
   
 
   #Loop c timing
-    log.txt <- tic.log(format = TRUE)
-    log.lst <- tic.log(format = FALSE)
-    tic.clearlog()
-    loop.c.duration.v <- unlist(lapply(log.lst, function(x) x$toc - x$tic))
-    mean.loop.c.duration <- loop.c.duration.v %>% mean
+    #log.txt <- tic.log(format = TRUE)
+    #log.lst <- tic.log(format = FALSE)
+    #tic.clearlog()
+    #loop.c.duration.v <- unlist(lapply(log.lst, function(x) x$toc - x$tic))
+    #mean.loop.c.duration <- loop.c.duration.v %>% mean
     
     #total.num.tables <- resp9.tb$unit.id %>% unique %>% length() %>% multiply_by(nrow(config.tables.tab12.input.tb))
-    implied.print.time.per.report.in.min <- mean.loop.c.duration %>% divide_by(60)
-    implied.full.print.time.in.min <- mean.loop.c.duration %>% multiply_by(resp9.tb$unit.id %>% unique %>% length) %>% divide_by(60) 
-    print(paste("Implied avg. calculation time per report in min: ", implied.print.time.per.report.in.min, sep = ""))
-    print(paste("Implied full print time in min: ", implied.full.print.time.in.min, sep = ""))
+    #implied.print.time.per.report.in.min <- mean.loop.c.duration %>% divide_by(60)
+    #implied.full.print.time.in.min <- mean.loop.c.duration %>% multiply_by(resp9.tb$unit.id %>% unique %>% length) %>% divide_by(60) 
+    #print(paste("Implied avg. calculation time per report in min: ", implied.print.time.per.report.in.min, sep = ""))
+    #print(paste("Implied full print time in min: ", implied.full.print.time.in.min, sep = ""))
   
   #Loop Measurement - progress bar & timing
-    c.loop.duration <- Sys.time() - c.loop.startime
-    close(progress.bar.c)  
+    #c.loop.duration <- Sys.time() - c.loop.startime
+    #close(progress.bar.c)  
     #c.loop.duration
       
   #Section Clocking
@@ -1218,7 +1262,7 @@
         } #END OF LOOP 'm' BY TEXT ITEM
         
       saveWorkbook(wb)
-      print(paste("Workbook saved. File: ", file.name.h, " - Pct. complete: ", 100*h/length(unit.ids.sample), sep = ""))
+      print(paste("WORKBOOK SAVED. File: ", file.name.h, " - Pct. complete: ", 100*h/length(unit.ids.sample), sep = ""))
     } # END OF LOOP 'h' BY REPORT UNIT
 
 # 6-WRAP UP -----------------------------------------------
