@@ -182,7 +182,7 @@
     #section1.duration <- Sys.time() - section1.starttime
     #section1.duration
     #Sys.time() - sections.all.starttime
-    toc()
+    #toc()
 
 # 2-CLEANING -----------------------------------------
   
@@ -285,32 +285,19 @@
     
   #ADDING NEW USEFUL VARIABLES ----
     
-    #Add domain variables
-      resp7.tb <- 
-        left_join(
-          x = resp6.tb,
-          y = questions.tb %>% select(var.id, domain, practice),
-          by = c("variable"="var.id")
-        ) %>%
-        left_join(
-          x = ., 
-          y = domains.tb,
-          by = c("domain" = "domain.id")
-        )
-    
     #Add proficiency dummy variable
-      resp8.tb <- 
-        resp7.tb %>%
+      resp7.tb <- 
+        resp6.tb %>%
         mutate(
           is.proficient = ifelse(value >= 4, 1, 0)
         )
       
     #Add variable for baseline, most recent, and next-to-most-recent years for each unit.id
-      resp8.tb$year[resp8.tb$year == "baseline"] <- "0000"
+      resp7.tb$year[resp7.tb$year == "baseline"] <- "0000"
       
 #FUNCTION - could be made into function to designate alphabetic first/last/penultimate by group
       year.var.helper.tb <-
-        resp8.tb %>%
+        resp7.tb %>%
         select(year, unit.id) %>%
         unique 
       
@@ -351,122 +338,205 @@
       
       year.var.helper.tb <- do.call(rbind, year.var.helper.ls)
       
-      resp9.tb <- 
+      resp8.tb <- 
         left_join(
-          resp8.tb,
+          resp7.tb,
           year.var.helper.tb,
           by = c("year", "unit.id")
         ) %>% 
-        filter(num.measurements > 1)
-
-  #RESTRICT DATA TO SAMPLE OF USER-DEFINED SIZE IF DOING SAMPLE PRINT ----
+        filter(num.measurements > 1) %>%
+        mutate(variable = as.character(variable))
+   
+  #FORM FINAL DATASETS - (A) SPLITCOLRESHAPED BY DOMAIN AND (B) RESTRICTED TO SAMPLE ----
+       
+    #Full dataset - no splitcolreshape by domain
+      resp.full.nosplit.tb <- 
+        resp8.tb
+      
+    #Full dataset - splitcolreshape by domain
+      resp.full.split.tb <-
+        left_join(
+          x = resp8.tb,
+          y = questions.tb %>% select(var.id, domain, practice),
+          by = c("variable"="var.id")
+        ) %>%
+        SplitColReshape.ToLong(
+          df = ., 
+          id.varname = "resp.id" ,
+          split.varname = "domain",
+          split.char = ","
+        ) %>% 
+        as_tibble() %>%
+        left_join(
+          x = ., 
+          y = domains.tb,
+          by = c("domain" = "domain.id")
+        )
     
-    #Scenario 1 - sample print
-      if(sample.print){ 
-        is.valid.sample <- FALSE
-        while(!is.valid.sample){
-          
-          resp10.tb <- 
-            RestrictDataToSample(
-              tb = resp9.tb,
-              report.unit = "unit.id",
-              sample.print = sample.print,
-              sample.group.unit = "unit.id",
-              sample.size = sample.size
-            )
-          
-          is.valid.sample <- 
-            ifelse(
-              dcast(
-                data = resp10.tb, 
-                formula = unit.id ~ .,
-                fun.aggregate = function(x){length(unique(x))},
-                value.var = "building.id"
+    #Sample Datasets  
+    
+      #Scenario 1 - sample print
+        if(sample.print){ 
+          is.valid.sample <- FALSE
+          while(!is.valid.sample){
+            
+            resp.sample.nosplit.tb <- 
+              RestrictDataToSample(
+                tb = resp.full.nosplit.tb,
+                report.unit = "unit.id",
+                sample.print = sample.print,
+                sample.group.unit = "unit.id",
+                sample.size = sample.size
+              )
+            
+            resp.sample.split.tb <- 
+              left_join(
+                x = resp.sample.nosplit.tb,
+                y = questions.tb %>% select(var.id, domain, practice),
+                by = c("variable"="var.id")
+              ) %>%
+              SplitColReshape.ToLong(
+                df = ., 
+                id.varname = "resp.id" ,
+                split.varname = "domain",
+                split.char = ","
               ) %>% 
-              select(".") %>%
-              unlist %>% as.vector %>%
-              is_weakly_less_than(max.building.count) %>% 
-              all,
-              TRUE,
-              FALSE
-            )
-        }
-        
-        unit.ids.sample <-
-          resp10.tb %>%
-          select(unit.id) %>%
-          unique %>%
-          unlist %>% as.vector
-        
-      }
-      
-    #Scenario 2 - full print (fresh, not adding to previous full print)  
-      if(!sample.print & !add.to.last.full.print){
-          
-        is.valid.sample <- FALSE
-        while(!is.valid.sample){
-          
-          resp10.tb <- 
-            RestrictDataToSample(
-              tb = resp9.tb,
-              report.unit = "unit.id",
-              sample.print = TRUE,
-              sample.group.unit = "unit.id",
-              sample.size = sample.size
-            )
+              as_tibble() %>%
+              left_join(
+                x = ., 
+                y = domains.tb,
+                by = c("domain" = "domain.id")
+              )
+            
+            is.valid.sample <- 
+              ifelse(
+                dcast(
+                  data = resp.sample.nosplit.tb, 
+                  formula = unit.id ~ .,
+                  fun.aggregate = function(x){length(unique(x))},
+                  value.var = "building.id"
+                ) %>% 
+                select(".") %>%
+                unlist %>% as.vector %>%
+                is_weakly_less_than(as.numeric(max.building.count)) %>% 
+                all,
+                TRUE,
+                FALSE
+              )
+          }
           
           unit.ids.sample <-
-            resp10.tb %>%
-            #filter(!unit.id %in% districts.that.already.have.reports) %>%
+            resp.sample.nosplit.tb %>%
             select(unit.id) %>%
             unique %>%
             unlist %>% as.vector
           
-          is.valid.sample <- 
-            ifelse(
-              length(unit.ids.sample) == as.numeric(sample.size),
-              TRUE,
-              FALSE
-            )
-          
-          print(is.valid.sample)
         }
         
-      }
-      
-    #Scenario 3 - full print (adding to previous full print)  
-      if(!sample.print & add.to.last.full.print){
-        is.valid.sample <- FALSE
-        while(!is.valid.sample){
+      #Scenario 2 - full print (fresh, not adding to previous full print)  
+        if(!sample.print & !add.to.last.full.print){
+            
+          is.valid.sample <- FALSE
+          while(!is.valid.sample){
+            
+            resp.sample.nosplit.tb <- 
+              RestrictDataToSample(
+                tb = resp.full.nosplit.tb,
+                report.unit = "unit.id",
+                sample.print = TRUE,
+                sample.group.unit = "unit.id",
+                sample.size = sample.size
+              )
+            
+            resp.sample.split.tb <- 
+              left_join(
+                x = resp.sample.nosplit.tb,
+                y = questions.tb %>% select(var.id, domain, practice),
+                by = c("variable"="var.id")
+              ) %>%
+              SplitColReshape.ToLong(
+                df = ., 
+                id.varname = "resp.id" ,
+                split.varname = "domain",
+                split.char = ","
+              ) %>% 
+              as_tibble() %>%
+              left_join(
+                x = ., 
+                y = domains.tb,
+                by = c("domain" = "domain.id")
+              )
+            
+            unit.ids.sample <-
+              resp.sample.nosplit.tb %>%
+              select(unit.id) %>%
+              unique %>%
+              unlist %>% as.vector
+            
+            is.valid.sample <- 
+              ifelse(
+                length(unit.ids.sample) == as.numeric(sample.size),
+                TRUE,
+                FALSE
+              )
+            
+            print(is.valid.sample)
+          }
           
-          resp10.tb <- 
-            RestrictDataToSample(
-              tb = resp9.tb,
-              report.unit = "unit.id",
-              sample.print = TRUE,
-              sample.group.unit = "unit.id",
-              sample.size = sample.size
-            )
-          
-          unit.ids.sample <-
-            resp10.tb %>%
-            filter(!unit.id %in% districts.that.already.have.reports) %>%
-            select(unit.id) %>%
-            unique %>%
-            unlist %>% as.vector
-          
-          is.valid.sample <- 
-            ifelse(
-              length(unit.ids.sample) == as.numeric(sample.size),
-              TRUE,
-              FALSE
-            )
-          
-          print(is.valid.sample)
         }
-      }
+        
+      #Scenario 3 - full print (adding to previous full print)  
+        if(!sample.print & add.to.last.full.print){
+          is.valid.sample <- FALSE
+          while(!is.valid.sample){
+            
+            resp.sample.nosplit.tb <- 
+              RestrictDataToSample(
+                tb = resp.full.nosplit.tb,
+                report.unit = "unit.id",
+                sample.print = TRUE,
+                sample.group.unit = "unit.id",
+                sample.size = sample.size
+              )
+            
+            resp.sample.split.tb <- 
+              left_join(
+                x = resp.sample.nosplit.tb,
+                y = questions.tb %>% select(var.id, domain, practice),
+                by = c("variable"="var.id")
+              ) %>%
+              SplitColReshape.ToLong(
+                df = ., 
+                id.varname = "resp.id" ,
+                split.varname = "domain",
+                split.char = ","
+              ) %>% 
+              as_tibble() %>%
+              left_join(
+                x = ., 
+                y = domains.tb,
+                by = c("domain" = "domain.id")
+              )
+            
+            unit.ids.sample <-
+              resp.sample.nosplit.tb %>%
+              filter(!unit.id %in% districts.that.already.have.reports) %>%
+              select(unit.id) %>%
+              unique %>%
+              unlist %>% as.vector
+            
+            is.valid.sample <- 
+              ifelse(
+                length(unit.ids.sample) == as.numeric(sample.size),
+                TRUE,
+                FALSE
+              )
+            
+            print(is.valid.sample)
+          }
+        }
 
-    resp.long.tb <- resp10.tb
+    #resp.long.tb <- resp10.tb
     
   #Section Clocking
     toc()
@@ -510,7 +580,7 @@
     
     #Create data frames for this loop - restrict to unit.id id i  
       resp.long.tb.b <- 
-        resp.long.tb %>% filter(unit.id == unit.id.b)
+        resp.sample.nosplit.tb%>% filter(unit.id == unit.id.b)
       
     #Other useful inputs for forming config tables
       district.name.v <- 
@@ -653,7 +723,7 @@
       #Loop d Timing
         #tic.clearlog()
       
-      #d <- 41
+      #d <- 4
       #for(d in 1:15){ #Loop Tester
       for(d in 1:nrow(config.tables.tab12.input.tb)){ ### START OF LOOP "d" BY TABLE ###
         
@@ -682,11 +752,20 @@
               filter.varnames.d <- config.tables.tb.d$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector
               filter.values.d <- config.tables.tb.d$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
               
-              if("unit.id" %in% filter.varnames.d){
-                table.source.data <- resp.long.tb
-              }else{
-                table.source.data <- resp9.tb
-              }
+              is.state.table <- ifelse(!"unit.id" %in% filter.varnames.d, TRUE, FALSE)
+              is.domain.table <- grepl("domain", c(filter.varnames.d, table.formula.d)) %>% any
+              
+              #STATE data with NO domains in formula
+                if(is.state.table & !is.domain.table){table.source.data <- resp.full.nosplit.tb}
+              
+              #STATE data WITH domains in formula
+                if(is.state.table & is.domain.table){table.source.data <- resp.full.split.tb}
+              
+              #NON-STATE data NO domains in formula
+                if(!is.state.table & !is.domain.table){table.source.data <- resp.sample.nosplit.tb}
+              
+              #NON-STATE data WITH domains in formula
+                if(!is.state.table & is.domain.table){table.source.data <- resp.sample.split.tb}
               
             #Define table filtering vector
               #tic("Table filter calculation")
@@ -797,7 +876,7 @@
         tables.tab3.ls[[1]] <- list()
         tables.tab3.ls[[1]]$configs <- config.tab3.tb[1,]
         tables.tab3.ls[[1]]$table <-
-          resp9.tb %>% 
+          resp.full.split.tb %>% 
           filter(
             is.current.or.most.recent == 1
           ) %>%
@@ -839,7 +918,7 @@
         tables.tab3.ls[[2]] <- list()
         tables.tab3.ls[[2]]$configs <- config.tab3.tb[2,]
         tables.tab3.ls[[2]]$table <- 
-          resp.long.tb %>% 
+          resp.sample.split.tb %>% 
           filter(
             unit.id == unit.id.c & 
             is.current.or.most.recent == 1
@@ -877,7 +956,7 @@
         tables.tab3.ls[[3]] <- list()
         tables.tab3.ls[[3]]$configs <- config.tab3.tb[3,]
         tables.tab3.ls[[3]]$table <-
-          resp9.tb %>% 
+          resp.full.split.tb %>% 
           filter(
             is.current.or.baseline == 1
           ) %>%
@@ -918,7 +997,7 @@
         tables.tab3.ls[[4]] <- list()
         tables.tab3.ls[[4]]$configs <- config.tab3.tb[4,]
         tables.tab3.ls[[4]]$table <- 
-          resp.long.tb %>% 
+          resp.sample.split.tb %>% 
           filter(
             unit.id == unit.id.c & 
             is.current.or.baseline == 1
@@ -970,7 +1049,7 @@
           
           #Print loop messages
             print(paste("TAB 4 LOOP - Loop #: ", e, " - Pct. Complete: ", 100*e/nrow(config.tables.tab4.input.tb), sep = ""))
-
+          
           config.tables.tb.e <- config.tables.tab4.input.tb[e,]
           
           #Define table aggregation formula
@@ -979,16 +1058,34 @@
                 row.header.varnames = strsplit(config.tables.tb.e$row.header.varname, ",") %>% unlist %>% as.vector,
                 col.header.varnames = strsplit(config.tables.tb.e$col.header.varname, ",") %>% unlist %>% as.vector
               )
-          
+            
+          #Define table source data
+            filter.varnames.e <- config.tables.tb.e$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector
+            filter.values.e <- config.tables.tb.e$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
+            
+            is.state.table <- ifelse("unit.id" %in% filter.varnames.e, TRUE, FALSE)
+            is.domain.table <- grepl("domain", c(filter.varnames.e, table.formula.e)) %>% any
+            
+            #STATE data with NO domains in formula
+              if(is.state.table & !is.domain.table){table.source.data <- resp.full.nosplit.tb}
+            
+            #STATE data WITH domains in formula
+              if(is.state.table & is.domain.table){table.source.data <- resp.full.split.tb}
+            
+            #NON-STATE data NO domains in formula
+              if(!is.state.table & !is.domain.table){table.source.data <- resp.sample.nosplit.tb}
+            
+            #NON-STATE data WITH domains in formula
+              if(!is.state.table & is.domain.table){table.source.data <- resp.sample.split.tb}
+            
           #Define table filtering vector
             loop.id.e <- config.tables.tb.e$loop.id
             table.filter.v <-
               DefineTableFilterVector(
-                tb = resp.long.tb,
-                filter.varnames = config.tables.tb.e$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector,
-                filter.values = config.tables.tb.e$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
+                tb = table.source.data,
+                filter.varnames = filter.varnames.e,
+                filter.values = filter.values.e
               )
-            
           
           #Create table itself
             if(table.filter.v %>% not %>% all){
@@ -997,7 +1094,7 @@
             
             if(table.filter.v %>% any){
               table.e <-  
-                resp.long.tb %>%
+                table.source.data %>%
                 filter(table.filter.v) %>%
                 dcast(
                   ., 
@@ -1280,7 +1377,7 @@
     )
   
     implied.total.runtime.for.all.reports <- 
-      resp9.tb$unit.id %>% 
+      resp.full.nosplit.tb$unit.id %>% 
       unique %>% length %>% 
       divide_by(length(unit.ids.sample)) %>% 
       multiply_by(code.runtime)
