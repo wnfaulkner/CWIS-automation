@@ -746,8 +746,7 @@
         tables.tab3.ls[[1]]$table <-
           resp.long.tb %>% 
           filter(
-            unit.id == unit.id.c & 
-              is.current.or.most.recent == 1
+            is.current.or.most.recent == 1
           ) %>%
           SplitColReshape.ToLong(
             df = ., 
@@ -826,8 +825,7 @@
         tables.tab3.ls[[3]]$table <-
           resp.long.tb %>% 
           filter(
-            unit.id == unit.id.c & 
-              is.current.or.baseline == 1
+            is.current.or.baseline == 1
           ) %>%
           SplitColReshape.ToLong(
             df = ., 
