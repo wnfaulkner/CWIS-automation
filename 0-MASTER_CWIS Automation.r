@@ -626,6 +626,7 @@
         
         #CREATE TABLE
           if(config.tables.tb.d$tab.type.id == 1){
+            
             #Define table aggregation formula
               #tic("Table formula calculation")
               table.formula.d <-
@@ -635,20 +636,30 @@
                 )
               #toc(log = TRUE, quiet = TRUE)
             
+            #Define table source data
+              filter.varnames.d <- config.tables.tb.d$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector
+              filter.values.d <- config.tables.tb.d$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
+              
+              if("unit.id" %in% filter.varnames.d){
+                table.source.data <- resp.long.tb
+              }else{
+                table.source.data <- resp9.tb
+              }
+              
             #Define table filtering vector
               #tic("Table filter calculation")
               table.filter.v <-
                 DefineTableFilterVector(
-                  tb = resp.long.tb,
-                  filter.varnames = config.tables.tb.d$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector,
-                  filter.values = config.tables.tb.d$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
+                  tb = table.source.data,
+                  filter.varnames = filter.varnames.d,
+                  filter.values = filter.values.d
                 )
               #toc(log = TRUE, quiet = TRUE)
             
             #Form final data frame
               #tic("Table calculation")
               table.d <-  
-                resp.long.tb %>%
+                table.source.data %>%
                 filter(table.filter.v) %>%
                 dcast(
                   ., 
@@ -788,7 +799,7 @@
           resp.long.tb %>% 
           filter(
             unit.id == unit.id.c & 
-              is.current.or.most.recent == 1
+            is.current.or.most.recent == 1
           ) %>%
           SplitColReshape.ToLong(
             df = ., 
@@ -866,7 +877,7 @@
           resp.long.tb %>% 
           filter(
             unit.id == unit.id.c & 
-              is.current.or.baseline == 1
+            is.current.or.baseline == 1
           ) %>%
           SplitColReshape.ToLong(
             df = ., 
@@ -1028,12 +1039,12 @@
             gsub(":",".",Sys.time()), 
             sep = ""
           )
-        
-        dir.create(
-          outputs.dir,
-          recursive = TRUE
-        )
       }
+      
+      dir.create(
+        outputs.dir,
+        recursive = TRUE
+      )
     
   #EXPORT OF LONG DATA (if in global configs) ----
     if(export.long.data %>% as.logical){
@@ -1212,16 +1223,31 @@
 
 # 6-WRAP UP -----------------------------------------------
   #Code Clocking
+    code.runtime <- Sys.time() %>% subtract(sections.all.starttime) %>% round(., 2)
+      
     print(
       paste(
         "Total Runtime for ", 
         length(unit.ids.sample), 
         " reports: ", 
-        Sys.time() %>% subtract(sections.all.starttime) %>% round(., 2),
+        code.runtime,
         sep = ""
       )
     )
+  
+    implied.total.runtime.for.all.reports <- 
+      resp9.tb$unit.id %>% 
+      unique %>% length %>% 
+      divide_by(length(unit.ids.sample)) %>% 
+      multiply_by(code.runtime)
     
+    print(
+      paste(
+        "Implied total runtime for all reports (min): ",
+        implied.total.runtime.for.all.reports,
+        sep = ""
+      )
+    )
 #SIGNAL CODE IS FINISHED BY OPENING A NEW WINDOW      
   windows()
     
