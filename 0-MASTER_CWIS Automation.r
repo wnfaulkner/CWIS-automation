@@ -712,19 +712,6 @@
         
       } ### END OF LOOP "d" BY TABLE ###
       
-      #Loop d timing
-        #log.txt <- tic.log(format = TRUE)
-        #log.lst <- tic.log(format = FALSE)
-        #tic.clearlog()
-        #loop.d.duration.v <- unlist(lapply(log.lst, function(x) x$toc - x$tic))
-        #mean.loop.d.duration <- loop.d.duration.v %>% mean
-        
-        #total.num.tables <- resp9.tb$unit.id %>% unique %>% length() %>% multiply_by(nrow(config.tables.tab12.input.tb))
-        #implied.print.time.per.report.tab12.in.min <- mean.loop.d.duration %>% multiply_by(nrow(config.tables.tab12.input.tb)) %>% divide_by(60)
-        #implied.full.print.time.tabs12.in.hrs <- mean.loop.d.duration %>% multiply_by(total.num.tables) %>% divide_by(60*60) 
-        #print(paste("Implied avg. calculation time per report for tabs 1 & 2 in min: ", implied.print.time.per.report.tab12.in.min, sep = ""))
-        #print(paste("Implied full print time for tabs 1 & 2 in hours: ", implied.full.print.time.tabs12.in.hrs, sep = ""))
-        
       #Finalizing loop outputs  
         names(tables.tab12.ls) <- 
           paste(
