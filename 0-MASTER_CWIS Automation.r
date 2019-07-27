@@ -973,14 +973,12 @@
             if(config.tables.tb.d$tab.type.id == 1){
               
               #Define table aggregation formula
-                #tic("Table formula calculation")
                 table.formula.d <-
                   DefineTableRowColFormula(
                     row.header.varnames = strsplit(config.tables.tb.d$row.header.varname, ",") %>% unlist %>% as.vector,
                     col.header.varnames = strsplit(config.tables.tb.d$col.header.varname, ",") %>% unlist %>% as.vector
                   )
-                #toc(log = TRUE, quiet = TRUE)
-              
+
               #Define table source data
                 filter.varnames.d <- config.tables.tb.d$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector
                 filter.values.d <- config.tables.tb.d$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
@@ -1001,18 +999,18 @@
                   if(!is.state.table & is.domain.table){table.source.data <- resp.sample.split.tb}
                 
               #Define table filtering vector
-                #tic("Table filter calculation")
                 table.filter.v <-
                   DefineTableFilterVector(
                     tb = table.source.data,
                     filter.varnames = filter.varnames.d,
                     filter.values = filter.values.d
                   )
-                #toc(log = TRUE, quiet = TRUE)
-              
+
               #Form final data frame
-                #tic("Table calculation")
-                table.d <-  
+                if(table.filter.v %>% not %>% all){
+                  table.d <- ""
+                }else{
+                  table.d <-  
                   table.source.data %>%
                   filter(table.filter.v) %>%
                   dcast(
@@ -1022,23 +1020,22 @@
                     fun.aggregate = table.aggregation.function
                   ) %>%
                   .[,names(.)!= "NA"]
-                #toc(log = TRUE, quiet = TRUE)
-              
-              #Modifications for specific tables
-                #tic("Table modifications")
-                if(grepl("building.level", table.formula.d) %>% any){
-                  table.d <- 
-                    left_join(
-                      building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
-                      table.d,
-                      by = "building.level"
-                    )
-                }
                 
-                if(!config.tables.tb.d$row.header){  #when don't want row labels
-                  table.d <- table.d %>% select(names(table.d)[-1])
+
+                  #Modifications for specific tables
+                    if(grepl("building.level", table.formula.d) %>% any){
+                      table.d <- 
+                        left_join(
+                          building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
+                          table.d,
+                          by = "building.level"
+                        )
+                    }
+                    
+                    if(!config.tables.tb.d$row.header){  #when don't want row labels
+                      table.d <- table.d %>% select(names(table.d)[-1])
+                    }
                 }
-                #toc(log = TRUE, quiet = TRUE)
             }
           
             if(config.tables.tb.d$tab.type.id == 2){
