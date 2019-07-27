@@ -647,8 +647,12 @@
           config.tabs.ls[[b]],
           config.table.types.tb,
           by = "tab.type.id"
+        ) %>%
+        mutate(
+          is.state.table = !grepl("unit.id", filter.varname),
+          is.domain.table = grepl("domain", filter.varname)|grepl("domain", row.header.varname)|grepl("domain",col.header.varname)
         )
-      
+        
     #Text configs table for this report unit
       
       config.text.ls[[b]] <-
@@ -688,161 +692,572 @@
     setwd(rproj.dir)
     source("4-source data tables functions.r")
     
-    #State Average Tables for Tab 3
+  #STATE AVERAGE TABLES ----
     
-    #Current vs. previous school year
-      tab3.state.avg.current.vs.previous.school.year <-
-        resp.full.split.tb %>% 
-        filter(
-          is.most.recent.or.current == 1
-        ) %>%
-        SplitColReshape.ToLong(
-          df = ., 
-          id.varname = "resp.id", 
-          split.varname = "domain", 
-          split.char = ","
-        ) %>%
-        as_tibble() %>%
-        dcast(
-          data = .,
-          formula = domain ~ is.current,
-          fun.aggregate = mean,
-          value.var = "value"
-        ) %>%
-        ReplaceNames(., current.names = c("0","1"), new.names = c("Previous School Year","2018-2019")) %>%
-        mutate(
-          Trend = .[,3] - .[,2]
-        ) %>%
-        TransposeTable(., keep.first.colname = FALSE)
+    #Tabs 1 & 2 ----
+
+      #Loop Inputs
+        config.tables.tab12.input.tb <- 
+          config.tables.ls[[1]] %>% 
+          filter(!is.na(table.type.id)) %>%
+          filter(grepl("1|2", tab.type.id)) %>%
+          filter(is.state.table) %>%
+          OrderDfByVar(., order.by.varname = "tab.type.id", rev = FALSE) %>%
+          as_tibble()
+        
+        tables.tab12.state.ls <- list()
       
-      tab3.state.avg.current.vs.previous.school.year %<>%
-        apply(
-          X = tab3.state.avg.current.vs.previous.school.year[,2:ncol(tab3.state.avg.current.vs.previous.school.year)], 
-          MARGIN = 2, 
-          FUN = as.numeric
-        ) %>%
-        cbind(
-          tab3.state.avg.current.vs.previous.school.year[,1],
-          .
-        ) %>%
-        ReplaceNames(., "Var.1", "")
+      #d <- 4
+      for(d in 1:nrow(config.tables.tab12.input.tb)){ ### START OF LOOP "d" BY TABLE ###
+        
+        #Print loop messages
+        print(paste("TABS 1 & 2 LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.tab12.input.tb), sep = ""))
+        
+        #Define table configs for loop
+        config.tables.tb.d <- config.tables.tab12.input.tb[d,]
+        
+        #CREATE TABLE
+        
+          #Tab 1 Tables (newly created)
+            if(config.tables.tb.d$tab.type.id == 1){
+              
+              #Define table aggregation formula
+                table.formula.d <-
+                  DefineTableRowColFormula(
+                    row.header.varnames = strsplit(config.tables.tb.d$row.header.varname, ",") %>% unlist %>% as.vector,
+                    col.header.varnames = strsplit(config.tables.tb.d$col.header.varname, ",") %>% unlist %>% as.vector
+                  )
+    
+              #Define table source data
+                filter.varnames.d <- config.tables.tb.d$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector
+                filter.values.d <- config.tables.tb.d$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
+              
+                is.state.table <- ifelse(!"unit.id" %in% filter.varnames.d, TRUE, FALSE)
+                is.domain.table <- grepl("domain", c(filter.varnames.d, table.formula.d)) %>% any
+              
+              #STATE data with NO domains in formula
+                if(is.state.table & !is.domain.table){table.source.data <- resp.full.nosplit.tb}
+              
+              #STATE data WITH domains in formula
+                if(is.state.table & is.domain.table){table.source.data <- resp.full.split.tb}
+              
+              #NON-STATE data NO domains in formula
+                if(!is.state.table & !is.domain.table){table.source.data <- resp.sample.nosplit.tb}
+              
+              #NON-STATE data WITH domains in formula
+                if(!is.state.table & is.domain.table){table.source.data <- resp.sample.split.tb}
+              
+              #Define table filtering vector
+                table.filter.v <-
+                  DefineTableFilterVector(
+                    tb = table.source.data,
+                    filter.varnames = filter.varnames.d,
+                    filter.values = filter.values.d
+                  )
+    
+              #Form final data frame
+                table.d <-  
+                  table.source.data %>%
+                  filter(table.filter.v) %>%
+                  dcast(
+                    ., 
+                    formula = table.formula.d, 
+                    value.var = config.tables.tb.d$value.varname, 
+                    fun.aggregate = table.aggregation.function
+                  ) %>%
+                  .[,names(.)!= "NA"]
+    
+              #Modifications for specific tables
+                if(grepl("building.level", table.formula.d) %>% any){
+                  table.d <- 
+                    left_join(
+                      building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
+                      table.d,
+                      by = "building.level"
+                    )
+                }
+                
+                if(!config.tables.tb.d$row.header){  #when don't want row labels
+                  table.d <- table.d %>% select(names(table.d)[-1])
+                }
+            }
+          
+          #Tab 2 Tables (copies of tab 1)
+            if(config.tables.tb.d$tab.type.id == 2){
+              table.d <- 
+                tables.tab12.state.ls[
+                  tables.tab12.state.ls %>%
+                    lapply(
+                      .,
+                      function(x){
+                        (
+                          x$configs$tab.type.id %>%
+                            unlist %>% as.vector %>%
+                            equals(1)
+                        ) &
+                          (
+                            x$configs$table.type.id %>%
+                              unlist %>% as.vector() %>%
+                              equals(config.tables.tb.d$table.type.id)
+                          )
+                      }
+                    ) %>%
+                    unlist %>% as.vector
+                  ] %>%
+                .[[1]] %>% 
+                .[["table"]]
+            }
+          
+        #Table Storage
+          table.d.storage.index <- length(tables.tab12.state.ls) %>% add(1)
+          tables.tab12.state.ls[[table.d.storage.index]] <- list()
+          tables.tab12.state.ls[[table.d.storage.index]]$configs <- config.tables.tb.d
+          tables.tab12.state.ls[[table.d.storage.index]]$table <- table.d
+        
+      } ### END OF LOOP "d" BY TABLE ###
       
-      tab3.state.avg.current.vs.previous.school.year[1,1] <- "Previous School Year"
-      
-    #Current vs. baseline
-      tab3.state.avg.current.vs.baseline <- 
-        resp.full.split.tb %>% 
-        filter(
-          is.baseline.or.current == 1
-        ) %>%
-        SplitColReshape.ToLong(
-          df = ., 
-          id.varname = "resp.id", 
-          split.varname = "domain", 
-          split.char = ","
-        ) %>%
-        as_tibble() %>%
-        dcast(
-          data = .,
-          formula = domain ~ is.current,
-          fun.aggregate = mean,
-          value.var = "value"
-        ) %>%
-        ReplaceNames(., current.names = c("0","1"), new.names = c("Baseline","2018-2019")) %>%
-        mutate(
-          Trend = .[,3] - .[,2]
-        ) %>%
-        TransposeTable(., keep.first.colname = FALSE)
-      
-      tab3.state.avg.current.vs.baseline %<>%
-        apply(
-          X = tab3.state.avg.current.vs.baseline[,2:ncol(tab3.state.avg.current.vs.baseline)], 
-          MARGIN = 2, 
-          FUN = as.numeric
-        ) %>%
-        cbind(
-          tab3.state.avg.current.vs.baseline[,1],
-          .
-        ) %>%
-        ReplaceNames(., "Var.1", "")
-      
-      tab3.state.avg.current.vs.baseline[1,1] <- "Baseline"
+      #Finalizing loop outputs  
+        names(tables.tab12.state.ls) <- 
+          paste(
+            rep(unit.id.c, length(tables.tab12.state.ls)),
+            ".",
+            c(1:length(tables.tab12.state.ls)),
+            ".",
+            config.tables.tb.d$table.type.name, 
+            sep = ""
+          ) %>%
+          gsub("-", " ", .) %>%
+          gsub(" ", ".", .) %>%
+          SubRepeatedCharWithSingleChar(., ".") %>%
+          tolower
+    
+    
+    #Tab 3 ----
+    
+      #Current vs. previous school year
+        tab3.state.avg.current.vs.previous.school.year <-
+          resp.full.split.tb %>% 
+          filter(
+            is.most.recent.or.current == 1
+          ) %>%
+          SplitColReshape.ToLong(
+            df = ., 
+            id.varname = "resp.id", 
+            split.varname = "domain", 
+            split.char = ","
+          ) %>%
+          as_tibble() %>%
+          dcast(
+            data = .,
+            formula = domain ~ is.current,
+            fun.aggregate = mean,
+            value.var = "value"
+          ) %>%
+          ReplaceNames(., current.names = c("0","1"), new.names = c("Previous School Year","2018-2019")) %>%
+          mutate(
+            Trend = .[,3] - .[,2]
+          ) %>%
+          TransposeTable(., keep.first.colname = FALSE)
+        
+        tab3.state.avg.current.vs.previous.school.year %<>%
+          apply(
+            X = tab3.state.avg.current.vs.previous.school.year[,2:ncol(tab3.state.avg.current.vs.previous.school.year)], 
+            MARGIN = 2, 
+            FUN = as.numeric
+          ) %>%
+          cbind(
+            tab3.state.avg.current.vs.previous.school.year[,1],
+            .
+          ) %>%
+          ReplaceNames(., "Var.1", "")
+        
+        tab3.state.avg.current.vs.previous.school.year[1,1] <- "Previous School Year"
+        
+      #Current vs. baseline
+        tab3.state.avg.current.vs.baseline <- 
+          resp.full.split.tb %>% 
+          filter(
+            is.baseline.or.current == 1
+          ) %>%
+          SplitColReshape.ToLong(
+            df = ., 
+            id.varname = "resp.id", 
+            split.varname = "domain", 
+            split.char = ","
+          ) %>%
+          as_tibble() %>%
+          dcast(
+            data = .,
+            formula = domain ~ is.current,
+            fun.aggregate = mean,
+            value.var = "value"
+          ) %>%
+          ReplaceNames(., current.names = c("0","1"), new.names = c("Baseline","2018-2019")) %>%
+          mutate(
+            Trend = .[,3] - .[,2]
+          ) %>%
+          TransposeTable(., keep.first.colname = FALSE)
+        
+        tab3.state.avg.current.vs.baseline %<>%
+          apply(
+            X = tab3.state.avg.current.vs.baseline[,2:ncol(tab3.state.avg.current.vs.baseline)], 
+            MARGIN = 2, 
+            FUN = as.numeric
+          ) %>%
+          cbind(
+            tab3.state.avg.current.vs.baseline[,1],
+            .
+          ) %>%
+          ReplaceNames(., "Var.1", "")
+        
+        tab3.state.avg.current.vs.baseline[1,1] <- "Baseline"
   
+  #DISTRICT/BUIDLING TABLES ----  
+        
   ###                          ###    
   ### LOOP "c" BY REPORT UNIT  ###
   ###                          ###
   
-  #Loop outputs
-    tables.ls <- list()
-  
-  #Loop Measurement - progress bar & timing
-    progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
-    nrows.c <- lapply(config.tables.ls, nrow) %>% unlist
-    c.loop.startime <- Sys.time()
-  
-  #Building Level Order
-    building.level.order.v <- c("Elem.","High","Middle","Technology Ctr.","Other")
-      
-  #c <- 1 #LOOP TESTER 
-  for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY unit.id
+    #Loop outputs
+      tables.ls <- list()
     
-    #Loop timing
-      tic("REPORT LOOP DURATION",c)
+    #Loop Measurement - progress bar & timing
+      progress.bar.c <- txtProgressBar(min = 0, max = 100, style = 3)
+      nrows.c <- lapply(config.tables.ls, nrow) %>% unlist
+      c.loop.startime <- Sys.time()
     
-    #Loop Inputs (both graphs and tables)
-      unit.id.c <- unit.ids.sample[c]
-    
-    #Print loop messages
-      if(c == 1){print("Forming tables for export...")}
-      print("REPORT LOOP")
-      print(paste("Loop #: ", c, " - Pct. Complete: ", 100*c/length(unit.ids.sample),sep = ""))
-      print(paste("Unit id: ", unit.ids.sample[c]))
-    
-    #Tabs 1 & 2 ----
-     
-      #Loop Inputs
-        config.tables.tab12.input.tb <- 
-          config.tables.ls[[c]] %>% 
-          filter(!is.na(table.type.id)) %>%
-          filter(grepl("1|2", tab.type.id)) %>%
-          OrderDfByVar(., order.by.varname = "tab.type.id", rev = FALSE) %>%
-          as_tibble()
-        tables.tab12.ls <- list()
-      
-      #Loop d Timing
-        #tic.clearlog()
-      
-      #d <- 4
-      #for(d in 1:15){ #Loop Tester
-      for(d in 1:nrow(config.tables.tab12.input.tb)){ ### START OF LOOP "d" BY TABLE ###
+    #Building Level Order
+      building.level.order.v <- c("Elem.","High","Middle","Technology Ctr.","Other")
         
+    #c <- 1 #LOOP TESTER 
+    for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY unit.id
+      #Loop Prep----
         #Loop timing
-          #tic("Tabs 1 & 2 loop iteration:", d)
+          tic("REPORT LOOP DURATION",c)
+        
+        #Loop Inputs (both graphs and tables)
+          unit.id.c <- unit.ids.sample[c]
         
         #Print loop messages
-          print(paste("TABS 1 & 2 LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.tab12.input.tb), sep = ""))
+          if(c == 1){print("Forming tables for export...")}
+          print("REPORT LOOP")
+          print(paste("Loop #: ", c, " - Pct. Complete: ", 100*c/length(unit.ids.sample),sep = ""))
+          print(paste("Unit id: ", unit.ids.sample[c]))
+      
+      #Tabs 1 & 2 ----
+       
+        #Loop Inputs
+          config.tables.tab12.input.tb <- 
+            config.tables.ls[[c]] %>% 
+            filter(!is.na(table.type.id)) %>%
+            filter(grepl("1|2", tab.type.id)) %>%
+            filter(!is.state.table) %>%
+            OrderDfByVar(., order.by.varname = "tab.type.id", rev = FALSE) %>%
+            as_tibble()
+          
+          tables.tab12.ls <- list()
         
-        #Define table configs for loop
-          config.tables.tb.d <- config.tables.tab12.input.tb[d,]
+        #d <- 4
+        for(d in 1:nrow(config.tables.tab12.input.tb)){ ### START OF LOOP "d" BY TABLE ###
+          
+          #Loop timing
+            #tic("Tabs 1 & 2 loop iteration:", d)
+          
+          #Print loop messages
+            print(paste("TABS 1 & 2 LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.tab12.input.tb), sep = ""))
+          
+          #Define table configs for loop
+            config.tables.tb.d <- config.tables.tab12.input.tb[d,]
+          
+          #CREATE TABLE
+            if(config.tables.tb.d$tab.type.id == 1){
+              
+              #Define table aggregation formula
+                #tic("Table formula calculation")
+                table.formula.d <-
+                  DefineTableRowColFormula(
+                    row.header.varnames = strsplit(config.tables.tb.d$row.header.varname, ",") %>% unlist %>% as.vector,
+                    col.header.varnames = strsplit(config.tables.tb.d$col.header.varname, ",") %>% unlist %>% as.vector
+                  )
+                #toc(log = TRUE, quiet = TRUE)
+              
+              #Define table source data
+                filter.varnames.d <- config.tables.tb.d$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector
+                filter.values.d <- config.tables.tb.d$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
+                
+                is.state.table <- ifelse(!"unit.id" %in% filter.varnames.d, TRUE, FALSE)
+                is.domain.table <- grepl("domain", c(filter.varnames.d, table.formula.d)) %>% any
+                
+                #STATE data with NO domains in formula
+                  if(is.state.table & !is.domain.table){table.source.data <- resp.full.nosplit.tb}
+                
+                #STATE data WITH domains in formula
+                  if(is.state.table & is.domain.table){table.source.data <- resp.full.split.tb}
+                
+                #NON-STATE data NO domains in formula
+                  if(!is.state.table & !is.domain.table){table.source.data <- resp.sample.nosplit.tb}
+                
+                #NON-STATE data WITH domains in formula
+                  if(!is.state.table & is.domain.table){table.source.data <- resp.sample.split.tb}
+                
+              #Define table filtering vector
+                #tic("Table filter calculation")
+                table.filter.v <-
+                  DefineTableFilterVector(
+                    tb = table.source.data,
+                    filter.varnames = filter.varnames.d,
+                    filter.values = filter.values.d
+                  )
+                #toc(log = TRUE, quiet = TRUE)
+              
+              #Form final data frame
+                #tic("Table calculation")
+                table.d <-  
+                  table.source.data %>%
+                  filter(table.filter.v) %>%
+                  dcast(
+                    ., 
+                    formula = table.formula.d, 
+                    value.var = config.tables.tb.d$value.varname, 
+                    fun.aggregate = table.aggregation.function
+                  ) %>%
+                  .[,names(.)!= "NA"]
+                #toc(log = TRUE, quiet = TRUE)
+              
+              #Modifications for specific tables
+                #tic("Table modifications")
+                if(grepl("building.level", table.formula.d) %>% any){
+                  table.d <- 
+                    left_join(
+                      building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
+                      table.d,
+                      by = "building.level"
+                    )
+                }
+                
+                if(!config.tables.tb.d$row.header){  #when don't want row labels
+                  table.d <- table.d %>% select(names(table.d)[-1])
+                }
+                #toc(log = TRUE, quiet = TRUE)
+            }
+          
+            if(config.tables.tb.d$tab.type.id == 2){
+              table.d <- 
+                tables.tab12.ls[
+                  tables.tab12.ls %>%
+                  lapply(
+                    .,
+                    function(x){
+                      (
+                        x$configs$tab.type.id %>%
+                          unlist %>% as.vector %>%
+                          equals(1)
+                      ) &
+                        (
+                          x$configs$table.type.id %>%
+                            unlist %>% as.vector() %>%
+                            equals(config.tables.tb.d$table.type.id)
+                        )
+                    }
+                  ) %>%
+                  unlist %>% as.vector
+                ] %>%
+                .[[1]] %>% 
+                .[["table"]]
+            }
+  
+          #Table Storage
+            table.d.storage.index <- length(tables.tab12.ls) %>% add(1)
+            tables.tab12.ls[[table.d.storage.index]] <- list()
+            tables.tab12.ls[[table.d.storage.index]]$configs <- config.tables.tb.d
+            tables.tab12.ls[[table.d.storage.index]]$table <- table.d
+          
+          #tic.log(format = TRUE)
+          #toc(log = TRUE, quiet = TRUE)
+          
+        } ### END OF LOOP "d" BY TABLE ###
         
-        #CREATE TABLE
-          if(config.tables.tb.d$tab.type.id == 1){
+        #Finalizing loop outputs  
+          names(tables.tab12.ls) <- 
+            paste(
+              rep(unit.id.c, length(tables.tab12.ls)),
+              ".",
+              c(1:length(tables.tab12.ls)),
+              ".",
+              config.tables.tb.d$table.type.name, 
+              sep = ""
+            ) %>%
+            gsub("-", " ", .) %>%
+            gsub(" ", ".", .) %>%
+            SubRepeatedCharWithSingleChar(., ".") %>%
+            tolower
+        
+      #Tab 3 ----
+        #Print status
+          print("Tab 3 calculations begun...")
+          
+        #Loop Inputs
+          config.tab3.tb <-   
+            config.tables.ls[[c]] %>% 
+            filter(!is.na(table.type.id)) %>%
+            filter(grepl("3", tab.type.id)) %>%
+            OrderDfByVar(., order.by.varname = "table.type.id", rev = FALSE)
+          
+          tables.tab3.ls <- list()
+        
+        #State Average Table - Last School Year vs. Current
+          tables.tab3.ls[[1]] <- list()
+          tables.tab3.ls[[1]]$configs <- config.tab3.tb[1,]
+          tables.tab3.ls[[1]]$table <- tab3.state.avg.current.vs.previous.school.year  
+        
+        #Building Average Table - Last School year vs. Current  
+          tables.tab3.ls[[2]] <- list()
+          tables.tab3.ls[[2]]$configs <- config.tab3.tb[2,]
+          tab3.bldg.current.vs.previous.school.year <- 
+            resp.sample.split.tb %>% 
+            filter(
+              unit.id == unit.id.c & 
+              is.most.recent.or.current == 1
+            ) %>%
+            SplitColReshape.ToLong(
+              df = ., 
+              id.varname = "resp.id", 
+              split.varname = "domain", 
+              split.char = ","
+            ) %>%
+            as_tibble() %>%
+            dcast(
+              data = .,
+              formula = building.name + domain ~ year,
+              fun.aggregate = mean,
+              value.var = "value"
+            )
+          
+          if(ncol(tab3.bldg.current.vs.previous.school.year) < 4){
+            tab3.bldg.current.vs.previous.school.year %<>%
+              mutate(
+                `Prev. School Year` = NA,
+                Trend = NA
+              )
+          }
+          
+          if(ncol(tab3.bldg.current.vs.previous.school.year) == 4){
+            tab3.bldg.current.vs.previous.school.year %<>%
+              mutate(
+                Trend = .[,4] - .[,3]
+              )
+          }
+          
+          tab3.bldg.current.vs.previous.school.year %<>%
+            melt(
+              ., 
+              id.vars = c("building.name","domain")
+            ) %>%
+            dcast(
+              ., 
+              formula = building.name + variable ~ domain
+            )
+          
+          tab3.bldg.current.vs.previous.school.year$variable %<>%
+            as.character %>%
+            gsub("2017-2018", "Prev. School Year", .)
+          
+          tables.tab3.ls[[2]]$table <- tab3.bldg.current.vs.previous.school.year
+  
+        #State Average Table - Baseline vs. Current
+          tables.tab3.ls[[3]] <- list()
+          tables.tab3.ls[[3]]$configs <- config.tab3.tb[3,]
+          tables.tab3.ls[[3]]$table <- tab3.state.avg.current.vs.baseline
+            
+          
+        #Building Average Table - Baseline year vs. Current  
+          tables.tab3.ls[[4]] <- list()
+          tables.tab3.ls[[4]]$configs <- config.tab3.tb[4,]
+          tab3.bldg.current.vs.baseline <- 
+            resp.sample.split.tb %>% 
+            filter(
+              unit.id == unit.id.c & 
+                is.baseline.or.current == 1
+            ) %>%
+            SplitColReshape.ToLong(
+              df = ., 
+              id.varname = "resp.id", 
+              split.varname = "domain", 
+              split.char = ","
+            ) %>%
+            as_tibble() %>%
+            dcast(
+              data = .,
+              formula = building.name + domain ~ year,
+              fun.aggregate = mean,
+              value.var = "value"
+            )
+          
+          if(ncol(tab3.bldg.current.vs.baseline) < 4){
+            tab3.bldg.current.vs.baseline %<>%
+              mutate(
+                `Prev. School Year` = NA,
+                Trend = NA
+              )
+          }
+          
+          if(ncol(tab3.bldg.current.vs.baseline) == 4){
+            tab3.bldg.current.vs.baseline %<>%
+              mutate(
+                Trend = .[,4] - .[,3]
+              )
+          }
+          
+          tab3.bldg.current.vs.baseline %<>%
+            melt(
+              ., 
+              id.vars = c("building.name","domain")
+            ) %>%
+            dcast(
+              ., 
+              formula = building.name + variable ~ domain
+            )
+          
+          tab3.bldg.current.vs.baseline$variable %<>%
+            as.character %>%
+            gsub("0000", "Baseline", .)
+          
+          tables.tab3.ls[[4]]$table <- tab3.bldg.current.vs.baseline
+        
+      #Tab 4+ (Building Summaries) ----
+          
+        #Loop timing
+          #tic("Tab 4 duration:")  
+          
+        #Loop Inputs
+          config.tables.tab4.input.tb <- 
+            config.tables.ls[[c]] %>% 
+            filter(!is.na(table.type.id)) %>%
+            filter(tab.type.id %in% c(4)) %>%
+            filter(!is.na(loop.id))
+          tables.tab4.ls <- list()
+          
+        #e <- 3
+        for(e in 1:nrow(config.tables.tab4.input.tb)){ ### START OF LOOP "e" BY TABLE ###
+            
+            #Print loop messages
+              print(paste("TAB 4 LOOP - Loop #: ", e, " - Pct. Complete: ", 100*e/nrow(config.tables.tab4.input.tb), sep = ""))
+            
+            config.tables.tb.e <- config.tables.tab4.input.tb[e,]
             
             #Define table aggregation formula
-              #tic("Table formula calculation")
-              table.formula.d <-
+              table.formula.e <-
                 DefineTableRowColFormula(
-                  row.header.varnames = strsplit(config.tables.tb.d$row.header.varname, ",") %>% unlist %>% as.vector,
-                  col.header.varnames = strsplit(config.tables.tb.d$col.header.varname, ",") %>% unlist %>% as.vector
+                  row.header.varnames = strsplit(config.tables.tb.e$row.header.varname, ",") %>% unlist %>% as.vector,
+                  col.header.varnames = strsplit(config.tables.tb.e$col.header.varname, ",") %>% unlist %>% as.vector
                 )
-              #toc(log = TRUE, quiet = TRUE)
-            
-            #Define table source data
-              filter.varnames.d <- config.tables.tb.d$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector
-              filter.values.d <- config.tables.tb.d$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
               
-              is.state.table <- ifelse(!"unit.id" %in% filter.varnames.d, TRUE, FALSE)
-              is.domain.table <- grepl("domain", c(filter.varnames.d, table.formula.d)) %>% any
+            #Define table source data
+              filter.varnames.e <- config.tables.tb.e$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector
+              filter.values.e <- config.tables.tb.e$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
+              
+              is.state.table <- ifelse(!"unit.id" %in% filter.varnames.e, TRUE, FALSE)
+              is.domain.table <- grepl("domain", c(filter.varnames.e, table.formula.e)) %>% any
               
               #STATE data with NO domains in formula
                 if(is.state.table & !is.domain.table){table.source.data <- resp.full.nosplit.tb}
@@ -857,337 +1272,67 @@
                 if(!is.state.table & is.domain.table){table.source.data <- resp.sample.split.tb}
               
             #Define table filtering vector
-              #tic("Table filter calculation")
+              loop.id.e <- config.tables.tb.e$loop.id
               table.filter.v <-
                 DefineTableFilterVector(
                   tb = table.source.data,
-                  filter.varnames = filter.varnames.d,
-                  filter.values = filter.values.d
-                )
-              #toc(log = TRUE, quiet = TRUE)
-            
-            #Form final data frame
-              #tic("Table calculation")
-              table.d <-  
-                table.source.data %>%
-                filter(table.filter.v) %>%
-                dcast(
-                  ., 
-                  formula = table.formula.d, 
-                  value.var = config.tables.tb.d$value.varname, 
-                  fun.aggregate = table.aggregation.function
-                ) %>%
-                .[,names(.)!= "NA"]
-              #toc(log = TRUE, quiet = TRUE)
-            
-            #Modifications for specific tables
-              #tic("Table modifications")
-              if(grepl("building.level", table.formula.d) %>% any){
-                table.d <- 
-                  left_join(
-                    building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
-                    table.d,
-                    by = "building.level"
-                  )
-              }
-              
-              if(!config.tables.tb.d$row.header){  #when don't want row labels
-                table.d <- table.d %>% select(names(table.d)[-1])
-              }
-              #toc(log = TRUE, quiet = TRUE)
-          }
-        
-          if(config.tables.tb.d$tab.type.id == 2){
-            table.d <- 
-              tables.tab12.ls[
-                tables.tab12.ls %>%
-                lapply(
-                  .,
-                  function(x){
-                    (
-                      x$configs$tab.type.id %>%
-                        unlist %>% as.vector %>%
-                        equals(1)
-                    ) &
-                      (
-                        x$configs$table.type.id %>%
-                          unlist %>% as.vector() %>%
-                          equals(config.tables.tb.d$table.type.id)
-                      )
-                  }
-                ) %>%
-                unlist %>% as.vector
-              ] %>%
-              .[[1]] %>% 
-              .[["table"]]
-          }
-
-        #Table Storage
-          table.d.storage.index <- length(tables.tab12.ls) %>% add(1)
-          tables.tab12.ls[[table.d.storage.index]] <- list()
-          tables.tab12.ls[[table.d.storage.index]]$configs <- config.tables.tb.d
-          tables.tab12.ls[[table.d.storage.index]]$table <- table.d
-        
-        #tic.log(format = TRUE)
-        #toc(log = TRUE, quiet = TRUE)
-        
-      } ### END OF LOOP "d" BY TABLE ###
-      
-      #Finalizing loop outputs  
-        names(tables.tab12.ls) <- 
-          paste(
-            rep(unit.id.c, length(tables.tab12.ls)),
-            ".",
-            c(1:length(tables.tab12.ls)),
-            ".",
-            config.tables.tb.d$table.type.name, 
-            sep = ""
-          ) %>%
-          gsub("-", " ", .) %>%
-          gsub(" ", ".", .) %>%
-          SubRepeatedCharWithSingleChar(., ".") %>%
-          tolower
-      
-    #Tab 3 ----
-      #Print status
-        print("Tab 3 calculations begun...")
-        
-      #Loop Inputs
-        config.tab3.tb <-   
-          config.tables.ls[[c]] %>% 
-          filter(!is.na(table.type.id)) %>%
-          filter(grepl("3", tab.type.id)) %>%
-          OrderDfByVar(., order.by.varname = "table.type.id", rev = FALSE)
-        
-        tables.tab3.ls <- list()
-      
-      #State Average Table - Last School Year vs. Current
-        tables.tab3.ls[[1]] <- list()
-        tables.tab3.ls[[1]]$configs <- config.tab3.tb[1,]
-        tables.tab3.ls[[1]]$table <- tab3.state.avg.current.vs.previous.school.year  
-      
-      #Building Average Table - Last School year vs. Current  
-        tables.tab3.ls[[2]] <- list()
-        tables.tab3.ls[[2]]$configs <- config.tab3.tb[2,]
-        tab3.bldg.current.vs.previous.school.year <- 
-          resp.sample.split.tb %>% 
-          filter(
-            unit.id == unit.id.c & 
-            is.most.recent.or.current == 1
-          ) %>%
-          SplitColReshape.ToLong(
-            df = ., 
-            id.varname = "resp.id", 
-            split.varname = "domain", 
-            split.char = ","
-          ) %>%
-          as_tibble() %>%
-          dcast(
-            data = .,
-            formula = building.name + domain ~ year,
-            fun.aggregate = mean,
-            value.var = "value"
-          )
-        
-        if(ncol(tab3.bldg.current.vs.previous.school.year) < 4){
-          tab3.bldg.current.vs.previous.school.year %<>%
-            mutate(
-              `Prev. School Year` = NA,
-              Trend = NA
-            )
-        }
-        
-        if(ncol(tab3.bldg.current.vs.previous.school.year) == 4){
-          tab3.bldg.current.vs.previous.school.year %<>%
-            mutate(
-              Trend = .[,4] - .[,3]
-            )
-        }
-        
-        tab3.bldg.current.vs.previous.school.year %<>%
-          melt(
-            ., 
-            id.vars = c("building.name","domain")
-          ) %>%
-          dcast(
-            ., 
-            formula = building.name + variable ~ domain
-          )
-        
-        tab3.bldg.current.vs.previous.school.year$variable %<>%
-          as.character %>%
-          gsub("2017-2018", "Prev. School Year", .)
-        
-        tables.tab3.ls[[2]]$table <- tab3.bldg.current.vs.previous.school.year
-
-      #State Average Table - Baseline vs. Current
-        tables.tab3.ls[[3]] <- list()
-        tables.tab3.ls[[3]]$configs <- config.tab3.tb[3,]
-        tables.tab3.ls[[3]]$table <- tab3.state.avg.current.vs.baseline
-          
-        
-      #Building Average Table - Baseline year vs. Current  
-        tables.tab3.ls[[4]] <- list()
-        tables.tab3.ls[[4]]$configs <- config.tab3.tb[4,]
-        tab3.bldg.current.vs.baseline <- 
-          resp.sample.split.tb %>% 
-          filter(
-            unit.id == unit.id.c & 
-              is.baseline.or.current == 1
-          ) %>%
-          SplitColReshape.ToLong(
-            df = ., 
-            id.varname = "resp.id", 
-            split.varname = "domain", 
-            split.char = ","
-          ) %>%
-          as_tibble() %>%
-          dcast(
-            data = .,
-            formula = building.name + domain ~ year,
-            fun.aggregate = mean,
-            value.var = "value"
-          )
-        
-        if(ncol(tab3.bldg.current.vs.baseline) < 4){
-          tab3.bldg.current.vs.baseline %<>%
-            mutate(
-              `Prev. School Year` = NA,
-              Trend = NA
-            )
-        }
-        
-        if(ncol(tab3.bldg.current.vs.baseline) == 4){
-          tab3.bldg.current.vs.baseline %<>%
-            mutate(
-              Trend = .[,4] - .[,3]
-            )
-        }
-        
-        tab3.bldg.current.vs.baseline %<>%
-          melt(
-            ., 
-            id.vars = c("building.name","domain")
-          ) %>%
-          dcast(
-            ., 
-            formula = building.name + variable ~ domain
-          )
-        
-        tab3.bldg.current.vs.baseline$variable %<>%
-          as.character %>%
-          gsub("0000", "Baseline", .)
-        
-        tables.tab3.ls[[4]]$table <- tab3.bldg.current.vs.baseline
-      
-    #Tab 4+ (Building Summaries) ----
-        
-      #Loop timing
-        #tic("Tab 4 duration:")  
-        
-      #Loop Inputs
-        config.tables.tab4.input.tb <- 
-          config.tables.ls[[c]] %>% 
-          filter(!is.na(table.type.id)) %>%
-          filter(tab.type.id %in% c(4)) %>%
-          filter(!is.na(loop.id))
-        tables.tab4.ls <- list()
-        
-      #e <- 3
-      for(e in 1:nrow(config.tables.tab4.input.tb)){ ### START OF LOOP "e" BY TABLE ###
-          
-          #Print loop messages
-            print(paste("TAB 4 LOOP - Loop #: ", e, " - Pct. Complete: ", 100*e/nrow(config.tables.tab4.input.tb), sep = ""))
-          
-          config.tables.tb.e <- config.tables.tab4.input.tb[e,]
-          
-          #Define table aggregation formula
-            table.formula.e <-
-              DefineTableRowColFormula(
-                row.header.varnames = strsplit(config.tables.tb.e$row.header.varname, ",") %>% unlist %>% as.vector,
-                col.header.varnames = strsplit(config.tables.tb.e$col.header.varname, ",") %>% unlist %>% as.vector
-              )
-            
-          #Define table source data
-            filter.varnames.e <- config.tables.tb.e$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector
-            filter.values.e <- config.tables.tb.e$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
-            
-            is.state.table <- ifelse(!"unit.id" %in% filter.varnames.e, TRUE, FALSE)
-            is.domain.table <- grepl("domain", c(filter.varnames.e, table.formula.e)) %>% any
-            
-            #STATE data with NO domains in formula
-              if(is.state.table & !is.domain.table){table.source.data <- resp.full.nosplit.tb}
-            
-            #STATE data WITH domains in formula
-              if(is.state.table & is.domain.table){table.source.data <- resp.full.split.tb}
-            
-            #NON-STATE data NO domains in formula
-              if(!is.state.table & !is.domain.table){table.source.data <- resp.sample.nosplit.tb}
-            
-            #NON-STATE data WITH domains in formula
-              if(!is.state.table & is.domain.table){table.source.data <- resp.sample.split.tb}
-            
-          #Define table filtering vector
-            loop.id.e <- config.tables.tb.e$loop.id
-            table.filter.v <-
-              DefineTableFilterVector(
-                tb = table.source.data,
-                filter.varnames = filter.varnames.e,
-                filter.values = filter.values.e
-              )
-          
-          #Create table itself
-            if(table.filter.v %>% not %>% all){
-              table.e <- ""
-            }
-            
-            if(table.filter.v %>% any){
-              table.e <-  
-                table.source.data %>%
-                filter(table.filter.v) %>%
-                dcast(
-                  ., 
-                  formula = table.formula.e, 
-                  value.var = config.tables.tb.e$value.varname, 
-                  fun.aggregate = table.aggregation.function
-                ) %>%
-                .[,names(.)!= ""]
-              
-              table.e$trend <- 
-                ifelse(
-                  IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]),
-                  NA,
-                  table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]
+                  filter.varnames = filter.varnames.e,
+                  filter.values = filter.values.e
                 )
             
-            #Modifications for specific tables
-              if(grepl("building.level", table.formula.e) %>% any){
-                table.e <- 
-                  left_join(
-                    building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
-                    table.e,
-                    by = "building.level"
-                  )
+            #Create table itself
+              if(table.filter.v %>% not %>% all){
+                table.e <- ""
               }
               
-              if(!config.tables.tb.e$row.header){  #when don't want row labels
-                table.e <- table.e %>% select(names(table.e)[-1])
+              if(table.filter.v %>% any){
+                table.e <-  
+                  table.source.data %>%
+                  filter(table.filter.v) %>%
+                  dcast(
+                    ., 
+                    formula = table.formula.e, 
+                    value.var = config.tables.tb.e$value.varname, 
+                    fun.aggregate = table.aggregation.function
+                  ) %>%
+                  .[,names(.)!= ""]
+                
+                table.e$trend <- 
+                  ifelse(
+                    IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]),
+                    NA,
+                    table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]
+                  )
+              
+              #Modifications for specific tables
+                if(grepl("building.level", table.formula.e) %>% any){
+                  table.e <- 
+                    left_join(
+                      building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
+                      table.e,
+                      by = "building.level"
+                    )
+                }
+                
+                if(!config.tables.tb.e$row.header){  #when don't want row labels
+                  table.e <- table.e %>% select(names(table.e)[-1])
+                }
               }
-            }
+              
+            #Table storage
+              if(table.e == ""){print(e)}
+              tables.tab4.ls[[e]] <- list()
+              tables.tab4.ls[[e]]$configs <- config.tables.tb.e
+              tables.tab4.ls[[e]]$table <- table.e
             
-          #Table storage
-            if(table.e == ""){print(e)}
-            tables.tab4.ls[[e]] <- list()
-            tables.tab4.ls[[e]]$configs <- config.tables.tb.e
-            tables.tab4.ls[[e]]$table <- table.e
-          
-        } ### END OF LOOP "e" BY TABLE ###
+          } ### END OF LOOP "e" BY TABLE ###
       
-    tables.ls[[c]] <- c(tables.tab12.ls, tables.tab3.ls, tables.tab4.ls)
-    
-    toc(log = TRUE, quiet = TRUE)  
-  } ### END OF LOOP "c" BY REPORT UNIT     
+      #Assemble final outputs for district ----  
+        tables.ls[[c]] <- c(tables.tab12.state.ls, tables.tab12.ls, tables.tab3.ls, tables.tab4.ls)
       
+      toc(log = TRUE, quiet = TRUE)  
+    } ### END OF LOOP "c" BY REPORT UNIT     
+        
   #Section Clocking
     toc(log = TRUE, quiet = FALSE)
     Sys.time() - sections.all.starttime
