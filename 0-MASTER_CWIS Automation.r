@@ -969,7 +969,7 @@
       #Building Average Table - Last School year vs. Current  
         tables.tab3.ls[[2]] <- list()
         tables.tab3.ls[[2]]$configs <- config.tab3.tb[2,]
-        tables.tab3.ls[[2]]$table <- 
+        tab3.bldg.current.vs.previous.school.year <- 
           resp.sample.split.tb %>% 
           filter(
             unit.id == unit.id.c & 
@@ -987,10 +987,24 @@
             formula = building.name + domain ~ year,
             fun.aggregate = mean,
             value.var = "value"
-          ) %>%
-          mutate(
-            Trend = .[,4] - .[,3]
-          ) %>%
+          )
+        
+        if(ncol(tab3.bldg.current.vs.previous.school.year) < 4){
+          tab3.bldg.current.vs.previous.school.year %<>%
+            mutate(
+              `Prev. School Year` = NA,
+              Trend = NA
+            )
+        }
+        
+        if(ncol(tab3.bldg.current.vs.previous.school.year) == 4){
+          tab3.bldg.current.vs.previous.school.year %<>%
+            mutate(
+              Trend = .[,4] - .[,3]
+            )
+        }
+        
+        tab3.bldg.current.vs.previous.school.year %<>%
           melt(
             ., 
             id.vars = c("building.name","domain")
@@ -1000,9 +1014,11 @@
             formula = building.name + variable ~ domain
           )
         
-        tables.tab3.ls[[2]]$table$variable %<>%
+        tab3.bldg.current.vs.previous.school.year$variable %<>%
           as.character %>%
-          gsub("0000", "Prev. School Year", .)
+          gsub("2017-2018", "Prev. School Year", .)
+        
+        tables.tab3.ls[[2]]$table <- tab3.bldg.current.vs.previous.school.year
 
       #State Average Table - Baseline vs. Current
         tables.tab3.ls[[3]] <- list()
@@ -1013,11 +1029,11 @@
       #Building Average Table - Baseline year vs. Current  
         tables.tab3.ls[[4]] <- list()
         tables.tab3.ls[[4]]$configs <- config.tab3.tb[4,]
-        tables.tab3.ls[[4]]$table <- 
+        tab3.bldg.current.vs.baseline <- 
           resp.sample.split.tb %>% 
           filter(
             unit.id == unit.id.c & 
-            is.baseline.or.current == 1
+              is.baseline.or.current == 1
           ) %>%
           SplitColReshape.ToLong(
             df = ., 
@@ -1031,10 +1047,24 @@
             formula = building.name + domain ~ year,
             fun.aggregate = mean,
             value.var = "value"
-          ) %>%
-          mutate(
-            Trend = .[,4] - .[,3]
-          ) %>%
+          )
+        
+        if(ncol(tab3.bldg.current.vs.baseline) < 4){
+          tab3.bldg.current.vs.baseline %<>%
+            mutate(
+              `Prev. School Year` = NA,
+              Trend = NA
+            )
+        }
+        
+        if(ncol(tab3.bldg.current.vs.baseline) == 4){
+          tab3.bldg.current.vs.baseline %<>%
+            mutate(
+              Trend = .[,4] - .[,3]
+            )
+        }
+        
+        tab3.bldg.current.vs.baseline %<>%
           melt(
             ., 
             id.vars = c("building.name","domain")
@@ -1044,9 +1074,11 @@
             formula = building.name + variable ~ domain
           )
         
-        tables.tab3.ls[[4]]$table$variable %<>%
+        tab3.bldg.current.vs.baseline$variable %<>%
           as.character %>%
           gsub("0000", "Baseline", .)
+        
+        tables.tab3.ls[[4]]$table <- tab3.bldg.current.vs.baseline
       
     #Tab 4+ (Building Summaries) ----
         
@@ -1080,7 +1112,7 @@
             filter.varnames.e <- config.tables.tb.e$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector
             filter.values.e <- config.tables.tb.e$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
             
-            is.state.table <- ifelse("unit.id" %in% filter.varnames.e, TRUE, FALSE)
+            is.state.table <- ifelse(!"unit.id" %in% filter.varnames.e, TRUE, FALSE)
             is.domain.table <- grepl("domain", c(filter.varnames.e, table.formula.e)) %>% any
             
             #STATE data with NO domains in formula
