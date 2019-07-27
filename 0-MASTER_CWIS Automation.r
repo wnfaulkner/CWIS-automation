@@ -299,44 +299,54 @@
       year.var.helper.tb <-
         resp7.tb %>%
         select(year, unit.id) %>%
-        unique 
+        unique %>%
+        mutate(
+          is.baseline = ifelse(year == "0000", 1, 0),
+          is.most.recent = ifelse(year == "2017-2018", 1, 0),
+          is.current = ifelse(year == "2018-2019", 1, 0)
+        ) %>%
+        mutate(
+          is.baseline.or.most.recent = ifelse(is.baseline == 1 | is.most.recent == 1, 1, 0),
+          is.baseline.or.current = ifelse(is.baseline == 1 | is.current == 1, 1, 0),
+          is.most.recent.or.current = ifelse(is.most.recent == 1 | is.current == 1, 1, 0)
+        )
       
-      year.var.helper.ls <- list()
+      #year.var.helper.ls <- list()
       
-      for(i in 1:length(unique(year.var.helper.tb$unit.id))){
-        unit.id.i <- unique(year.var.helper.tb$unit.id)[i]
-        year.var.helper.tb.i <- 
-          year.var.helper.tb %>% 
-          filter(unit.id == unit.id.i) %>%
-          arrange(year) %>% 
-          mutate(
-            num.measurements = nrow(.),
-            is.baseline = 0,
-            is.most.recent = 0, 
-            is.current = 0,
-            is.current.or.most.recent = 0,
-            is.current.or.baseline = 0
-          )
+      #for(i in 1:length(unique(year.var.helper.tb$unit.id))){
+      #  unit.id.i <- unique(year.var.helper.tb$unit.id)[i]
+      #  year.var.helper.tb.i <- 
+      #    year.var.helper.tb %>% 
+      #    filter(unit.id == unit.id.i) %>%
+      #    arrange(year) %>% 
+      #    mutate(
+      #      num.measurements = nrow(.),
+      #      is.baseline = 0,
+      #      is.most.recent = 0, 
+      #      is.current = 0,
+      #      is.most.recent.or.current = 0,
+      #      is.baseline.or.current = 0
+      #    )
+      #  
+      #  year.var.helper.tb.i$is.baseline[1] <- 1
+      #  
+      #  year.var.helper.tb.i$is.current[nrow(year.var.helper.tb.i)] <- 
+      #    ifelse(unique(year.var.helper.tb.i$num.measurements) == 1, 0, 1)
+      #  
+      #  year.var.helper.tb.i$is.most.recent[nrow(year.var.helper.tb.i)-1] <- 
+      #    ifelse(unique(year.var.helper.tb.i$num.measurements) == 1, 0, 1)
+      #  
+      #  year.var.helper.tb.i$is.most.recent.or.current[
+      #     year.var.helper.tb.i$is.current == 1 | year.var.helper.tb.i$is.most.recent ==1
+      #  ] <- 1
+      #  year.var.helper.tb.i$is.baseline.or.current[
+      #    year.var.helper.tb.i$is.current == 1 | year.var.helper.tb.i$is.baseline ==1
+      #    ] <- 1
+      #  
+      #  year.var.helper.ls[[i]] <- year.var.helper.tb.i
+      #}
         
-        year.var.helper.tb.i$is.baseline[1] <- 1
-        
-        year.var.helper.tb.i$is.current[nrow(year.var.helper.tb.i)] <- 
-          ifelse(unique(year.var.helper.tb.i$num.measurements) == 1, 0, 1)
-        
-        year.var.helper.tb.i$is.most.recent[nrow(year.var.helper.tb.i)-1] <- 
-          ifelse(unique(year.var.helper.tb.i$num.measurements) == 1, 0, 1)
-        
-        year.var.helper.tb.i$is.current.or.most.recent[
-          year.var.helper.tb.i$is.current == 1 | year.var.helper.tb.i$is.most.recent ==1
-        ] <- 1
-        year.var.helper.tb.i$is.current.or.baseline[
-          year.var.helper.tb.i$is.current == 1 | year.var.helper.tb.i$is.baseline ==1
-          ] <- 1
-        
-        year.var.helper.ls[[i]] <- year.var.helper.tb.i
-      }
-      
-      year.var.helper.tb <- do.call(rbind, year.var.helper.ls)
+      #year.var.helper.tb <- do.call(rbind, year.var.helper.ls)
       
       resp8.tb <- 
         left_join(
@@ -344,7 +354,6 @@
           year.var.helper.tb,
           by = c("year", "unit.id")
         ) %>% 
-        filter(num.measurements > 1) %>%
         mutate(variable = as.character(variable))
    
   #FORM FINAL DATASETS - (A) SPLITCOLRESHAPED BY DOMAIN AND (B) RESTRICTED TO SAMPLE ----
@@ -678,6 +687,86 @@
   #Load Configs Functions
     setwd(rproj.dir)
     source("4-source data tables functions.r")
+    
+    #State Average Tables for Tab 3
+    
+    #Current vs. previous school year
+      tab3.state.avg.current.vs.previous.school.year <-
+        resp.full.split.tb %>% 
+        filter(
+          is.most.recent.or.current == 1
+        ) %>%
+        SplitColReshape.ToLong(
+          df = ., 
+          id.varname = "resp.id", 
+          split.varname = "domain", 
+          split.char = ","
+        ) %>%
+        as_tibble() %>%
+        dcast(
+          data = .,
+          formula = domain ~ is.current,
+          fun.aggregate = mean,
+          value.var = "value"
+        ) %>%
+        ReplaceNames(., current.names = c("0","1"), new.names = c("Previous School Year","2018-2019")) %>%
+        mutate(
+          Trend = .[,3] - .[,2]
+        ) %>%
+        TransposeTable(., keep.first.colname = FALSE)
+      
+      tab3.state.avg.current.vs.previous.school.year %<>%
+        apply(
+          X = tab3.state.avg.current.vs.previous.school.year[,2:ncol(tab3.state.avg.current.vs.previous.school.year)], 
+          MARGIN = 2, 
+          FUN = as.numeric
+        ) %>%
+        cbind(
+          tab3.state.avg.current.vs.previous.school.year[,1],
+          .
+        ) %>%
+        ReplaceNames(., "Var.1", "")
+      
+      tab3.state.avg.current.vs.previous.school.year[1,1] <- "Previous School Year"
+      
+    #Current vs. baseline
+      tab3.state.avg.current.vs.baseline <- 
+        resp.full.split.tb %>% 
+        filter(
+          is.baseline.or.current == 1
+        ) %>%
+        SplitColReshape.ToLong(
+          df = ., 
+          id.varname = "resp.id", 
+          split.varname = "domain", 
+          split.char = ","
+        ) %>%
+        as_tibble() %>%
+        dcast(
+          data = .,
+          formula = domain ~ is.current,
+          fun.aggregate = mean,
+          value.var = "value"
+        ) %>%
+        ReplaceNames(., current.names = c("0","1"), new.names = c("Baseline","2018-2019")) %>%
+        mutate(
+          Trend = .[,3] - .[,2]
+        ) %>%
+        TransposeTable(., keep.first.colname = FALSE)
+      
+      tab3.state.avg.current.vs.baseline %<>%
+        apply(
+          X = tab3.state.avg.current.vs.baseline[,2:ncol(tab3.state.avg.current.vs.baseline)], 
+          MARGIN = 2, 
+          FUN = as.numeric
+        ) %>%
+        cbind(
+          tab3.state.avg.current.vs.baseline[,1],
+          .
+        ) %>%
+        ReplaceNames(., "Var.1", "")
+      
+      tab3.state.avg.current.vs.baseline[1,1] <- "Baseline"
   
   ###                          ###    
   ### LOOP "c" BY REPORT UNIT  ###
@@ -693,7 +782,7 @@
   
   #Building Level Order
     building.level.order.v <- c("Elem.","High","Middle","Technology Ctr.","Other")
-    
+      
   #c <- 1 #LOOP TESTER 
   for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY unit.id
     
@@ -875,44 +964,7 @@
       #State Average Table - Last School Year vs. Current
         tables.tab3.ls[[1]] <- list()
         tables.tab3.ls[[1]]$configs <- config.tab3.tb[1,]
-        tables.tab3.ls[[1]]$table <-
-          resp.full.split.tb %>% 
-          filter(
-            is.current.or.most.recent == 1
-          ) %>%
-          SplitColReshape.ToLong(
-            df = ., 
-            id.varname = "resp.id", 
-            split.varname = "domain", 
-            split.char = ","
-          ) %>%
-          as_tibble() %>%
-          dcast(
-            data = .,
-            formula = domain ~ is.current,
-            fun.aggregate = mean,
-            value.var = "value"
-          ) %>%
-          ReplaceNames(., current.names = c("0","1"), new.names = c("Previous School Year","2018-2019")) %>%
-          mutate(
-            Trend = .[,3] - .[,2]
-          ) %>%
-          TransposeTable(., keep.first.colname = FALSE)
-        
-        tables.tab3.ls[[1]]$table %<>%
-          apply(
-            X = tables.tab3.ls[[1]]$table[,2:ncol(tables.tab3.ls[[1]]$table)], 
-            MARGIN = 2, 
-            FUN = as.numeric
-          ) %>%
-          cbind(
-            tables.tab3.ls[[1]]$table[,1],
-            .
-          ) %>%
-          ReplaceNames(., "Var.1", "")
-        
-        tables.tab3.ls[[1]]$table[1,1] <- "Previous School Year"
-          
+        tables.tab3.ls[[1]]$table <- tab3.state.avg.current.vs.previous.school.year  
       
       #Building Average Table - Last School year vs. Current  
         tables.tab3.ls[[2]] <- list()
@@ -921,7 +973,7 @@
           resp.sample.split.tb %>% 
           filter(
             unit.id == unit.id.c & 
-            is.current.or.most.recent == 1
+            is.most.recent.or.current == 1
           ) %>%
           SplitColReshape.ToLong(
             df = ., 
@@ -955,43 +1007,8 @@
       #State Average Table - Baseline vs. Current
         tables.tab3.ls[[3]] <- list()
         tables.tab3.ls[[3]]$configs <- config.tab3.tb[3,]
-        tables.tab3.ls[[3]]$table <-
-          resp.full.split.tb %>% 
-          filter(
-            is.current.or.baseline == 1
-          ) %>%
-          SplitColReshape.ToLong(
-            df = ., 
-            id.varname = "resp.id", 
-            split.varname = "domain", 
-            split.char = ","
-          ) %>%
-          as_tibble() %>%
-          dcast(
-            data = .,
-            formula = domain ~ is.current,
-            fun.aggregate = mean,
-            value.var = "value"
-          ) %>%
-          ReplaceNames(., current.names = c("0","1"), new.names = c("Baseline","2018-2019")) %>%
-          mutate(
-            Trend = .[,3] - .[,2]
-          ) %>%
-          TransposeTable(., keep.first.colname = FALSE)
-        
-        tables.tab3.ls[[3]]$table %<>%
-          apply(
-            X = tables.tab3.ls[[3]]$table[,2:ncol(tables.tab3.ls[[3]]$table)], 
-            MARGIN = 2, 
-            FUN = as.numeric
-          ) %>%
-          cbind(
-            tables.tab3.ls[[3]]$table[,1],
-            .
-          ) %>%
-          ReplaceNames(., "Var.1", "")
-        
-        tables.tab3.ls[[3]]$table[1,1] <- "Baseline"
+        tables.tab3.ls[[3]]$table <- tab3.state.avg.current.vs.baseline
+          
         
       #Building Average Table - Baseline year vs. Current  
         tables.tab3.ls[[4]] <- list()
@@ -1000,7 +1017,7 @@
           resp.sample.split.tb %>% 
           filter(
             unit.id == unit.id.c & 
-            is.current.or.baseline == 1
+            is.baseline.or.current == 1
           ) %>%
           SplitColReshape.ToLong(
             df = ., 
@@ -1138,25 +1155,6 @@
     
     toc(log = TRUE, quiet = TRUE)  
   } ### END OF LOOP "c" BY REPORT UNIT     
-  
-
-  #Loop c timing
-    #log.txt <- tic.log(format = TRUE)
-    #log.lst <- tic.log(format = FALSE)
-    #tic.clearlog()
-    #loop.c.duration.v <- unlist(lapply(log.lst, function(x) x$toc - x$tic))
-    #mean.loop.c.duration <- loop.c.duration.v %>% mean
-    
-    #total.num.tables <- resp9.tb$unit.id %>% unique %>% length() %>% multiply_by(nrow(config.tables.tab12.input.tb))
-    #implied.print.time.per.report.in.min <- mean.loop.c.duration %>% divide_by(60)
-    #implied.full.print.time.in.min <- mean.loop.c.duration %>% multiply_by(resp9.tb$unit.id %>% unique %>% length) %>% divide_by(60) 
-    #print(paste("Implied avg. calculation time per report in min: ", implied.print.time.per.report.in.min, sep = ""))
-    #print(paste("Implied full print time in min: ", implied.full.print.time.in.min, sep = ""))
-  
-  #Loop Measurement - progress bar & timing
-    #c.loop.duration <- Sys.time() - c.loop.startime
-    #close(progress.bar.c)  
-    #c.loop.duration
       
   #Section Clocking
     toc(log = TRUE, quiet = FALSE)
