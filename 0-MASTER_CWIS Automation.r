@@ -6,7 +6,7 @@
   
   #INITIAL SETUP
     rm(list=ls()) #Remove lists
-    options(java.parameters = "- Xmx8g") #helps r not to fail when importing large xlsx files with xlsx package
+    options(java.parameters = "- Xmx20g") #helps r not to fail when importing large xlsx files with xlsx package
     #TODO: MAKE UTILS MEMORY FUNCTIONS
       #MEASURE MEMORY USAGE OF OBJECTS
       #FUNCTION TO LIST MEMORY USAGE OF LARGEST OBJECTS IN CURRENT ENVIRONMENT
@@ -167,7 +167,8 @@
         list.files()[!grepl("desktop.ini", list.files())] %>%
         str_split(., "_") %>%
         lapply(., `[[`, 2) %>%
-        unlist
+        unlist %>%
+        gsub(".xlsx","",.)
       
       outputs.dir <- 
         paste(
@@ -499,14 +500,27 @@
           is.valid.sample <- FALSE
           while(!is.valid.sample){
             
+            unit.ids.sample <-
+              resp.full.nosplit.tb %>%
+              select(unit.id) %>%
+              unique %>%
+              unlist %>% as.vector %>%
+              setdiff(., districts.that.already.have.reports) %>%
+              .[1:sample.size] %>%
+              RemoveNA
+            
+            #if(length(districts.without.reports) > sample.size){unit.ids.sample <- districts.without.reports[1:sample.size]}
+            #if(length(districts.without.reports) < sample.size){unit.ids.sample <- districts.without.reports}
+            
+            is.valid.sample <-
+              unit.ids.sample %in% districts.that.already.have.reports %>% not %>% all
+            
+            print(is.valid.sample)
+            if(!is.valid.sample){next()}
+            
             resp.sample.nosplit.tb <- 
-              RestrictDataToSample(
-                tb = resp.full.nosplit.tb,
-                report.unit = "unit.id",
-                sample.print = TRUE,
-                sample.group.unit = "unit.id",
-                sample.size = sample.size
-              )
+              resp.full.nosplit.tb %>%
+              filter(unit.id %in% unit.ids.sample)
             
             resp.sample.split.tb <- 
               left_join(
@@ -526,22 +540,6 @@
                 y = domains.tb,
                 by = c("domain" = "domain.id")
               )
-            
-            unit.ids.sample <-
-              resp.sample.nosplit.tb %>%
-              filter(!unit.id %in% districts.that.already.have.reports) %>%
-              select(unit.id) %>%
-              unique %>%
-              unlist %>% as.vector
-            
-            is.valid.sample <- 
-              ifelse(
-                length(unit.ids.sample) == as.numeric(sample.size),
-                TRUE,
-                FALSE
-              )
-            
-            print(is.valid.sample)
           }
         }
 
@@ -819,8 +817,8 @@
       #Finalizing loop outputs  
         names(tables.tab12.state.ls) <- 
           paste(
-            rep(unit.id.c, length(tables.tab12.state.ls)),
-            ".",
+            #rep(unit.id.c, length(tables.tab12.state.ls)),
+            #".",
             c(1:length(tables.tab12.state.ls)),
             ".",
             config.tables.tb.d$table.type.name, 
@@ -1115,49 +1113,55 @@
             filter(
               unit.id == unit.id.c & 
               is.most.recent.or.current == 1
-            ) %>%
-            SplitColReshape.ToLong(
-              df = ., 
-              id.varname = "resp.id", 
-              split.varname = "domain", 
-              split.char = ","
-            ) %>%
-            as_tibble() %>%
-            dcast(
-              data = .,
-              formula = building.name + domain ~ year,
-              fun.aggregate = mean,
-              value.var = "value"
             )
           
-          if(ncol(tab3.bldg.current.vs.previous.school.year) < 4){
+          if(nrow(tab3.bldg.current.vs.previous.school.year) < 1){
+            tab3.bldg.current.vs.previous.school.year <- "" 
+          }else{
             tab3.bldg.current.vs.previous.school.year %<>%
-              mutate(
-                `Prev. School Year` = NA,
-                Trend = NA
+              SplitColReshape.ToLong(
+                df = ., 
+                id.varname = "resp.id", 
+                split.varname = "domain", 
+                split.char = ","
+              ) %>%
+              as_tibble() %>%
+              dcast(
+                data = .,
+                formula = building.name + domain ~ year,
+                fun.aggregate = mean,
+                value.var = "value"
               )
-          }
-          
-          if(ncol(tab3.bldg.current.vs.previous.school.year) == 4){
+            
+            if(ncol(tab3.bldg.current.vs.previous.school.year) < 4){
+              tab3.bldg.current.vs.previous.school.year %<>%
+                mutate(
+                  `Prev. School Year` = NA,
+                  Trend = NA
+                )
+            }
+            
+            if(ncol(tab3.bldg.current.vs.previous.school.year) == 4){
+              tab3.bldg.current.vs.previous.school.year %<>%
+                mutate(
+                  Trend = .[,4] - .[,3]
+                )
+            }
+            
             tab3.bldg.current.vs.previous.school.year %<>%
-              mutate(
-                Trend = .[,4] - .[,3]
+              melt(
+                ., 
+                id.vars = c("building.name","domain")
+              ) %>%
+              dcast(
+                ., 
+                formula = building.name + variable ~ domain
               )
+            
+            tab3.bldg.current.vs.previous.school.year$variable %<>%
+              as.character %>%
+              gsub("2017-2018", "Prev. School Year", .)
           }
-          
-          tab3.bldg.current.vs.previous.school.year %<>%
-            melt(
-              ., 
-              id.vars = c("building.name","domain")
-            ) %>%
-            dcast(
-              ., 
-              formula = building.name + variable ~ domain
-            )
-          
-          tab3.bldg.current.vs.previous.school.year$variable %<>%
-            as.character %>%
-            gsub("2017-2018", "Prev. School Year", .)
           
           tables.tab3.ls[[2]]$table <- tab3.bldg.current.vs.previous.school.year
   
@@ -1317,7 +1321,7 @@
               }
               
             #Table storage
-              if(table.e == ""){print(e)}
+              #if(table.e == ""){print(e)}
               tables.tab4.ls[[e]] <- list()
               tables.tab4.ls[[e]]$configs <- config.tables.tb.e
               tables.tab4.ls[[e]]$table <- table.e
@@ -1380,18 +1384,122 @@
     }
   
   #EXPORT TO EXCEL REPORTS - LOOP 'h' BY REPORT UNIT ----
-        
+      #Remove all objects except those needed to print (patch on memory errors)
+        #rm(
+        #  list = 
+        #    setdiff(
+        #      ls(), 
+        #      c("sections.all.starttime","RemoveNA","unit.ids.sample", "tables.ls","config.text.ls","source.tables.dir","outputs.dir","sample.print")
+        #    )
+        #)
+      
+      #Define function to write workbooks inside of loop h
+        WriteDistrictWorkbook <- 
+          function(
+            district.tables.list,
+            district.text.list,
+            district.file.name
+          ){
+            config.tables.h <- district.tables.list %>% lapply(., `[[`, 1) %>% do.call(rbind, .)
+            wb <- loadWorkbook(file.name.h, create = FALSE)
+            setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
+            
+            building.names.for.district <- config.tables.h %>% select(loop.id) %>% unlist %>% unique %>% RemoveNA
+            
+            #i <- 1 #LOOP TESTER
+            for(i in 1:length(district.tables.list)){  
+              
+              #Loop inputs
+                if(
+                  (district.tables.list[[i]]$table %>% dim %>% length %>% equals(1)) && (district.tables.list[[i]]$table %>% equals(""))
+                ){
+                  table.i <- ""
+                }else{
+                  table.i <- district.tables.list[[i]]$table
+                }
+                configs.i <- district.tables.list[[i]]$configs
+                
+                if(configs.i$tab.type.id == 4){ #customize tab name if need be for building summaries
+                  building.num <- configs.i$loop.id %>% unique %>% equals(building.names.for.district) %>% which
+                  
+                  configs.i$tab.name <- 
+                    getSheets(wb) %>% 
+                    .[grepl("Building Summary", .)] %>% 
+                    .[building.num]
+                }
+                
+              #Print loop messages
+                #print(paste("Loop i #: ", i, " - Table: ", configs.i$table.type.name, sep = ""))
+              
+              #Write Worksheets
+                writeWorksheet(
+                  object = wb, 
+                  data = table.i,
+                  sheet = configs.i$tab.name,
+                  startRow = configs.i$startrow,
+                  startCol = configs.i$startcol,
+                  header = configs.i$header,
+                  rownames = configs.i$row.header
+                )
+              
+            } # END OF LOOP 'i' BY TABLE
+            
+            #Delete any extra building summary tabs
+              #building.summary.tabs.with.data <- 
+              #  getSheets(wb) %>% 
+              #  .[grepl("Building Summary", .)] %>% 
+              #  assign("building.summary.tabs", ., pos = 1) %>%
+              #  .[1:length(building.names.for.district)]
+              
+              #extra.building.summary.tabnames <-
+              #  building.summary.tabs[!building.summary.tabs %in% building.summary.tabs.with.data]
+              
+              #for(k in 1:length(extra.building.summary.tabnames)){
+              #  removeSheet(
+              #    object = wb, 
+              #    sheet = extra.building.summary.tabnames[k]
+              #  )
+              #}
+            
+            ###                           ###
+            ###   LOOP "m" BY TEXT ITEM   ###
+            ###                           ###
+            
+            config.text.h <- district.text.list
+            
+            #m = 2 #LOOP TESTER
+            for(m in 1:nrow(config.text.h)){
+              #print(paste("Loop m #:", m, " - Pct. Complete: ", 100*m/nrow(config.text.h), sep = ""))
+              
+              #Write tables to building worksheet
+                writeWorksheet(
+                  object = wb,
+                  data = config.text.h$text.value[m],
+                  sheet = config.text.h$tab.name[m],
+                  startRow = config.text.h$row.num[m],
+                  startCol = config.text.h$col.num[m],
+                  header = FALSE,
+                  rownames = FALSE
+                )
+              
+            } #END OF LOOP 'm' BY TEXT ITEM
+            
+            saveWorkbook(wb)
+            print(paste("WORKBOOK SAVED. File: ", file.name.h, " - Pct. complete: ", 100*h/length(unit.ids.sample), sep = ""))
+          }   
+      
+   
     ###                          ###    
   # ### LOOP "h" BY REPORT UNIT  ###
     ###                          ###
     
     #Progress Bar
+      print(districts.that.already.have.reports)
+      print(unit.ids.sample)
       progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
       maxrow.h <- tables.ls %>% lengths %>% sum
-      #printed.reports.ls <- list()
-    
+      
     #h <- 1 #LOOP TESTER
-    #for(h in ceiling(runif(5,1,length(unit.ids.sample)))){
     for(h in 1:length(unit.ids.sample)){ 
       
       unit.id.h <- unit.ids.sample[h]  
@@ -1443,95 +1551,15 @@
   #   ###   LOOP "i" BY TABLE   ###
       ###                       ###
       
-      config.tables.h <- tables.ls[[h]] %>% lapply(., `[[`, 1) %>% do.call(rbind, .)   
-      setwd(outputs.dir)
-      wb <- loadWorkbook(file.name.h, create = FALSE)
-      setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
-      
-      building.names.for.district <- config.tables.h %>% select(loop.id) %>% unlist %>% unique %>% RemoveNA
-      
-      #i <- 1 #LOOP TESTER
-      for(i in 1:length(tables.ls[[h]])){  
-        
-        #Loop inputs
-          if(
-            (tables.ls[[h]][[i]]$table %>% dim %>% length %>% equals(1)) && (tables.ls[[h]][[i]]$table %>% equals(""))
-          ){
-            table.i <- ""
-          }else{
-            table.i <- tables.ls[[h]][[i]]$table
-          }
-          configs.i <- tables.ls[[h]][[i]]$configs
-        
-          if(configs.i$tab.type.id == 4){ #customize tab name if need be for building summaries
-            building.num <- configs.i$loop.id %>% unique %>% equals(building.names.for.district) %>% which
-            
-            configs.i$tab.name <- 
-              getSheets(wb) %>% 
-              .[grepl("Building Summary", .)] %>% 
-              .[building.num]
-          }
-          
-        #Print loop messages
-          print(paste("Loop i #: ", i, " - Table: ", configs.i$table.type.name, sep = ""))
-        
-        #Write Worksheets
-          
          
-          writeWorksheet(
-            object = wb, 
-            data = table.i,
-            sheet = configs.i$tab.name,
-            startRow = configs.i$startrow,
-            startCol = configs.i$startcol,
-            header = configs.i$header,
-            rownames = configs.i$row.header
-          )
-        
-      } # END OF LOOP 'i' BY TABLE
-        
-    #Delete any extra building summary tabs
-      building.summary.tabs.with.data <- 
-        getSheets(wb) %>% 
-        .[grepl("Building Summary", .)] %>% 
-        assign("building.summary.tabs", ., pos = 1) %>%
-        .[1:length(building.names.for.district)]
+      setwd(outputs.dir)
       
-      extra.building.summary.tabnames <-
-        building.summary.tabs[!building.summary.tabs %in% building.summary.tabs.with.data]
-      
-      for(k in 1:length(extra.building.summary.tabnames)){
-        removeSheet(
-          object = wb, 
-          sheet = extra.building.summary.tabnames[k]
-        )
-      }
-        
-        ###                           ###
-    #   ###   LOOP "m" BY TEXT ITEM   ###
-        ###                           ###
-        
-        config.text.h <- config.text.ls[[h]]
-        
-        #m = 2 #LOOP TESTER
-        for(m in 1:nrow(config.text.h)){
-          print(paste("Loop m #:", m, " - Pct. Complete: ", 100*m/nrow(config.text.h), sep = ""))
-          
-          #Write tables to building worksheet
-            writeWorksheet(
-              object = wb,
-              data = config.text.h$text.value[m],
-              sheet = config.text.h$tab.name[m],
-              startRow = config.text.h$row.num[m],
-              startCol = config.text.h$col.num[m],
-              header = FALSE,
-              rownames = FALSE
-            )
-          
-        } #END OF LOOP 'm' BY TEXT ITEM
-        
-      saveWorkbook(wb)
-      print(paste("WORKBOOK SAVED. File: ", file.name.h, " - Pct. complete: ", 100*h/length(unit.ids.sample), sep = ""))
+      WriteDistrictWorkbook(
+        district.tables.list = tables.ls[[h]],
+        district.text.list = config.text.ls[[h]],
+        district.file.name = file.name.h
+      )
+
     } # END OF LOOP 'h' BY REPORT UNIT
 
 # 6-WRAP UP -----------------------------------------------
@@ -1548,19 +1576,19 @@
       )
     )
   
-    implied.total.runtime.for.all.reports <- 
-      resp.full.nosplit.tb$unit.id %>% 
-      unique %>% length %>% 
-      divide_by(length(unit.ids.sample)) %>% 
-      multiply_by(code.runtime)
+    #implied.total.runtime.for.all.reports <- 
+    #  resp.full.nosplit.tb$unit.id %>% 
+    #  unique %>% length %>% 
+    #  divide_by(length(unit.ids.sample)) %>% 
+    #  multiply_by(code.runtime)
     
-    print(
-      paste(
-        "Implied total runtime for all reports (min): ",
-        implied.total.runtime.for.all.reports,
-        sep = ""
-      )
-    )
+    #print(
+    #  paste(
+    #    "Implied total runtime for all reports (min): ",
+    #    implied.total.runtime.for.all.reports,
+    #    sep = ""
+    #  )
+    #)
 #SIGNAL CODE IS FINISHED BY OPENING A NEW WINDOW      
   windows()
     
