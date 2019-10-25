@@ -260,7 +260,7 @@
           low.response.nums.filter.tb %>% select(building.id, year, filter.combined), 
           by = c("year","building.id")
         ) %>%
-        filter(filter.combined)
+        filter(filter.combined) 
       
   #Column Filters (only columns necessary for producing reports)
     
@@ -910,7 +910,7 @@
         
         tab3.state.avg.current.vs.baseline[1,1] <- "Baseline"
   
-  #DISTRICT/BUIDLING TABLES ----  
+  #DISTRICT/BUILDING TABLES ----  
         
   ###                          ###    
   ### LOOP "c" BY REPORT UNIT  ###
