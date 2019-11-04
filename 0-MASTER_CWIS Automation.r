@@ -533,7 +533,6 @@
     config.tabs.ls <- list()
     config.tables.ls <- list()
     config.text.ls <- list()
-
   
   #Loop Measurement - progress bar & timing
     progress.bar.b <- txtProgressBar(min = 0, max = 100, style = 3)
@@ -555,28 +554,34 @@
         resp.sample.nosplit.tb%>% filter(unit.id == unit.id.b)
       
     #Other useful inputs for forming config tables
-      district.name.v <- 
-        resp.long.tb.b$unit.id %>% unique %>% unlist %>% as.vector %>%
-        str_split(., "-") %>% lapply(., Proper) %>% unlist %>% as.vector
       
-      if(length(district.name.v) > 1){
-        district.name.v[length(district.name.v)] <- district.name.v[length(district.name.v)] %>% toupper()
-      }
+      #District Name
+        district.name.v <- 
+          resp.long.tb.b$unit.id %>% unique %>% unlist %>% as.vector %>%
+          str_split(., "-") %>% lapply(., Proper) %>% unlist %>% as.vector
+        
+        if(length(district.name.v) > 1){
+          district.name.v[length(district.name.v)] <- district.name.v[length(district.name.v)] %>% toupper()
+        }
+        
+        district.name <- district.name.v %>% paste(., collapse = "-")
       
-      district.name <- district.name.v %>% paste(., collapse = "-")
+      #District Overview Indicator (if have only data from one year)
+        district.overview <- resp.long.tb.b$year %>% unique %>% length %>% is_less_than(2) 
       
-      tab4.loopvarname <- 
-        config.tab.types.tb %>% 
-        select(tab.loop.var.1) %>% 
-        unlist %>% unique %>% RemoveNA
-      
-      building.names <- resp.long.tb.b %>% select(tab4.loopvarname) %>% unlist %>% unique
-      
-      building.names.tb <- 
-        tibble(
-          tab.type.id = 4,
-          loop.id = building.names
-        )
+      #Tab 4 Loop Variable & Building Names
+        tab4.loopvarname <- 
+          config.tab.types.tb %>% 
+          select(tab.loop.var.1) %>% 
+          unlist %>% unique %>% RemoveNA
+        
+        building.names <- resp.long.tb.b %>% select(tab4.loopvarname) %>% unlist %>% unique
+        
+        building.names.tb <- 
+          tibble(
+            tab.type.id = 4,
+            loop.id = building.names
+          )
       
     #Tab config table for this report unit
       
@@ -604,7 +609,6 @@
         )
          
     #Tables config table for this report unit
-      #config.table.types.tb
       config.tables.ls[[b]] <- 
         full_join(
           config.tabs.ls[[b]],
@@ -796,7 +800,6 @@
     
     
     #Tab 3 ----
-    
       #Current vs. previous school year
         tab3.state.avg.current.vs.previous.school.year <-
           resp.full.split.tb %>% 
@@ -906,6 +909,8 @@
           print("REPORT LOOP")
           print(paste("Loop #: ", c, " - Pct. Complete: ", 100*c/length(unit.ids.sample),sep = ""))
           print(paste("Unit id: ", unit.ids.sample[c]))
+          
+          district.overview <- 
       
       #Tabs 1 & 2 ----
        
@@ -1297,7 +1302,11 @@
           } ### END OF LOOP "e" BY TABLE ###
       
       #Assemble final outputs for district ----  
-        tables.ls[[c]] <- c(tables.tab12.state.ls, tables.tab12.ls, tables.tab3.ls, tables.tab4.ls)
+          if(district.overview){
+            tables.ls[[c]] <- c(tables.tab12.state.ls, tables.tab12.ls)
+          }else{
+            tables.ls[[c]] <- c(tables.tab12.state.ls, tables.tab12.ls, tables.tab3.ls, tables.tab4.ls)
+          }
       
       toc(log = TRUE, quiet = TRUE)  
     } ### END OF LOOP "c" BY REPORT UNIT     
@@ -1412,7 +1421,7 @@
               
             } # END OF LOOP 'i' BY TABLE
             
-            #Delete any extra building summary tabs
+            #!Delete any extra building summary tabs
               #building.summary.tabs.with.data <- 
               #  getSheets(wb) %>% 
               #  .[grepl("Building Summary", .)] %>% 
@@ -1513,19 +1522,14 @@
         file.copy(template.file, target.path.h)
         
         print(file.name.h)
-      
-  
-      ###                       ###
-  #   ###   LOOP "i" BY TABLE   ###
-      ###                       ###
-      
-         
-      setwd(outputs.dir)
-      
-      WriteDistrictWorkbook(
-        district.tables.list = tables.ls[[h]],
-        district.text.list = config.text.ls[[h]],
-        district.file.name = file.name.h
+    
+      #Write Workbook
+        setwd(outputs.dir)
+        
+        WriteDistrictWorkbook(
+          district.tables.list = tables.ls[[h]],
+          district.text.list = config.text.ls[[h]],
+          district.file.name = file.name.h
       )
 
     } # END OF LOOP 'h' BY REPORT UNIT
