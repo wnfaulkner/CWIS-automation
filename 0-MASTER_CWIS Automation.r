@@ -24,7 +24,7 @@
       # Set Working Directory and R Project Directory
       if(m900){  
         #M900
-          wd <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-11_Phase 10_District Overview\\"
+          wd <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-11_Phase 10\\"
           rproj.dir <- "C:\\Users\\willi\\Documents\\GIT PROJECTS\\CWIS-automation\\"
       }else{
         #Thinkpad T470
@@ -871,7 +871,7 @@
             tab3.state.avg.current.vs.baseline[,1],
             .
           ) %>%
-          ReplaceNames(., "Var.1", "")
+          ReplaceNames(., "Var.1", "") 
         
         tab3.state.avg.current.vs.baseline[1,1] <- "Baseline"
   
@@ -1078,7 +1078,8 @@
             filter(
               unit.id == unit.id.c & 
               is.most.recent.or.current == 1
-            )
+            ) #%>%
+            #.[order(.[,2]),]
           
           if(nrow(tab3.bldg.current.vs.previous.school.year) < 1){
             tab3.bldg.current.vs.previous.school.year <- "" 
@@ -1126,6 +1127,8 @@
             tab3.bldg.current.vs.previous.school.year$variable %<>%
               as.character %>%
               gsub("2017-2018", "Prev. School Year", .)
+            
+            tab3.bldg.current.vs.previous.school.year %<>% .[c(2,1,3),]
           }
           
           tables.tab3.ls[[2]]$table <- tab3.bldg.current.vs.previous.school.year
