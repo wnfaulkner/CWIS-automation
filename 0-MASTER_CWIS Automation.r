@@ -24,11 +24,11 @@
       # Set Working Directory and R Project Directory
       if(m900){  
         #M900
-          wd <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-06 District Dashboards\\"
+          wd <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-11_Phase 10_District Overview\\"
           rproj.dir <- "C:\\Users\\willi\\Documents\\GIT PROJECTS\\CWIS-automation\\"
       }else{
         #Thinkpad T470
-          wd <- "G:\\My Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-06 District Dashboards\\"
+          wd <- "G:\\My Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-11_Phase 10_District Overview\\"
           rproj.dir <- "C:\\Users\\WNF\\Documents\\GIT PROJECTS\\CWIS-automation\\"
       }
     
@@ -84,7 +84,7 @@
     source("1-import_functions.r")
   
   #Import Config Tables
-    configs.ss <- gs_key("1dWVAe2AjWLFQzbfOTpnUon02UdTYU7xaOl3m1UtWjGc",verbose = TRUE) 
+    configs.ss <- gs_key("1_QqIHuAlUfYXX-qC9yMRRpOkgpudJT9-bETY1k0D19k",verbose = TRUE) 
     
     #Import all tables from config google sheet as tibbles
       all.configs.ls <- GoogleSheetLoadAllWorksheets(configs.ss)
@@ -144,6 +144,8 @@
     if(!sample.print & !add.to.last.full.print){  #scenario 2 - full print not adding to last full print
       setwd(outputs.parent.folder)
       
+      districts.that.already.have.reports <- vector() %>% as.character()
+      
       outputs.dir <- 
         paste(
           outputs.parent.folder,
@@ -183,7 +185,7 @@
     #section1.duration <- Sys.time() - section1.starttime
     #section1.duration
     #Sys.time() - sections.all.starttime
-    #toc()
+    toc()
 
 # 2-CLEANING -----------------------------------------
   
@@ -226,7 +228,7 @@
   #Add variables: building.id, building.name building.level 
     resp2.tb %<>% mutate(building.id.raw = paste(unit.id,building,sep=".") %>% gsub(" |\\/", ".", .))
     
-    resp2.tb <-
+    resp2.tb <-  #!Might need to update building list for 2019-11 new round of reports
       left_join(
         resp2.tb,
         buildings.tb %>% select(building.id.raw, building.id, building.name, building.level),
@@ -312,43 +314,6 @@
           is.most.recent.or.current = ifelse(is.most.recent == 1 | is.current == 1, 1, 0)
         )
       
-      #year.var.helper.ls <- list()
-      
-      #for(i in 1:length(unique(year.var.helper.tb$unit.id))){
-      #  unit.id.i <- unique(year.var.helper.tb$unit.id)[i]
-      #  year.var.helper.tb.i <- 
-      #    year.var.helper.tb %>% 
-      #    filter(unit.id == unit.id.i) %>%
-      #    arrange(year) %>% 
-      #    mutate(
-      #      num.measurements = nrow(.),
-      #      is.baseline = 0,
-      #      is.most.recent = 0, 
-      #      is.current = 0,
-      #      is.most.recent.or.current = 0,
-      #      is.baseline.or.current = 0
-      #    )
-      #  
-      #  year.var.helper.tb.i$is.baseline[1] <- 1
-      #  
-      #  year.var.helper.tb.i$is.current[nrow(year.var.helper.tb.i)] <- 
-      #    ifelse(unique(year.var.helper.tb.i$num.measurements) == 1, 0, 1)
-      #  
-      #  year.var.helper.tb.i$is.most.recent[nrow(year.var.helper.tb.i)-1] <- 
-      #    ifelse(unique(year.var.helper.tb.i$num.measurements) == 1, 0, 1)
-      #  
-      #  year.var.helper.tb.i$is.most.recent.or.current[
-      #     year.var.helper.tb.i$is.current == 1 | year.var.helper.tb.i$is.most.recent ==1
-      #  ] <- 1
-      #  year.var.helper.tb.i$is.baseline.or.current[
-      #    year.var.helper.tb.i$is.current == 1 | year.var.helper.tb.i$is.baseline ==1
-      #    ] <- 1
-      #  
-      #  year.var.helper.ls[[i]] <- year.var.helper.tb.i
-      #}
-        
-      #year.var.helper.tb <- do.call(rbind, year.var.helper.ls)
-      
       resp8.tb <- 
         left_join(
           resp7.tb,
@@ -363,7 +328,7 @@
       resp.full.nosplit.tb <- 
         resp8.tb
       
-    #Full dataset - splitcolreshape by domain
+    #Full dataset - splitcolreshape by domain (for some practices where answers count towards ETL and CFA)
       resp.full.split.tb <-
         left_join(
           x = resp8.tb,
