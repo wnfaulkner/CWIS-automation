@@ -301,7 +301,7 @@
 #FUNCTION - could be made into function to designate alphabetic first/last/penultimate by group
       year.var.helper.tb <-
         resp7.tb %>%
-        select(year, unit.id) %>%
+        select(year, unit.id, building) %>%
         unique %>%
         mutate(
           is.baseline = ifelse(year == "0000", 1, 0),
