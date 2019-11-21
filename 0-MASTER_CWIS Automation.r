@@ -330,13 +330,42 @@
       
       response.count.restriction.tb <-
         resp8.tb %>% 
-        select(resp.id, year, unit.id, building) %>%
-        #melt() %>%
-        dcast(., formula = unit.id ~ ., fun.aggregate = length)
-        
-      
-      
-      
+        select(resp.id, year, unit.id, building, building.id) %>%
+        #filter(!building %in% c("district office", "other")) %>% #get rid of rows for 'other' and 'district office'
+        filter(year == "2019-2020") %>% #filter for school year 2019-2020 #!could be generalized using a config        
+        dcast( #reshape into table of response counts by building.id
+          ., 
+          formula = unit.id + building.id ~ ., 
+          value.var = "resp.id", 
+          fun.aggregate = function(x){length(unique(x))}
+        ) %>%
+        as_tibble() %>%
+        select(-unit.id) %>%
+        ReplaceNames(
+          ., 
+          current.names = names(.)[length(names(.))],
+          new.names = "resp.count.2019-20"
+        ) %>%
+        left_join( #join with buildings table so have all buildings and response counts for 2019-20
+          buildings.tb %>% select(district, building.id) %>% filter(!duplicated(building.id)), 
+          ., 
+          by = "building.id"
+        ) %>%
+        filter(!grepl("district.office|other", building.id)) %>% #get rid of rows for 'other' and 'district office' buildings
+        dcast( #reshape into table of percentage of buildings with responses in current school year by district
+          .,
+          formula = district ~ .,
+          value.var = 'resp.count.2019-20',
+          fun.aggregate = function(x){mean(!is.na(x))}
+        ) %>%
+        mutate(produce.report = . >= 0.5) %>% #add logical variable for those districts with >= 50% of buildings with responses in current school year
+        ReplaceNames(
+          ., 
+          current.names = names(.)[2],
+          new.names = "pct.bldgs.w.responses.in.current.schyr"
+        ) %>%
+        as_tibble()
+     
     #Full dataset - no splitcolreshape by domain
       resp.full.nosplit.tb <- 
         resp8.tb
