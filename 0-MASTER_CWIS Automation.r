@@ -472,52 +472,17 @@
       #Scenario 2 - full print (fresh, not adding to previous full print)  
         if(!sample.print & !add.to.last.full.print){
             
-          is.valid.sample <- FALSE
-          while(!is.valid.sample){
-            
-            resp.sample.nosplit.tb <- 
-              RestrictDataToSample(
-                tb = resp.full.nosplit.tb,
-                report.unit = "unit.id",
-                sample.print = TRUE,
-                sample.group.unit = "unit.id",
-                sample.size = sample.size
-              )
-            
-            resp.sample.split.tb <- 
-              left_join(
-                x = resp.sample.nosplit.tb,
-                y = questions.tb %>% select(var.id, domain, practice),
-                by = c("variable"="var.id")
-              ) %>%
-              SplitColReshape.ToLong(
-                df = ., 
-                id.varname = "resp.id" ,
-                split.varname = "domain",
-                split.char = ","
-              ) %>% 
-              as_tibble() %>%
-              left_join(
-                x = ., 
-                y = domains.tb,
-                by = c("domain" = "domain.id")
-              )
-            
-            unit.ids.sample <-
-              resp.sample.nosplit.tb %>%
-              select(unit.id) %>%
-              unique %>%
-              unlist %>% as.vector
-            
-            is.valid.sample <- 
-              ifelse(
-                length(unit.ids.sample) == as.numeric(sample.size),
-                TRUE,
-                FALSE
-              )
-            
-            print(is.valid.sample)
-          }
+          resp.sample.nosplit.tb <- 
+            resp.full.nosplit.tb
+          
+          resp.sample.split.tb <- 
+            resp.full.split.tb
+          
+          unit.ids.sample <-
+            resp.sample.nosplit.tb %>%
+            select(unit.id) %>%
+            unique %>%
+            unlist %>% as.vector
           
         }
         
@@ -628,7 +593,7 @@
         district.name <- district.name.v %>% paste(., collapse = "-")
       
       #District Overview Indicator (if have only data from one year)
-        district.overview <- resp.long.tb.b$year %>% unique %>% length %>% is_less_than(2) 
+        #district.overview <- resp.long.tb.b$year %>% unique %>% length %>% is_less_than(2) 
       
       #Tab 4 Loop Variable & Building Names
         tab4.loopvarname <- 
@@ -971,7 +936,7 @@
           print(paste("Loop #: ", c, " - Pct. Complete: ", 100*c/length(unit.ids.sample),sep = ""))
           print(paste("Unit id: ", unit.ids.sample[c]))
           
-          district.overview <- 
+          #district.overview <- 
       
       #Tabs 1 & 2 ----
        
@@ -1332,9 +1297,14 @@
                   ) %>%
                   .[,names(.)!= ""]
                 
+                #if(
+                #  IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]) | 
+                #  class(table.e[,ncol(table.e)-1]) == "factor"
+                #){print(e)}
+                
                 table.e$trend <- 
                   ifelse(
-                    IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]),
+                    class(table.e[,ncol(table.e)-1]) == "factor" || IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]),
                     NA,
                     table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]
                   )
@@ -1363,11 +1333,11 @@
           } ### END OF LOOP "e" BY TABLE ###
       
       #Assemble final outputs for district ----  
-          if(district.overview){
-            tables.ls[[c]] <- c(tables.tab12.state.ls, tables.tab12.ls)
-          }else{
+          #if(district.overview){
+          #  tables.ls[[c]] <- c(tables.tab12.state.ls, tables.tab12.ls)
+          #}else{
             tables.ls[[c]] <- c(tables.tab12.state.ls, tables.tab12.ls, tables.tab3.ls, tables.tab4.ls)
-          }
+          #}
       
       toc(log = TRUE, quiet = TRUE)  
     } ### END OF LOOP "c" BY REPORT UNIT     
@@ -1532,7 +1502,7 @@
     ###                          ###
     
     #Progress Bar
-      print(districts.that.already.have.reports)
+      if(exists("districts.that.already.have.reports")){print(districts.that.already.have.reports)}
       print(unit.ids.sample)
       progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
       maxrow.h <- tables.ls %>% lengths %>% sum
