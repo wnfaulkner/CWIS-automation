@@ -286,6 +286,10 @@
       MoveColsLeft(., c("resp.id","unit.id")) %>% #Rearrange columns: resp.id and unit.id at the front
       as_tibble()
     
+  #Filter out responses for DBDM practice 5 (see Missouri Journal entry 2019-11-08)
+    resp6.tb %<>%
+      filter(variable != "dbdm_visualrepresetations")
+    
   #ADDING NEW USEFUL VARIABLES ----
     
     #Add proficiency dummy variable
@@ -365,15 +369,30 @@
           new.names = "pct.bldgs.w.responses.in.current.schyr"
         ) %>%
         as_tibble()
+      
+      resp9.tb <- 
+        left_join(
+          resp8.tb,
+          response.count.restriction.tb,
+          by = "district"
+        ) %>%
+        filter(produce.report == TRUE)
+      
+      buildings.tb %<>%
+        left_join(
+          buildings.tb,
+          response.count.restriction.tb,
+          by = "district"
+        )
      
     #Full dataset - no splitcolreshape by domain
       resp.full.nosplit.tb <- 
-        resp8.tb
+        resp9.tb
       
     #Full dataset - splitcolreshape by domain (for some practices where answers count towards ETL and CFA)
       resp.full.split.tb <-
         left_join(
-          x = resp8.tb,
+          x = resp9.tb,
           y = questions.tb %>% select(var.id, domain, practice),
           by = c("variable"="var.id")
         ) %>%
