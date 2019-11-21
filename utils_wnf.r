@@ -138,9 +138,9 @@
     
   #Find most recently modified file in a directory
     #Test Inputs
-      title.string.match = "MYDev_Master"
-      file.type = ".xlsx"
-      dir = "C:\\Users\\WNF\\Documents\\GIT PROJECTS\\2019-03-EDC-SNA\\3_source_tables\\"
+      #title.string.match = main.data.file.name.character.string
+      #file.type = ".csv"
+      #dir = source.tables.dir
     
     MostRecentlyModifiedFilename <- function(
       title.string.match, 

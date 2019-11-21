@@ -201,7 +201,7 @@
     resp2.tb <- 
       LowerCaseNames(resp1.tb) %>%  #Lower-case all variable names
       ReplaceNames(., "school", "building") %>% #Replace "school" with "building" in column names
-      ReplaceNames(., "ï..year", "year") %>%
+      #ReplaceNames(., "ï..year", "year") %>% #not necessary in latest 2019 data
       ReplaceNames(., "id", "resp.id") %>%
       as_tibble()
 
@@ -225,13 +225,13 @@
   #Lower-case all character variable data
     resp2.tb <- LowerCaseCharVars(resp2.tb)
   
-  #Add variables: building.id, building.name building.level 
+  #Add variables: building.id, building.name, building.level 
     resp2.tb %<>% mutate(building.id.raw = paste(unit.id,building,sep=".") %>% gsub(" |\\/", ".", .))
     
     resp2.tb <-  #!Might need to update building list for 2019-11 new round of reports
       left_join(
         resp2.tb,
-        buildings.tb %>% select(building.id.raw, building.id, building.name, building.level),
+        buildings.tb %>% select(district, building.id.raw, building.id, building.name, building.level),
         by = "building.id.raw"
       )
     
@@ -317,13 +317,26 @@
       resp8.tb <- 
         left_join(
           resp7.tb,
-          year.var.helper.tb,
-          by = c("year", "unit.id")
+          year.var.helper.tb,# %>% select(building),
+          by = c("year", "unit.id", "building")
         ) %>% 
         mutate(variable = as.character(variable))
    
   #FORM FINAL DATASETS - (A) SPLITCOLRESHAPED BY DOMAIN AND (B) RESTRICTED TO SAMPLE ----
-       
+    
+    #Restrict whole dataset to districts with following condition: 
+      #50% or more of buildings in the district that are not `other` or `district office` 
+      #have at least one response in the 2019-2020 period
+      
+      response.count.restriction.tb <-
+        resp8.tb %>% 
+        select(resp.id, year, unit.id, building) %>%
+        #melt() %>%
+        dcast(., formula = unit.id ~ ., fun.aggregate = length)
+        
+      
+      
+      
     #Full dataset - no splitcolreshape by domain
       resp.full.nosplit.tb <- 
         resp8.tb
