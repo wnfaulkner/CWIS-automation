@@ -28,7 +28,7 @@
           rproj.dir <- "C:\\Users\\willi\\Documents\\GIT PROJECTS\\CWIS-automation\\"
       }else{
         #Thinkpad T470
-          wd <- "G:\\My Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-11_Phase 10_District Overview\\"
+          wd <- "G:\\Meu Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-11_Phase 10\\"
           rproj.dir <- "C:\\Users\\WNF\\Documents\\GIT PROJECTS\\CWIS-automation\\"
       }
     
@@ -380,7 +380,7 @@
       
       buildings.tb %<>%
         left_join(
-          buildings.tb,
+          .,
           response.count.restriction.tb,
           by = "district"
         )
