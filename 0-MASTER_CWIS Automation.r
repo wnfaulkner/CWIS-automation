@@ -98,10 +98,20 @@
     sample.print <- #Convert sample.print to TRUE/FALSE
       ifelse(sample.print == "true", TRUE, FALSE)
     
-    add.to.last.full.print <-
-      ifelse(add.to.last.full.print == "true", TRUE, FALSE)
+    #Specific formatting & definitions for global configs
+      add.to.last.full.print <-
+        ifelse(add.to.last.full.print == "true", TRUE, FALSE)
     
       domains <- strsplit(domains, ",") %>% unlist %>% as.vector
+      
+      previous.school.year <-
+        current.school.year %>%
+        strsplit(., "-") %>%
+        unlist() %>%
+        as.numeric() %>%
+        subtract(1) %>%
+        as.character %>%
+        paste0(., collapse = "-")
     
   #Import Responses table (main data, imported as data frame)
     setwd(source.tables.dir)
@@ -228,7 +238,7 @@
   #Add variables: building.id, building.name, building.level 
     resp2.tb %<>% mutate(building.id.raw = paste(unit.id,building,sep=".") %>% gsub(" |\\/", ".", .))
     
-    resp2.tb <-  #!Might need to update building list for 2019-11 new round of reports
+    resp2.tb <- 
       left_join(
         resp2.tb,
         buildings.tb %>% select(district, building.id.raw, building.id, building.name, building.level),
@@ -251,9 +261,9 @@
         summarize(x = length(resp.id)) %>%
         mutate(
           filter.baseline = ifelse(year == "baseline" & x < 6, FALSE, TRUE),
-          filter.201718 = ifelse(year == "2017-2018" & x < 6, FALSE, TRUE),
-          filter.201819 = ifelse(year == "2018-2019" & x < 6, FALSE, TRUE),
-          filter.combined = all(filter.baseline, filter.201718, filter.201819)
+          filter.previous.school.year = ifelse(year == previous.school.year & x < 6, FALSE, TRUE),
+          filter.current.school.year = ifelse(year == current.school.year & x < 6, FALSE, TRUE),
+          filter.combined = all(filter.baseline, filter.previous.school.year, filter.current.school.year)
         )
       
       resp4.tb <- 
@@ -303,14 +313,15 @@
       resp7.tb$year[resp7.tb$year == "baseline"] <- "0000"
       
 #FUNCTION - could be made into function to designate alphabetic first/last/penultimate by group
+      
       year.var.helper.tb <-
         resp7.tb %>%
         select(year, unit.id, building) %>%
         unique %>%
         mutate(
           is.baseline = ifelse(year == "0000", 1, 0),
-          is.most.recent = ifelse(year == "2017-2018", 1, 0),
-          is.current = ifelse(year == "2018-2019", 1, 0)
+          is.most.recent = ifelse(year == previous.school.year, 1, 0),
+          is.current = ifelse(year == current.school.year, 1, 0)
         ) %>%
         mutate(
           is.baseline.or.most.recent = ifelse(is.baseline == 1 | is.most.recent == 1, 1, 0),
@@ -330,13 +341,13 @@
     
     #Restrict whole dataset to districts with following condition: 
       #50% or more of buildings in the district that are not `other` or `district office` 
-      #have at least one response in the 2019-2020 period
+      #have at least one response in the current period
       
       response.count.restriction.tb <-
         resp8.tb %>% 
         select(resp.id, year, unit.id, building, building.id) %>%
         #filter(!building %in% c("district office", "other")) %>% #get rid of rows for 'other' and 'district office'
-        filter(year == "2019-2020") %>% #filter for school year 2019-2020 #!could be generalized using a config        
+        filter(year == current.school.year) %>% #filter for current school year 
         dcast( #reshape into table of response counts by building.id
           ., 
           formula = unit.id + building.id ~ ., 
@@ -348,9 +359,9 @@
         ReplaceNames(
           ., 
           current.names = names(.)[length(names(.))],
-          new.names = "resp.count.2019-20"
+          new.names = "resp.count.current.school.year"
         ) %>%
-        left_join( #join with buildings table so have all buildings and response counts for 2019-20
+        left_join( #join with buildings table so have all buildings and response counts for current school year
           buildings.tb %>% select(district, building.id) %>% filter(!duplicated(building.id)), 
           ., 
           by = "building.id"
@@ -359,7 +370,7 @@
         dcast( #reshape into table of percentage of buildings with responses in current school year by district
           .,
           formula = district ~ .,
-          value.var = 'resp.count.2019-20',
+          value.var = 'resp.count.current.school.year',
           fun.aggregate = function(x){mean(!is.na(x))}
         ) %>%
         mutate(produce.report = . >= 0.5) %>% #add logical variable for those districts with >= 50% of buildings with responses in current school year
@@ -687,7 +698,7 @@
     
   #STATE AVERAGE TABLES ----
     
-    #Tabs 1 & 2 ----
+    #Tabs 1 & 2 State Averages ----
 
       #Loop Inputs
         config.tables.tab12.input.tb <- 
@@ -825,7 +836,7 @@
           tolower
     
     
-    #Tab 3 ----
+    #Tab 3 State Averages ----
       #Current vs. previous school year
         tab3.state.avg.current.vs.previous.school.year <-
           resp.full.split.tb %>% 
@@ -845,7 +856,7 @@
             fun.aggregate = mean,
             value.var = "value"
           ) %>%
-          ReplaceNames(., current.names = c("0","1"), new.names = c("Previous School Year","2018-2019")) %>%
+          ReplaceNames(., current.names = c("0","1"), new.names = c("Previous School Year","Current Year")) %>%
           mutate(
             Trend = .[,3] - .[,2]
           ) %>%
@@ -884,7 +895,7 @@
             fun.aggregate = mean,
             value.var = "value"
           ) %>%
-          ReplaceNames(., current.names = c("0","1"), new.names = c("Baseline","2018-2019")) %>%
+          ReplaceNames(., current.names = c("0","1"), new.names = c("Baseline","Current Year")) %>%
           mutate(
             Trend = .[,3] - .[,2]
           ) %>%
@@ -1157,7 +1168,7 @@
             
             tab3.bldg.current.vs.previous.school.year$variable %<>%
               as.character %>%
-              gsub("2017-2018", "Prev. School Year", .)
+              gsub(previous.school.year, "Prev. School Year", .)
             
             tab3.bldg.current.vs.previous.school.year %<>% .[c(2,1,3),]
           }
