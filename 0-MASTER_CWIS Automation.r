@@ -932,7 +932,7 @@
     #Building Level Order
       building.level.order.v <- c("Elem.","High","Middle","Technology Ctr.","Other")
         
-    #c <- 1 #LOOP TESTER 
+    c <- 1 #LOOP TESTER 
     for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY unit.id
       #Loop Prep----
         #Loop timing
