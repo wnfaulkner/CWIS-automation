@@ -874,7 +874,7 @@
           ) %>%
           ReplaceNames(., "Var.1", "")
         
-        tab3.state.avg.current.vs.previous.school.year[1,1] <- "Previous School Year"
+        tab3.state.avg.current.vs.previous.school.year[1,1] <- "Prev. School Year"
         
       #Current vs. baseline
         tab3.state.avg.current.vs.baseline <- 
@@ -1119,29 +1119,27 @@
             resp.sample.split.tb %>% 
             filter(
               unit.id == unit.id.c & 
-              is.most.recent.or.current == 1
-            ) #%>%
-            #.[order(.[,2]),]
-          
+                is.most.recent.or.current == 1
+            ) %>%
+            SplitColReshape.ToLong(
+              df = ., 
+              id.varname = "resp.id", 
+              split.varname = "domain", 
+              split.char = ","
+            ) %>%
+            as_tibble() %>%
+            dcast(
+              data = .,
+              formula = building.name + domain ~ year,
+              fun.aggregate = mean,
+              value.var = "value"
+            )
+
           if(nrow(tab3.bldg.current.vs.previous.school.year) < 1){
             tab3.bldg.current.vs.previous.school.year <- "" 
           }else{
-            tab3.bldg.current.vs.previous.school.year %<>%
-              SplitColReshape.ToLong(
-                df = ., 
-                id.varname = "resp.id", 
-                split.varname = "domain", 
-                split.char = ","
-              ) %>%
-              as_tibble() %>%
-              dcast(
-                data = .,
-                formula = building.name + domain ~ year,
-                fun.aggregate = mean,
-                value.var = "value"
-              )
             
-            if(ncol(tab3.bldg.current.vs.previous.school.year) < 4){
+            if(ncol(tab3.bldg.current.vs.previous.school.year) < 4){ # if missing previous school year data, add 4th column with NAs
               tab3.bldg.current.vs.previous.school.year %<>%
                 mutate(
                   `Prev. School Year` = NA,
@@ -1149,14 +1147,14 @@
                 )
             }
             
-            if(ncol(tab3.bldg.current.vs.previous.school.year) == 4){
+            if(ncol(tab3.bldg.current.vs.previous.school.year) == 4){ # add trend column
               tab3.bldg.current.vs.previous.school.year %<>%
                 mutate(
                   Trend = .[,4] - .[,3]
                 )
             }
             
-            tab3.bldg.current.vs.previous.school.year %<>%
+            tab3.bldg.current.vs.previous.school.year %<>% # transpose table
               melt(
                 ., 
                 id.vars = c("building.name","domain")
@@ -1166,11 +1164,8 @@
                 formula = building.name + variable ~ domain
               )
             
-            tab3.bldg.current.vs.previous.school.year$variable %<>%
-              as.character %>%
-              gsub(previous.school.year, "Prev. School Year", .)
-            
-            tab3.bldg.current.vs.previous.school.year %<>% .[c(2,1,3),]
+            tab3.bldg.current.vs.previous.school.year$variable <-
+              c("Prev. School Year", current.school.year, "Trend")
           }
           
           tables.tab3.ls[[2]]$table <- tab3.bldg.current.vs.previous.school.year
@@ -1248,7 +1243,7 @@
             filter(!is.na(loop.id))
           tables.tab4.ls <- list()
           
-        #e <- 3
+        #e <- 1
         for(e in 1:nrow(config.tables.tab4.input.tb)){ ### START OF LOOP "e" BY TABLE ###
             
             #Print loop messages
@@ -1307,18 +1302,12 @@
                     fun.aggregate = table.aggregation.function
                   ) %>%
                   .[,names(.)!= ""]
-                
-                #if(
-                #  IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]) | 
-                #  class(table.e[,ncol(table.e)-1]) == "factor"
-                #){print(e)}
-                
-                table.e$trend <- 
-                  ifelse(
-                    class(table.e[,ncol(table.e)-1]) == "factor" || IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]),
-                    NA,
-                    table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]
-                  )
+              
+                if(class(table.e[,ncol(table.e)-1]) == "factor" || IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1])){ # add trend
+                  table.e$trend <- rep(NA, nrow(table.e))
+                }else{
+                  table.e$trend <- table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]
+                }
               
               #Modifications for specific tables
                 if(grepl("building.level", table.formula.e) %>% any){
