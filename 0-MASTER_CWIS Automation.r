@@ -104,6 +104,8 @@
     
       domains <- strsplit(domains, ",") %>% unlist %>% as.vector
       
+      is.overview <- ifelse(dashboard.or.overview == "overview", TRUE, FALSE)
+      
       previous.school.year <-
         current.school.year %>%
         strsplit(., "-") %>%
@@ -343,7 +345,7 @@
       #50% or more of buildings in the district that are not `other` or `district office` 
       #have at least one response in the current period
       
-      response.count.restriction.tb <-
+      dashboard.restriction.tb <-
         resp8.tb %>% 
         select(resp.id, year, unit.id, building, building.id) %>%
         #filter(!building %in% c("district office", "other")) %>% #get rid of rows for 'other' and 'district office'
@@ -373,7 +375,7 @@
           value.var = 'resp.count.current.school.year',
           fun.aggregate = function(x){mean(!is.na(x))}
         ) %>%
-        mutate(produce.report = . >= 0.5) %>% #add logical variable for those districts with >= 50% of buildings with responses in current school year
+        mutate(is.dashboard = . >= 0.5) %>% #add logical variable for those districts with >= 50% of buildings with responses in current school year
         ReplaceNames(
           ., 
           current.names = names(.)[2],
@@ -381,18 +383,30 @@
         ) %>%
         as_tibble()
       
-      resp9.tb <- 
+      overview.restriction.tb <- 
+        resp8.tb %>% 
+        select(district, building.id, year) %>%
+        dcast(., district + building.id ~ year, value.var = "year", fun.aggregate = length) %>%
+        mutate(is.overview = .[,ncol(.)] > 0 & .[,ncol(.)-1] == 0) %>%
+        dcast(., district ~ is.overview, value.var = "is.overview", fun.aggregate = length) %>%
+        mutate(is.overview = .[,ncol(.)] == 1)
+      
+      resp9.tb <-   
         left_join(
           resp8.tb,
-          response.count.restriction.tb,
+          dashboard.restriction.tb,
           by = "district"
         ) %>%
-        filter(produce.report == TRUE)
+        left_join(
+          ., 
+          overview.restriction.tb,
+          by = "district"
+        )
       
       buildings.tb %<>%
         left_join(
           .,
-          response.count.restriction.tb,
+          dashboard.restriction.tb,
           by = "district"
         )
      
@@ -419,6 +433,25 @@
           y = domains.tb,
           by = c("domain" = "domain.id")
         )
+      
+    #Restricted datasets (depending on whether printing dashboards or overviews)
+      if(is.overview){
+        resp.restricted.nosplit.tb <- 
+          resp.full.nosplit.tb %>%
+          filter(is.overview == TRUE)
+        
+        resp.restricted.split.tb <-
+          resp.full.split.tb %>%
+          filter(is.overview == TRUE)
+      }else{
+        resp.restricted.nosplit.tb <- 
+          resp.full.nosplit.tb %>%
+          filter(is.dashboard == TRUE)
+        
+        resp.restricted.split.tb <-
+          resp.full.split.tb %>%
+          filter(is.dashboard == TRUE)
+      }
     
     #Sample Datasets  
     
@@ -429,7 +462,7 @@
             
             resp.sample.nosplit.tb <- 
               RestrictDataToSample(
-                tb = resp.full.nosplit.tb,
+                tb = resp.restricted.nosplit.tb,
                 report.unit = "unit.id",
                 sample.print = sample.print,
                 sample.group.unit = "unit.id",
@@ -484,10 +517,10 @@
         if(!sample.print & !add.to.last.full.print){
             
           resp.sample.nosplit.tb <- 
-            resp.full.nosplit.tb
+            resp.restricted.nosplit.tb
           
           resp.sample.split.tb <- 
-            resp.full.split.tb
+            resp.restricted.split.tb
           
           unit.ids.sample <-
             resp.sample.nosplit.tb %>%
@@ -503,16 +536,13 @@
           while(!is.valid.sample){
             
             unit.ids.sample <-
-              resp.full.nosplit.tb %>%
+              resp.restricted.nosplit.tb %>%
               select(unit.id) %>%
               unique %>%
               unlist %>% as.vector %>%
               setdiff(., districts.that.already.have.reports) %>%
               .[1:sample.size] %>%
               RemoveNA
-            
-            #if(length(districts.without.reports) > sample.size){unit.ids.sample <- districts.without.reports[1:sample.size]}
-            #if(length(districts.without.reports) < sample.size){unit.ids.sample <- districts.without.reports}
             
             is.valid.sample <-
               unit.ids.sample %in% districts.that.already.have.reports %>% not %>% all
@@ -521,7 +551,7 @@
             if(!is.valid.sample){next()}
             
             resp.sample.nosplit.tb <- 
-              resp.full.nosplit.tb %>%
+              resp.restricted.nosplit.tb %>%
               filter(unit.id %in% unit.ids.sample)
             
             resp.sample.split.tb <- 
@@ -674,6 +704,10 @@
         mutate(
           text.value = 
             ifelse(text.type == "building", loop.id, text.value)
+        ) %>%
+        mutate(
+          text.value =  
+            ifelse(text.type == "report.version", report.version, text.value)
         ) %>%
         mutate(text.value = Proper(text.value))
         
@@ -1408,7 +1442,24 @@
             district.text.list,
             district.file.name
           ){
-            config.tables.h <- district.tables.list %>% lapply(., `[[`, 1) %>% do.call(rbind, .)
+            
+            #Define config tables for district
+              config.tables.h <- 
+                district.tables.list %>% 
+                lapply(., `[[`, 1) %>% 
+                do.call(rbind, .) %>%
+                mutate(
+                  is.overview.table = ifelse(tab.type.id %in% c(1,2), TRUE, FALSE),
+                  config.id = 1:nrow(.)
+                )
+              
+              if(is.overview){config.tables.h <- config.tables.h %>% filter(is.overview.table)} #filter out tables not in tabs 1 & 2 if printing district overview
+            
+            #Define tables list for district
+              if(is.overview){
+                district.tables.list %<>% .[config.tables.h$config.id[config.tables.h$is.overview.table == TRUE]]
+              }
+              
             wb <- loadWorkbook(file.name.h, create = FALSE)
             setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
             
@@ -1427,14 +1478,14 @@
                 }
                 configs.i <- district.tables.list[[i]]$configs
                 
-                if(configs.i$tab.type.id == 4){ #customize tab name if need be for building summaries
-                  building.num <- configs.i$loop.id %>% unique %>% equals(building.names.for.district) %>% which
-                  
-                  configs.i$tab.name <- 
-                    getSheets(wb) %>% 
-                    .[grepl("Building Summary", .)] %>% 
-                    .[building.num]
-                }
+                #if(configs.i$tab.type.id == 4){ #customize tab name if need be for building summaries
+                #  building.num <- configs.i$loop.id %>% unique %>% equals(building.names.for.district) %>% which
+                #  
+                #  configs.i$tab.name <- 
+                #    getSheets(wb) %>% 
+                #    .[grepl("Building Summary", .)] %>% 
+                #    .[building.num]
+                #}
                 
               #Print loop messages
                 #print(paste("Loop i #: ", i, " - Table: ", configs.i$table.type.name, sep = ""))
@@ -1452,28 +1503,16 @@
               
             } # END OF LOOP 'i' BY TABLE
             
-            #!Delete any extra building summary tabs
-              #building.summary.tabs.with.data <- 
-              #  getSheets(wb) %>% 
-              #  .[grepl("Building Summary", .)] %>% 
-              #  assign("building.summary.tabs", ., pos = 1) %>%
-              #  .[1:length(building.names.for.district)]
-              
-              #extra.building.summary.tabnames <-
-              #  building.summary.tabs[!building.summary.tabs %in% building.summary.tabs.with.data]
-              
-              #for(k in 1:length(extra.building.summary.tabnames)){
-              #  removeSheet(
-              #    object = wb, 
-              #    sheet = extra.building.summary.tabnames[k]
-              #  )
-              #}
-            
             ###                           ###
             ###   LOOP "m" BY TEXT ITEM   ###
             ###                           ###
             
-            config.text.h <- district.text.list
+            #Define source table to print text items (filter if just printing District Overviews)
+            if(is.overview){
+              config.text.h <- district.text.list %>% filter(tab.type.id %in% c(1,2))
+            }else{
+              config.text.h <- district.text.list
+            }
             
             #m = 2 #LOOP TESTER
             for(m in 1:nrow(config.text.h)){
@@ -1494,9 +1533,8 @@
             
             saveWorkbook(wb)
             print(paste("WORKBOOK SAVED. File: ", file.name.h, " - Pct. complete: ", 100*h/length(unit.ids.sample), sep = ""))
-          }   
+          }  
       
-   
     ###                          ###    
   # ### LOOP "h" BY REPORT UNIT  ###
     ###                          ###
@@ -1513,13 +1551,23 @@
       unit.id.h <- unit.ids.sample[h]  
                     
       #Set up target file
-        template.file <- 
-          paste(
-            source.tables.dir,
-            "dashboard_template.xlsx",
-            sep = ""
-          )
-        
+        if(is.overview){
+          template.file <- 
+            paste(
+              source.tables.dir,
+              "overview_template.xlsx",
+              sep = ""
+            )
+        }else{
+          template.file <- 
+            paste(
+              source.tables.dir,
+              "dashboard_template.xlsx",
+              sep = ""
+            )
+        }
+      
+      #Define template file
         if(sample.print){
           
           file.name.h <- 
@@ -1531,17 +1579,19 @@
               ".xlsx",
               sep = ""
             )
-          
         }else{
            file.name.h <- 
             paste(
               "district dashboard_",
               unit.id.h,
+              "_",
+              report.version,
               ".xlsx",
               sep = ""
             )
         }
-        
+      
+      #Define target file path & copy template into new file path to be overwritten as report  
         target.path.h <- 
             paste(
               outputs.dir,
@@ -1558,7 +1608,7 @@
         setwd(outputs.dir)
         
         WriteDistrictWorkbook(
-          district.tables.list = tables.ls[[h]],
+          district.tables.list = tables.ls[[h]] ,
           district.text.list = config.text.ls[[h]],
           district.file.name = file.name.h
       )
