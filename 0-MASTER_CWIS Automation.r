@@ -385,11 +385,30 @@
       
       overview.restriction.tb <- 
         resp8.tb %>% 
-        select(district, building.id, year) %>%
-        dcast(., district + building.id ~ year, value.var = "year", fun.aggregate = length) %>%
-        mutate(is.overview = .[,ncol(.)] > 0 & .[,ncol(.)-1] == 0) %>%
-        dcast(., district ~ is.overview, value.var = "is.overview", fun.aggregate = length) %>%
-        mutate(is.overview = .[,ncol(.)] == 1)
+        filter(is.most.recent == 1 & is.baseline.or.current == 0) %>%
+        select(building.id) %>%
+        mutate(is.overview = FALSE) %>%
+        left_join(
+          buildings.tb,
+          .,
+          by = "building.id"
+        ) %>%
+        dcast(district ~ is.overview, value.var = "building.id", fun.aggregate = function(x){length(unique(x))}) %>%
+        mutate(is.overview = ifelse(.[,2] == 0 & .[,3] > 0, TRUE, FALSE)) %>%
+        select(district, is.overview)
+      
+        #filter(.[,2])
+        #unique
+        #select(building.id, year) %>%
+        #dcast(., building.id ~ year, value.var = "year", fun.aggregate = length) %>%
+        #mutate(
+        #  is.overview = 
+        #    .[,ncol(.)] > 0 & 
+        #    .[,ncol(.)-1] == 0 &
+        #    .[,ncol(.)-2] > 0
+        #) %>%
+        #dcast(., district ~ is.overview, value.var = "is.overview", fun.aggregate = length) %>%
+        #mutate(is.overview = .[,ncol(.)] == 1)
       
       resp9.tb <-   
         left_join(
