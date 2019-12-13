@@ -1300,7 +1300,6 @@
               #Print loop messages
                 print(paste("TAB 4 LOOP - Loop #: ", e, " - Pct. Complete: ", 100*e/nrow(config.tables.tab4.input.tb), sep = ""))
               
-<<<<<<< HEAD
               if(table.filter.v %>% any){
                 table.e <-  
                   table.source.data %>%
@@ -1331,7 +1330,8 @@
                 }else{
                   table.e$trend <- table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]
                 }
-=======
+              }
+              
               config.tables.tb.e <- config.tables.tab4.input.tb[e,]
               
               #Define table aggregation formula
@@ -1368,7 +1368,6 @@
                     filter.varnames = filter.varnames.e,
                     filter.values = filter.values.e
                   )
->>>>>>> 8da574fc489d5bd9a165921efeb89ba8f2b6213d
               
               #Create table itself
                 if(table.filter.v %>% not %>% all){
@@ -1419,9 +1418,7 @@
         } #end of if statement for producing tab 4 tables only if not a district overview report
           
       #Assemble final outputs for district ----  
-<<<<<<< HEAD
-            tables.ls[[c]] <- c(tables.tab12.state.ls, tables.tab12.ls, tables.tab3.ls, tables.tab4.ls)
-=======
+
         tables.ls[[c]] <- 
             c(
               tables.tab12.state.ls, 
@@ -1432,8 +1429,7 @@
           
         if(!is.overview & !exists("tables.tab3.ls")){stop("Missing 'tables.tab3.ls'.")}
         if(!is.overview & !exists("tables.tab4.ls")){stop("Missing 'tables.tab4.ls'.")}  
->>>>>>> 8da574fc489d5bd9a165921efeb89ba8f2b6213d
-      
+
       toc(log = TRUE, quiet = TRUE)  
     } ### END OF LOOP "c" BY REPORT UNIT     
         
