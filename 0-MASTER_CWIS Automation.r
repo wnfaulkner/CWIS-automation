@@ -1302,8 +1302,21 @@
                     fun.aggregate = table.aggregation.function
                   ) %>%
                   .[,names(.)!= ""]
-              
-                if(class(table.e[,ncol(table.e)-1]) == "factor" || IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1])){ # add trend
+                
+                trend.all.na <- 
+                  ncol(table.e) %>% is_less_than(3) %>%
+                  ifelse(
+                    .,
+                    TRUE,
+                    c(
+                      class(table.e[,ncol(table.e)-1]) == "factor",
+                      IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]) %>% all,
+                      all(is.na(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]))
+                    ) %>% any
+                  )
+                  
+                  
+                if(trend.all.na){ # add trend
                   table.e$trend <- rep(NA, nrow(table.e))
                 }else{
                   table.e$trend <- table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]
@@ -1333,11 +1346,7 @@
           } ### END OF LOOP "e" BY TABLE ###
       
       #Assemble final outputs for district ----  
-          #if(district.overview){
-          #  tables.ls[[c]] <- c(tables.tab12.state.ls, tables.tab12.ls)
-          #}else{
             tables.ls[[c]] <- c(tables.tab12.state.ls, tables.tab12.ls, tables.tab3.ls, tables.tab4.ls)
-          #}
       
       toc(log = TRUE, quiet = TRUE)  
     } ### END OF LOOP "c" BY REPORT UNIT     
