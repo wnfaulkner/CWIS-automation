@@ -107,13 +107,17 @@
       is.overview <- ifelse(dashboard.or.overview == "overview", TRUE, FALSE)
       
       previous.school.year <-
-        current.school.year %>%
-        strsplit(., "-") %>%
-        unlist() %>%
-        as.numeric() %>%
-        subtract(1) %>%
-        as.character %>%
-        paste0(., collapse = "-")
+        if(current.school.year == "0000"){
+          "0000"  
+        }else{
+          current.school.year %>%
+          strsplit(., "-") %>%
+          unlist() %>%
+          as.numeric() %>%
+          subtract(1) %>%
+          as.character %>%
+          paste0(., collapse = "-")
+        }
     
   #Import Responses table (main data, imported as data frame)
     setwd(source.tables.dir)
@@ -398,29 +402,41 @@
         ReplaceNames(., current.names = "x", new.names = "is.overview") %>%
         as_tibble()
       
-      resp9.tb <-   
-        left_join(
-          resp8.tb,
-          dashboard.restriction.tb,
-          by = "district"
-        ) %>%
-        left_join(
-          ., 
-          overview.restriction.tb,
-          by = "district"
-        )
-      
-      buildings.tb %<>%
+      if(exists("dashboard.restriction.tb")){
+        resp9.tb <-   
+          left_join(
+            resp8.tb,
+            dashboard.restriction.tb,
+            by = "district"
+          )
+        
+        buildings.tb %<>%
         left_join(
           .,
           dashboard.restriction.tb,
           by = "district"
-        ) %>%
-        left_join(
+        ) 
+        
+      }else{
+        resp9.tb <- resp8.tb
+      }
+      
+      if(exists("overview.restriction.tb")){
+        resp9.tb <-
+          left_join(
+            resp9.tb, 
+            overview.restriction.tb,
+            by = "district"
+          )
+        
+        buildings.tb %<>%
+          left_join(
           ., 
           overview.restriction.tb,
           by = "district"
         )
+      }else{}
+        
      
     #Full dataset - no splitcolreshape by domain
       resp.full.nosplit.tb <- 
@@ -587,8 +603,6 @@
           }
         }
 
-    #resp.long.tb <- resp10.tb
-    
   #Section Clocking
     toc()
     Sys.time() - sections.all.starttime
@@ -961,7 +975,7 @@
         
         tab3.state.avg.current.vs.baseline[1,1] <- "Baseline"
   
-  #DISTRICT/BUILDING TABLES ----  
+  #DISTRICT/BUILDINGtables TABLES ----  
         
   ###                          ###    
   ### LOOP "c" BY REPORT UNIT  ###
