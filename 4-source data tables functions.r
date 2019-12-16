@@ -58,31 +58,12 @@ source("utils_wnf.r")
               filter.values[e]
             )
           
-          #if(
-          #  !is.na(filter.varname.e) && 
-          #  is.na(filter.value.e)
-          #){
-          #  print(paste("ERROR: filter variable specified but missing filter values. c = ", c, "; d = ", d, ". Skipping to next loop iteration."))
-          #  next()
-          #}
-          
           table.filters.ls[[e]] <- #regular filter for unit.id data based on filter column and value(s)
             tb %>%
             select(filter.varname.e) %>%
             unlist %>% as.vector %>%
-            grepl(filter.value.e, .)
-          
-          #if(table.filters.ls[[e]] %>% not %>% all){
-          #  warning(
-          #    paste(
-          #      "Filtering variable '",
-          #      filter.varname.e, 
-          #      "' for value '",
-          #      filter.value.e,
-          #      "' returning no rows."
-          #    )
-          #  )
-          #}
+            equals(filter.value.e)
+
         }
         #toc(log = TRUE, quiet = FALSE)
         

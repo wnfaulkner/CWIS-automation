@@ -897,84 +897,87 @@
     
     
     #Tab 3 State Averages ----
-      #Current vs. previous school year
-        tab3.state.avg.current.vs.previous.school.year <-
-          resp.full.split.tb %>% 
-          filter(
-            is.most.recent.or.current == 1
-          ) %>%
-          SplitColReshape.ToLong(
-            df = ., 
-            id.varname = "resp.id", 
-            split.varname = "domain", 
-            split.char = ","
-          ) %>%
-          as_tibble() %>%
-          dcast(
-            data = .,
-            formula = domain ~ is.current,
-            fun.aggregate = mean,
-            value.var = "value"
-          ) %>%
-          ReplaceNames(., current.names = c("0","1"), new.names = c("Previous School Year","Current Year")) %>%
-          mutate(
-            Trend = .[,3] - .[,2]
-          ) %>%
-          TransposeTable(., keep.first.colname = FALSE)
+      if(!is.overview){
+        #Current vs. previous school year
+          tab3.state.avg.current.vs.previous.school.year <-
+            resp.full.split.tb %>% 
+            filter(
+              is.most.recent.or.current == 1
+            ) %>%
+            SplitColReshape.ToLong(
+              df = ., 
+              id.varname = "resp.id", 
+              split.varname = "domain", 
+              split.char = ","
+            ) %>%
+            as_tibble() %>%
+            dcast(
+              data = .,
+              formula = domain ~ is.current,
+              fun.aggregate = mean,
+              value.var = "value"
+            ) %>%
+            ReplaceNames(., current.names = c("0","1"), new.names = c("Previous School Year","Current Year")) %>%
+            mutate(
+              Trend = .[,3] - .[,2]
+            ) %>%
+            TransposeTable(., keep.first.colname = FALSE)
+          
+          tab3.state.avg.current.vs.previous.school.year %<>%
+            apply(
+              X = tab3.state.avg.current.vs.previous.school.year[,2:ncol(tab3.state.avg.current.vs.previous.school.year)], 
+              MARGIN = 2, 
+              FUN = as.numeric
+            ) %>%
+            cbind(
+              tab3.state.avg.current.vs.previous.school.year[,1],
+              .
+            ) %>%
+            ReplaceNames(., "Var.1", "")
+          
+          tab3.state.avg.current.vs.previous.school.year[1,1] <- "Prev. School Year"
+          
+        #Current vs. baseline
+          tab3.state.avg.current.vs.baseline <- 
+            resp.full.split.tb %>% 
+            filter(
+              is.baseline.or.current == 1
+            ) %>%
+            SplitColReshape.ToLong(
+              df = ., 
+              id.varname = "resp.id", 
+              split.varname = "domain", 
+              split.char = ","
+            ) %>%
+            as_tibble() %>%
+            dcast(
+              data = .,
+              formula = domain ~ is.current,
+              fun.aggregate = mean,
+              value.var = "value"
+            ) %>%
+            ReplaceNames(., current.names = c("0","1"), new.names = c("Baseline","Current Year")) %>%
+            mutate(
+              Trend = .[,3] - .[,2]
+            ) %>%
+            TransposeTable(., keep.first.colname = FALSE)
+          
+          tab3.state.avg.current.vs.baseline %<>%
+            apply(
+              X = tab3.state.avg.current.vs.baseline[,2:ncol(tab3.state.avg.current.vs.baseline)], 
+              MARGIN = 2, 
+              FUN = as.numeric
+            ) %>%
+            cbind(
+              tab3.state.avg.current.vs.baseline[,1],
+              .
+            ) %>%
+            ReplaceNames(., "Var.1", "") 
+          
+          tab3.state.avg.current.vs.baseline[1,1] <- "Baseline"
         
-        tab3.state.avg.current.vs.previous.school.year %<>%
-          apply(
-            X = tab3.state.avg.current.vs.previous.school.year[,2:ncol(tab3.state.avg.current.vs.previous.school.year)], 
-            MARGIN = 2, 
-            FUN = as.numeric
-          ) %>%
-          cbind(
-            tab3.state.avg.current.vs.previous.school.year[,1],
-            .
-          ) %>%
-          ReplaceNames(., "Var.1", "")
+        } #end of if statement to execute code only if not an overview report.
         
-        tab3.state.avg.current.vs.previous.school.year[1,1] <- "Prev. School Year"
-        
-      #Current vs. baseline
-        tab3.state.avg.current.vs.baseline <- 
-          resp.full.split.tb %>% 
-          filter(
-            is.baseline.or.current == 1
-          ) %>%
-          SplitColReshape.ToLong(
-            df = ., 
-            id.varname = "resp.id", 
-            split.varname = "domain", 
-            split.char = ","
-          ) %>%
-          as_tibble() %>%
-          dcast(
-            data = .,
-            formula = domain ~ is.current,
-            fun.aggregate = mean,
-            value.var = "value"
-          ) %>%
-          ReplaceNames(., current.names = c("0","1"), new.names = c("Baseline","Current Year")) %>%
-          mutate(
-            Trend = .[,3] - .[,2]
-          ) %>%
-          TransposeTable(., keep.first.colname = FALSE)
-        
-        tab3.state.avg.current.vs.baseline %<>%
-          apply(
-            X = tab3.state.avg.current.vs.baseline[,2:ncol(tab3.state.avg.current.vs.baseline)], 
-            MARGIN = 2, 
-            FUN = as.numeric
-          ) %>%
-          cbind(
-            tab3.state.avg.current.vs.baseline[,1],
-            .
-          ) %>%
-          ReplaceNames(., "Var.1", "") 
-        
-        tab3.state.avg.current.vs.baseline[1,1] <- "Baseline"
-  
   #DISTRICT/BUILDINGtables TABLES ----  
         
   ###                          ###    
@@ -992,7 +995,7 @@
     #Building Level Order
       building.level.order.v <- c("Elem.","High","Middle","Technology Ctr.","Other")
         
-    #c <- 1 #LOOP TESTER 
+    #c <- 20 #LOOP TESTER 
     for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY unit.id
       #Loop Prep----
         #Loop timing
@@ -1022,7 +1025,7 @@
           
           tables.tab12.ls <- list()
         
-        #d <- 4
+        #d <- 1
         for(d in 1:nrow(config.tables.tab12.input.tb)){ ### START OF LOOP "d" BY TABLE ###
           
           #Loop timing
