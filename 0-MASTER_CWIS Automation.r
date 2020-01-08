@@ -19,7 +19,7 @@
   # ESTABLISH BASE DIRECTORIES
   
       # Figure out what machine code is running on
-      if(dir.exists("C:\\Users\\WNF\\Google Drive")){m900 <- TRUE}else{m900 <- FALSE}
+      if(dir.exists("X:\\Google Drive File Stream\\Meu Drive")){m900 <- FALSE}else{m900 <- TRUE}
       
       # Set Working Directory and R Project Directory
       if(m900){  
@@ -132,6 +132,11 @@
       stringsAsFactors = FALSE,
       header = TRUE
     ) %>% as_tibble(.)
+    
+  #Import resp.full.split if have saved it on a previous run
+    resp.full.split.tb <-
+      read.csv(file = "resp.full.split.tb.csv") %>%
+      as_tibble()
     
   #Establish Outputs Directory
     outputs.parent.folder <- 
