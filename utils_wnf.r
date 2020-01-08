@@ -951,14 +951,16 @@
       
       if(dim(df)[1] == 0){
         result <- df
-      }else{
+      }
+      
+      if(dim(df)[1] != 0){
         id.var <- df[,names(df)==id.varname]
         split.var <- df[,names(df)==split.varname]
         
         result <- 
           df %>% 
-          mutate(new.split.var =
-            #df[,names(df)==split.varname] = strsplit(df[,names(df)==split.varname],",")
+          mutate(
+            new.split.var =
               sapply(
                 split.var, function(x){strsplit(x,split.char)}
               )

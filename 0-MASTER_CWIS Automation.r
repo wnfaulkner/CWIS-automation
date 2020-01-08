@@ -134,9 +134,11 @@
     ) %>% as_tibble(.)
     
   #Import resp.full.split if have saved it on a previous run
-    resp.full.split.tb <-
+    if(file.exists("resp.full.split.tb.csv")){
+      resp.full.split.tb <-
       read.csv(file = "resp.full.split.tb.csv") %>%
       as_tibble()
+    }
     
   #Establish Outputs Directory
     outputs.parent.folder <- 
@@ -448,24 +450,26 @@
         resp9.tb
       
     #Full dataset - splitcolreshape by domain (for some practices where answers count towards ETL and CFA)
-      resp.full.split.tb <-
-        left_join(
-          x = resp9.tb,
-          y = questions.tb %>% select(var.id, domain, practice),
-          by = c("variable"="var.id")
-        ) %>%
-        SplitColReshape.ToLong(
-          df = ., 
-          id.varname = "resp.id" ,
-          split.varname = "domain",
-          split.char = ","
-        ) %>% 
-        as_tibble() %>%
-        left_join(
-          x = ., 
-          y = domains.tb,
-          by = c("domain" = "domain.id")
-        )
+      if(!exists("resp.full.split.tb")){
+        resp.full.split.tb <-
+          left_join(
+            x = resp9.tb,
+            y = questions.tb %>% select(var.id, domain, practice),
+            by = c("variable"="var.id")
+          ) %>%
+          SplitColReshape.ToLong(
+            df = ., 
+            id.varname = "resp.id" ,
+            split.varname = "domain",
+            split.char = ","
+          ) %>% 
+          as_tibble() %>%
+          left_join(
+            x = ., 
+            y = domains.tb,
+            by = c("domain" = "domain.id")
+          )
+      }
       
     #Restricted datasets (depending on whether printing dashboards or overviews)
       if(is.overview){
