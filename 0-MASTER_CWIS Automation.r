@@ -134,11 +134,11 @@
     ) %>% as_tibble(.)
     
   #Import resp.full.split if have saved it on a previous run
-    if(file.exists("resp.full.split.tb.csv")){
-      resp.full.split.tb <-
-      read.csv(file = "resp.full.split.tb.csv") %>%
-      as_tibble()
-    }
+    #if(file.exists("resp.full.split.tb.csv")){
+    #  resp.full.split.tb <-
+    #  read.csv(file = "resp.full.split.tb.csv") %>%
+    #  as_tibble()
+    #}
     
   #Establish Outputs Directory
     outputs.parent.folder <- 
@@ -1326,39 +1326,8 @@
               #Print loop messages
                 print(paste("TAB 4 LOOP - Loop #: ", e, " - Pct. Complete: ", 100*e/nrow(config.tables.tab4.input.tb), sep = ""))
               
-              if(table.filter.v %>% any){
-                table.e <-  
-                  table.source.data %>%
-                  filter(table.filter.v) %>%
-                  dcast(
-                    ., 
-                    formula = table.formula.e, 
-                    value.var = config.tables.tb.e$value.varname, 
-                    fun.aggregate = table.aggregation.function
-                  ) %>%
-                  .[,names(.)!= ""]
-                
-                trend.all.na <- 
-                  ncol(table.e) %>% is_less_than(3) %>%
-                  ifelse(
-                    .,
-                    TRUE,
-                    c(
-                      class(table.e[,ncol(table.e)-1]) == "factor",
-                      IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]) %>% all,
-                      all(is.na(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]))
-                    ) %>% any
-                  )
-                  
-                  
-                if(trend.all.na){ # add trend
-                  table.e$trend <- rep(NA, nrow(table.e))
-                }else{
-                  table.e$trend <- table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]
-                }
-              }
-              
-              config.tables.tb.e <- config.tables.tab4.input.tb[e,]
+              #Define Configs for this loop
+                config.tables.tb.e <- config.tables.tab4.input.tb[e,]
               
               #Define table aggregation formula
                 table.formula.e <-
@@ -1412,7 +1381,10 @@
                     ) %>%
                     .[,names(.)!= ""]
                 
-                  if(class(table.e[,ncol(table.e)-1]) == "factor" || IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1])){ # add trend
+                  if( # add trend
+                    class(table.e[,ncol(table.e)-1]) == "factor" || 
+                    IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]) %in% c(FALSE,NA) %>% all %>% not
+                  ){ 
                     table.e$trend <- rep(NA, nrow(table.e))
                   }else{
                     table.e$trend <- table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]
