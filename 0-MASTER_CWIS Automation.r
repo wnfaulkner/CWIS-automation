@@ -24,11 +24,11 @@
       # Set Working Directory and R Project Directory
       if(m900){  
         #M900
-          wd <- "C:\\Users\\WNF\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-11_Phase 10\\"
+          wd <- "C:\\Users\\WNF\\Google Drive\\1. FLUX PROJECTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-11_Phase 10\\"
           rproj.dir <- "C:\\Users\\WNF\\Documents\\GIT PROJECTS\\CWIS-automation\\"
       }else{
         #Thinkpad T470
-          wd <- "G:\\Meu Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-11_Phase 10\\"
+          wd <- "G:\\Meu Drive\\1. FLUX PROJECTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-11_Phase 10\\"
           rproj.dir <- "C:\\Users\\WNF\\Documents\\GIT PROJECTS\\CWIS-automation\\"
       }
     
@@ -134,11 +134,11 @@
     ) %>% as_tibble(.)
     
   #Import resp.full.split if have saved it on a previous run
-    #if(file.exists("resp.full.split.tb.csv")){
-    #  resp.full.split.tb <-
-    #  read.csv(file = "resp.full.split.tb.csv") %>%
-    #  as_tibble()
-    #}
+    if(file.exists("resp.full.split.tb.csv") && m900){
+      resp.full.split.tb <-
+      read.csv(file = "resp.full.split.tb.csv") %>%
+      as_tibble()
+    }
     
   #Establish Outputs Directory
     outputs.parent.folder <- 
@@ -447,28 +447,29 @@
      
     #Full dataset - no splitcolreshape by domain
       resp.full.nosplit.tb <- 
-        resp9.tb
+        resp9.tb %>%
+        left_join(
+          x = resp9.tb,
+          y = questions.tb %>% select(var.id, domain, practice),
+          by = c("variable"="var.id")
+        ) %>%
+        left_join(
+          x = ., 
+          y = domains.tb,
+          by = c("domain" = "domain.id")
+        )
       
     #Full dataset - splitcolreshape by domain (for some practices where answers count towards ETL and CFA)
       if(!exists("resp.full.split.tb")){
         resp.full.split.tb <-
-          left_join(
-            x = resp9.tb,
-            y = questions.tb %>% select(var.id, domain, practice),
-            by = c("variable"="var.id")
-          ) %>%
+          resp.full.nosplit.tb %>%
           SplitColReshape.ToLong(
             df = ., 
             id.varname = "resp.id" ,
             split.varname = "domain",
             split.char = ","
           ) %>% 
-          as_tibble() %>%
-          left_join(
-            x = ., 
-            y = domains.tb,
-            by = c("domain" = "domain.id")
-          )
+          as_tibble()
       }
       
     #Restricted datasets (depending on whether printing dashboards or overviews)
