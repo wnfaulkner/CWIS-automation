@@ -268,7 +268,7 @@
         filter(building != "")
       
     #Building Restrictions
-      low.response.nums.filter.tb <- #Filter out building-periods with less than 6 responses at baseline
+      low.response.nums.filter.tb <- #Filter out building-periods with less than 6 responses
         resp3.tb %>%
         group_by(building.id,year) %>%
         summarize(x = length(resp.id)) %>%
@@ -284,8 +284,8 @@
           resp3.tb, 
           low.response.nums.filter.tb %>% select(building.id, year, filter.combined), 
           by = c("year","building.id")
-        ) %>%
-        filter(filter.combined) 
+        ) #%>%
+        #filter(filter.combined) 
       
   #Column Filters (only columns necessary for producing reports)
     
@@ -505,26 +505,19 @@
                 sample.print = sample.print,
                 sample.group.unit = "unit.id",
                 sample.size = sample.size
-              )
+              ) %>%
+              filter(filter.combined)
+              
             
             resp.sample.split.tb <- 
-              left_join(
-                x = resp.sample.nosplit.tb,
-                y = questions.tb %>% select(var.id, domain, practice),
-                by = c("variable"="var.id")
+              RestrictDataToSample(
+                tb = resp.restricted.split.tb,
+                report.unit = "unit.id",
+                sample.print = sample.print,
+                sample.group.unit = "unit.id",
+                sample.size = sample.size
               ) %>%
-              SplitColReshape.ToLong(
-                df = ., 
-                id.varname = "resp.id" ,
-                split.varname = "domain",
-                split.char = ","
-              ) %>% 
-              as_tibble() %>%
-              left_join(
-                x = ., 
-                y = domains.tb,
-                by = c("domain" = "domain.id")
-              )
+              filter(filter.combined)
             
             is.valid.sample <- 
               ifelse(
@@ -555,10 +548,12 @@
         if(!sample.print & !add.to.last.full.print){
             
           resp.sample.nosplit.tb <- 
-            resp.restricted.nosplit.tb
+            resp.restricted.nosplit.tb %>%
+            filter(filter.combined)
           
           resp.sample.split.tb <- 
-            resp.restricted.split.tb
+            resp.restricted.split.tb %>%
+            filter(filter.combined)
           
           unit.ids.sample <-
             resp.sample.nosplit.tb %>%
@@ -590,26 +585,13 @@
             
             resp.sample.nosplit.tb <- 
               resp.restricted.nosplit.tb %>%
+              filter(filter.combined) %>%
               filter(unit.id %in% unit.ids.sample)
             
             resp.sample.split.tb <- 
-              left_join(
-                x = resp.sample.nosplit.tb,
-                y = questions.tb %>% select(var.id, domain, practice),
-                by = c("variable"="var.id")
-              ) %>%
-              SplitColReshape.ToLong(
-                df = ., 
-                id.varname = "resp.id" ,
-                split.varname = "domain",
-                split.char = ","
-              ) %>% 
-              as_tibble() %>%
-              left_join(
-                x = ., 
-                y = domains.tb,
-                by = c("domain" = "domain.id")
-              )
+              resp.restricted.split.tb %>%
+              filter(filter.combined) %>%
+              filter(unit.id %in% unit.ids.sample)
           }
         }
 
@@ -914,12 +896,6 @@
             filter(
               is.most.recent.or.current == 1
             ) %>%
-            SplitColReshape.ToLong(
-              df = ., 
-              id.varname = "resp.id", 
-              split.varname = "domain", 
-              split.char = ","
-            ) %>%
             as_tibble() %>%
             dcast(
               data = .,
@@ -933,7 +909,7 @@
             ) %>%
             TransposeTable(., keep.first.colname = FALSE)
           
-          tab3.state.avg.current.vs.previous.school.year %<>%
+          tab3.state.avg.current.vs.previous.school.year %<>% #add trend column
             apply(
               X = tab3.state.avg.current.vs.previous.school.year[,2:ncol(tab3.state.avg.current.vs.previous.school.year)], 
               MARGIN = 2, 
@@ -952,12 +928,6 @@
             resp.full.split.tb %>% 
             filter(
               is.baseline.or.current == 1
-            ) %>%
-            SplitColReshape.ToLong(
-              df = ., 
-              id.varname = "resp.id", 
-              split.varname = "domain", 
-              split.char = ","
             ) %>%
             as_tibble() %>%
             dcast(
