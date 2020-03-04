@@ -19,7 +19,7 @@
   # ESTABLISH BASE DIRECTORIES
   
       # Figure out what machine code is running on
-      if(dir.exists("C:\\Users\\WNF\\Google Drive")){m900 <- TRUE}else{m900 <- FALSE}
+      if(dir.exists("G:\\Meu Drive")){m900 <- FALSE}else{m900 <- TRUE}
       
       # Set Working Directory and R Project Directory
       if(m900){  
@@ -28,7 +28,7 @@
           rproj.dir <- "C:\\Users\\WNF\\Documents\\GIT PROJECTS\\CWIS-automation\\"
       }else{
         #Thinkpad T470
-          wd <- "G:\\My Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-06 District Dashboards\\"
+          wd <- "G:\\Meu Drive\\1. FLUX PROJECTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-06_Phase 9_District Dashboards\\"
           rproj.dir <- "C:\\Users\\WNF\\Documents\\GIT PROJECTS\\CWIS-automation\\"
       }
     
@@ -387,54 +387,67 @@
     
       #Scenario 1 - sample print
         if(sample.print){ 
-          is.valid.sample <- FALSE
-          while(!is.valid.sample){
-            
+          
+          if(unit.of.interest != ""){
             resp.sample.nosplit.tb <- 
-              RestrictDataToSample(
-                tb = resp.full.nosplit.tb,
-                report.unit = "unit.id",
-                sample.print = sample.print,
-                sample.group.unit = "unit.id",
-                sample.size = sample.size
-              )
+              resp.full.nosplit.tb %>%
+              filter(unit.id == unit.of.interest)
             
             resp.sample.split.tb <- 
-              left_join(
-                x = resp.sample.nosplit.tb,
-                y = questions.tb %>% select(var.id, domain, practice),
-                by = c("variable"="var.id")
-              ) %>%
-              SplitColReshape.ToLong(
-                df = ., 
-                id.varname = "resp.id" ,
-                split.varname = "domain",
-                split.char = ","
-              ) %>% 
-              as_tibble() %>%
-              left_join(
-                x = ., 
-                y = domains.tb,
-                by = c("domain" = "domain.id")
-              )
-            
-            is.valid.sample <- 
-              ifelse(
-                dcast(
-                  data = resp.sample.nosplit.tb, 
-                  formula = unit.id ~ .,
-                  fun.aggregate = function(x){length(unique(x))},
-                  value.var = "building.id"
-                ) %>% 
-                select(".") %>%
-                unlist %>% as.vector %>%
-                is_weakly_less_than(as.numeric(max.building.count)) %>% 
-                all,
-                TRUE,
-                FALSE
-              )
+              resp.full.split.tb %>%
+              filter(unit.id == unit.of.interest)
           }
           
+          if(unit.of.interest == ""){
+            is.valid.sample <- FALSE
+            while(!is.valid.sample){
+              
+              resp.sample.nosplit.tb <- 
+                RestrictDataToSample(
+                  tb = resp.full.nosplit.tb,
+                  report.unit = "unit.id",
+                  sample.print = sample.print,
+                  sample.group.unit = "unit.id",
+                  sample.size = sample.size
+                )
+              
+              resp.sample.split.tb <- 
+                left_join(
+                  x = resp.sample.nosplit.tb,
+                  y = questions.tb %>% select(var.id, domain, practice),
+                  by = c("variable"="var.id")
+                ) %>%
+                SplitColReshape.ToLong(
+                  df = ., 
+                  id.varname = "resp.id" ,
+                  split.varname = "domain",
+                  split.char = ","
+                ) %>% 
+                as_tibble() %>%
+                left_join(
+                  x = ., 
+                  y = domains.tb,
+                  by = c("domain" = "domain.id")
+                )
+              
+              is.valid.sample <- 
+                ifelse(
+                  dcast(
+                    data = resp.sample.nosplit.tb, 
+                    formula = unit.id ~ .,
+                    fun.aggregate = function(x){length(unique(x))},
+                    value.var = "building.id"
+                  ) %>% 
+                  select(".") %>%
+                  unlist %>% as.vector %>%
+                  is_weakly_less_than(as.numeric(max.building.count)) %>% 
+                  all,
+                  TRUE,
+                  FALSE
+                )
+            }
+          }
+            
           unit.ids.sample <-
             resp.sample.nosplit.tb %>%
             select(unit.id) %>%
@@ -543,8 +556,6 @@
           }
         }
 
-    #resp.long.tb <- resp10.tb
-    
   #Section Clocking
     toc()
     Sys.time() - sections.all.starttime
@@ -587,7 +598,7 @@
     
     #Create data frames for this loop - restrict to unit.id id i  
       resp.long.tb.b <- 
-        resp.sample.nosplit.tb%>% filter(unit.id == unit.id.b)
+        resp.sample.nosplit.tb %>% filter(unit.id == unit.id.b)
       
     #Other useful inputs for forming config tables
       district.name.v <- 
