@@ -19,13 +19,13 @@
   # ESTABLISH BASE DIRECTORIES
   
       # Figure out what machine code is running on
-      if(dir.exists("C:\\Users\\willi")){m900 <- TRUE}else{m900 <- FALSE}
+      if(dir.exists("C:\\Users\\WNF\\Google Drive")){m900 <- TRUE}else{m900 <- FALSE}
       
       # Set Working Directory and R Project Directory
       if(m900){  
         #M900
-          wd <- "C:\\Users\\willi\\Google Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-06 District Dashboards\\"
-          rproj.dir <- "C:\\Users\\willi\\Documents\\GIT PROJECTS\\CWIS-automation\\"
+          wd <- "C:\\Users\\WNF\\Google Drive\\1. FLUX PROJECTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-06_Phase 9_District Dashboards\\"
+          rproj.dir <- "C:\\Users\\WNF\\Documents\\GIT PROJECTS\\CWIS-automation\\"
       }else{
         #Thinkpad T470
           wd <- "G:\\My Drive\\1. FLUX CONTRACTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-06 District Dashboards\\"
