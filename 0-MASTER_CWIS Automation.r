@@ -24,12 +24,12 @@
       # Set Working Directory and R Project Directory
       if(m900){  
         #M900
-          wd <- "C:\\Users\\WNF\\Google Drive\\1. FLUX PROJECTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-11_Phase 10\\"
+          wd <- "C:\\Users\\WNF\\Google Drive\\1. FLUX PROJECTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2020-04 Phase 11\\"
           rproj.dir <- "C:\\Users\\WNF\\Documents\\GIT PROJECTS\\CWIS-automation\\"
       }else{
         #Thinkpad T470
-          wd <- "G:\\Meu Drive\\1. FLUX PROJECTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2019-11_Phase 10\\"
-          rproj.dir <- "C:\\Users\\WNF\\Documents\\GIT PROJECTS\\CWIS-automation\\"
+          wd <- "G:\\Meu Drive\\1. FLUX PROJECTS - CURRENT\\2016-09 EXT Missouri\\3. MO GDRIVE\\8. CWIS\\2020-04 Phase 11\\"
+          rproj.dir <- "C:\\Users\\WNF\\Documents\\GIT PROJECTS\\GIT_2016-09 EXT Missouri_CWIS-automation"
       }
     
     #Check Directories
@@ -84,7 +84,7 @@
     source("1-import_functions.r")
   
   #Import Config Tables
-    configs.ss <- gs_key("1_QqIHuAlUfYXX-qC9yMRRpOkgpudJT9-bETY1k0D19k",verbose = TRUE) 
+    configs.ss <- gs_key("1LBQR0hekDnG8j-XeE9CPm1kDVZCB16zHf_vUWT6iPNg", verbose = TRUE) 
     
     #Import all tables from config google sheet as tibbles
       all.configs.ls <- GoogleSheetLoadAllWorksheets(configs.ss)
