@@ -171,6 +171,26 @@
     
 #FUNCTIONS FOR MANIPULATING VECTORS & COLUMNS --------------------
   
+  #UnlistVector: turn variable stored as table object into vector
+    UnlistVector <- function(x){
+      
+      #if(class(x) != "list"){
+      #  stop(
+      #    paste(
+      #      "Input must be of class 'list' but is of class '",
+      #      class(x),
+      #      "'.",
+      #      sep = ""
+      #    )
+      #  )
+      #}
+      
+      result <- x %>% unlist %>% as.vector
+      
+      return(result)
+      
+    }
+    
   #Excel 'proper' function - capitalize first letter of each word in string
     Proper <- function(s, strict = FALSE) {
       cap <- function(s) 

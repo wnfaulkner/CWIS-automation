@@ -19,7 +19,7 @@
   # ESTABLISH BASE DIRECTORIES
   
       # Figure out what machine code is running on
-      if(dir.exists("X:\\Google Drive File Stream\\Meu Drive")){m900 <- FALSE}else{m900 <- TRUE}
+      m900 <- !(Sys.info()[which(row.names(as.data.frame(Sys.info())) == "nodename")] == "LAPTOP-NIDLDLA7")
       
       # Set Working Directory and R Project Directory
       if(m900){  
@@ -219,100 +219,129 @@
     cleaning.source.dir <- paste(rproj.dir,"2-Cleaning/", sep = "")
     setwd(rproj.dir)
     source("2-cleaning_functions.r")
+  
+  #BUILDINGS CONFIG TABLE
+    buildings.tb %<>%
+      LowerCaseCharVars(.)
     
-  #Names/Column Headers
-    resp2.tb <- 
-      LowerCaseNames(resp1.tb) %>%  #Lower-case all variable names
-      ReplaceNames(., "school", "building") %>% #Replace "school" with "building" in column names
-      #ReplaceNames(., "ï..year", "year") %>% #not necessary in latest 2019 data
-      ReplaceNames(., "id", "resp.id") %>%
-      as_tibble()
-
-    names(resp2.tb) <- #replace domain names that have 'c' in front of them for stome reason with regular domain names
-      mgsub(
-          pattern = paste("c",domains, sep = ""), 
-          replacement = domains, 
-          x = names(resp2.tb), 
-          print.replacements = FALSE
+  #RESPONSES TABLE  
+    #Lower-case all character variable data
+      resp2.tb <- LowerCaseCharVars(resp1.tb)  
+      
+    #Names/Column Headers
+      resp2.tb %<>% 
+        LowerCaseNames(.) %>%  #Lower-case all variable names
+        ReplaceNames( #Replace specific column names
+          ., 
+          current.names = c("school", "id", "schoolid"), 
+          new.names = c("building.name", "resp.id", "building.id")
+        ) %>% 
+        as_tibble()
+  
+      names(resp2.tb) <- #replace domain names that have 'c' in front of them for stome reason with regular domain names
+        mgsub(
+            pattern = paste("c",domains, sep = ""), 
+            replacement = domains, 
+            x = names(resp2.tb), 
+            print.replacements = FALSE
+          )
+      
+      names(resp2.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(resp2.tb), char = ".") # get rid of any double periods in names
+      
+      #TODO: Add building ids for District Offices and Other
+        
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      #Replace district & building name with official DESE names from building configs table
+        x<-resp2.tb %>%
+          select(-c("district","building.name")) %>%
+          left_join(
+            ., 
+            buildings.tb %>% select(building.id, district, building.name),
+            by = "building.id"
+          )
+      
+      #Assign variable that is the report unit the name 'unit.id'  
+        resp2.tb %<>% 
+          ReplaceNames(
+            ., 
+            current.names = names(resp2.tb)[names(resp2.tb) == as.vector(report.unit)], 
+            new.names =  "unit.id"
+          )
+      
+      
+      
+      resp2.tb %<>% mutate(building.id.raw = paste(unit.id,building,sep=".") %>% gsub(" |\\/", ".", .))
+      
+      resp2.tb <- 
+        left_join(
+          resp2.tb,
+          buildings.tb %>% select(district, building.id.raw, building.id, building.name, building.level),
+          by = "building.id.raw"
+        )
+      
+      resp2.tb$building.level <- Proper(resp2.tb$building.level)
+      
+    #Row Filters
+      
+      #Filter out blank schools
+        resp3.tb <- 
+          resp2.tb %>% 
+          filter(building != "")
+        
+      #Building Restrictions
+        low.response.nums.filter.tb <- #Filter out building-periods with less than 6 responses
+          resp3.tb %>%
+          group_by(building.id,year) %>%
+          summarize(x = length(resp.id)) %>%
+          mutate(
+            filter.baseline = ifelse(year == "baseline" & x < 6, FALSE, TRUE),
+            filter.previous.school.year = ifelse(year == previous.school.year & x < 6, FALSE, TRUE),
+            filter.current.school.year = ifelse(year == current.school.year & x < 6, FALSE, TRUE),
+            filter.combined = all(filter.baseline, filter.previous.school.year, filter.current.school.year)
+          )
+        
+        resp4.tb <- 
+          inner_join(
+            resp3.tb, 
+            low.response.nums.filter.tb %>% select(building.id, year, filter.combined), 
+            by = c("year","building.id")
+          ) #%>%
+          #filter(filter.combined) 
+        
+    #Column Filters (only columns necessary for producing reports)
+      
+      resp5.tb <-
+        resp4.tb %>%
+        SelectColsIn(
+          ., 
+          "NOT.IN",
+          questions.tb %>% filter(necessary.in.final.data == 0) %>% select(var.id) %>% unlist %>% as.vector
         )
     
-    resp2.tb %<>% 
-      ReplaceNames(
-        ., 
-        current.names = names(resp2.tb)[names(resp2.tb) == as.vector(report.unit)], 
-        new.names =  "unit.id"
-      )
-    
-    names(resp2.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(resp2.tb), char = ".")
-    
-  #Lower-case all character variable data
-    resp2.tb <- LowerCaseCharVars(resp2.tb)
-  
-  #Add variables: building.id, building.name, building.level 
-    resp2.tb %<>% mutate(building.id.raw = paste(unit.id,building,sep=".") %>% gsub(" |\\/", ".", .))
-    
-    resp2.tb <- 
-      left_join(
-        resp2.tb,
-        buildings.tb %>% select(district, building.id.raw, building.id, building.name, building.level),
-        by = "building.id.raw"
-      )
-    
-    resp2.tb$building.level <- Proper(resp2.tb$building.level)
-    
-  #Row Filters
-    
-    #Filter out blank schools
-      resp3.tb <- 
-        resp2.tb %>% 
-        filter(building != "")
+    #Reshape to Long Data by response to CWIS question
+      cwis.varnames <- FilterVector(grepl(paste0(domains, collapse = "|"), names(resp5.tb)), names(resp5.tb))
+      resp6.tb <-
+        melt( #Melt to long data frame for all cwis vars
+          resp5.tb,
+          id.vars = names(resp5.tb)[!names(resp5.tb) %in% cwis.varnames], 
+          measure.vars = cwis.varnames
+        ) %>% 
+        filter(!is.na(value)) %>% #remove rows with no answer for cwis vars
+        MoveColsLeft(., c("resp.id","unit.id")) %>% #Rearrange columns: resp.id and unit.id at the front
+        as_tibble()
       
-    #Building Restrictions
-      low.response.nums.filter.tb <- #Filter out building-periods with less than 6 responses
-        resp3.tb %>%
-        group_by(building.id,year) %>%
-        summarize(x = length(resp.id)) %>%
-        mutate(
-          filter.baseline = ifelse(year == "baseline" & x < 6, FALSE, TRUE),
-          filter.previous.school.year = ifelse(year == previous.school.year & x < 6, FALSE, TRUE),
-          filter.current.school.year = ifelse(year == current.school.year & x < 6, FALSE, TRUE),
-          filter.combined = all(filter.baseline, filter.previous.school.year, filter.current.school.year)
-        )
+    #Filter out responses for DBDM practice 5 (see Missouri Journal entry 2019-11-08)
+      resp6.tb %<>%
+        filter(variable != "dbdm_visualrepresetations")
       
-      resp4.tb <- 
-        inner_join(
-          resp3.tb, 
-          low.response.nums.filter.tb %>% select(building.id, year, filter.combined), 
-          by = c("year","building.id")
-        ) #%>%
-        #filter(filter.combined) 
-      
-  #Column Filters (only columns necessary for producing reports)
-    
-    resp5.tb <-
-      resp4.tb %>%
-      SelectColsIn(
-        ., 
-        "NOT.IN",
-        questions.tb %>% filter(necessary.in.final.data == 0) %>% select(var.id) %>% unlist %>% as.vector
-      )
-  
-  #Reshape to Long Data by response to CWIS question
-    cwis.varnames <- FilterVector(grepl(paste0(domains, collapse = "|"), names(resp5.tb)), names(resp5.tb))
-    resp6.tb <-
-      melt( #Melt to long data frame for all cwis vars
-        resp5.tb,
-        id.vars = names(resp5.tb)[!names(resp5.tb) %in% cwis.varnames], 
-        measure.vars = cwis.varnames
-      ) %>% 
-      filter(!is.na(value)) %>% #remove rows with no answer for cwis vars
-      MoveColsLeft(., c("resp.id","unit.id")) %>% #Rearrange columns: resp.id and unit.id at the front
-      as_tibble()
-    
-  #Filter out responses for DBDM practice 5 (see Missouri Journal entry 2019-11-08)
-    resp6.tb %<>%
-      filter(variable != "dbdm_visualrepresetations")
-    
   #ADDING NEW USEFUL VARIABLES ----
     
     #Add proficiency dummy variable
