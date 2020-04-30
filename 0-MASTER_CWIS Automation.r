@@ -816,10 +816,10 @@
       for(d in 1:nrow(config.tables.overviews.input.tb)){ ### START OF LOOP "d" BY TABLE ###
         
         #Print loop messages
-        print(paste("TABS 1 & 2 LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.overviews.input.tb), sep = ""))
+          print(paste("OVERVIEW TABS LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.overviews.input.tb), sep = ""))
         
         #Define table configs for loop
-        config.tables.tb.d <- config.tables.overviews.input.tb[d,]
+          config.tables.tb.d <- config.tables.overviews.input.tb[d,]
         
         #CREATE TABLES
         
@@ -888,7 +888,7 @@
               }
         
           #District Overview (vs district) Tables
-            if(config.tables.tb.d$tab.type.name == "District Overview (vs district)"){
+            if(config.tables.tb.d$tab.type.name %in% c("District Overview (vs district)")){
               
               #Define table aggregation formula
                 table.formula.d <-
@@ -952,30 +952,30 @@
             }
           
           #District Overview (vs. state) - copies of vs distrct tables
-            if(config.tables.tb.d$tab.type.name == "District Overview (vs state)"){
-              table.d <- 
-                tables.overviews.state.ls[
-                  tables.overviews.state.ls %>%
-                    lapply(
-                      .,
-                      function(x){
-                        (
-                          x$configs$tab.type.id %>%
-                            unlist %>% as.vector %>%
-                            equals(1)
-                        ) &
-                          (
-                            x$configs$table.type.id %>%
-                              unlist %>% as.vector() %>%
-                              equals(config.tables.tb.d$table.type.id)
-                          )
-                      }
-                    ) %>%
-                    unlist %>% as.vector
-                  ] %>%
-                .[[1]] %>% 
-                .[["table"]]
-            }
+            #if(config.tables.tb.d$tab.type.name == "District Overview (vs state)"){
+            #  table.d <- 
+            #    tables.overviews.state.ls[
+            #      tables.overviews.state.ls %>%
+            #        lapply(
+            #          .,
+            #          function(x){
+            #            (
+            #              x$configs$tab.type.id %>%
+            #                unlist %>% as.vector %>%
+            #                equals(2)
+            #            ) &
+            #              (
+            #                x$configs$table.type.id %>%
+            #                  unlist %>% as.vector() %>%
+            #                  equals(config.tables.tb.d$table.type.id)
+            #              )
+            #          }
+            #        ) %>%
+            #        unlist %>% as.vector
+            #      ] %>%
+            #    .[[1]] %>% 
+            #    .[["table"]]
+            #}
           
         #Table Storage
           table.d.storage.index <- length(tables.overviews.state.ls) %>% add(1)
@@ -1001,6 +1001,7 @@
     
     #Buildings Over Time - State Averages ----
       if(!is.overview){
+        
         #Current vs. previous school year
           buildings.over.time.state.avg.current.vs.previous.school.year <-
             resp.full.split.tb %>% 
@@ -1014,25 +1015,24 @@
               fun.aggregate = mean,
               value.var = "value"
             ) %>%
-            ReplaceNames(., current.names = c("0","1"), new.names = c(previous.school.year,current.school.year)) %>%
             mutate(
-              Trend = .[,3] - .[,2]
+              Trend = `1` %>% subtract(`0`)
             ) %>%
-            TransposeTable(., keep.first.colname = FALSE)
+            ReplaceNames(., current.names = c("0","1"), new.names = c(previous.school.year,current.school.year)) %>%
+            TransposeTable(., keep.first.colname = FALSE) %>%
+            apply(., c(1,2), trimws) 
           
-          buildings.over.time.state.avg.current.vs.previous.school.year %<>% #add trend column
+          buildings.over.time.state.avg.current.vs.previous.school.year %<>%
             apply(
               X = buildings.over.time.state.avg.current.vs.previous.school.year[,2:ncol(buildings.over.time.state.avg.current.vs.previous.school.year)], 
               MARGIN = 2, 
               FUN = as.numeric
             ) %>%
-            cbind(
-              buildings.over.time.state.avg.current.vs.previous.school.year[,1],
-              .
+            as_tibble() %>%
+            mutate(
+              period = buildings.over.time.state.avg.current.vs.previous.school.year[,1]
             ) %>%
-            ReplaceNames(., "Var.1", "")
-          
-          buildings.over.time.state.avg.current.vs.previous.school.year[1,1] <- "Prev. School Year"
+            MoveColsLeft(., "period")
           
         #Current vs. baseline
           buildings.over.time.state.avg.current.vs.baseline <- 
@@ -1047,11 +1047,12 @@
               fun.aggregate = mean,
               value.var = "value"
             ) %>%
-            ReplaceNames(., current.names = c("0","1"), new.names = c("Baseline","Current Year")) %>%
             mutate(
-              Trend = .[,3] - .[,2]
+              Trend = `1` %>% subtract(`0`)
             ) %>%
-            TransposeTable(., keep.first.colname = FALSE)
+            ReplaceNames(., current.names = c("0","1"), new.names = c("Baseline",current.school.year)) %>%
+            TransposeTable(., keep.first.colname = FALSE) %>%
+            apply(., c(1,2), trimws) 
           
           buildings.over.time.state.avg.current.vs.baseline %<>%
             apply(
@@ -1059,13 +1060,11 @@
               MARGIN = 2, 
               FUN = as.numeric
             ) %>%
-            cbind(
-              buildings.over.time.state.avg.current.vs.baseline[,1],
-              .
+            as_tibble() %>%
+            mutate(
+              period = buildings.over.time.state.avg.current.vs.baseline[,1]
             ) %>%
-            ReplaceNames(., "Var.1", "") 
-          
-          buildings.over.time.state.avg.current.vs.baseline[1,1] <- "Baseline"
+            MoveColsLeft(., "period")
         
         } #end of if statement to execute code only if not an overview report.
         
