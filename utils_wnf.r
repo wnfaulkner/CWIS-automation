@@ -785,57 +785,78 @@
     ReplaceNames <- function(df,current.names, new.names) {
       
       #Data Checks
-      if(!is.data.frame(df)){
-        stop("Input not a data frame. Input must be of class 'data.frame'.")
-      }
+        if(!is.data.frame(df)){
+          stop("Input not a data frame. Input must be of class 'data.frame'.")
+        }
       
       #New Names Checks
-      if(!exists("new.names")){
-        new.names <- readline(prompt = "No new names defined. Enter a vector of new names to replace current names: ")
-      }
-      
-      if(!is.character(new.names)){
-        new.names <- as.character(new.names)
-        warning("'new.names' input not of class 'character.' Coercing to character vector.")
-      }
-      
-      #Current Names Checks
-      if(!exists("current.names")){
-        
-        if(length(names(df)) == length(new.names)){
-          print("No current names to replace specified. All current names will be replaced.")
-          current.names <- names(df)
+        if(!exists("new.names")){
+          new.names <- readline(prompt = "No new names defined. Enter a vector of new names to replace current names: ")
         }
         
-        if(length(names(df)) != length(new.names)){
-          stop(
+        if(!is.character(new.names)){
+          new.names <- as.character(new.names)
+          warning("'new.names' input not of class 'character.' Coercing to character vector.")
+        }
+      
+      #Current Names Checks
+        if(!exists("current.names")){
+          
+          if(length(names(df)) == length(new.names)){
+            print("No current names to replace specified. All current names will be replaced.")
+            current.names <- names(df)
+          }
+          
+          if(length(names(df)) != length(new.names)){
+            stop(
+              paste(
+                "No current names to replace specified. Current df has ",
+                length(names(df)),
+                " columns. New names is of length ",
+                length(new.names),
+                ".",
+                sep = ""
+              )
+            )
+          }
+          
+        } #End of if statement for when current.names not defined by user
+      
+        if(any(!current.names %in% names(df))){
+          warning(
             paste(
-              "No current names to replace specified. Current df has ",
-              length(names(df)),
-              " columns. New names is of length ",
-              length(new.names),
-              ".",
+              "One or more current.names were not found in input data frame: '",
+              current.names[!current.names %in% names(df)],
+              "'. ",
               sep = ""
             )
           )
         }
-        
-      } #End of if statement for when current.names not defined by user
       
-      if(any(!current.names %in% names(df))){
-        warning(
-          paste(
-            "One or more current.names were not found in input data frame: '",
-            current.names[!current.names %in% names(df)],
-            "'. ",
-            sep = ""
+      #Check same number of current and replacement names
+        if(length(current.names) != length(new.names)){
+          stop(
+            paste(
+              "Different number of current and new names: current names = ",
+              length(current.names),
+              ", new names = ",
+              length(new.names),
+              "."
+            )
           )
-        )
-      }
+        }
       
       #Actual Function: name replacement
-      names(df)[names(df) %in% current.names] <- new.names
-      return(df)
+        for(i in 1:length(current.names)){
+          names(df)[names(df) == current.names[i]] <- new.names[i] 
+            #mgsub(
+            #  pattern = current.names[i],
+            #  replacement = new.names[i],
+            #  x = names(df)
+            #)
+        }
+      #names(df)[names(df) %in% current.names] <- new.names
+      return(df %>% as_tibble)
     }
   
   #Select names based on in/not in string vector

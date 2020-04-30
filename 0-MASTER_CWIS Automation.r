@@ -220,11 +220,16 @@
     setwd(rproj.dir)
     source("2-cleaning_functions.r")
   
-  #BUILDINGS CONFIG TABLE
+  #BUILDINGS CONFIG TABLE ----
     buildings.tb %<>%
-      LowerCaseCharVars(.)
+      LowerCaseCharVars(.) %>%
+      mutate(
+        district =
+          district %>% gsub(" ", ".", .) %>%
+          SubRepeatedCharWithSingleChar(., ".")
+      )
     
-  #RESPONSES TABLE  
+  #RESPONSES TABLE  ----
     #Lower-case all character variable data
       resp2.tb <- LowerCaseCharVars(resp1.tb)  
       
@@ -248,36 +253,56 @@
       
       names(resp2.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(resp2.tb), char = ".") # get rid of any double periods in names
       
-      #TODO: Add building ids for District Offices and Other
+    #Add building ids for District Offices and Other
+      resp2.tb %<>%
+        mutate(
+          district = 
+            district %>% gsub(" ", ".", .) %>%
+            SubRepeatedCharWithSingleChar(., ".")
+        )
         
+      resp.district.office.other.tb <- 
+        resp2.tb %>%
+        filter(building.name %in% c("district office", "other"))
       
+      for(i in 1:nrow(resp.district.office.other.tb)){
+        building.name.i <- resp.district.office.other.tb$building.name[i]
+        building.id.end.i <- if(building.name.i == "district office"){"0001"}else{"0002"}
+        district.i <- resp.district.office.other.tb$district[i]
+        
+        building.id.i <- #create new building id from district id plus '0001' for district office and '0002' for other
+          buildings.tb %>% 
+          filter(district == district.i) %>%
+          select(building.id) %>%
+          UnlistVector() %>%
+          RemoveNA %>%
+          .[1] %>%
+          substr(., 1, 5) %>%
+          paste(., building.id.end.i, sep = "")
+        
+        #if(grepl("NA", building.id.i)){print(i)}
+        
+        resp2.tb$building.id[ #insert into response table
+          resp2.tb$building.name == building.name.i & 
+          resp2.tb$district == district.i
+        ] <- building.id.i 
+        
+        buildings.tb$building.id[ #insert into buildings config table
+          buildings.tb$district == district.i & 
+          buildings.tb$building.name == building.name.i
+        ] <- building.id.i 
+        
+        if(!(building.id.i %in% buildings.tb$building.id & building.id.i %in% buildings.tb$building.id)){print(i)}
+      }
       
-      
-      
-      
-      
-      
-      
-      
-      #Replace district & building name with official DESE names from building configs table
-        x<-resp2.tb %>%
-          select(-c("district","building.name")) %>%
-          left_join(
-            ., 
-            buildings.tb %>% select(building.id, district, building.name),
-            by = "building.id"
-          )
-      
-      #Assign variable that is the report unit the name 'unit.id'  
-        resp2.tb %<>% 
-          ReplaceNames(
-            ., 
-            current.names = names(resp2.tb)[names(resp2.tb) == as.vector(report.unit)], 
-            new.names =  "unit.id"
-          )
-      
-      
-      
+    #Assign variable that is the report unit the name 'unit.id'  
+      resp2.tb %<>% 
+        ReplaceNames(
+          ., 
+          current.names = names(resp2.tb)[names(resp2.tb) == as.vector(report.unit)], 
+          new.names =  "unit.id"
+        )
+    
       resp2.tb %<>% mutate(building.id.raw = paste(unit.id,building,sep=".") %>% gsub(" |\\/", ".", .))
       
       resp2.tb <- 
