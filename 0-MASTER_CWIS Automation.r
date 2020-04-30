@@ -375,90 +375,91 @@
     #Add variable for baseline, most recent, and next-to-most-recent years for each unit.id
       resp7.tb$year[resp7.tb$year == "baseline"] <- "0000"
       
-#FUNCTION - could be made into function to designate alphabetic first/last/penultimate by group
-      
-      year.var.helper.tb <-
-        resp7.tb %>%
-        select(year, unit.id, building) %>%
-        unique %>%
-        mutate(
-          is.baseline = ifelse(year == "0000", 1, 0),
-          is.most.recent = ifelse(year == previous.school.year, 1, 0),
-          is.current = ifelse(year == current.school.year, 1, 0)
-        ) %>%
-        mutate(
-          is.baseline.or.most.recent = ifelse(is.baseline == 1 | is.most.recent == 1, 1, 0),
-          is.baseline.or.current = ifelse(is.baseline == 1 | is.current == 1, 1, 0),
-          is.most.recent.or.current = ifelse(is.most.recent == 1 | is.current == 1, 1, 0)
-        )
+      #FUNCTION - could be made into function to designate alphabetic first/last/penultimate by group
+        year.var.helper.tb <-
+          resp7.tb %>%
+          select(year, building.id) %>%
+          unique %>%
+          mutate(
+            is.baseline = ifelse(year == "0000", 1, 0),
+            is.most.recent = ifelse(year == previous.school.year, 1, 0),
+            is.current = ifelse(year == current.school.year, 1, 0)
+          ) %>%
+          mutate(
+            is.baseline.or.most.recent = ifelse(is.baseline == 1 | is.most.recent == 1, 1, 0),
+            is.baseline.or.current = ifelse(is.baseline == 1 | is.current == 1, 1, 0),
+            is.most.recent.or.current = ifelse(is.most.recent == 1 | is.current == 1, 1, 0)
+          )
       
       resp8.tb <- 
         left_join(
           resp7.tb,
-          year.var.helper.tb,# %>% select(building),
-          by = c("year", "unit.id", "building")
+          year.var.helper.tb,
+          by = c("year", "building.id")
         ) %>% 
         mutate(variable = as.character(variable))
    
-  #FORM FINAL DATASETS - (A) SPLITCOLRESHAPED BY DOMAIN AND (B) RESTRICTED TO SAMPLE ----
+  #FORM FINAL DATASETS - RESTRICTED TO SAMPLE ---- 
+    #Not necessary in Phase 11 as restrictions simplified and data already filtered above during cleaning
     
     #Restrict whole dataset to districts with following condition: 
       #50% or more of buildings in the district that are not `other` or `district office` 
       #have at least one response in the current period
       
-      dashboard.restriction.tb <-
-        resp8.tb %>% 
-        select(resp.id, year, unit.id, building, building.id) %>%
-        #filter(!building %in% c("district office", "other")) %>% #get rid of rows for 'other' and 'district office'
-        filter(year == current.school.year) %>% #filter for current school year 
-        dcast( #reshape into table of response counts by building.id
-          ., 
-          formula = unit.id + building.id ~ ., 
-          value.var = "resp.id", 
-          fun.aggregate = function(x){length(unique(x))}
-        ) %>%
-        as_tibble() %>%
-        select(-unit.id) %>%
-        ReplaceNames(
-          ., 
-          current.names = names(.)[length(names(.))],
-          new.names = "resp.count.current.school.year"
-        ) %>%
-        left_join( #join with buildings table so have all buildings and response counts for current school year
-          buildings.tb %>% select(district, building.id) %>% filter(!duplicated(building.id)), 
-          ., 
-          by = "building.id"
-        ) %>%
-        filter(!grepl("district.office|other", building.id)) %>% #get rid of rows for 'other' and 'district office' buildings
-        dcast( #reshape into table of percentage of buildings with responses in current school year by district
-          .,
-          formula = district ~ .,
-          value.var = 'resp.count.current.school.year',
-          fun.aggregate = function(x){mean(!is.na(x))}
-        ) %>%
-        mutate(is.dashboard = . >= 0.5) %>% #add logical variable for those districts with >= 50% of buildings with responses in current school year
-        ReplaceNames(
-          ., 
-          current.names = names(.)[2],
-          new.names = "pct.bldgs.w.responses.in.current.schyr"
-        ) %>%
-        as_tibble()
+      #dashboard.restriction.tb <-
+      #  resp8.tb %>% 
+      #  select(resp.id, year, unit.id, building.name, building.id) %>%
+      #  filter(year == current.school.year) %>% #filter for current school year 
+      #  dcast( #reshape into table of response counts by building.id
+      #    ., 
+      #    formula = unit.id + building.id ~ ., 
+      #    value.var = "resp.id", 
+      #    fun.aggregate = function(x){length(unique(x))}
+      #  ) %>%
+      #  as_tibble() %>%
+      #  select(-unit.id) %>%
+      #  ReplaceNames(
+      #    ., 
+      #    current.names = names(.)[length(names(.))],
+      #    new.names = "resp.count.current.school.year"
+      #  ) %>%
+      #  left_join( #join with buildings table so have all buildings and response counts for current school year
+      #    buildings.tb %>% select(district, building.id) %>% filter(!duplicated(building.id)), 
+      #    ., 
+      #    by = "building.id"
+      #  ) %>%
+      #  filter(!grepl("district.office|other", building.id)) %>% #get rid of rows for 'other' and 'district office' buildings
+      #  dcast( #reshape into table of percentage of buildings with responses in current school year by district
+      #    .,
+      #    formula = district ~ .,
+      #    value.var = 'resp.count.current.school.year',
+      #    fun.aggregate = function(x){mean(!is.na(x))}
+      #  ) %>%
+      #  mutate(is.dashboard = . >= 0.5) %>% #add logical variable for those districts with >= 50% of buildings with responses in current school year
+      #  ReplaceNames(
+      #    ., 
+      #    current.names = names(.)[2],
+      #    new.names = "pct.bldgs.w.responses.in.current.schyr"
+      #  ) %>%
+      #  as_tibble()
       
       
-      overview.restriction.base.tb <-
-        buildings.tb %>%
-        mutate(
-          is.overview = FALSE,
-          constant = "x"
-        )
+      if(dashboard.or.overview == "overview"){
+        overview.restriction.base.tb <-
+          buildings.tb %>%
+          mutate(
+            is.overview = FALSE,
+            constant = "x"
+          )
+          
+        overview.restriction.base.tb$is.overview[overview.restriction.base.tb$cohort == 3] <- TRUE
         
-      overview.restriction.base.tb$is.overview[overview.restriction.base.tb$cohort == 3] <- TRUE
-      
-      overview.restriction.tb <-
-        dcast(overview.restriction.base.tb, district ~ constant, value.var = "is.overview", fun.aggregate = any) %>%
-        ReplaceNames(., current.names = "x", new.names = "is.overview") %>%
-        as_tibble()
-      
+        overview.restriction.tb <-
+          dcast(overview.restriction.base.tb, district ~ constant, value.var = "is.overview", fun.aggregate = any) %>%
+          ReplaceNames(., current.names = "x", new.names = "is.overview") %>%
+          as_tibble()
+      }
+        
       if(exists("dashboard.restriction.tb")){
         resp9.tb <-   
           left_join(
@@ -493,8 +494,8 @@
           by = "district"
         )
       }else{}
-        
-     
+      
+      
     #Full dataset - no splitcolreshape by domain
       resp.full.nosplit.tb <- 
         resp9.tb %>%
@@ -509,6 +510,27 @@
           by = c("domain" = "domain.id")
         )
       
+    #Restricted datasets (depending on whether printing dashboards or overviews)
+      #if(is.overview){
+      #  resp.restricted.nosplit.tb <- 
+      #    resp.full.nosplit.tb %>%
+      #    filter(is.overview == TRUE)
+      #  
+      #  resp.restricted.split.tb <-
+      #    resp.full.split.tb %>%
+      #    filter(is.overview == TRUE)
+      #}else{
+      #  resp.restricted.nosplit.tb <- 
+      #    resp.full.nosplit.tb %>%
+      #    filter(is.dashboard == TRUE)
+      #  
+      #  resp.restricted.split.tb <-
+      #    resp.full.split.tb %>%
+      #    filter(is.dashboard == TRUE)
+      #}
+        
+  #FORM FINAL DATASETS - SPLICOLRESHAPE ----
+      
     #Full dataset - splitcolreshape by domain (for some practices where answers count towards ETL and CFA)
       if(!exists("resp.full.split.tb")){
         resp.full.split.tb <-
@@ -521,129 +543,106 @@
           ) %>% 
           as_tibble()
       }
-      
-    #Restricted datasets (depending on whether printing dashboards or overviews)
-      if(is.overview){
-        resp.restricted.nosplit.tb <- 
-          resp.full.nosplit.tb %>%
-          filter(is.overview == TRUE)
-        
-        resp.restricted.split.tb <-
-          resp.full.split.tb %>%
-          filter(is.overview == TRUE)
-      }else{
-        resp.restricted.nosplit.tb <- 
-          resp.full.nosplit.tb %>%
-          filter(is.dashboard == TRUE)
-        
-        resp.restricted.split.tb <-
-          resp.full.split.tb %>%
-          filter(is.dashboard == TRUE)
-      }
     
-    #Sample Datasets  
+  #FORM SAMPLE DATASETS ----  
     
-      #Scenario 1 - sample print
-        if(sample.print){ 
-          is.valid.sample <- FALSE
-          while(!is.valid.sample){
-            
-            resp.sample.nosplit.tb <- 
-              RestrictDataToSample(
-                tb = resp.restricted.nosplit.tb,
-                report.unit = "unit.id",
-                sample.print = sample.print,
-                sample.group.unit = "unit.id",
-                sample.size = sample.size
-              ) %>%
-              filter(filter.combined)
-              
-            
-            resp.sample.split.tb <- 
-              RestrictDataToSample(
-                tb = resp.restricted.split.tb,
-                report.unit = "unit.id",
-                sample.print = sample.print,
-                sample.group.unit = "unit.id",
-                sample.size = sample.size
-              ) %>%
-              filter(filter.combined)
-            
-            is.valid.sample <- 
-              ifelse(
-                dcast(
-                  data = resp.sample.nosplit.tb, 
-                  formula = unit.id ~ .,
-                  fun.aggregate = function(x){length(unique(x))},
-                  value.var = "building.id"
-                ) %>% 
-                select(".") %>%
-                unlist %>% as.vector %>%
-                is_weakly_less_than(as.numeric(max.building.count)) %>% 
-                all,
-                TRUE,
-                FALSE
-              )
-          }
+    #Scenario 1 - sample print
+      if(sample.print){ 
+        is.valid.sample <- FALSE
+        while(!is.valid.sample){
           
-          unit.ids.sample <-
-            resp.sample.nosplit.tb %>%
-            select(unit.id) %>%
-            unique %>%
-            unlist %>% as.vector
-          
-        }
-        
-      #Scenario 2 - full print (fresh, not adding to previous full print)  
-        if(!sample.print & !add.to.last.full.print){
-            
           resp.sample.nosplit.tb <- 
-            resp.restricted.nosplit.tb %>%
-            filter(filter.combined)
+            RestrictDataToSample(
+              tb = resp.full.nosplit.tb,
+              report.unit = "unit.id",
+              sample.print = sample.print,
+              sample.group.unit = "unit.id",
+              sample.size = sample.size
+            ) #%>% filter(filter.combined)
+            
           
           resp.sample.split.tb <- 
-            resp.restricted.split.tb %>%
-            filter(filter.combined)
+            RestrictDataToSample(
+              tb = resp.full.split.tb,
+              report.unit = "unit.id",
+              sample.print = sample.print,
+              sample.group.unit = "unit.id",
+              sample.size = sample.size
+            ) #%>% filter(filter.combined)
           
-          unit.ids.sample <-
-            resp.sample.nosplit.tb %>%
-            select(unit.id) %>%
-            unique %>%
-            unlist %>% as.vector
-          
+          is.valid.sample <- 
+            ifelse(
+              dcast(
+                data = resp.sample.nosplit.tb, 
+                formula = unit.id ~ .,
+                fun.aggregate = function(x){length(unique(x))},
+                value.var = "building.id"
+              ) %>% 
+              select(".") %>%
+              unlist %>% as.vector %>%
+              is_weakly_less_than(as.numeric(max.building.count)) %>% 
+              all,
+              TRUE,
+              FALSE
+            )
         }
         
-      #Scenario 3 - full print (adding to previous full print)  
-        if(!sample.print & add.to.last.full.print){
-          is.valid.sample <- FALSE
-          while(!is.valid.sample){
-            
-            unit.ids.sample <-
-              resp.restricted.nosplit.tb %>%
-              select(unit.id) %>%
-              unique %>%
-              unlist %>% as.vector %>%
-              setdiff(., districts.that.already.have.reports) %>%
-              .[1:sample.size] %>%
-              RemoveNA
-            
-            is.valid.sample <-
-              unit.ids.sample %in% districts.that.already.have.reports %>% not %>% all
-            
-            print(is.valid.sample)
-            if(!is.valid.sample){next()}
-            
-            resp.sample.nosplit.tb <- 
-              resp.restricted.nosplit.tb %>%
-              filter(filter.combined) %>%
-              filter(unit.id %in% unit.ids.sample)
-            
-            resp.sample.split.tb <- 
-              resp.restricted.split.tb %>%
-              filter(filter.combined) %>%
-              filter(unit.id %in% unit.ids.sample)
-          }
+        unit.ids.sample <-
+          resp.sample.nosplit.tb %>%
+          select(unit.id) %>%
+          unique %>%
+          unlist %>% as.vector
+        
+      }
+      
+    #Scenario 2 - full print (fresh, not adding to previous full print)  
+      if(!sample.print & !add.to.last.full.print){
+          
+        resp.sample.nosplit.tb <- 
+          resp.full.nosplit.tb #%>% filter(filter.combined)
+        
+        resp.sample.split.tb <- 
+          resp.full.split.tb %>% #filter(filter.combined)
+        
+        unit.ids.sample <-
+          resp.sample.nosplit.tb %>%
+          select(unit.id) %>%
+          unique %>%
+          unlist %>% as.vector
+        
+      }
+      
+    #Scenario 3 - full print (adding to previous full print)  
+      if(!sample.print & add.to.last.full.print){
+        is.valid.sample <- FALSE
+        while(!is.valid.sample){
+          
+          unit.ids.sample <-
+            resp.full.nosplit.tb %>%
+            select(unit.id) %>%
+            unique %>%
+            unlist %>% as.vector %>%
+            setdiff(., districts.that.already.have.reports) %>%
+            .[1:sample.size] %>%
+            RemoveNA
+          
+          is.valid.sample <-
+            unit.ids.sample %in% districts.that.already.have.reports %>% not %>% all
+          
+          print(is.valid.sample)
+          if(!is.valid.sample){next()}
+          
+          resp.sample.nosplit.tb <- 
+            resp.full.nosplit.tb %>%
+            #filter(filter.combined) %>%
+            filter(unit.id %in% unit.ids.sample)
+          
+          resp.sample.split.tb <- 
+            resp.full.split.tb %>%
+            #filter(filter.combined) %>%
+            filter(unit.id %in% unit.ids.sample)
         }
+      }
 
   #Section Clocking
     toc()
@@ -704,13 +703,13 @@
       #District Overview Indicator (if have only data from one year)
         #district.overview <- resp.long.tb.b$year %>% unique %>% length %>% is_less_than(2) 
       
-      #Tab 4 Loop Variable & Building Names
-        tab4.loopvarname <- 
+      #Building Summary Loop Variable & Building Names
+        building.summaries.loopvarname <- 
           config.tab.types.tb %>% 
           select(tab.loop.var.1) %>% 
           unlist %>% unique %>% RemoveNA
         
-        building.names <- resp.long.tb.b %>% select(tab4.loopvarname) %>% unlist %>% unique
+        building.names <- resp.long.tb.b %>% select(building.summaries.loopvarname) %>% unlist %>% unique
         
         building.names.tb <- 
           tibble(
@@ -722,18 +721,18 @@
       
       config.tabs.ls[[b]] <-
         tibble(
-          tab.type.id = 4,
+          tab.type.id = 5,
           tab.type.name = "Building Summary",
           loop.id = building.names 
         ) %>%
         rbind(
-          config.tab.types.tb %>% select(tab.type.id, tab.type.name) %>% mutate(loop.id = NA) %>% filter(tab.type.id != 4),
+          config.tab.types.tb %>% select(tab.type.id, tab.type.name) %>% mutate(loop.id = NA) %>% filter(tab.type.id != 5),
           .
         ) %>%
         mutate(
           tab.name = 
             c(
-              tab.type.name[1:3],
+              tab.type.name[1:4],
               paste(
                 "Building Summary (",
                 1:length(building.names),
@@ -800,32 +799,96 @@
     
   #STATE AVERAGE TABLES ----
     
-    #Tabs 1 & 2 State Averages ----
+    #Overview Tabs State Averages ----
 
       #Loop Inputs
-        config.tables.tab12.input.tb <- 
+        config.tables.overviews.input.tb <- 
           config.tables.ls[[1]] %>% 
           filter(!is.na(table.type.id)) %>%
-          filter(grepl("1|2", tab.type.id)) %>%
+          filter(grepl("Overview", tab.type.name)) %>%
           filter(is.state.table) %>%
           OrderDfByVar(., order.by.varname = "tab.type.id", rev = FALSE) %>%
           as_tibble()
         
-        tables.tab12.state.ls <- list()
+        tables.overviews.state.ls <- list()
       
       #d <- 4
-      for(d in 1:nrow(config.tables.tab12.input.tb)){ ### START OF LOOP "d" BY TABLE ###
+      for(d in 1:nrow(config.tables.overviews.input.tb)){ ### START OF LOOP "d" BY TABLE ###
         
         #Print loop messages
-        print(paste("TABS 1 & 2 LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.tab12.input.tb), sep = ""))
+        print(paste("TABS 1 & 2 LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.overviews.input.tb), sep = ""))
         
         #Define table configs for loop
-        config.tables.tb.d <- config.tables.tab12.input.tb[d,]
+        config.tables.tb.d <- config.tables.overviews.input.tb[d,]
         
-        #CREATE TABLE
+        #CREATE TABLES
         
-          #Tab 1 Tables (newly created)
-            if(config.tables.tb.d$tab.type.id == 1){
+          #CWIS Response Tab Tables
+            if(config.tables.tb.d$tab.type.name == "CWIS Responses"){
+              
+              #Define table aggregation formula
+                table.formula.d <-
+                  DefineTableRowColFormula(
+                    row.header.varnames = strsplit(config.tables.tb.d$row.header.varname, ",") %>% unlist %>% as.vector,
+                    col.header.varnames = strsplit(config.tables.tb.d$col.header.varname, ",") %>% unlist %>% as.vector
+                  )
+                
+              #Define table source data
+                filter.varnames.d <- config.tables.tb.d$filter.varname %>% strsplit(., ";") %>% unlist %>% as.vector
+                filter.values.d <- config.tables.tb.d$filter.values %>% strsplit(., ";") %>% unlist %>% as.vector
+                
+                is.state.table <- ifelse(!"unit.id" %in% filter.varnames.d, TRUE, FALSE)
+                is.domain.table <- grepl("domain", c(filter.varnames.d, table.formula.d)) %>% any
+                
+              #STATE data with NO domains in formula
+                if(is.state.table & !is.domain.table){table.source.data <- resp.full.nosplit.tb}
+                
+              #STATE data WITH domains in formula
+                if(is.state.table & is.domain.table){table.source.data <- resp.full.split.tb}
+                
+              #NON-STATE data NO domains in formula
+                if(!is.state.table & !is.domain.table){table.source.data <- resp.sample.nosplit.tb}
+                
+              #NON-STATE data WITH domains in formula
+                if(!is.state.table & is.domain.table){table.source.data <- resp.sample.split.tb}
+                
+              #Define table filtering vector
+                table.filter.v <-
+                  DefineTableFilterVector(
+                    tb = table.source.data,
+                    filter.varnames = filter.varnames.d,
+                    filter.values = filter.values.d
+                  )
+                
+              #Form final data frame
+                table.d <-  
+                  table.source.data %>%
+                  filter(table.filter.v) %>%
+                  dcast(
+                    ., 
+                    formula = table.formula.d, 
+                    value.var = config.tables.tb.d$value.varname, 
+                    fun.aggregate = table.aggregation.function
+                  ) %>%
+                  .[,names(.)!= "NA"]
+                
+              #Modifications for specific tables
+                if(grepl("building.level", table.formula.d) %>% any){
+                  table.d <- 
+                    left_join(
+                      building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
+                      table.d,
+                      by = "building.level"
+                    )
+                }
+                
+                if(!config.tables.tb.d$row.header){  #when don't want row labels
+                  table.d <- table.d %>% select(names(table.d)[-1])
+                }
+              }
+        
+          #District Overview (vs district) Tables
+            if(config.tables.tb.d$tab.type.name == "District Overview (vs district)"){
               
               #Define table aggregation formula
                 table.formula.d <-
@@ -888,11 +951,11 @@
                 }
             }
           
-          #Tab 2 Tables (copies of tab 1)
-            if(config.tables.tb.d$tab.type.id == 2){
+          #District Overview (vs. state) - copies of vs distrct tables
+            if(config.tables.tb.d$tab.type.name == "District Overview (vs state)"){
               table.d <- 
-                tables.tab12.state.ls[
-                  tables.tab12.state.ls %>%
+                tables.overviews.state.ls[
+                  tables.overviews.state.ls %>%
                     lapply(
                       .,
                       function(x){
@@ -915,19 +978,17 @@
             }
           
         #Table Storage
-          table.d.storage.index <- length(tables.tab12.state.ls) %>% add(1)
-          tables.tab12.state.ls[[table.d.storage.index]] <- list()
-          tables.tab12.state.ls[[table.d.storage.index]]$configs <- config.tables.tb.d
-          tables.tab12.state.ls[[table.d.storage.index]]$table <- table.d
+          table.d.storage.index <- length(tables.overviews.state.ls) %>% add(1)
+          tables.overviews.state.ls[[table.d.storage.index]] <- list()
+          tables.overviews.state.ls[[table.d.storage.index]]$configs <- config.tables.tb.d
+          tables.overviews.state.ls[[table.d.storage.index]]$table <- table.d
         
       } ### END OF LOOP "d" BY TABLE ###
       
       #Finalizing loop outputs  
-        names(tables.tab12.state.ls) <- 
+        names(tables.overviews.state.ls) <- 
           paste(
-            #rep(unit.id.c, length(tables.tab12.state.ls)),
-            #".",
-            c(1:length(tables.tab12.state.ls)),
+            c(1:length(tables.overviews.state.ls)),
             ".",
             config.tables.tb.d$table.type.name, 
             sep = ""
@@ -938,10 +999,10 @@
           tolower
     
     
-    #Tab 3 State Averages ----
+    #Buildings Over Time - State Averages ----
       if(!is.overview){
         #Current vs. previous school year
-          tab3.state.avg.current.vs.previous.school.year <-
+          buildings.over.time.state.avg.current.vs.previous.school.year <-
             resp.full.split.tb %>% 
             filter(
               is.most.recent.or.current == 1
@@ -953,28 +1014,28 @@
               fun.aggregate = mean,
               value.var = "value"
             ) %>%
-            ReplaceNames(., current.names = c("0","1"), new.names = c("Previous School Year","Current Year")) %>%
+            ReplaceNames(., current.names = c("0","1"), new.names = c(previous.school.year,current.school.year)) %>%
             mutate(
               Trend = .[,3] - .[,2]
             ) %>%
             TransposeTable(., keep.first.colname = FALSE)
           
-          tab3.state.avg.current.vs.previous.school.year %<>% #add trend column
+          buildings.over.time.state.avg.current.vs.previous.school.year %<>% #add trend column
             apply(
-              X = tab3.state.avg.current.vs.previous.school.year[,2:ncol(tab3.state.avg.current.vs.previous.school.year)], 
+              X = buildings.over.time.state.avg.current.vs.previous.school.year[,2:ncol(buildings.over.time.state.avg.current.vs.previous.school.year)], 
               MARGIN = 2, 
               FUN = as.numeric
             ) %>%
             cbind(
-              tab3.state.avg.current.vs.previous.school.year[,1],
+              buildings.over.time.state.avg.current.vs.previous.school.year[,1],
               .
             ) %>%
             ReplaceNames(., "Var.1", "")
           
-          tab3.state.avg.current.vs.previous.school.year[1,1] <- "Prev. School Year"
+          buildings.over.time.state.avg.current.vs.previous.school.year[1,1] <- "Prev. School Year"
           
         #Current vs. baseline
-          tab3.state.avg.current.vs.baseline <- 
+          buildings.over.time.state.avg.current.vs.baseline <- 
             resp.full.split.tb %>% 
             filter(
               is.baseline.or.current == 1
@@ -992,19 +1053,19 @@
             ) %>%
             TransposeTable(., keep.first.colname = FALSE)
           
-          tab3.state.avg.current.vs.baseline %<>%
+          buildings.over.time.state.avg.current.vs.baseline %<>%
             apply(
-              X = tab3.state.avg.current.vs.baseline[,2:ncol(tab3.state.avg.current.vs.baseline)], 
+              X = buildings.over.time.state.avg.current.vs.baseline[,2:ncol(buildings.over.time.state.avg.current.vs.baseline)], 
               MARGIN = 2, 
               FUN = as.numeric
             ) %>%
             cbind(
-              tab3.state.avg.current.vs.baseline[,1],
+              buildings.over.time.state.avg.current.vs.baseline[,1],
               .
             ) %>%
             ReplaceNames(., "Var.1", "") 
           
-          tab3.state.avg.current.vs.baseline[1,1] <- "Baseline"
+          buildings.over.time.state.avg.current.vs.baseline[1,1] <- "Baseline"
         
         } #end of if statement to execute code only if not an overview report.
         
@@ -1045,7 +1106,7 @@
       #Tabs 1 & 2 ----
        
         #Loop Inputs
-          config.tables.tab12.input.tb <- 
+          config.tables.overviews.input.tb <- 
             config.tables.ls[[c]] %>% 
             filter(!is.na(table.type.id)) %>%
             filter(grepl("1|2", tab.type.id)) %>%
@@ -1053,19 +1114,19 @@
             OrderDfByVar(., order.by.varname = "tab.type.id", rev = FALSE) %>%
             as_tibble()
           
-          tables.tab12.ls <- list()
+          tables.overviews.ls <- list()
         
         #d <- 1
-        for(d in 1:nrow(config.tables.tab12.input.tb)){ ### START OF LOOP "d" BY TABLE ###
+        for(d in 1:nrow(config.tables.overviews.input.tb)){ ### START OF LOOP "d" BY TABLE ###
           
           #Loop timing
             #tic("Tabs 1 & 2 loop iteration:", d)
           
           #Print loop messages
-            print(paste("TABS 1 & 2 LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.tab12.input.tb), sep = ""))
+            print(paste("TABS 1 & 2 LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.overviews.input.tb), sep = ""))
           
           #Define table configs for loop
-            config.tables.tb.d <- config.tables.tab12.input.tb[d,]
+            config.tables.tb.d <- config.tables.overviews.input.tb[d,]
           
           #CREATE TABLE
             if(config.tables.tb.d$tab.type.id == 1){
@@ -1138,8 +1199,8 @@
           
             if(config.tables.tb.d$tab.type.id == 2){
               table.d <- 
-                tables.tab12.ls[
-                  tables.tab12.ls %>%
+                tables.overviews.ls[
+                  tables.overviews.ls %>%
                   lapply(
                     .,
                     function(x){
@@ -1162,10 +1223,10 @@
             }
   
           #Table Storage
-            table.d.storage.index <- length(tables.tab12.ls) %>% add(1)
-            tables.tab12.ls[[table.d.storage.index]] <- list()
-            tables.tab12.ls[[table.d.storage.index]]$configs <- config.tables.tb.d
-            tables.tab12.ls[[table.d.storage.index]]$table <- table.d
+            table.d.storage.index <- length(tables.overviews.ls) %>% add(1)
+            tables.overviews.ls[[table.d.storage.index]] <- list()
+            tables.overviews.ls[[table.d.storage.index]]$configs <- config.tables.tb.d
+            tables.overviews.ls[[table.d.storage.index]]$table <- table.d
           
           #tic.log(format = TRUE)
           #toc(log = TRUE, quiet = TRUE)
@@ -1173,11 +1234,11 @@
         } ### END OF LOOP "d" BY TABLE ###
         
         #Finalizing loop outputs  
-          names(tables.tab12.ls) <- 
+          names(tables.overviews.ls) <- 
             paste(
-              rep(unit.id.c, length(tables.tab12.ls)),
+              rep(unit.id.c, length(tables.overviews.ls)),
               ".",
-              c(1:length(tables.tab12.ls)),
+              c(1:length(tables.overviews.ls)),
               ".",
               config.tables.tb.d$table.type.name, 
               sep = ""
@@ -1195,23 +1256,23 @@
             print("Tab 3 calculations begun...")
             
           #Loop Inputs
-            config.tab3.tb <-   
+            config.buildings.over.time.tb <-   
               config.tables.ls[[c]] %>% 
               filter(!is.na(table.type.id)) %>%
               filter(grepl("3", tab.type.id)) %>%
               OrderDfByVar(., order.by.varname = "table.type.id", rev = FALSE)
             
-            tables.tab3.ls <- list()
+            tables.buildings.over.time.ls <- list()
           
           #State Average Table - Last School Year vs. Current
-            tables.tab3.ls[[1]] <- list()
-            tables.tab3.ls[[1]]$configs <- config.tab3.tb[1,]
-            tables.tab3.ls[[1]]$table <- tab3.state.avg.current.vs.previous.school.year  
+            tables.buildings.over.time.ls[[1]] <- list()
+            tables.buildings.over.time.ls[[1]]$configs <- config.buildings.over.time.tb[1,]
+            tables.buildings.over.time.ls[[1]]$table <- buildings.over.time.state.avg.current.vs.previous.school.year  
           
           #Building Average Table - Last School year vs. Current  
-            tables.tab3.ls[[2]] <- list()
-            tables.tab3.ls[[2]]$configs <- config.tab3.tb[2,]
-            tab3.bldg.current.vs.previous.school.year <- 
+            tables.buildings.over.time.ls[[2]] <- list()
+            tables.buildings.over.time.ls[[2]]$configs <- config.buildings.over.time.tb[2,]
+            buildings.over.time.bldg.current.vs.previous.school.year <- 
               resp.sample.split.tb %>% 
               filter(
                 unit.id == unit.id.c & 
@@ -1231,26 +1292,26 @@
                 value.var = "value"
               )
   
-            if(nrow(tab3.bldg.current.vs.previous.school.year) < 1){
-              tab3.bldg.current.vs.previous.school.year <- "" 
+            if(nrow(buildings.over.time.bldg.current.vs.previous.school.year) < 1){
+              buildings.over.time.bldg.current.vs.previous.school.year <- "" 
             }else{
               
-              if(ncol(tab3.bldg.current.vs.previous.school.year) < 4){ # if missing previous school year data, add 4th column with NAs
-                tab3.bldg.current.vs.previous.school.year %<>%
+              if(ncol(buildings.over.time.bldg.current.vs.previous.school.year) < 4){ # if missing previous school year data, add 4th column with NAs
+                buildings.over.time.bldg.current.vs.previous.school.year %<>%
                   mutate(
                     `Prev. School Year` = NA,
                     Trend = NA
                   )
               }
               
-              if(ncol(tab3.bldg.current.vs.previous.school.year) == 4){ # add trend column
-                tab3.bldg.current.vs.previous.school.year %<>%
+              if(ncol(buildings.over.time.bldg.current.vs.previous.school.year) == 4){ # add trend column
+                buildings.over.time.bldg.current.vs.previous.school.year %<>%
                   mutate(
                     Trend = .[,4] - .[,3]
                   )
               }
               
-              tab3.bldg.current.vs.previous.school.year %<>% # transpose table
+              buildings.over.time.bldg.current.vs.previous.school.year %<>% # transpose table
                 melt(
                   ., 
                   id.vars = c("building.name","domain")
@@ -1260,22 +1321,22 @@
                   formula = building.name + variable ~ domain
                 )
               
-              tab3.bldg.current.vs.previous.school.year$variable <-
+              buildings.over.time.bldg.current.vs.previous.school.year$variable <-
                 c("Prev. School Year", current.school.year, "Trend")
             }
             
-            tables.tab3.ls[[2]]$table <- tab3.bldg.current.vs.previous.school.year
+            tables.buildings.over.time.ls[[2]]$table <- buildings.over.time.bldg.current.vs.previous.school.year
     
           #State Average Table - Baseline vs. Current
-            tables.tab3.ls[[3]] <- list()
-            tables.tab3.ls[[3]]$configs <- config.tab3.tb[3,]
-            tables.tab3.ls[[3]]$table <- tab3.state.avg.current.vs.baseline
+            tables.buildings.over.time.ls[[3]] <- list()
+            tables.buildings.over.time.ls[[3]]$configs <- config.buildings.over.time.tb[3,]
+            tables.buildings.over.time.ls[[3]]$table <- buildings.over.time.state.avg.current.vs.baseline
               
             
           #Building Average Table - Baseline year vs. Current  
-            tables.tab3.ls[[4]] <- list()
-            tables.tab3.ls[[4]]$configs <- config.tab3.tb[4,]
-            tab3.bldg.current.vs.baseline <- 
+            tables.buildings.over.time.ls[[4]] <- list()
+            tables.buildings.over.time.ls[[4]]$configs <- config.buildings.over.time.tb[4,]
+            buildings.over.time.bldg.current.vs.baseline <- 
               resp.sample.split.tb %>% 
               filter(
                 unit.id == unit.id.c & 
@@ -1295,22 +1356,22 @@
                 value.var = "value"
               )
             
-            if(ncol(tab3.bldg.current.vs.baseline) < 4){
-              tab3.bldg.current.vs.baseline %<>%
+            if(ncol(buildings.over.time.bldg.current.vs.baseline) < 4){
+              buildings.over.time.bldg.current.vs.baseline %<>%
                 mutate(
                   `Prev. School Year` = NA,
                   Trend = NA
                 )
             }
             
-            if(ncol(tab3.bldg.current.vs.baseline) == 4){
-              tab3.bldg.current.vs.baseline %<>%
+            if(ncol(buildings.over.time.bldg.current.vs.baseline) == 4){
+              buildings.over.time.bldg.current.vs.baseline %<>%
                 mutate(
                   Trend = .[,4] - .[,3]
                 )
             }
             
-            tab3.bldg.current.vs.baseline %<>%
+            buildings.over.time.bldg.current.vs.baseline %<>%
               melt(
                 ., 
                 id.vars = c("building.name","domain")
@@ -1320,35 +1381,35 @@
                 formula = building.name + variable ~ domain
               )
             
-            tab3.bldg.current.vs.baseline$variable %<>%
+            buildings.over.time.bldg.current.vs.baseline$variable %<>%
               as.character %>%
               gsub("0000", "Baseline", .)
             
-            tables.tab3.ls[[4]]$table <- tab3.bldg.current.vs.baseline
-        } #end of if statement for producing tab 4 tables only if not a district overview report
+            tables.buildings.over.time.ls[[4]]$table <- buildings.over.time.bldg.current.vs.baseline
+        } #end of if statement for producing building summary tables only if not a district overview report
       
-      #Tab 4+ (Building Summaries) ----
+      #Building Summary Tabs ----
         
         if(!is.overview){  
           #Loop timing
-            #tic("Tab 4 duration:")  
+            #tic("Building Summary Tabs Duration:")  
             
           #Loop Inputs
-            config.tables.tab4.input.tb <- 
+            config.tables.building.summaries.input.tb <- 
               config.tables.ls[[c]] %>% 
               filter(!is.na(table.type.id)) %>%
               filter(tab.type.id %in% c(4)) %>%
               filter(!is.na(loop.id))
-            tables.tab4.ls <- list()
+            tables.building.summaries.ls <- list()
             
           #e <- 1
-          for(e in 1:nrow(config.tables.tab4.input.tb)){ ### START OF LOOP "e" BY TABLE ###
+          for(e in 1:nrow(config.tables.building.summaries.input.tb)){ ### START OF LOOP "e" BY TABLE ###
               
               #Print loop messages
-                print(paste("TAB 4 LOOP - Loop #: ", e, " - Pct. Complete: ", 100*e/nrow(config.tables.tab4.input.tb), sep = ""))
+                print(paste("BUILDING SUMMARY LOOP - Loop #: ", e, " - Pct. Complete: ", 100*e/nrow(config.tables.building.summaries.input.tb), sep = ""))
               
               #Define Configs for this loop
-                config.tables.tb.e <- config.tables.tab4.input.tb[e,]
+                config.tables.tb.e <- config.tables.building.summaries.input.tb[e,]
               
               #Define table aggregation formula
                 table.formula.e <-
@@ -1428,26 +1489,26 @@
                 
               #Table storage
                 #if(table.e == ""){print(e)}
-                tables.tab4.ls[[e]] <- list()
-                tables.tab4.ls[[e]]$configs <- config.tables.tb.e
-                tables.tab4.ls[[e]]$table <- table.e
+                tables.building.summaries.ls[[e]] <- list()
+                tables.building.summaries.ls[[e]]$configs <- config.tables.tb.e
+                tables.building.summaries.ls[[e]]$table <- table.e
               
             } ### END OF LOOP "e" BY TABLE ###
         
-        } #end of if statement for producing tab 4 tables only if not a district overview report
+        } #end of if statement for producing building summary tables only if not a district overview report
           
       #Assemble final outputs for district ----  
 
         tables.ls[[c]] <- 
             c(
-              tables.tab12.state.ls, 
-              tables.tab12.ls, 
-              if(exists("tables.tab3.ls")){tables.tab3.ls}else{},
-              if(exists("tables.tab4.ls")){tables.tab4.ls}else{}
+              tables.overviews.state.ls, 
+              tables.overviews.ls, 
+              if(exists("tables.buildings.over.time.ls")){tables.buildings.over.time.ls}else{},
+              if(exists("tables.building.summaries.ls")){tables.building.summaries.ls}else{}
             )
           
-        if(!is.overview & !exists("tables.tab3.ls")){stop("Missing 'tables.tab3.ls'.")}
-        if(!is.overview & !exists("tables.tab4.ls")){stop("Missing 'tables.tab4.ls'.")}  
+        if(!is.overview & !exists("tables.buildings.over.time.ls")){stop("Missing 'tables.buildings.over.time.ls'.")}
+        if(!is.overview & !exists("tables.building.summaries.ls")){stop("Missing 'tables.building.summaries.ls'.")}  
 
       toc(log = TRUE, quiet = TRUE)  
     } ### END OF LOOP "c" BY REPORT UNIT     
