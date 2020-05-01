@@ -559,16 +559,6 @@
               sample.group.unit = "unit.id",
               sample.size = sample.size
             ) #%>% filter(filter.combined)
-            
-          
-          resp.sample.split.tb <- 
-            RestrictDataToSample(
-              tb = resp.full.split.tb,
-              report.unit = "unit.id",
-              sample.print = sample.print,
-              sample.group.unit = "unit.id",
-              sample.size = sample.size
-            ) #%>% filter(filter.combined)
           
           is.valid.sample <- 
             ifelse(
@@ -592,6 +582,10 @@
           select(unit.id) %>%
           unique %>%
           unlist %>% as.vector
+        
+        resp.sample.split.tb <- 
+          resp.full.split.tb %>%
+          filter(unit.id %in% unit.ids.sample)
         
       }
       
@@ -713,7 +707,7 @@
         
         building.names.tb <- 
           tibble(
-            tab.type.id = 4,
+            tab.type.name = "Building Summary",
             loop.id = building.names
           )
       
@@ -721,12 +715,11 @@
       
       config.tabs.ls[[b]] <-
         tibble(
-          tab.type.id = 5,
           tab.type.name = "Building Summary",
           loop.id = building.names 
         ) %>%
         rbind(
-          config.tab.types.tb %>% select(tab.type.id, tab.type.name) %>% mutate(loop.id = NA) %>% filter(tab.type.id != 5),
+          config.tab.types.tb %>% select(tab.type.name) %>% mutate(loop.id = NA) %>% filter(tab.type.name != "Building Summary"),
           .
         ) %>%
         mutate(
@@ -747,7 +740,7 @@
         full_join(
           config.tabs.ls[[b]],
           config.table.types.tb,
-          by = "tab.type.id"
+          by = "tab.type.name"
         ) %>%
         mutate(
           is.state.table = !grepl("unit.id", filter.varname),
@@ -760,12 +753,12 @@
         full_join(
           config.text.types.tb,
           building.names.tb,
-          by = "tab.type.id"
+          by = "tab.type.name"
         ) %>% 
         full_join(
           .,
           config.tabs.ls[[b]],
-          by = c("tab.type.id","loop.id")
+          by = c("tab.type.name","loop.id")
         ) %>%
         mutate(text.value = district.name) %>%
         mutate(
@@ -804,10 +797,10 @@
       #Loop Inputs
         config.tables.overviews.input.tb <- 
           config.tables.ls[[1]] %>% 
-          filter(!is.na(table.type.id)) %>%
+          filter(!is.na(table.type.name)) %>%
           filter(grepl("Overview", tab.type.name)) %>%
           filter(is.state.table) %>%
-          OrderDfByVar(., order.by.varname = "tab.type.id", rev = FALSE) %>%
+          #OrderDfByVar(., order.by.varname = "tab.section.1", rev = FALSE) %>%
           as_tibble()
         
         tables.overviews.state.ls <- list()
@@ -1102,15 +1095,15 @@
           
           #district.overview <- 
       
-      #Tabs 1 & 2 ----
+      #Overview Tabs ----
        
         #Loop Inputs
           config.tables.overviews.input.tb <- 
             config.tables.ls[[c]] %>% 
             filter(!is.na(table.type.id)) %>%
-            filter(grepl("1|2", tab.type.id)) %>%
+            filter(grepl("District Overview", tab.type.name)) %>%
             filter(!is.state.table) %>%
-            OrderDfByVar(., order.by.varname = "tab.type.id", rev = FALSE) %>%
+            #OrderDfByVar(., order.by.varname = "tab.type.id", rev = FALSE) %>%
             as_tibble()
           
           tables.overviews.ls <- list()
@@ -1122,13 +1115,13 @@
             #tic("Tabs 1 & 2 loop iteration:", d)
           
           #Print loop messages
-            print(paste("TABS 1 & 2 LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.overviews.input.tb), sep = ""))
+            print(paste("OVERVIEW TABS LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.overviews.input.tb), sep = ""))
           
           #Define table configs for loop
             config.tables.tb.d <- config.tables.overviews.input.tb[d,]
           
           #CREATE TABLE
-            if(config.tables.tb.d$tab.type.id == 1){
+            if(config.tables.tb.d$tab.type.name == "District Overview (vs district)"){
               
               #Define table aggregation formula
                 table.formula.d <-
@@ -1196,7 +1189,7 @@
                 }
             }
           
-            if(config.tables.tb.d$tab.type.id == 2){
+            if(config.tables.tb.d$tab.type.name == "District Overview (vs state)"){
               table.d <- 
                 tables.overviews.ls[
                   tables.overviews.ls %>%
@@ -1204,9 +1197,9 @@
                     .,
                     function(x){
                       (
-                        x$configs$tab.type.id %>%
+                        x$configs$tab.type.name %>%
                           unlist %>% as.vector %>%
-                          equals(1)
+                          equals(2)
                       ) &
                         (
                           x$configs$table.type.id %>%
@@ -1247,19 +1240,19 @@
             SubRepeatedCharWithSingleChar(., ".") %>%
             tolower
         
-      #Tab 3 ----
+      #Buildings Over Time ----
         
         if(!is.overview){
           
           #Print status
-            print("Tab 3 calculations begun...")
+            print("Buildings Over Time calculations begun...")
             
           #Loop Inputs
             config.buildings.over.time.tb <-   
               config.tables.ls[[c]] %>% 
-              filter(!is.na(table.type.id)) %>%
-              filter(grepl("3", tab.type.id)) %>%
-              OrderDfByVar(., order.by.varname = "table.type.id", rev = FALSE)
+              filter(!is.na(table.type.name)) %>%
+              filter(grepl("vs state", tab.type.name)) #%>%
+              #OrderDfByVar(., order.by.varname = "table.type.id", rev = FALSE)
             
             tables.buildings.over.time.ls <- list()
           
@@ -1396,8 +1389,8 @@
           #Loop Inputs
             config.tables.building.summaries.input.tb <- 
               config.tables.ls[[c]] %>% 
-              filter(!is.na(table.type.id)) %>%
-              filter(tab.type.id %in% c(4)) %>%
+              filter(!is.na(table.type.name)) %>%
+              filter(tab.type.name == "Building Summary") %>%
               filter(!is.na(loop.id))
             tables.building.summaries.ls <- list()
             
@@ -1585,7 +1578,7 @@
                 lapply(., `[[`, 1) %>% 
                 do.call(rbind, .) %>%
                 mutate(
-                  is.overview.table = ifelse(tab.type.id %in% c(1,2), TRUE, FALSE),
+                  is.overview.table = ifelse(grepl("Overview", tab.type.name), TRUE, FALSE),
                   config.id = 1:nrow(.)
                 )
               
@@ -1645,7 +1638,7 @@
             
             #Define source table to print text items (filter if just printing District Overviews)
             if(is.overview){
-              config.text.h <- district.text.list %>% filter(tab.type.id %in% c(1,2))
+              config.text.h <- district.text.list %>% filter(grepl("Overview", tab.type.id))
             }else{
               config.text.h <- district.text.list
             }
