@@ -49,6 +49,7 @@
       
     setwd(rproj.dir)
     source("utils_wnf.r")
+    source("2016-09 EXT Missouri_CWIS-automation functions.r")
     
   # LOAD LIBRARIES/PACKAGES
     
@@ -1555,115 +1556,7 @@
     }
   
   #EXPORT TO EXCEL REPORTS - LOOP 'h' BY REPORT UNIT ----
-      #Remove all objects except those needed to print (patch on memory errors)
-        #rm(
-        #  list = 
-        #    setdiff(
-        #      ls(), 
-        #      c("sections.all.starttime","RemoveNA","unit.ids.sample", "tables.ls","config.text.ls","source.tables.dir","outputs.dir","sample.print")
-        #    )
-        #)
-      
-      #Define function to write workbooks inside of loop h
-        WriteDistrictWorkbook <- 
-          function(
-            district.tables.list,
-            district.text.list,
-            district.file.name
-          ){
-            
-            #Define config tables for district
-              config.tables.h <- 
-                district.tables.list %>% 
-                lapply(., `[[`, 1) %>% 
-                do.call(rbind, .) %>%
-                mutate(
-                  is.overview.table = ifelse(grepl("Overview", tab.type.name), TRUE, FALSE),
-                  config.id = 1:nrow(.)
-                )
-              
-              if(is.overview){config.tables.h <- config.tables.h %>% filter(is.overview.table)} #filter out tables not in tabs 1 & 2 if printing district overview
-            
-            #Define tables list for district
-              if(is.overview){
-                district.tables.list %<>% .[config.tables.h$config.id[config.tables.h$is.overview.table == TRUE]]
-              }
-              
-            wb <- loadWorkbook(file.name.h, create = FALSE)
-            setStyleAction(wb, XLC$"STYLE_ACTION.NONE")
-            
-            building.names.for.district <- config.tables.h %>% select(loop.id) %>% unlist %>% unique %>% RemoveNA
-            
-            #i <- 1 #LOOP TESTER
-            for(i in 1:length(district.tables.list)){  
-              
-              #Loop inputs
-                if(
-                  (district.tables.list[[i]]$table %>% dim %>% length %>% equals(1)) && (district.tables.list[[i]]$table %>% equals(""))
-                ){
-                  table.i <- ""
-                }else{
-                  table.i <- district.tables.list[[i]]$table
-                }
-                configs.i <- district.tables.list[[i]]$configs
-                
-                #if(configs.i$tab.type.id == 4){ #customize tab name if need be for building summaries
-                #  building.num <- configs.i$loop.id %>% unique %>% equals(building.names.for.district) %>% which
-                #  
-                #  configs.i$tab.name <- 
-                #    getSheets(wb) %>% 
-                #    .[grepl("Building Summary", .)] %>% 
-                #    .[building.num]
-                #}
-                
-              #Print loop messages
-                #print(paste("Loop i #: ", i, " - Table: ", configs.i$table.type.name, sep = ""))
-              
-              #Write Worksheets
-                writeWorksheet(
-                  object = wb, 
-                  data = table.i,
-                  sheet = configs.i$tab.name,
-                  startRow = configs.i$startrow,
-                  startCol = configs.i$startcol,
-                  header = configs.i$header,
-                  rownames = configs.i$row.header
-                )
-              
-            } # END OF LOOP 'i' BY TABLE
-            
-            ###                           ###
-            ###   LOOP "m" BY TEXT ITEM   ###
-            ###                           ###
-            
-            #Define source table to print text items (filter if just printing District Overviews)
-            if(is.overview){
-              config.text.h <- district.text.list %>% filter(grepl("Overview", tab.type.id))
-            }else{
-              config.text.h <- district.text.list
-            }
-            
-            #m = 2 #LOOP TESTER
-            for(m in 1:nrow(config.text.h)){
-              #print(paste("Loop m #:", m, " - Pct. Complete: ", 100*m/nrow(config.text.h), sep = ""))
-              
-              #Write tables to building worksheet
-                writeWorksheet(
-                  object = wb,
-                  data = config.text.h$text.value[m],
-                  sheet = config.text.h$tab.name[m],
-                  startRow = config.text.h$row.num[m],
-                  startCol = config.text.h$col.num[m],
-                  header = FALSE,
-                  rownames = FALSE
-                )
-              
-            } #END OF LOOP 'm' BY TEXT ITEM
-            
-            saveWorkbook(wb)
-            print(paste("WORKBOOK SAVED. File: ", file.name.h, " - Pct. complete: ", 100*h/length(unit.ids.sample), sep = ""))
-          }  
-      
+
     ###                          ###    
   # ### LOOP "h" BY REPORT UNIT  ###
     ###                          ###
@@ -1736,7 +1629,7 @@
       #Write Workbook
         setwd(outputs.dir)
         
-        WriteDistrictWorkbook(
+        WriteReportWorkbook(
           district.tables.list = tables.ls[[h]] ,
           district.text.list = config.text.ls[[h]],
           district.file.name = file.name.h
