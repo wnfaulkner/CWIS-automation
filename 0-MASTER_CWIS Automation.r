@@ -228,7 +228,7 @@
           SubRepeatedCharWithSingleChar(., ".")
       )
     
-  #RESPONSES TABLE  ----
+  #RESPONSE TABLE  ----
     #Lower-case all character variable data
       resp2.tb <- LowerCaseCharVars(resp1.tb)  
       
@@ -319,7 +319,7 @@
         
       #Building Restrictions
         if(dashboard.or.overview == "dashboard"){
-          buildings.to.keep <- #Filter out building-periods with less than 6 responses
+          buildings.to.keep <- 
             resp3.tb %>%
             dcast(., building.id ~ year, value.var = "resp.id", fun.aggregate = length) %>%
             mutate(
@@ -1583,8 +1583,8 @@
       progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
       maxrow.h <- tables.ls %>% lengths %>% sum
       
-    h <- 1 #LOOP TESTER
-    #for(h in 1:length(unit.ids.sample)){ 
+    #h <- 1 #LOOP TESTER
+    for(h in 1:length(unit.ids.sample)){ 
       
       unit.id.h <- unit.ids.sample[h]  
                     

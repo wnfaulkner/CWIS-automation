@@ -896,7 +896,7 @@ source("utils_wnf.r")
           #Print loop messages
             #print(paste("Loop i #: ", i, " - Table: ", configs.i$table.type.name, sep = ""))
             if(i == 1){print("Table loop started.")}
-            print(paste("i = ", i, sep =))
+            #print(paste("i = ", i, sep =))
           
         #Write Worksheets
           writeWorksheet(
@@ -916,27 +916,27 @@ source("utils_wnf.r")
         ###                           ###
         
         #Define source table to print text items (filter if just printing District Overviews)
-        if(is.overview){
-          config.text.h <- district.text.list %>% filter(grepl("Overview", tab.type.id))
-        }else{
-          config.text.h <- district.text.list
-        }
+          if(is.overview){
+            config.text.h <- district.text.list %>% filter(grepl("Overview", tab.type.id))
+          }else{
+            config.text.h <- district.text.list
+          }
         
-        #m = 2 #LOOP TESTER
-        for(m in 1:nrow(config.text.h)){
-          print(paste("Loop m #:", m, " - Pct. Complete: ", 100*m/nrow(config.text.h), sep = ""))
-          
-          #Write tables to building worksheet
-          writeWorksheet(
-            object = wb,
-            data = config.text.h$text.value[m],
-            sheet = config.text.h$tab.name[m],
-            startRow = config.text.h$row.num[m],
-            startCol = config.text.h$col.num[m],
-            header = FALSE,
-            rownames = FALSE
-          )
-          
+          #m = 2 #LOOP TESTER
+          for(m in 1:nrow(config.text.h)){
+            print(paste("Loop m #:", m, " - Pct. Complete: ", 100*m/nrow(config.text.h), sep = ""))
+            
+            #Write tables to building worksheet
+              writeWorksheet(
+                object = wb,
+                data = config.text.h$text.value[m],
+                sheet = config.text.h$tab.name[m],
+                startRow = config.text.h$row.num[m],
+                startCol = config.text.h$col.num[m],
+                header = FALSE,
+                rownames = FALSE
+              )
+            
         } #END OF LOOP 'm' BY TEXT ITEM
         
         saveWorkbook(wb)
