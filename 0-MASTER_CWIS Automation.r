@@ -82,8 +82,7 @@
     
   #Source Import Functions
     setwd(rproj.dir)
-    source("1-import_functions.r")
-  
+
   #Import Config Tables
     configs.ss <- gs_key("1Bbs7ITPpCjB73ZEp2PLJuWyEAvG0X7XEMMR6wTUb-PM", verbose = TRUE) 
     
@@ -219,8 +218,7 @@
   #Source Cleaning Functions
     cleaning.source.dir <- paste(rproj.dir,"2-Cleaning/", sep = "")
     setwd(rproj.dir)
-    source("2-cleaning_functions.r")
-  
+
   #BUILDINGS CONFIG TABLE ----
     buildings.tb %<>%
       LowerCaseCharVars(.) %>%
@@ -650,8 +648,7 @@
           
   #Load Configs Functions
     setwd(rproj.dir)
-    source("3-configs_functions.r")
-   
+
   #EXPAND CONFIG TABLES FOR EACH unit.id ACCORDING TO LOOPING VARIABLES
   
   ###                          ###
@@ -789,8 +786,7 @@
         
   #Load Configs Functions
     setwd(rproj.dir)
-    source("4-source data tables functions.r")
-    
+
   #STATE AVERAGE TABLES ----
     
     #Overview Tabs State Averages ----
@@ -1062,7 +1058,7 @@
         
         } #end of if statement to execute code only if not an overview report.
         
-  #DISTRICT/BUILDINGtables TABLES ----  
+  #DISTRICT/BUILDING TABLES ----  
         
   ###                          ###    
   ### LOOP "c" BY REPORT UNIT  ###
@@ -1079,7 +1075,7 @@
     #Building Level Order
       building.level.order.v <- c("Elem.","High","Middle","Technology Ctr.","Other")
         
-    #c <- 20 #LOOP TESTER 
+    #c <- 1 #LOOP TESTER 
     for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY unit.id
       #Loop Prep----
         #Loop timing
@@ -1107,22 +1103,23 @@
             #OrderDfByVar(., order.by.varname = "tab.type.id", rev = FALSE) %>%
             as_tibble()
           
-          tables.overviews.ls <- list()
+          tables.overview.district.ls <- list()
+          max.d <- config.tables.overviews.input.tb %>% filter(tab.name == "District Overview (vs district)") %>% nrow
         
-        #d <- 1
-        for(d in 1:nrow(config.tables.overviews.input.tb)){ ### START OF LOOP "d" BY TABLE ###
+        #d <- 29
+        for(d in 1:max.d){ ### START OF LOOP "d" BY TABLE ###
           
           #Loop timing
             #tic("Tabs 1 & 2 loop iteration:", d)
           
           #Print loop messages
-            print(paste("OVERVIEW TABS LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/nrow(config.tables.overviews.input.tb), sep = ""))
+            print(paste("OVERVIEW TABS LOOP - Loop #: ", d, " - Pct. Complete: ", 100*d/max.d, sep = ""))
           
           #Define table configs for loop
             config.tables.tb.d <- config.tables.overviews.input.tb[d,]
           
           #CREATE TABLE
-            if(config.tables.tb.d$tab.type.name == "District Overview (vs district)"){
+            #if(config.tables.tb.d$tab.type.name == "District Overview (vs district)"){
               
               #Define table aggregation formula
                 table.formula.d <-
@@ -1188,73 +1185,93 @@
                       table.d <- table.d %>% select(names(table.d)[-1])
                     }
                 }
-            }
+            #}
           
-            if(config.tables.tb.d$tab.type.name == "District Overview (vs state)"){
-              table.d <- 
-                tables.overviews.ls[
-                  tables.overviews.ls %>%
-                  lapply(
-                    .,
-                    function(x){
-                      (
-                        x$configs$tab.type.name %>%
-                          unlist %>% as.vector %>%
-                          equals(2)
-                      ) &
-                        (
-                          x$configs$table.type.id %>%
-                            unlist %>% as.vector() %>%
-                            equals(config.tables.tb.d$table.type.id)
-                        )
-                    }
-                  ) %>%
-                  unlist %>% as.vector
-                ] %>%
-                .[[1]] %>% 
-                .[["table"]]
-            }
+            #if(config.tables.tb.d$tab.type.name == "District Overview (vs state)"){
+            #  table.d <- 
+            #    tables.overview.district.ls[
+            #      tables.overview.district.ls %>%
+            #      lapply(
+            #        .,
+            #        function(x){
+            #          #(
+            #          #  x$configs$tab.type.name %>%
+            #          #    unlist %>% as.vector %>%
+            #          #    equals("District Overview (vs state)")
+            #          #) &
+            #            (
+            #              x$configs$table.type.id %>%
+            #                unlist %>% as.vector() %>%
+            #                equals(config.tables.tb.d$table.type.id)
+            #            )
+            #        }
+            #      ) %>%
+            #      unlist %>% as.vector
+            #    ] %>%
+            #    .[[1]] %>% 
+            #    .[["table"]]
+            #}
   
           #Table Storage
-            table.d.storage.index <- length(tables.overviews.ls) %>% add(1)
-            tables.overviews.ls[[table.d.storage.index]] <- list()
-            tables.overviews.ls[[table.d.storage.index]]$configs <- config.tables.tb.d
-            tables.overviews.ls[[table.d.storage.index]]$table <- table.d
+            table.d.storage.index <- length(tables.overview.district.ls) %>% add(1)
+            tables.overview.district.ls[[table.d.storage.index]] <- list()
+            tables.overview.district.ls[[table.d.storage.index]]$configs <- config.tables.tb.d
+            tables.overview.district.ls[[table.d.storage.index]]$table <- table.d
           
           #tic.log(format = TRUE)
           #toc(log = TRUE, quiet = TRUE)
           
         } ### END OF LOOP "d" BY TABLE ###
         
-        #Finalizing loop outputs  
-          names(tables.overviews.ls) <- 
-            paste(
-              rep(unit.id.c, length(tables.overviews.ls)),
-              ".",
-              c(1:length(tables.overviews.ls)),
-              ".",
-              config.tables.tb.d$table.type.name, 
-              sep = ""
-            ) %>%
-            gsub("-", " ", .) %>%
-            gsub(" ", ".", .) %>%
-            SubRepeatedCharWithSingleChar(., ".") %>%
-            tolower
+        #Finalizing loop output list
+          
+          #Create near copy of list made for 'District Overview (vs district)' but change tab.type.name to be "District Overview (vs state)"
+            tables.overview.state.ls <-
+              tables.overview.district.ls %>%
+              lapply(
+                ., 
+                function(x){
+                  x$configs$tab.type.name <- "District Overview (vs state)"
+                  x$configs$tab.name <- "District Overview (vs state)"
+                  return(x)
+                }
+              )
+          
+          #Stack lists together
+            tables.overview.ls <- 
+              c(
+                tables.overview.district.ls,
+                tables.overview.state.ls
+              )
+          
+          #Finalize names
+            names(tables.overview.ls) <- 
+              paste(
+                rep(unit.id.c, length(tables.overview.ls)),
+                ".",
+                c(1:length(tables.overview.ls)),
+                ".",
+                config.tables.tb.d$table.type.name, 
+                sep = ""
+              ) %>%
+              gsub("-", " ", .) %>%
+              gsub(" ", ".", .) %>%
+              SubRepeatedCharWithSingleChar(., ".") %>%
+              tolower
         
       #Buildings Over Time ----
         
         if(!is.overview){
           
           #Print status
-            print("Buildings Over Time calculations begun...")
+            #print("Buildings Over Time calculations begun...")
             
           #Loop Inputs
             config.buildings.over.time.tb <-   
               config.tables.ls[[c]] %>% 
               filter(!is.na(table.type.name)) %>%
-              filter(grepl("vs state", tab.type.name)) #%>%
-              #OrderDfByVar(., order.by.varname = "table.type.id", rev = FALSE)
-            
+              filter(grepl("Over Time", tab.type.name))
+
             tables.buildings.over.time.ls <- list()
           
           #State Average Table - Last School Year vs. Current
@@ -1495,7 +1512,7 @@
         tables.ls[[c]] <- 
             c(
               tables.overviews.state.ls, 
-              tables.overviews.ls, 
+              tables.overview.ls, 
               if(exists("tables.buildings.over.time.ls")){tables.buildings.over.time.ls}else{},
               if(exists("tables.building.summaries.ls")){tables.building.summaries.ls}else{}
             )
@@ -1518,8 +1535,7 @@
       
     #Load Configs Functions
       setwd(rproj.dir)
-      #source("6-powerpoints export functions.r")
-      
+
     #Create Outputs Directory
       if(sample.print){
         outputs.dir <- 
@@ -1567,8 +1583,8 @@
       progress.bar.h <- txtProgressBar(min = 0, max = 100, style = 3)
       maxrow.h <- tables.ls %>% lengths %>% sum
       
-    #h <- 1 #LOOP TESTER
-    for(h in 1:length(unit.ids.sample)){ 
+    h <- 1 #LOOP TESTER
+    #for(h in 1:length(unit.ids.sample)){ 
       
       unit.id.h <- unit.ids.sample[h]  
                     
@@ -1577,14 +1593,22 @@
           template.file <- 
             paste(
               source.tables.dir,
-              "overview_template.xlsx",
+              MostRecentlyModifiedFilename(
+                title.string.match = "overview_template",
+                file.type = "xlsx",
+                dir = source.tables.dir
+              ),
               sep = ""
             )
         }else{
           template.file <- 
             paste(
               source.tables.dir,
-              "dashboard_template.xlsx",
+              MostRecentlyModifiedFilename(
+                title.string.match = "dashboard_template",
+                file.type = "xlsx",
+                dir = source.tables.dir
+              ),
               sep = ""
             )
         }
@@ -1630,10 +1654,10 @@
         setwd(outputs.dir)
         
         WriteReportWorkbook(
-          district.tables.list = tables.ls[[h]] ,
+          district.tables.list = tables.ls[[h]],
           district.text.list = config.text.ls[[h]],
           district.file.name = file.name.h
-      )
+        )
 
     } # END OF LOOP 'h' BY REPORT UNIT
 
