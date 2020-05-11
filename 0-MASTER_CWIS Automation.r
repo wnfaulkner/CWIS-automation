@@ -1077,6 +1077,7 @@
         
     #c <- 1 #LOOP TESTER 
     for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY unit.id
+      
       #Loop Prep----
         #Loop timing
           tic("REPORT LOOP DURATION",c)
@@ -1092,6 +1093,25 @@
           
           #district.overview <- 
       
+      #CWIS Responses Tab ----
+          
+        tables.cwis.responses.ls <- list(NULL)
+          
+        #Config Input
+          tables.cwis.responses.ls[[1]]$configs <- 
+            config.tables.ls[[c]] %>% 
+            filter(!is.na(table.type.id)) %>%
+            filter(grepl("CWIS Responses", tab.type.name)) %>%
+            filter(!is.state.table) %>%
+            as_tibble()
+          
+        #Unit Response Table
+          tables.cwis.responses.ls[[1]]$table <-
+            resp.sample.nosplit.tb %>%
+            filter(unit.id == unit.id.c) %>%
+            dcast(., formula = building.name ~ year, value.var = "resp.id", fun.aggregate = length) %>%
+            ReplaceNames(., c("building.name","0000"), c("Building", "Baseline"))
+          
       #Overview Tabs ----
        
         #Loop Inputs
@@ -1100,7 +1120,6 @@
             filter(!is.na(table.type.id)) %>%
             filter(grepl("District Overview", tab.type.name)) %>%
             filter(!is.state.table) %>%
-            #OrderDfByVar(., order.by.varname = "tab.type.id", rev = FALSE) %>%
             as_tibble()
           
           tables.overview.district.ls <- list()
@@ -1511,6 +1530,7 @@
 
         tables.ls[[c]] <- 
             c(
+              tables.cwis.responses.ls,
               tables.overviews.state.ls, 
               tables.overview.ls, 
               if(exists("tables.buildings.over.time.ls")){tables.buildings.over.time.ls}else{},
