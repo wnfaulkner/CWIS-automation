@@ -595,7 +595,7 @@
           resp.full.nosplit.tb #%>% filter(filter.combined)
         
         resp.sample.split.tb <- 
-          resp.full.split.tb %>% #filter(filter.combined)
+          resp.full.split.tb #%>% filter(filter.combined)
         
         unit.ids.sample <-
           resp.sample.nosplit.tb %>%
