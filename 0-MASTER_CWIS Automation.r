@@ -614,7 +614,7 @@
             resp.full.nosplit.tb %>%
             select(unit.id) %>%
             unique %>%
-            unlist %>% as.vector %>%
+            UnlistVector %>%
             setdiff(., districts.that.already.have.reports) %>%
             .[1:sample.size] %>%
             RemoveNA
@@ -627,12 +627,10 @@
           
           resp.sample.nosplit.tb <- 
             resp.full.nosplit.tb %>%
-            #filter(filter.combined) %>%
             filter(unit.id %in% unit.ids.sample)
           
           resp.sample.split.tb <- 
             resp.full.split.tb %>%
-            #filter(filter.combined) %>%
             filter(unit.id %in% unit.ids.sample)
         }
       }
@@ -1604,7 +1602,7 @@
       maxrow.h <- tables.ls %>% lengths %>% sum
       
     #h <- 1 #LOOP TESTER
-    for(h in 1:length(unit.ids.sample)){ 
+    for(h in 1:length(tables.ls)){ 
       
       unit.id.h <- unit.ids.sample[h]  
                     

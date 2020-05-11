@@ -940,7 +940,7 @@ source("utils_wnf.r")
         } #END OF LOOP 'm' BY TEXT ITEM
         
         saveWorkbook(wb)
-        print(paste("WORKBOOK SAVED. File: ", file.name.h, " - Pct. complete: ", 100*h/length(unit.ids.sample), sep = ""))
+        print(paste("WORKBOOK SAVED. File: ", file.name.h, " - Pct. complete: ", 100*h/length(tables.ls), sep = ""))
       }  
     
 
