@@ -1134,7 +1134,7 @@
           
           #Define table configs for loop
             config.tables.tb.d <- config.tables.overviews.input.tb[d,]
-          
+
           #CREATE TABLE
             #if(config.tables.tb.d$tab.type.name == "District Overview (vs district)"){
               
@@ -1305,13 +1305,6 @@
                 unit.id == unit.id.c & 
                   is.most.recent.or.current == 1
               ) %>%
-              SplitColReshape.ToLong(
-                df = ., 
-                id.varname = "resp.id", 
-                split.varname = "domain", 
-                split.char = ","
-              ) %>%
-              as_tibble() %>%
               dcast(
                 data = .,
                 formula = building.name + domain ~ year,
