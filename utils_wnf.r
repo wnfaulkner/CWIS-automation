@@ -171,6 +171,9 @@
     
 #FUNCTIONS FOR MANIPULATING VECTORS & COLUMNS --------------------
   
+  #New Operator - 'not in'
+    '%!in%' <- function(x,y)!('%in%'(x,y))
+    
   #UnlistVector: turn variable stored as table object into vector
     UnlistVector <- function(x){
       

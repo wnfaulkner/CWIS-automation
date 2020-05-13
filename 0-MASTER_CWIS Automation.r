@@ -69,6 +69,7 @@
     library(XLConnect)
     library(tictoc)
     library(microbenchmark)
+    library(tibble)
     
     #Section Clocking
       #section0.duration <- Sys.time() - section0.starttime
@@ -1341,8 +1342,17 @@
                   formula = building.name + variable ~ domain
                 )
               
-              buildings.over.time.bldg.current.vs.previous.school.year$variable <-
-                c("Prev. School Year", current.school.year, "Trend")
+              buildings.over.time.bldg.current.vs.previous.school.year <-
+                ManualOrderTableByVectorsWithValuesCorrespondingToVariableInTable(
+                  tb = buildings.over.time.bldg.current.vs.previous.school.year,
+                  tb.order.varnames = "variable",
+                  ordering.vectors.list = 
+                    list(
+                      c("Prev. School Year",current.school.year, "Trend")
+                    )
+                ) %>%
+                OrderDfByVar(., order.by.varname = "building.name", rev = FALSE)
+
             }
             
             tables.buildings.over.time.ls[[2]]$table <- buildings.over.time.bldg.current.vs.previous.school.year
@@ -1422,7 +1432,7 @@
               filter(!is.na(loop.id))
             tables.building.summaries.ls <- list()
             
-          #e <- 1
+          #e <- 2
           for(e in 1:nrow(config.tables.building.summaries.input.tb)){ ### START OF LOOP "e" BY TABLE ###
               
               #Print loop messages
@@ -1469,51 +1479,112 @@
               #Create table itself
                 if(table.filter.v %>% not %>% all){
                   table.e <- ""
+                  
+                  #Table storage
+                    #if(table.e == ""){print(e)}
+                    tables.building.summaries.ls[[e]] <- list()
+                    tables.building.summaries.ls[[e]]$configs <- config.tables.tb.e
+                    tables.building.summaries.ls[[e]]$table <- table.e
+                    
+                  next()
                 }
+              
+                table.e <-  
+                  table.source.data %>%
+                  filter(table.filter.v) %>%
+                  dcast(
+                    ., 
+                    formula = table.formula.e, 
+                    value.var = config.tables.tb.e$value.varname, 
+                    fun.aggregate = table.aggregation.function
+                  ) %>%
+                  .[,names(.)!= ""]
                 
-                if(table.filter.v %>% any){
-                  table.e <-  
-                    table.source.data %>%
-                    filter(table.filter.v) %>%
-                    dcast(
-                      ., 
-                      formula = table.formula.e, 
-                      value.var = config.tables.tb.e$value.varname, 
-                      fun.aggregate = table.aggregation.function
-                    ) %>%
-                    .[,names(.)!= ""]
+                #Add missing practices
+                  if(
+                    !is.na(config.tables.tb.e$row.header.varname) && 
+                    config.tables.tb.e$row.header.varname == "practice"
+                  ){
+                    table.e %<>%
+                      mutate(
+                        practice = practice %>% tolower
+                      )
+                    
+                    domain.e <- 
+                      config.tables.tb.e$filter.values %>%
+                      strsplit(., ";") %>%
+                      UnlistVector() %>% 
+                      .[. %in% domains]
+                    
+                    practices.e <- 
+                      practices.tb %>%
+                      filter(grepl(domain.e, practices.tb$domain.id)) %>%
+                      select(practice.long) %>%
+                      UnlistVector() %>% 
+                      tolower() %>%
+                      as.data.frame %>%
+                      ReplaceNames(., names(.), "practice")
+                    
+                    table.e %<>%
+                      left_join(
+                        practices.e,
+                        ., 
+                        by = "practice"
+                      )
+                  }
                 
-                  if( # add trend
+                #Add columns with no data if necessary
+                  
+                  full.names.e <-
+                    if(grepl("is.most.recent", config.tables.tb.e$filter.varname)){
+                      c(previous.school.year, current.school.year)
+                    }else{
+                      c("0000", current.school.year)
+                    }
+                  
+                  add.names.e <- full.names.e[full.names.e %!in% names(table.e)]
+                  
+                  table.e[add.names.e] <- NA
+                  
+                  table.e %<>%
+                    ReplaceNames(., ".", "practice") %>%
+                    .[,order(names(.))] %>%
+                    MoveColsLeft(., "practice")
+                
+                #Add trend variable
+                  if(
                     class(table.e[,ncol(table.e)-1]) == "factor" || 
                     IsError(table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]) %in% c(FALSE,NA) %>% all %>% not
                   ){ 
                     table.e$trend <- rep(NA, nrow(table.e))
                   }else{
-                    table.e$trend <- table.e[,ncol(table.e)] - table.e[,ncol(table.e)-1]
-                  }
-                
-                #Modifications for specific tables
-                  if(grepl("building.level", table.formula.e) %>% any){
-                    table.e <- 
-                      left_join(
-                        building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
-                        table.e,
-                        by = "building.level"
-                      )
+                    table.e$trend <- table.e[,ncol(table.e)] %>% subtract(table.e[,ncol(table.e)-1]) %>% UnlistVector()
                   }
                   
-                  if(!config.tables.tb.e$row.header){  #when don't want row labels
-                    table.e <- table.e %>% select(names(table.e)[-1])
-                  }
-                }
-                
-              #Table storage
-                #if(table.e == ""){print(e)}
-                tables.building.summaries.ls[[e]] <- list()
-                tables.building.summaries.ls[[e]]$configs <- config.tables.tb.e
-                tables.building.summaries.ls[[e]]$table <- table.e
+               #print(table.e)
               
-            } ### END OF LOOP "e" BY TABLE ###
+              #Modifications for specific tables
+                #if(grepl("building.level", table.formula.e) %>% any){
+                #  table.e <- 
+                #    left_join(
+                #      building.level.order.v %>% as.data.frame %>% ReplaceNames(., ".", "building.level"), 
+                #      table.e,
+                #      by = "building.level"
+                #    )
+                #}
+              
+                
+                if(!config.tables.tb.e$row.header){  #when don't want row labels
+                  table.e <- table.e %>% select(names(table.e)[-1])
+                }
+              
+            #Table storage
+              #if(table.e == ""){print(e)}
+              tables.building.summaries.ls[[e]] <- list()
+              tables.building.summaries.ls[[e]]$configs <- config.tables.tb.e
+              tables.building.summaries.ls[[e]]$table <- table.e
+              
+          } ### END OF LOOP "e" BY TABLE ###
         
         } #end of if statement for producing building summary tables only if not a district overview report
           
