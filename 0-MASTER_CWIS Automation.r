@@ -325,8 +325,9 @@
             dcast(., building.id ~ year, value.var = "resp.id", fun.aggregate = length) %>%
             mutate(
               filter.baseline = baseline %>% is_greater_than(0),
-              filter.other.school.years = apply(.[,2:4] %>% as.data.frame(), 1, sum) %>% is_greater_than(0),
-              filter.combined = filter.baseline & filter.other.school.years
+              filter.most.recent = apply(.[,ncol(.)-1] %>% as.data.frame(), 1, sum),
+              filter.other.school.years = apply(.[,2:(ncol(.)-1)] %>% as.data.frame(), 1, sum) %>% is_greater_than(0),
+              filter.combined = filter.baseline & filter.most.recent & filter.other.school.years
             ) %>%
             filter(filter.combined) %>%
             select(building.id) %>%
@@ -793,15 +794,13 @@
       #Loop Inputs
         config.tables.overviews.input.tb <- 
           config.tables.ls[[1]] %>% 
-          filter(!is.na(table.type.name)) %>%
-          filter(grepl("Overview", tab.type.name)) %>%
-          filter(is.state.table) %>%
-          #OrderDfByVar(., order.by.varname = "tab.section.1", rev = FALSE) %>%
+          filter(!is.na(table.type.name) & grepl("Overview", tab.type.name) & is.state.table) %>%
+          filter(tab.type.name != "District Overview (vs state)") %>%
           as_tibble()
         
         tables.overviews.state.ls <- list()
       
-      #d <- 4
+      #d <- 14
       for(d in 1:nrow(config.tables.overviews.input.tb)){ ### START OF LOOP "d" BY TABLE ###
         
         #Print loop messages
@@ -874,10 +873,17 @@
                 if(!config.tables.tb.d$row.header){  #when don't want row labels
                   table.d <- table.d %>% select(names(table.d)[-1])
                 }
-              }
+                
+              #Table Storage
+                table.d.storage.index <- length(tables.overviews.state.ls) %>% add(1)
+                tables.overviews.state.ls[[table.d.storage.index]] <- list()
+                tables.overviews.state.ls[[table.d.storage.index]]$configs <- config.tables.tb.d
+                tables.overviews.state.ls[[table.d.storage.index]]$table <- table.d
+                
+            } #End of if statement for CWIS Response Tab
         
           #District Overview (vs district) Tables
-            if(config.tables.tb.d$tab.type.name %in% c("District Overview (vs district)")){
+            if(grepl("District Overview", config.tables.tb.d$tab.type.name)){
               
               #Define table aggregation formula
                 table.formula.d <-
@@ -938,39 +944,31 @@
                 if(!config.tables.tb.d$row.header){  #when don't want row labels
                   table.d <- table.d %>% select(names(table.d)[-1])
                 }
-            }
-          
-          #District Overview (vs. state) - copies of vs distrct tables
-            #if(config.tables.tb.d$tab.type.name == "District Overview (vs state)"){
-            #  table.d <- 
-            #    tables.overviews.state.ls[
-            #      tables.overviews.state.ls %>%
-            #        lapply(
-            #          .,
-            #          function(x){
-            #            (
-            #              x$configs$tab.type.id %>%
-            #                unlist %>% as.vector %>%
-            #                equals(2)
-            #            ) &
-            #              (
-            #                x$configs$table.type.id %>%
-            #                  unlist %>% as.vector() %>%
-            #                  equals(config.tables.tb.d$table.type.id)
-            #              )
-            #          }
-            #        ) %>%
-            #        unlist %>% as.vector
-            #      ] %>%
-            #    .[[1]] %>% 
-            #    .[["table"]]
-            #}
-          
-        #Table Storage
-          table.d.storage.index <- length(tables.overviews.state.ls) %>% add(1)
-          tables.overviews.state.ls[[table.d.storage.index]] <- list()
-          tables.overviews.state.ls[[table.d.storage.index]]$configs <- config.tables.tb.d
-          tables.overviews.state.ls[[table.d.storage.index]]$table <- table.d
+                
+              #Table Storage
+                
+                #Store table for 'vs district' tab
+                  table.d.storage.index <- length(tables.overviews.state.ls) %>% add(1)
+                  tables.overviews.state.ls[[table.d.storage.index]] <- list()
+                  tables.overviews.state.ls[[table.d.storage.index]]$configs <- config.tables.tb.d
+                  tables.overviews.state.ls[[table.d.storage.index]]$table <- table.d
+                
+                #Store table for 'vs state' tab
+                  table.d.storage.index <- length(tables.overviews.state.ls) %>% add(1)
+                  tables.overviews.state.ls[[table.d.storage.index]] <- list()
+                  
+                  tables.overviews.state.ls[[table.d.storage.index]]$configs <- 
+                    config.tables.ls[[1]] %>% 
+                    filter(
+                      table.type.name == config.tables.tb.d$table.type.name,
+                      startrow == config.tables.tb.d$startrow,
+                      startcol == config.tables.tb.d$startcol,
+                      table.type.id != config.tables.tb.d$table.type.id
+                    )
+                  
+                  tables.overviews.state.ls[[table.d.storage.index]]$table <- table.d
+                
+            } #End of if statement for District Overview Tabs
         
       } ### END OF LOOP "d" BY TABLE ###
       
