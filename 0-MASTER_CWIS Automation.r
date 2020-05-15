@@ -325,7 +325,7 @@
             dcast(., building.id ~ year, value.var = "resp.id", fun.aggregate = length) %>%
             mutate(
               filter.baseline = baseline %>% is_greater_than(0),
-              filter.most.recent = apply(.[,ncol(.)-1] %>% as.data.frame(), 1, sum),
+              filter.most.recent = apply(.[,ncol(.)-1] %>% as.data.frame(), 1, sum) %>% is_greater_than(10),
               filter.other.school.years = apply(.[,2:(ncol(.)-1)] %>% as.data.frame(), 1, sum) %>% is_greater_than(0),
               filter.combined = filter.baseline & filter.most.recent & filter.other.school.years
             ) %>%
@@ -399,6 +399,7 @@
           by = c("year", "building.id")
         ) %>% 
         mutate(variable = as.character(variable))
+      
    
   #FORM FINAL DATASETS - RESTRICTED TO SAMPLE ---- 
     #Not necessary in Phase 11 as restrictions simplified and data already filtered above during cleaning
@@ -499,17 +500,13 @@
       
     #Full dataset - no splitcolreshape by domain
       resp.full.nosplit.tb <- 
-        resp9.tb %>%
+        resp8.tb %>%
         left_join(
-          x = resp9.tb,
-          y = questions.tb %>% select(var.id, domain, practice),
+          x = resp8.tb,
+          y = questions.tb %>% select(var.id, domain),
           by = c("variable"="var.id")
-        ) %>%
-        left_join(
-          x = ., 
-          y = domains.tb,
-          by = c("domain" = "domain.id")
-        )
+        ) 
+        
       
     #Restricted datasets (depending on whether printing dashboards or overviews)
       #if(is.overview){
@@ -542,8 +539,20 @@
             split.varname = "domain",
             split.char = ","
           ) %>% 
+          left_join(
+            x = ., 
+            y = domains.tb,
+            by = c("domain" = "domain.id")
+          ) %>%
+          left_join(
+            x = ., 
+            y = practices.tb %>% SplitColReshape.ToLong(., id.varname = "practice.id", split.varname = "domain.id", split.char = ","),
+            by = c("variable" = "practice.id")
+          ) %>%
+          select(-domain.id) %>%
+          ReplaceNames(., current.names = "practice.abbrv", new.names = "practice") %>%
           as_tibble()
-      }
+      } 
     
   #FORM SAMPLE DATASETS ----  
     
@@ -1070,7 +1079,7 @@
       c.loop.startime <- Sys.time()
     
     #Building Level Order
-      building.level.order.v <- c("Elem.","High","Middle","Technology Ctr.","Other")
+      building.level.order.v <- c("Elem.","Middle","High","Technology Ctr.","Other")
         
     #c <- 1 #LOOP TESTER 
     for(c in 1:length(unit.ids.sample)){   #START OF LOOP BY unit.id
@@ -1115,12 +1124,12 @@
           config.tables.overviews.input.tb <- 
             config.tables.ls[[c]] %>% 
             filter(!is.na(table.type.id)) %>%
-            filter(grepl("District Overview", tab.type.name)) %>%
+            filter(grepl("vs district", tab.type.name)) %>%
             filter(!is.state.table) %>%
             as_tibble()
           
-          tables.overview.district.ls <- list()
-          max.d <- config.tables.overviews.input.tb %>% filter(tab.name == "District Overview (vs district)") %>% nrow
+          tables.overview.ls <- list()
+          max.d <- config.tables.overviews.input.tb %>% nrow
         
         #d <- 29
         for(d in 1:max.d){ ### START OF LOOP "d" BY TABLE ###
@@ -1135,7 +1144,6 @@
             config.tables.tb.d <- config.tables.overviews.input.tb[d,]
 
           #CREATE TABLE
-            #if(config.tables.tb.d$tab.type.name == "District Overview (vs district)"){
               
               #Define table aggregation formula
                 table.formula.d <-
@@ -1176,16 +1184,16 @@
                   table.d <- ""
                 }else{
                   table.d <-  
-                  table.source.data %>%
-                  filter(table.filter.v) %>%
-                  dcast(
-                    ., 
-                    formula = table.formula.d, 
-                    value.var = config.tables.tb.d$value.varname, 
-                    fun.aggregate = table.aggregation.function
-                  ) %>%
-                  .[,names(.)!= "NA"]
-                
+                    table.source.data %>%
+                    filter(table.filter.v) %>%
+                    dcast(
+                      ., 
+                      formula = table.formula.d, 
+                      value.var = config.tables.tb.d$value.varname, 
+                      fun.aggregate = table.aggregation.function
+                    ) %>%
+                    .[,names(.)!= "NA"]
+                  
 
                   #Modifications for specific tables
                     if(grepl("building.level", table.formula.d) %>% any){
@@ -1201,64 +1209,34 @@
                       table.d <- table.d %>% select(names(table.d)[-1])
                     }
                 }
-            #}
-          
-            #if(config.tables.tb.d$tab.type.name == "District Overview (vs state)"){
-            #  table.d <- 
-            #    tables.overview.district.ls[
-            #      tables.overview.district.ls %>%
-            #      lapply(
-            #        .,
-            #        function(x){
-            #          #(
-            #          #  x$configs$tab.type.name %>%
-            #          #    unlist %>% as.vector %>%
-            #          #    equals("District Overview (vs state)")
-            #          #) &
-            #            (
-            #              x$configs$table.type.id %>%
-            #                unlist %>% as.vector() %>%
-            #                equals(config.tables.tb.d$table.type.id)
-            #            )
-            #        }
-            #      ) %>%
-            #      unlist %>% as.vector
-            #    ] %>%
-            #    .[[1]] %>% 
-            #    .[["table"]]
-            #}
-  
+            
           #Table Storage
-            table.d.storage.index <- length(tables.overview.district.ls) %>% add(1)
-            tables.overview.district.ls[[table.d.storage.index]] <- list()
-            tables.overview.district.ls[[table.d.storage.index]]$configs <- config.tables.tb.d
-            tables.overview.district.ls[[table.d.storage.index]]$table <- table.d
+              
+            #Store table for 'vs district' tab
+              table.d.storage.index <- length(tables.overview.ls) %>% add(1)
+              tables.overview.ls[[table.d.storage.index]] <- list()
+              tables.overview.ls[[table.d.storage.index]]$configs <- config.tables.tb.d
+              tables.overview.ls[[table.d.storage.index]]$table <- table.d
+              
+            #Store table for 'vs state' tab
+              table.d.storage.index <- length(tables.overview.ls) %>% add(1)
+              tables.overview.ls[[table.d.storage.index]] <- list()
+              
+              tables.overview.ls[[table.d.storage.index]]$configs <- 
+                config.tables.ls[[1]] %>% 
+                filter(
+                  table.type.name == config.tables.tb.d$table.type.name,
+                  startrow == config.tables.tb.d$startrow,
+                  startcol == config.tables.tb.d$startcol,
+                  table.type.id != config.tables.tb.d$table.type.id
+                )
+              
+              tables.overview.ls[[table.d.storage.index]]$table <- table.d
           
           #tic.log(format = TRUE)
           #toc(log = TRUE, quiet = TRUE)
           
         } ### END OF LOOP "d" BY TABLE ###
-        
-        #Finalizing loop output list
-          
-          #Create near copy of list made for 'District Overview (vs district)' but change tab.type.name to be "District Overview (vs state)"
-            tables.overview.state.ls <-
-              tables.overview.district.ls %>%
-              lapply(
-                ., 
-                function(x){
-                  x$configs$tab.type.name <- "District Overview (vs state)"
-                  x$configs$tab.name <- "District Overview (vs state)"
-                  return(x)
-                }
-              )
-          
-          #Stack lists together
-            tables.overview.ls <- 
-              c(
-                tables.overview.district.ls,
-                tables.overview.state.ls
-              )
           
           #Finalize names
             names(tables.overview.ls) <- 
