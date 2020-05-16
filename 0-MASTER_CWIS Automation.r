@@ -557,6 +557,7 @@
   #FORM SAMPLE DATASETS ----  
     
     #Scenario 1 - sample print
+      
       if(sample.print){ 
         is.valid.sample <- FALSE
         while(!is.valid.sample){
@@ -1029,6 +1030,9 @@
               period = buildings.over.time.state.avg.current.vs.previous.school.year[,1]
             ) %>%
             MoveColsLeft(., "period")
+            
+          buildings.over.time.state.avg.current.vs.previous.school.year$period <-
+            gsub(previous.school.year, "Prev. School Year", buildings.over.time.state.avg.current.vs.previous.school.year$period)
           
         #Current vs. baseline
           buildings.over.time.state.avg.current.vs.baseline <- 
@@ -1270,12 +1274,12 @@
           
           #State Average Table - Last School Year vs. Current
             tables.buildings.over.time.ls[[1]] <- list()
-            tables.buildings.over.time.ls[[1]]$configs <- config.buildings.over.time.tb[1,]
+            tables.buildings.over.time.ls[[1]]$configs <- config.buildings.over.time.tb %>% filter(table.type.id == 82)
             tables.buildings.over.time.ls[[1]]$table <- buildings.over.time.state.avg.current.vs.previous.school.year  
           
           #Building Average Table - Last School year vs. Current  
             tables.buildings.over.time.ls[[2]] <- list()
-            tables.buildings.over.time.ls[[2]]$configs <- config.buildings.over.time.tb[2,]
+            tables.buildings.over.time.ls[[2]]$configs <- config.buildings.over.time.tb %>% filter(table.type.id == 83)
             buildings.over.time.bldg.current.vs.previous.school.year <- 
               resp.sample.split.tb %>% 
               filter(
@@ -1298,7 +1302,8 @@
                   mutate(
                     `Prev. School Year` = NA,
                     Trend = NA
-                  )
+                  ) %>%
+                  ReplaceNames(., "Prev. School Year", previous.school.year)
               }
               
               if(ncol(buildings.over.time.bldg.current.vs.previous.school.year) == 4){ # add trend column
@@ -1324,7 +1329,7 @@
                   tb.order.varnames = "variable",
                   ordering.vectors.list = 
                     list(
-                      c("Prev. School Year",current.school.year, "Trend")
+                      c(previous.school.year,current.school.year, "Trend")
                     )
                 ) %>%
                 OrderDfByVar(., order.by.varname = "building.name", rev = FALSE)
@@ -1335,13 +1340,13 @@
     
           #State Average Table - Baseline vs. Current
             tables.buildings.over.time.ls[[3]] <- list()
-            tables.buildings.over.time.ls[[3]]$configs <- config.buildings.over.time.tb[3,]
+            tables.buildings.over.time.ls[[3]]$configs <- config.buildings.over.time.tb %>% filter(table.type.id == 84)
             tables.buildings.over.time.ls[[3]]$table <- buildings.over.time.state.avg.current.vs.baseline
               
             
           #Building Average Table - Baseline year vs. Current  
             tables.buildings.over.time.ls[[4]] <- list()
-            tables.buildings.over.time.ls[[4]]$configs <- config.buildings.over.time.tb[4,]
+            tables.buildings.over.time.ls[[4]]$configs <- config.buildings.over.time.tb %>% filter(table.type.id == 85)
             buildings.over.time.bldg.current.vs.baseline <- 
               resp.sample.split.tb %>% 
               filter(
@@ -1482,31 +1487,42 @@
                     config.tables.tb.e$row.header.varname == "practice"
                   ){
                     table.e %<>%
-                      mutate(
-                        practice = practice %>% tolower
-                      )
-                    
-                    domain.e <- 
-                      config.tables.tb.e$filter.values %>%
-                      strsplit(., ";") %>%
-                      UnlistVector() %>% 
-                      .[. %in% domains]
-                    
-                    practices.e <- 
-                      practices.tb %>%
-                      filter(grepl(domain.e, practices.tb$domain.id)) %>%
-                      select(practice.long) %>%
-                      UnlistVector() %>% 
-                      tolower() %>%
-                      as.data.frame %>%
-                      ReplaceNames(., names(.), "practice")
-                    
-                    table.e %<>%
                       left_join(
-                        practices.e,
                         ., 
-                        by = "practice"
-                      )
+                        practices.tb %>% select(practice.abbrv, practice.long),
+                        by = c("practice" = "practice.abbrv")
+                      ) %>%
+                      select(-practice) %>%
+                      ReplaceNames(., "practice.long", "practice") %>%
+                      MoveColsLeft("practice")
+                      
+                      
+                      
+                  #    mutate(
+                  #      practice = practice.long %>% tolower
+                  #    )
+                  #  
+                  #  domain.e <- 
+                  #    config.tables.tb.e$filter.values %>%
+                  #    strsplit(., ";") %>%
+                  #   UnlistVector() %>% 
+                  #    .[. %in% domains]
+                  #  
+                  #  practices.e <- 
+                  ##    practices.tb %>%
+                  #    filter(grepl(domain.e, practices.tb$domain.id)) %>%
+                  #    select(practice.long) %>%
+                  #    UnlistVector() %>% 
+                  #    tolower() %>%
+                  #    as.data.frame %>%
+                  #    ReplaceNames(., names(.), "practice")
+                  #  
+                  #  table.e %<>%
+                  #    left_join(
+                  #      practices.e,
+                  #      ., 
+                  #      by = "practice"
+                  #    )
                   }
                 
                 #Add columns with no data if necessary
@@ -1525,7 +1541,8 @@
                   table.e %<>%
                     ReplaceNames(., ".", "practice") %>%
                     .[,order(names(.))] %>%
-                    MoveColsLeft(., "practice")
+                    MoveColsLeft(., "practice") %>%
+                    OrderDfByVar(., "practice", rev = FALSE)
                 
                 #Add trend variable
                   if(
