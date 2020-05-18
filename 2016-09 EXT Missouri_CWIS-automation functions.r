@@ -840,6 +840,23 @@ source("utils_wnf.r")
         
         return(result)
       }
+    
+  #Format Building Names as 'Proper' in all tables
+    #FormatBuildingNamesAsProper <- 
+    #  function(tables.list.element){
+    #    
+    #      configs.i <- tables.list.element$configs
+    #      table.i <- tables.list.element$table
+    #      
+    #      if(
+    #        grepl("building.name", configs.i$row.header.varname)
+    #      ){
+    #        table.i[,1] <- table.i[,1] %>% UnlistVector() %>% Proper
+    #        tables.list.element$table <- table.i
+    #      }else{
+    #        tables.list.element$table <- table.i
+    #      }
+    #  }
   
 
 ### 5 - EXPORT FUNCTIONS --------------------------------------------------------------------------------------------------------

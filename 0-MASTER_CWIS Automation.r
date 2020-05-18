@@ -360,10 +360,6 @@
         MoveColsLeft(., c("resp.id","unit.id")) %>% #Rearrange columns: resp.id and unit.id at the front
         as_tibble()
       
-    #Filter out responses for DBDM practice 5 (see Missouri Journal entry 2019-11-08)
-      resp6.tb %<>%
-        filter(variable != "dbdm_visualrepresetations")
-      
   #ADDING NEW USEFUL VARIABLES ----
     
     #Add proficiency dummy variable
@@ -1119,10 +1115,12 @@
           tables.cwis.responses.ls[[1]]$table <-
             resp.sample.nosplit.tb %>%
             filter(unit.id == unit.id.c) %>%
-            dcast(., formula = building.name ~ year, value.var = "resp.id", fun.aggregate = length) %>%
+            dcast(., formula = building.name ~ year, value.var = "resp.id", fun.aggregate = function(x){length(unique(x))}) %>%
             ReplaceNames(., c("building.name","0000"), c("Building", "Baseline"))
           
-      #Overview Tabs ----
+          tables.cwis.responses.ls[[1]]$table$Building <- tables.cwis.responses.ls[[1]]$table$Building %>% Proper
+          
+      #District Overview Tabs ----
        
         #Loop Inputs
           config.tables.overviews.input.tb <- 
@@ -1207,6 +1205,10 @@
                           table.d,
                           by = "building.level"
                         )
+                    }
+                  
+                    if(grepl("building.name", table.formula.d) %>% any){ #Failed to do this in the final tables.ls instead of have to repeat it for each tab type here
+                      table.d$building.name <- Proper(table.d$building.name)
                     }
                     
                     if(!config.tables.tb.d$row.header){  #when don't want row labels
@@ -1333,6 +1335,9 @@
                     )
                 ) %>%
                 OrderDfByVar(., order.by.varname = "building.name", rev = FALSE)
+              
+              buildings.over.time.bldg.current.vs.previous.school.year$building.name <-
+                buildings.over.time.bldg.current.vs.previous.school.year$building.name %>% Proper
 
             }
             
@@ -1395,6 +1400,9 @@
             buildings.over.time.bldg.current.vs.baseline$variable %<>%
               as.character %>%
               gsub("0000", "Baseline", .)
+            
+            buildings.over.time.bldg.current.vs.baseline$building.name <- 
+              buildings.over.time.bldg.current.vs.baseline$building.name %>% Proper
             
             tables.buildings.over.time.ls[[4]]$table <- buildings.over.time.bldg.current.vs.baseline
         } #end of if statement for producing building summary tables only if not a district overview report
