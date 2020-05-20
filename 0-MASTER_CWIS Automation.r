@@ -543,9 +543,8 @@
           left_join(
             x = ., 
             y = practices.tb %>% SplitColReshape.ToLong(., id.varname = "practice.id", split.varname = "domain.id", split.char = ","),
-            by = c("variable" = "practice.id")
+            by = c("variable" = "practice.id", "domain" = "domain.id")
           ) %>%
-          select(-domain.id) %>%
           ReplaceNames(., current.names = "practice.abbrv", new.names = "practice") %>%
           as_tibble()
       } 
@@ -1198,6 +1197,21 @@
                   
 
                   #Modifications for specific tables
+                    if(grepl("practice.long", config.tables.tb.d$col.header.varname)){
+                      practices.d <- 
+                        resp.full.split.tb %>%
+                        filter(domain == table.source.data %>% filter(table.filter.v) %>% select(domain) %>% UnlistVector() %>% unique) %>%
+                        select(practice.long) %>%
+                        UnlistVector() %>%
+                        unique
+                      
+                      if(table.d %>% ncol %>% subtract(1) %>% is_less_than(length(practices.d))){
+                        cols.to.add <- practices.d[practices.d %!in% names(table.d)]
+                        table.d[,cols.to.add] = NA
+                        table.d <- table.d[,order(names(table.d))] %>% MoveColsLeft(names(table.d)[names(table.d) %!in% practices.d])
+                      }
+                    }
+                  
                     if(grepl("building.level", table.formula.d) %>% any){
                       table.d <- 
                         left_join(
@@ -1205,7 +1219,7 @@
                           table.d,
                           by = "building.level"
                         )
-                    }
+                    } 
                   
                     if(grepl("building.name", table.formula.d) %>% any){ #Failed to do this in the final tables.ls instead of have to repeat it for each tab type here
                       table.d$building.name <- Proper(table.d$building.name)
@@ -1669,9 +1683,88 @@
     #h <- 1 #LOOP TESTER
     for(h in 1:length(tables.ls)){ 
       
-      unit.id.h <- unit.ids.sample[h]  
+      unit.id.h <- unit.ids.sample[h]
+      
+      #Exception for districts with more than 15 buildings that will not fit on current template 
+        if(
+          resp.sample.nosplit.tb %>% 
+          filter(unit.id == unit.id.h) %>%
+          select(building.name) %>%
+          UnlistVector() %>%
+          unique %>%
+          length %>%
+          is_greater_than(15)
+        ){
+          
+          file.name.h <- #file name
+            paste(
+              "district dashboard_",
+              unit.id.h,
+              "_",
+              report.version,
+              ".xlsx",
+              sep = ""
+            )
+          
+          district.tables.list <- tables.ls[[h]]
+          
+          wb <- loadWorkbook(file.name.h, create = TRUE)
+          
+          for(i in 1:length(district.tables.list)){
+            
+            #Loop inputs
+            
+              if(i == 1){print("Table loop started.")} #Print loop messages
+            
+              if(
+                (district.tables.list[[i]]$table %>% dim %>% length %>% equals(1)) && (district.tables.list[[i]]$table %>% equals(""))
+              ){
+                table.i <- ""
+              }else{
+                table.i <- district.tables.list[[i]]$table
+              }
+              
+              configs.i <- district.tables.list[[i]]$configs
+            
+              sheetname.i <- 
+                paste(
+                  configs.i$tab.name %>% substr(., 1, 27),
+                  configs.i$table.type.id,
+                  sep = "."
+                )
+                
+           
+            #Create worksheet
+              createSheet(wb, name = sheetname.i)
+              
+              writeWorksheet(
+                object = wb, 
+                data = configs.i,
+                sheet = sheetname.i,
+                startRow = 1,
+                startCol = 1,
+                header = TRUE,
+                rownames = FALSE
+              )
+              
+              writeWorksheet(
+                object = wb, 
+                data = table.i,
+                sheet = sheetname.i,
+                startRow = 4,
+                startCol = 1,
+                header = TRUE,
+                rownames = TRUE
+              )
+          } #End of loop 'i' by table
+          
+          setwd(outputs.dir)
+          
+          saveWorkbook(wb)
+          
+        } #End of if statement for districts with > 15 buildings
                     
-      #Set up target file
+      #Set up template file
         if(is.overview){
           template.file <- 
             paste(
@@ -1696,9 +1789,8 @@
             )
         }
       
-      #Define template file
+      #Define target file
         if(sample.print){
-          
           file.name.h <- 
              paste(
               "district dashboard_",
