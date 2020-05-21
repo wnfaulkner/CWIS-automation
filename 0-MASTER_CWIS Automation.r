@@ -1065,7 +1065,7 @@
             resp.sample.nosplit.tb %>%
             filter(unit.id == unit.id.c) %>%
             dcast(., formula = building.name ~ year, value.var = "resp.id", fun.aggregate = function(x){length(unique(x))}) %>%
-            #ReplaceNames(., c("building.name","0000"), c("Building", "Baseline"))
+            ReplaceNames(., "building.name", "Building") %>%
             select(-`0000`)
           
           tables.cwis.responses.ls[[1]]$table$Building <- tables.cwis.responses.ls[[1]]$table$Building %>% Proper
