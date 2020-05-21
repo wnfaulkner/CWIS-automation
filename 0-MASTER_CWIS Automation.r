@@ -226,10 +226,13 @@
       mutate(
         district =
           district %>% gsub(" ", ".", .) %>%
-          SubRepeatedCharWithSingleChar(., ".")
-      )
+          SubRepeatedCharWithSingleChar(., "."),
+        print.building = print.building %in% c(NA, FALSE) %>% not
+      ) %>%
+      filter(print.building)
     
   #RESPONSE TABLE  ----
+    
     #Lower-case all character variable data
       resp2.tb <- LowerCaseCharVars(resp1.tb)  
       
@@ -253,112 +256,59 @@
       
       names(resp2.tb) <- SubRepeatedCharWithSingleChar(string.vector = names(resp2.tb), char = ".") # get rid of any double periods in names
       
-      #Add building ids for District Offices and Other
-        resp2.tb %<>%
-          mutate(
-            district = 
-              district %>% gsub(" ", ".", .) %>%
-              SubRepeatedCharWithSingleChar(., ".")
+    #Row Filters
+      
+      #Filter out blank schools & schools marked as do-not-print
+      
+        resp3.tb <- 
+          resp2.tb %>% 
+          filter(building.id != "") %>%
+          left_join(
+            buildings.tb %>% select(building.id),
+            ., 
+            by = "building.id"
           )
-          
-        resp.district.office.other.tb <- 
-          resp2.tb %>%
-          filter(building.name %in% c("district office", "other"))
-        
-        for(i in 1:nrow(resp.district.office.other.tb)){
-          building.name.i <- resp.district.office.other.tb$building.name[i]
-          building.id.end.i <- if(building.name.i == "district office"){"0001"}else{"0002"}
-          district.i <- resp.district.office.other.tb$district[i]
-          
-          building.id.i <- #create new building id from district id plus '0001' for district office and '0002' for other
-            buildings.tb %>% 
-            filter(district == district.i) %>%
-            select(building.id) %>%
-            UnlistVector() %>%
-            RemoveNA %>%
-            .[1] %>%
-            substr(., 1, 5) %>%
-            paste(., building.id.end.i, sep = "")
-          
-          resp2.tb$building.id[ #insert into response table
-            resp2.tb$building.name == building.name.i & 
-            resp2.tb$district == district.i
-          ] <- building.id.i 
-          
-          buildings.tb$building.id[ #insert into buildings config table
-            buildings.tb$district == district.i & 
-            buildings.tb$building.name == building.name.i
-          ] <- building.id.i 
-          
-          if(!(building.id.i %in% buildings.tb$building.id & building.id.i %in% buildings.tb$building.id)){print(i)}
-        }
+      
+      #Column Filters (only columns necessary for producing reports)
+        resp4.tb <-
+          resp3.tb %>%
+          SelectColsIn(
+            ., 
+            "NOT.IN",
+            questions.tb %>% filter(necessary.in.final.data == 0) %>% select(var.id) %>% unlist %>% as.vector
+          )
         
       #Replace district and building.name variables from response data with official designations from DESE
-        resp2.tb <- 
+        resp5.tb <- 
           left_join(
-            resp2.tb %>% select(-c("district","building.name")),
+            resp4.tb %>% select(-c("district","building.name")),
             buildings.tb %>% select(building.id, district, building.name, building.level),
             by = "building.id"
           )
         
-        resp2.tb$building.level <- Proper(resp2.tb$building.level)
+      #Format Building Level names in Proper case
+        resp5.tb$building.level <- Proper(resp5.tb$building.level)
+        #resp5.tb$district <- gsub("\\.", " ", resp5.tb$district) %>% Proper
         
       #Assign variable that is the report unit the name 'unit.id'  
-        resp2.tb %<>% 
+        resp5.tb %<>% 
           ReplaceNames(
             ., 
             current.names = names(resp2.tb)[names(resp2.tb) == as.vector(report.unit)], 
             new.names =  "unit.id"
           )
 
-    #Row Filters
-      
-      #Filter out blank schools
-        resp3.tb <- 
-          resp2.tb %>% 
-          filter(building.name != "")
-        
-      #Building Restrictions
-        if(dashboard.or.overview == "dashboard"){
-          buildings.to.keep <- 
-            resp3.tb %>%
-            dcast(., building.id ~ year, value.var = "resp.id", fun.aggregate = length) %>%
-            mutate(
-              filter.baseline = baseline %>% is_greater_than(0),
-              filter.most.recent = apply(.[,ncol(.)-1] %>% as.data.frame(), 1, sum) %>% is_greater_than(10),
-              filter.other.school.years = apply(.[,2:(ncol(.)-1)] %>% as.data.frame(), 1, sum) %>% is_greater_than(0),
-              filter.combined = filter.baseline & filter.most.recent & filter.other.school.years
-            ) %>%
-            filter(filter.combined) %>%
-            select(building.id) %>%
-            UnlistVector()
-          
-          resp4.tb <- 
-            resp3.tb %>%
-            filter(building.id %in% buildings.to.keep)
-        }
-        
-    #Column Filters (only columns necessary for producing reports)
-      
-      resp5.tb <-
-        resp4.tb %>%
-        SelectColsIn(
-          ., 
-          "NOT.IN",
-          questions.tb %>% filter(necessary.in.final.data == 0) %>% select(var.id) %>% unlist %>% as.vector
-        )
-    
-    #Reshape to Long Data by response to CWIS question
-      cwis.varnames <- FilterVector(grepl(paste0(domains, collapse = "|"), names(resp5.tb)), names(resp5.tb))
-      resp6.tb <-
-        melt( #Melt to long data frame for all cwis vars
-          resp5.tb,
-          id.vars = names(resp5.tb)[!names(resp5.tb) %in% cwis.varnames], 
-          measure.vars = cwis.varnames
-        ) %>% 
-        filter(!is.na(value)) %>% #remove rows with no answer for cwis vars
-        MoveColsLeft(., c("resp.id","unit.id")) %>% #Rearrange columns: resp.id and unit.id at the front
-        as_tibble()
+      #Reshape to Long Data by response to CWIS question
+        cwis.varnames <- FilterVector(grepl(paste0(domains, collapse = "|"), names(resp4.tb)), names(resp4.tb))
+        resp6.tb <-
+          melt( #Melt to long data frame for all cwis vars
+            resp5.tb,
+            id.vars = names(resp5.tb)[!names(resp5.tb) %in% cwis.varnames], 
+            measure.vars = cwis.varnames
+          ) %>% 
+          filter(!is.na(value)) %>% #remove rows with no answer for cwis vars
+          MoveColsLeft(., c("resp.id","unit.id")) %>% #Rearrange columns: resp.id and unit.id at the front
+          as_tibble()
       
   #ADDING NEW USEFUL VARIABLES ----
     
@@ -763,7 +713,7 @@
           config.tabs.ls[[b]],
           by = c("tab.type.name","loop.id")
         ) %>%
-        mutate(text.value = district.name) %>%
+        mutate(text.value = district.name %>% gsub("\\."," ",.) %>% Proper) %>%
         mutate(
           text.value = 
             ifelse(text.type == "building", loop.id, text.value)
@@ -1115,7 +1065,8 @@
             resp.sample.nosplit.tb %>%
             filter(unit.id == unit.id.c) %>%
             dcast(., formula = building.name ~ year, value.var = "resp.id", fun.aggregate = function(x){length(unique(x))}) %>%
-            ReplaceNames(., c("building.name","0000"), c("Building", "Baseline"))
+            #ReplaceNames(., c("building.name","0000"), c("Building", "Baseline"))
+            select(-`0000`)
           
           tables.cwis.responses.ls[[1]]$table$Building <- tables.cwis.responses.ls[[1]]$table$Building %>% Proper
           
