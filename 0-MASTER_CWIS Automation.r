@@ -1647,9 +1647,9 @@
           is_greater_than(15)
         ){
           
-          file.name.h <- #file name
+          file.name.tables.h <- #file name
             paste(
-              "district dashboard_",
+              "district tables_",
               unit.id.h,
               "_",
               report.version,
@@ -1657,9 +1657,10 @@
               sep = ""
             )
           
-          district.tables.list <- tables.ls[[h]]
+          district.tables.list <- 
+            tables.ls[[h]] 
           
-          wb <- loadWorkbook(file.name.h, create = TRUE)
+          wb <- loadWorkbook(file.name.tables.h, create = TRUE)
           
           for(i in 1:length(district.tables.list)){
             
